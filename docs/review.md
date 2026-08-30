@@ -80,6 +80,14 @@ surface — database, review screen, PDF. Anything that collapses them is a find
 
 New logic with no test. `npm test` is the gate; `npm run test:all` adds the PDF assertion.
 
+## Reviewing the whole codebase rather than a diff
+
+The checks above are written for a diff, but they apply unchanged to a full pass — read
+each area's code and ask the same question of it. Two differences worth knowing: there is
+no author to have rationalised anything, so weigh what the `README.md` already explains
+and defends before calling it a defect; and the volume tempts padding, so hold the same
+bar. A clean report on a check is a result, not a gap in the review.
+
 ## Reporting
 
 Report findings ranked most severe first. For each: the file and line, one sentence on the

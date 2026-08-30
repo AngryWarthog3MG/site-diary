@@ -51,7 +51,7 @@ npm run dev          # local
 npm test             # typecheck + unit tests — the gate for any change
 npm run db:test      # SQL suites
 npm run pdf:check    # byte-identical PDF assertion; run if src/lib/pdf/ changed
-npm run test:all     # both of the above
+npm run test:all     # npm test + pdf:check — does NOT include db:test
 npm run db:types     # regenerate src/types/database.ts after a migration
 ```
 
