@@ -1,0 +1,38 @@
+<!--
+  Magic-link email.
+
+  The link carries a token_hash, not a PKCE code. On a phone, a mail app opens
+  links in its own in-app browser, which has none of the cookies the browser
+  that asked for the link is holding — a PKCE code fails there every time. A
+  token_hash works from any browser.
+
+  The six-digit code underneath is the third fallback, for a site with enough
+  signal to load the app but not enough for the link to survive the round trip.
+-->
+<div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-width:480px;margin:0 auto;padding:32px 24px;color:#131A1E;background:#F1F2EF;">
+  <p style="margin:0;font-size:12px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:#5A6469;">Site Diary</p>
+  <h1 style="margin:6px 0 0;font-size:22px;font-weight:600;">Sign in</h1>
+
+  <p style="margin:20px 0 0;font-size:15px;line-height:1.5;">
+    Open this on the phone you record on. It signs you in — there is no password.
+  </p>
+
+  <p style="margin:24px 0 0;">
+    <a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=email"
+       style="display:inline-block;padding:16px 28px;background:#0E4F52;color:#F1F2EF;text-decoration:none;font-size:15px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;">
+      Open the diary
+    </a>
+  </p>
+
+  <p style="margin:24px 0 0;font-size:14px;line-height:1.5;color:#5A6469;">
+    If the link will not open, key this code into the app instead:
+  </p>
+  <p style="margin:8px 0 0;font-family:ui-monospace,Menlo,monospace;font-size:26px;letter-spacing:.14em;">
+    {{ .Token }}
+  </p>
+
+  <hr style="border:0;border-top:1px solid rgba(19,26,30,.12);margin:28px 0 0;">
+  <p style="margin:16px 0 0;font-size:12px;line-height:1.5;color:#5A6469;">
+    If you did not ask for this, ignore it — nothing happens until the link is opened.
+  </p>
+</div>

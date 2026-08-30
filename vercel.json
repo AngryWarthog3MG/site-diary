@@ -1,0 +1,28 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "nextjs",
+  "regions": [
+    "syd1"
+  ],
+  "build": {
+    "env": {
+      "PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD": "1"
+    }
+  },
+  "functions": {
+    "src/app/api/entries/[id]/pdf/route.ts": {
+      "memory": 2048,
+      "maxDuration": 120
+    }
+  },
+  "crons": [
+    {
+      "path": "/api/ops/check",
+      "schedule": "0 20 * * *"
+    },
+    {
+      "path": "/api/ops/check?remind=1",
+      "schedule": "0 8 * * 1-5"
+    }
+  ]
+}

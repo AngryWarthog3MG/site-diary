@@ -1,0 +1,918 @@
+/*
+ * Site Diary — visual system.
+ *
+ * A carbonless docket book, drawn properly: one white document floating on a
+ * tinted desk, condensed uppercase field labels, hairline rules, monospaced
+ * figures, serialised entries. High contrast for sunlight, 56px touch targets
+ * for gloved hands. The polish lives in surface, depth and rhythm — not in
+ * decoration.
+ */
+
+:root {
+  --ink: #16211f;
+  --ink-60: #55625f;
+  --ink-40: #86928f;
+  --ink-30: #a9b3b0;
+  --ink-12: rgba(22, 33, 31, 0.12);
+  --ink-08: rgba(22, 33, 31, 0.08);
+
+  --desk: #e9ece7;
+  --desk-deep: #dfe3dd;
+  --paper: #fdfdfc;
+  --paper-dim: #f6f7f4;
+
+  --teal: #0e4f52;
+  --teal-deep: #0a3d40;
+  --teal-tint: #e4eeed;
+  --amber: #9a6a09;
+  --amber-tint: #f8f0dd;
+  --signal: #b8341f;
+  --signal-tint: #f9e9e5;
+
+  --rule: 1px solid var(--ink-12);
+  --touch: 56px;
+
+  --r-card: 18px;
+  --r-ui: 12px;
+
+  --shadow-card:
+    0 1px 2px rgba(22, 33, 31, 0.05),
+    0 8px 28px rgba(22, 33, 31, 0.09);
+  --shadow-ui: 0 1px 2px rgba(22, 33, 31, 0.08);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background:
+    radial-gradient(120% 90% at 50% 0%, #f0f2ee 0%, var(--desk) 55%, var(--desk-deep) 100%)
+    fixed var(--desk);
+  color: var(--ink);
+  font-family: var(--font-plex-sans), system-ui, sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ---- The document ------------------------------------------------------- */
+
+.sheet {
+  position: relative;
+  max-width: 30rem;
+  margin: clamp(0.75rem, 3vw, 2.5rem) auto;
+  padding: 1.75rem 1.5rem calc(2rem + env(safe-area-inset-bottom));
+  background: var(--paper);
+  border: 1px solid rgba(22, 33, 31, 0.06);
+  border-radius: var(--r-card);
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+}
+
+/* The docket's edge: a teal binding strip along the top of every document. */
+.sheet::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 5px;
+  background: linear-gradient(90deg, var(--teal) 0%, var(--teal) 62%, var(--amber) 62%, var(--amber) 66%, var(--teal-tint) 66%);
+}
+
+.sheet--wide {
+  max-width: 46rem;
+}
+
+@media (max-width: 520px) {
+  .sheet {
+    margin: 0.625rem;
+    padding: 1.5rem 1.125rem calc(1.75rem + env(safe-area-inset-bottom));
+  }
+}
+
+/* ---- Type --------------------------------------------------------------- */
+
+.label {
+  margin: 0;
+  font-family: var(--font-plex-condensed), var(--font-plex-sans), sans-serif;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-40);
+}
+
+.mono {
+  font-family: var(--font-plex-mono), ui-monospace, monospace;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+
+h1 {
+  letter-spacing: -0.015em;
+}
+
+.rule {
+  border: 0;
+  border-top: var(--rule);
+  margin: 1.375rem 0;
+}
+
+/* ---- Fields ------------------------------------------------------------- */
+
+.field {
+  display: block;
+  width: 100%;
+  min-height: var(--touch);
+  margin-top: 0.375rem;
+  padding: 0.75rem 0.875rem;
+  background: var(--paper-dim);
+  border: 1px solid var(--ink-12);
+  border-radius: var(--r-ui);
+  color: var(--ink);
+  font: inherit;
+  font-size: 1.0625rem;
+  transition: border-color 120ms, background-color 120ms, box-shadow 120ms;
+}
+
+.field::placeholder {
+  color: var(--ink-30);
+}
+
+.field:focus {
+  outline: none;
+  background: var(--paper);
+  border-color: var(--teal);
+  box-shadow: 0 0 0 3px var(--teal-tint);
+}
+
+.field--sm {
+  min-height: 46px;
+  padding: 0.5rem 0.75rem;
+  font-size: 1rem;
+}
+
+textarea.field--sm,
+textarea.field {
+  resize: vertical;
+  line-height: 1.45;
+}
+
+select.field--sm {
+  appearance: none;
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--ink-40) 50%),
+    linear-gradient(135deg, var(--ink-40) 50%, transparent 50%);
+  background-position:
+    calc(100% - 18px) calc(50% - 2px),
+    calc(100% - 12px) calc(50% - 2px);
+  background-size: 6px 6px;
+  background-repeat: no-repeat;
+}
+
+/* ---- Buttons ------------------------------------------------------------ */
+
+.button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  min-height: var(--touch);
+  margin-top: 1rem;
+  padding: 0 1.25rem;
+  background: linear-gradient(180deg, #135a5d 0%, var(--teal) 55%, var(--teal-deep) 100%);
+  border: 0;
+  border-radius: var(--r-ui);
+  box-shadow:
+    var(--shadow-ui),
+    inset 0 1px 0 rgba(255, 255, 255, 0.14);
+  color: #f4f6f3;
+  font-family: var(--font-plex-condensed), var(--font-plex-sans), sans-serif;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-align: center;
+  text-decoration: none;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: transform 80ms, box-shadow 120ms, filter 120ms;
+}
+
+.button:active {
+  transform: translateY(1px);
+  filter: brightness(0.96);
+}
+
+.button:disabled {
+  background: var(--desk-deep);
+  box-shadow: none;
+  color: var(--ink-40);
+  cursor: default;
+}
+
+.button--quiet {
+  background: var(--paper);
+  border: 1px solid var(--ink-12);
+  box-shadow: var(--shadow-ui);
+  color: var(--teal);
+}
+
+.button--quiet:active {
+  background: var(--paper-dim);
+}
+
+.button--record {
+  min-height: 68px;
+  font-size: 1.0625rem;
+  letter-spacing: 0.12em;
+}
+
+.button--record::before {
+  content: '';
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #ff6b52;
+  box-shadow: 0 0 0 3px rgba(255, 107, 82, 0.28);
+}
+
+/* ---- Notices ------------------------------------------------------------ */
+
+.notice,
+.alert {
+  margin-top: 1rem;
+  padding: 0.75rem 0.875rem;
+  background: var(--teal-tint);
+  border: 1px solid rgba(14, 79, 82, 0.14);
+  border-radius: var(--r-ui);
+  color: var(--teal-deep);
+  font-size: 0.9375rem;
+  line-height: 1.5;
+}
+
+.alert {
+  background: var(--signal-tint);
+  border-color: rgba(184, 52, 31, 0.18);
+  color: #8f2917;
+}
+
+.gap {
+  background: var(--amber-tint);
+  border-color: rgba(154, 106, 9, 0.2);
+  color: #7c5507;
+}
+
+/* ---- Layout bits -------------------------------------------------------- */
+
+.grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+/*
+ * Data panel: the tinted inset that holds figures — weather, status, queue.
+ * Gives the flat sheet its second level of depth.
+ */
+.panel {
+  margin-top: 0.75rem;
+  padding: 0.875rem 1rem;
+  background: var(--paper-dim);
+  border: 1px solid var(--ink-08);
+  border-radius: var(--r-ui);
+}
+
+.panel .label {
+  color: var(--ink-40);
+}
+
+/* ---- Chips -------------------------------------------------------------- */
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4375rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.4375rem 0.75rem;
+  background: var(--paper);
+  border: 1px solid var(--ink-12);
+  border-radius: 999px;
+  color: var(--ink-40);
+  font-family: var(--font-plex-condensed), var(--font-plex-sans), sans-serif;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  transition: color 140ms, border-color 140ms, background-color 140ms, box-shadow 140ms;
+}
+
+.chip--on {
+  background: var(--teal);
+  border-color: var(--teal);
+  box-shadow: 0 2px 6px rgba(14, 79, 82, 0.28);
+  color: #f2f5f2;
+}
+
+.chips--compact .chip {
+  padding: 0.3125rem 0.625rem;
+  font-size: 0.6875rem;
+}
+
+.chip--link {
+  text-decoration: none;
+}
+
+.chip--link:hover {
+  background: var(--teal-deep);
+  border-color: var(--teal-deep);
+}
+
+.chipx {
+  margin-left: 0.375rem;
+  padding: 0;
+  background: none;
+  border: 0;
+  color: inherit;
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+/* ---- Recording ----------------------------------------------------------- */
+
+.timer {
+  margin: 0;
+  font-size: 3.5rem;
+  font-weight: 500;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  text-align: center;
+}
+
+.timer--live {
+  color: var(--signal);
+}
+
+.waveform {
+  display: block;
+  width: 100%;
+  margin: 0.75rem 0 1rem;
+}
+
+.transcript {
+  margin: 0.5rem 0 0;
+  min-height: 5.5rem;
+  font-size: 1.0625rem;
+  line-height: 1.55;
+}
+
+.transcript__interim {
+  color: var(--ink-60);
+}
+
+.queue {
+  margin: 0.5rem 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.875rem;
+  color: var(--ink-60);
+}
+
+.queue li {
+  padding: 0.4375rem 0;
+  border-bottom: var(--rule);
+}
+
+.queue li:last-child {
+  border-bottom: 0;
+}
+
+/* ---- Review docket -------------------------------------------------------- */
+
+.item {
+  margin-top: 0.75rem;
+  padding: 0.875rem;
+  background: var(--paper-dim);
+  border: 1px solid var(--ink-08);
+  border-radius: var(--r-ui);
+}
+
+.item--low {
+  border-left: 3px solid var(--amber);
+  background: linear-gradient(90deg, var(--amber-tint) 0%, var(--paper-dim) 34%);
+}
+
+.fieldgrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.625rem;
+}
+
+.fieldcell {
+  display: block;
+  grid-column: 1 / -1;
+  min-width: 0;
+}
+
+.fieldcell--narrow {
+  grid-column: span 1;
+}
+
+.itemfoot {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+  padding-top: 0.625rem;
+  border-top: var(--rule);
+}
+
+.quotebtn {
+  padding: 0.25rem 0;
+  background: none;
+  border: 0;
+  color: var(--teal);
+  font-family: var(--font-plex-condensed), var(--font-plex-sans), sans-serif;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.quotebtn--muted {
+  color: var(--ink-30);
+  cursor: default;
+}
+
+.quotebtn--remove {
+  color: var(--signal);
+}
+
+.quote {
+  margin: 0.625rem 0 0;
+  padding: 0.625rem 0.875rem;
+  background: var(--teal-tint);
+  border-left: 3px solid var(--teal);
+  border-radius: 0 var(--r-ui) var(--r-ui) 0;
+  color: var(--teal-deep);
+  font-size: 0.9375rem;
+  line-height: 1.5;
+}
+
+.hash {
+  margin: 0.375rem 0 0;
+  padding: 0.625rem 0.75rem;
+  background: var(--paper-dim);
+  border: 1px dashed var(--ink-12);
+  border-radius: var(--r-ui);
+  font-size: 0.8125rem;
+  line-height: 1.6;
+  word-break: break-all;
+}
+
+.gaplist {
+  margin: 0.375rem 0 0;
+  padding-left: 1.125rem;
+  font-size: 0.9375rem;
+  line-height: 1.55;
+}
+
+.gaplist li + li {
+  margin-top: 0.1875rem;
+}
+
+/* A file input dressed as a button. */
+label.button--quiet {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+/* ---- Ask ------------------------------------------------------------------ */
+
+.examples {
+  margin: 0.5rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.examples li {
+  padding: 0;
+  border-bottom: var(--rule);
+}
+
+.examples li:last-child {
+  border-bottom: 0;
+}
+
+.examples .quotebtn {
+  display: block;
+  width: 100%;
+  padding: 0.75rem 0.25rem;
+  font-family: inherit;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-align: left;
+  text-transform: none;
+}
+
+.examples .quotebtn::before {
+  content: '→  ';
+  color: var(--ink-30);
+}
+
+.answer {
+  margin-top: 0.5rem;
+  font-size: 1.0625rem;
+  line-height: 1.6;
+}
+
+.answer p {
+  margin: 0 0 0.75rem;
+}
+
+.sql {
+  margin: 0.5rem 0 0;
+  padding: 0.875rem;
+  overflow-x: auto;
+  background: #122320;
+  border-radius: var(--r-ui);
+  color: #cfe3dd;
+  font-family: var(--font-plex-mono), ui-monospace, monospace;
+  font-size: 0.8125rem;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.tablewrap {
+  margin-top: 0.5rem;
+  overflow-x: auto;
+  border: 1px solid var(--ink-08);
+  border-radius: var(--r-ui);
+}
+
+table.rows {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+table.rows th {
+  padding: 0.5625rem 0.875rem;
+  background: var(--paper-dim);
+  border-bottom: 1px solid var(--ink-12);
+  font-family: var(--font-plex-condensed), var(--font-plex-sans), sans-serif;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-align: left;
+  color: var(--ink-40);
+  white-space: nowrap;
+}
+
+table.rows td {
+  padding: 0.5625rem 0.875rem;
+  border-bottom: var(--rule);
+  vertical-align: top;
+  white-space: nowrap;
+}
+
+table.rows tr:last-child td {
+  border-bottom: 0;
+}
+
+table.rows tbody tr:nth-child(even) td {
+  background: var(--paper-dim);
+}
+
+mark {
+  background: rgba(154, 106, 9, 0.2);
+  border-radius: 3px;
+  color: inherit;
+  padding: 0 0.1875rem;
+}
+
+/* The entries register */
+.register-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.875rem 0.25rem;
+  border-bottom: var(--rule);
+  color: inherit;
+  text-decoration: none;
+}
+.register-row:last-of-type { border-bottom: 0; }
+.register-row:active { background: var(--paper-dim); }
+
+/* ---- Visual pass two ----------------------------------------------------- */
+
+/* The serial as a stamp — the docket book's numbering block. */
+.stamp {
+  display: inline-block;
+  padding: 0.375rem 0.75rem;
+  border: 2px solid var(--ink);
+  border-radius: 6px;
+  font-family: var(--font-plex-mono), ui-monospace, monospace;
+  font-size: 1.25rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+}
+
+/* An ink-stamp seal for the signed screen. */
+.seal {
+  position: absolute;
+  top: 1.5rem;
+  right: 1.125rem;
+  padding: 0.375rem 0.875rem;
+  border: 3px double var(--teal);
+  border-radius: 8px;
+  transform: rotate(-6deg);
+  color: var(--teal);
+  font-family: var(--font-plex-condensed), var(--font-plex-sans), sans-serif;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  opacity: 0.85;
+}
+
+/* Section chips tick when covered. */
+.chip--on::before {
+  content: '✓';
+  margin-right: 0.375rem;
+  font-size: 0.8125rem;
+}
+
+/* Recording is a mode, not a page: the whole document shifts while live. */
+.sheet--recording::before {
+  background: linear-gradient(90deg, var(--signal) 0%, var(--signal) 70%, #7c2314 70%);
+}
+
+.sheet--recording .timer {
+  color: var(--signal);
+}
+
+.recdot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  margin-right: 0.5rem;
+  border-radius: 50%;
+  background: var(--signal);
+  vertical-align: 2px;
+  animation: recpulse 1.4s ease-in-out infinite;
+}
+
+@keyframes recpulse {
+  0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(184, 52, 31, 0.35); }
+  50% { opacity: 0.55; box-shadow: 0 0 0 7px rgba(184, 52, 31, 0); }
+}
+
+/* Login brand block. */
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  margin-bottom: 0.375rem;
+}
+
+.brand__mark {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  background: linear-gradient(180deg, #135a5d, var(--teal-deep));
+  box-shadow: var(--shadow-ui);
+  position: relative;
+}
+
+.brand__mark::after {
+  content: '';
+  position: absolute;
+  inset: 9px 7px auto 7px;
+  height: 3px;
+  background: var(--paper);
+  border-radius: 2px;
+  box-shadow: 0 6px 0 var(--paper), 0 12px 0 rgba(253, 253, 252, 0.55);
+}
+
+.brand__name {
+  font-family: var(--font-plex-condensed), var(--font-plex-sans), sans-serif;
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+/* Weather figures deserve their size. */
+.panel .big {
+  margin: 0.25rem 0 0;
+  font-size: 1.375rem;
+  font-weight: 500;
+  line-height: 1.3;
+}
+
+/* Table on the register breathes a little more. */
+.register-row .chip { flex-shrink: 0; }
+
+/* ---- Composition pass ---------------------------------------------------- */
+
+/* Conditions strip: three stats that never wrap, one full-width panel. */
+.stats {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.stat {
+  flex: 1;
+  padding: 0.75rem 0.875rem;
+  background: var(--paper-dim);
+  border: 1px solid var(--ink-08);
+  border-radius: var(--r-ui);
+  min-width: 0;
+}
+
+.stat .label { font-size: 0.625rem; }
+
+.stat__value {
+  margin: 0.25rem 0 0;
+  font-size: 1.375rem;
+  font-weight: 500;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.stat__sub {
+  margin: 0.125rem 0 0;
+  color: var(--ink-40);
+  font-size: 0.75rem;
+  white-space: nowrap;
+}
+
+.caption {
+  margin: 0.5rem 0 0;
+  color: var(--ink-40);
+  font-size: 0.75rem;
+}
+
+/* A quiet inline fact row. */
+.factrow {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.75rem;
+  margin-top: 0.875rem;
+  padding-top: 0.875rem;
+  border-top: var(--rule);
+}
+
+.factrow .label { white-space: nowrap; }
+
+.factrow .mono {
+  font-size: 0.8125rem !important;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Text-link toolbar: navigation without five boxes of chrome. */
+.toolbar {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.625rem;
+  margin-top: 1.25rem;
+}
+
+.toolbar a {
+  padding: 0.5rem 0.625rem;
+  color: var(--teal);
+  font-family: var(--font-plex-condensed), var(--font-plex-sans), sans-serif;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  text-decoration: none;
+}
+
+.toolbar span { color: var(--ink-30); }
+
+/* ---- Colour pass --------------------------------------------------------- */
+
+/* A touch more life in the primary, and a hi-vis cue in the binding. */
+:root {
+  --teal: #0d5a58;
+  --teal-deep: #073f3e;
+  --teal-tint: #dfeeea;
+  --hivis: #f0a41f;
+}
+
+.sheet::before {
+  background: linear-gradient(
+    90deg,
+    var(--teal-deep) 0%,
+    var(--teal) 45%,
+    #1b7a6f 62%,
+    var(--hivis) 62.5%,
+    var(--hivis) 67%,
+    var(--teal-tint) 67.5%
+  );
+}
+
+.button {
+  background: linear-gradient(180deg, #17706b 0%, var(--teal) 55%, var(--teal-deep) 100%);
+}
+
+.chip--on {
+  background: linear-gradient(180deg, #17706b, var(--teal-deep));
+  border-color: var(--teal-deep);
+  box-shadow: 0 2px 8px rgba(13, 90, 88, 0.32);
+}
+
+/* Weather stats wear their meaning. */
+.stats .stat:nth-child(1) {
+  background: linear-gradient(180deg, #fdf6e7, #faefd8);
+  border-color: rgba(240, 164, 31, 0.25);
+}
+.stats .stat:nth-child(1) .label { color: #a06e10; }
+
+.stats .stat:nth-child(2) {
+  background: linear-gradient(180deg, #ecf4f9, #e2eef6);
+  border-color: rgba(58, 199, 176, 0.28);
+}
+.stats .stat:nth-child(2) .label { color: #3d6f8e; }
+
+.stats .stat:nth-child(3) {
+  background: linear-gradient(180deg, #e9f3f0, #ddece8);
+  border-color: rgba(13, 90, 88, 0.2);
+}
+.stats .stat:nth-child(3) .label { color: var(--teal); }
+
+/* The desk warms slightly toward the light. */
+body {
+  background:
+    radial-gradient(120% 90% at 50% 0%, #f3f4ee 0%, #e9ebe4 55%, #dfe2da 100%)
+    fixed #e9ebe4;
+}
+
+/* Quiet buttons and toolbar acknowledge touch with a tint. */
+.button--quiet:active,
+.toolbar a:active {
+  background: var(--teal-tint);
+}
+
+/* The seal richer, like a real ink stamp. */
+.seal {
+  color: var(--teal);
+  border-color: var(--teal);
+  background: rgba(223, 238, 234, 0.5);
+}
+
+/* Cascade repair: the colour-pass .button gradient above outranked the quiet
+   variant purely by source order, turning "Record a correction" dark-on-dark.
+   Quiet buttons re-assert themselves after it. */
+.button--quiet {
+  background: var(--paper);
+  color: var(--teal);
+}
+
+/* Gap rows: the register's conscience. */
+.register-row--gap {
+  background: var(--amber-tint);
+  border-radius: var(--r-ui);
+  border-bottom: 0;
+  margin: 0.375rem 0;
+  padding: 0.75rem 0.875rem;
+  color: #7c5507;
+}
+
+.chip--gap {
+  background: transparent;
+  border-color: rgba(154, 106, 9, 0.4);
+  color: #7c5507;
+}
+
+/* Knock-off reminder line on the Today screen. */
+.reminder-line { margin-top: 1rem; }
+.reminder-line--muted { color: var(--ink-60); font-size: 0.8125rem; margin-top: 1rem; }

@@ -1,0 +1,110 @@
+project_id = "site-diary"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public"]          # `app` stays private — not exposed through PostgREST
+extra_search_path = ["public"]
+max_rows = 1000
+
+[db]
+port = 54322
+major_version = 17
+
+[studio]
+enabled = true
+port = 54323
+
+[local_smtp]
+enabled = true
+port = 54324                  # magic-link emails land here in local dev
+
+[storage]
+enabled = true
+file_size_limit = "50MiB"
+
+# The CLI defaults this on, the free tier refuses it, and every config push
+# then fails on a feature nothing here uses.
+[storage.vector]
+enabled = false
+
+[auth]
+enabled = true
+site_url = "http://localhost:3000"
+# Wildcarded: the magic link comes back to /auth/confirm carrying a `next`
+# query parameter, and an exact-match entry does not cover that.
+# A quick Cloudflare tunnel gets a fresh hostname every time it starts, so the
+# wildcard saves re-registering the redirect on each restart. Narrow this to a
+# fixed hostname before anything but testing runs through it.
+additional_redirect_urls = ["http://localhost:3000/**", "https://*.trycloudflare.com/**", "https://*.vercel.app/**"]
+jwt_expiry = 3600
+enable_refresh_token_rotation = true
+# 60s, up from the 10s default: a phone waking with several stale PWA tabs
+# replays the old refresh token in a burst, and the mid-pilot logout came from
+# exactly that race. Inside the interval the old token still answers; outside
+# it, reuse revokes the whole session family.
+refresh_token_reuse_interval = 60
+enable_signup = true
+enable_anonymous_sign_ins = false
+
+[auth.email]
+enable_signup = true
+double_confirm_changes = true
+# OFF, and this matters: with confirmations on, a brand-new address gets a
+# "Confirm your signup" mail instead of a magic link — which is what happened
+# on the first attempt. There are no passwords here, so opening the link IS the
+# confirmation; a separate confirm step confirms nothing and costs an email
+# nobody can spare on the built-in mail limit.
+enable_confirmations = false
+secure_password_change = false
+otp_length = 6
+otp_expiry = 3600
+max_frequency = "20s"
+
+# --- Custom SMTP -----------------------------------------------------------
+#
+# Supabase's built-in mail provider is rate limited to a handful of messages an
+# hour and cannot have its templates replaced on the free tier. That is what
+# stops the diary sending a six-digit code, and what will stop a crew signing
+# in. Custom SMTP fixes both at once.
+#
+# The password is read from the environment so it never sits in a file that
+# gets committed. Export it before pushing:
+#
+#   set -a; . ./.env.local; set +a; npx supabase config push
+#
+# Values below are Resend's (host/user are fixed; the password is an API key).
+# For Postmark, SES or anything else, only host and user change.
+#
+# Sending to an address other than your own needs a verified sending domain —
+# that is a DNS record or two on the provider's side, not a code change.
+#
+[auth.email.smtp]
+enabled = true
+host = "smtp.resend.com"
+port = 465
+user = "resend"
+pass = "env(SMTP_PASS)"
+admin_email = "env(SMTP_SENDER)"
+sender_name = "Site Diary"
+#
+# Supabase caps auth emails at 2/hour on its built-in provider. With custom
+# SMTP that ceiling is yours to set, and seating a crew means several sign-ins
+# in quick succession — the default will stop the third person.
+#
+[auth.rate_limit]
+email_sent = 60
+
+# The mail carries a token hash rather than a PKCE code: a link opened in a
+# mail app's in-app browser has none of the cookies the requesting browser
+# holds, so a PKCE code fails there every time. `supabase config push` applies
+# this to the linked project, so it is not a manual dashboard step.
+[auth.email.template.magic_link]
+subject = "Your Site Diary sign-in"
+# Blocked on the free tier with Supabase's built-in mail provider:
+#   "Email template modification is not available for free tier projects
+#    using the default email provider."
+# Configure custom SMTP (or upgrade), then uncomment this and run
+# `supabase config push`. Until then the stock template is sent, which carries
+# a PKCE link and no six-digit code — see the README for what that costs.
+content_path = "./supabase/templates/magic-link.html"

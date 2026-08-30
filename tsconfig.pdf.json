@@ -1,0 +1,27 @@
+{
+  "//": "Emit config for the PDF determinism check. Node cannot run JSX, so the docket template is compiled to CommonJS first and the check runs against exactly the modules the app ships.",
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "allowImportingTsExtensions": false,
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "jsx": "react-jsx",
+    "outDir": ".pdfbuild",
+    "rootDir": "src",
+    "incremental": false,
+    "declaration": false,
+    "types": [
+      "node"
+    ]
+  },
+  "include": [
+    "src/lib/pdf/**/*.ts",
+    "src/lib/pdf/**/*.tsx"
+  ],
+  "exclude": [
+    "node_modules",
+    "**/*.test.ts",
+    "**/* *.ts"
+  ]
+}

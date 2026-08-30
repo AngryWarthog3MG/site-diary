@@ -1,0 +1,7 @@
+# Anchored with a leading slash. Unanchored, `supabase/` also matches
+# src/lib/supabase/ — the app's own database clients — and the build fails on
+# a module-not-found that looks nothing like an ignore-file problem.
+/supabase/
+/scripts/
+/.pdfbuild/
+*.test.ts

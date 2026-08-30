@@ -1,0 +1,385 @@
+import { createAdminClient } from '@/lib/supabase/admin';
+import { fetchProduct } from '@/lib/weather/bom';
+import { BOM_PRODUCT_IDS } from '@/lib/weather/derive';
+
+export const maxDuration = 120;
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
+/**
+ * Operations endpoint: refresh the BOM cache, and report what this host can
+ * actually do.
+ *
+ * It exists because two capabilities are environment-dependent and fail in
+ * ways that look like application bugs from the outside — whether outbound FTP
+ * works (BOM permits no other automated channel), and whether a browser can be
+ * launched for PDF rendering. Guessing at either from a laptop is how you find
+ * out on site.
+ *
+ * Refreshing here rather than on the request path is the point. One poll per
+ * state serves every supervisor, the Bureau sees a sane rate, and a cold
+ * function is never the thing standing between a phone and its weather.
+ *
+ * Gated by CRON_SECRET, sent as a bearer token — the same header Vercel Cron
+ * sends, so this doubles as the scheduled job.
+ */
+export async function GET(request: Request) {
+  const secret = process.env.CRON_SECRET;
+  if (!secret) {
+    return Response.json({ error: 'CRON_SECRET is not configured.' }, { status: 503 });
+  }
+  if (request.headers.get('authorization') !== `Bearer ${secret}`) {
+    return Response.json({ error: 'Not authorised.' }, { status: 401 });
+  }
+
+  const url = new URL(request.url);
+  const wanted = url.searchParams.get('products');
+  const products = wanted
+    ? wanted.split(',').filter((p) => (BOM_PRODUCT_IDS as readonly string[]).includes(p))
+    : await productsInUse();
+
+  const report: Record<string, unknown> = {
+    host: process.env.VERCEL ? `vercel:${process.env.VERCEL_REGION ?? 'unknown'}` : 'local',
+    checked_at: new Date().toISOString(),
+  };
+
+  report.bom = await refreshProducts(products);
+  if (url.searchParams.get('browser') === '1') report.browser = await probeBrowser();
+  if (url.searchParams.get('resume') === '1') report.resumed = await resumeStalled();
+  if (url.searchParams.get('remind') === '1') {
+    // force=1 bypasses the decision rules — drill support only, so the send
+    // and dead-subscription cleanup paths can be proven on a weekend.
+    report.reminders = await sendKnockOffReminders(url.searchParams.get('force') === '1');
+  }
+
+  return Response.json(report);
+}
+
+/**
+ * The knock-off nudge (scheduled for 4pm Perth on weekdays): anyone with the
+ * reminder on and no entry of their own today gets one push. The decision
+ * rules live in lib/push/decide and are unit-tested; dead subscriptions are
+ * deleted on the spot so the list never fills with ghosts.
+ */
+async function sendKnockOffReminders(force = false): Promise<Record<string, number | string>> {
+  const [{ shouldRemind, perthToday }, { sendPush, PushConfigError }] = await Promise.all([
+    import('@/lib/push/decide'),
+    import('@/lib/push/send'),
+  ]);
+
+  const admin = createAdminClient();
+  const today = perthToday();
+
+  const { data: subs, error } = await admin
+    .from('push_subscriptions')
+    .select('id, user_id, endpoint, p256dh, auth, last_notified_on');
+  if (error) return { error: error.message };
+  if (!subs || subs.length === 0) return { subscriptions: 0, sent: 0 };
+
+  const userIds = [...new Set(subs.map((s) => s.user_id as string))];
+  const { data: entries } = await admin
+    .from('entries')
+    .select('author_id')
+    .eq('entry_date', today)
+    .in('author_id', userIds);
+  const recorded = new Set((entries ?? []).map((e) => e.author_id as string));
+
+  let sent = 0;
+  let skipped = 0;
+  let removed = 0;
+  let failed = 0;
+  for (const sub of subs) {
+    const due =
+      force ||
+      shouldRemind({
+        perthToday: today,
+        hasEntryToday: recorded.has(sub.user_id as string),
+        lastNotifiedOn: (sub.last_notified_on as string | null) ?? null,
+      });
+    if (!due) {
+      skipped += 1;
+      continue;
+    }
+    let outcome: 'sent' | 'gone' | 'failed';
+    try {
+      outcome = await sendPush(
+        {
+          endpoint: sub.endpoint as string,
+          p256dh: sub.p256dh as string,
+          auth: sub.auth as string,
+        },
+        {
+          title: 'Knock-off — nothing recorded today',
+          body: 'Ninety seconds now beats a claim fight later. Talk it in before you drive off.',
+          url: '/record',
+          tag: 'knock-off',
+        },
+      );
+    } catch (err) {
+      if (err instanceof PushConfigError) return { error: err.message };
+      outcome = 'failed';
+    }
+    if (outcome === 'sent') {
+      sent += 1;
+      await admin.from('push_subscriptions').update({ last_notified_on: today }).eq('id', sub.id);
+    } else if (outcome === 'gone') {
+      removed += 1;
+      await admin.from('push_subscriptions').delete().eq('id', sub.id);
+    } else {
+      failed += 1;
+    }
+  }
+
+  return { subscriptions: subs.length, sent, skipped, removed, failed };
+}
+
+/** Only refresh states that a project actually sits in. */
+async function productsInUse(): Promise<string[]> {
+  const admin = createAdminClient();
+  const { data } = await admin
+    .from('projects')
+    .select('bom_product_id, site_lat, site_lng')
+    .eq('active', true);
+
+  const { inferProductId } = await import('@/lib/weather/derive');
+  const products = new Set<string>();
+  for (const row of (data ?? []) as Array<{
+    bom_product_id: string | null;
+    site_lat: number | null;
+    site_lng: number | null;
+  }>) {
+    const id =
+      row.bom_product_id ??
+      (row.site_lat != null && row.site_lng != null
+        ? inferProductId(row.site_lat, row.site_lng)
+        : null);
+    if (id) products.add(id);
+  }
+  return [...products];
+}
+
+async function refreshProducts(products: string[]) {
+  if (products.length === 0) {
+    return { products: [], note: 'No active project has coordinates, so nothing to fetch.' };
+  }
+
+  const admin = createAdminClient();
+  const results: Array<Record<string, unknown>> = [];
+
+  for (const productId of products) {
+    const started = Date.now();
+    try {
+      const snapshot = await fetchProduct(productId);
+      const { error } = await admin.from('bom_snapshots').upsert(
+        {
+          product_id: productId,
+          issued_at: snapshot.issuedAt,
+          fetched_at: new Date().toISOString(),
+          station_count: snapshot.stations.length,
+          stations: snapshot.stations,
+        },
+        { onConflict: 'product_id' },
+      );
+      results.push({
+        product: productId,
+        ok: !error,
+        stations: snapshot.stations.length,
+        issued_at: snapshot.issuedAt,
+        ms: Date.now() - started,
+        ...(error ? { store_error: error.message } : {}),
+      });
+    } catch (error) {
+      results.push({
+        product: productId,
+        ok: false,
+        ms: Date.now() - started,
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+  }
+
+  return { products: results };
+}
+
+/**
+ * Finish work the sync queue started and could not complete.
+ *
+ * The queue deletes its local copy as soon as a recording is safely on the
+ * server, which is right — but it means a transcript that failed (a bad key, a
+ * rate limit, a dropped connection) has nothing left to retry it. The Today
+ * screen picks that up when someone opens it; this does it without waiting for
+ * anyone to look.
+ *
+ * Runs with the service role, so it is a maintenance job rather than a user
+ * action: it only ever touches draft entries, and a signed entry is immutable
+ * regardless.
+ */
+async function resumeStalled() {
+  const admin = createAdminClient();
+  const { transcribeAudio } = await import('@/lib/transcription/deepgram');
+  const { buildKeyterms } = await import('@/lib/transcription/glossary');
+
+  const { data: segments } = await admin
+    .from('entry_audio')
+    .select('id, entry_id, url, mime_type, entry:entries!inner(id, project_id, status)')
+    .in('transcript_status', ['pending', 'processing', 'failed'])
+    .limit(20);
+
+  const transcribed: Array<Record<string, unknown>> = [];
+
+  for (const row of (segments ?? []) as Array<Record<string, unknown>>) {
+    const entry = (Array.isArray(row.entry) ? row.entry[0] : row.entry) as {
+      id: string; project_id: string; status: string;
+    };
+    if (entry.status !== 'draft') continue;
+
+    try {
+      const { data: file } = await admin.storage.from('entry-audio').download(row.url as string);
+      if (!file) throw new Error('Audio file is missing from storage.');
+
+      const { data: terms } = await admin.rpc('project_keyterms', {
+        p_project_id: entry.project_id,
+      });
+
+      const result = await transcribeAudio(
+        await file.arrayBuffer(),
+        (row.mime_type as string | null) ?? null,
+        buildKeyterms((terms as string[] | null) ?? []),
+      );
+
+      await admin
+        .from('entry_audio')
+        .update({
+          transcript: result.transcript,
+          transcript_status: 'done',
+          transcript_provider: result.provider,
+          transcript_error: null,
+          transcribed_at: new Date().toISOString(),
+        })
+        .eq('id', row.id as string);
+
+      transcribed.push({
+        segment: row.id,
+        ok: true,
+        words: result.transcript.split(/\s+/).filter(Boolean).length,
+        seconds: result.durationSeconds,
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      await admin
+        .from('entry_audio')
+        .update({ transcript_status: 'failed', transcript_error: message.slice(0, 500) })
+        .eq('id', row.id as string);
+      transcribed.push({ segment: row.id, ok: false, error: message.slice(0, 200) });
+    }
+  }
+
+  // A transcript with no proposal is the other half of the same stall.
+  const extracted: Array<Record<string, unknown>> = [];
+  const { data: entries } = await admin
+    .from('entries')
+    .select('id, entry_date, project_id, transcript_raw, status, project:projects!inner(name)')
+    .eq('status', 'draft')
+    .not('transcript_raw', 'is', null)
+    .limit(10);
+
+  for (const entry of (entries ?? []) as Array<Record<string, unknown>>) {
+    const { extractEntry } = await import('@/lib/extraction/extract');
+    const { reconcileSections } = await import('@/lib/extraction/completeness');
+    const { PROMPT_VERSION } = await import('@/lib/extraction/prompt');
+    const { createHash } = await import('node:crypto');
+
+    const { data: pending } = await admin
+      .from('entry_extractions')
+      .select('id, prompt_version')
+      .eq('entry_id', entry.id as string)
+      .eq('status', 'pending')
+      .maybeSingle();
+
+    // A proposal built by a superseded prompt is stale by definition — showing
+    // it to a supervisor means showing a worse extraction than the system can
+    // now produce, and they would be signing off the older one's mistakes.
+    // Nothing is lost: the old proposal is kept as superseded.
+    const stale = pending != null && pending.prompt_version !== PROMPT_VERSION;
+    if (pending && !stale) continue;
+
+    try {
+      if (stale) {
+        await admin
+          .from('entry_extractions')
+          .update({ status: 'superseded' })
+          .eq('id', pending.id as string);
+      }
+
+      const transcript = (entry.transcript_raw as string).trim();
+      const { data: terms } = await admin.rpc('project_keyterms', {
+        p_project_id: entry.project_id as string,
+      });
+      const project = Array.isArray(entry.project) ? entry.project[0] : entry.project;
+
+      const result = await extractEntry({
+        transcript,
+        entryDate: entry.entry_date as string,
+        projectName: (project as { name: string } | null)?.name ?? null,
+        vocabulary: (terms as string[] | null) ?? [],
+      });
+      const { applyStandardDay } = await import('@/lib/extraction/completeness');
+      const { proposal } = applyStandardDay(reconcileSections(result.proposal).proposal);
+
+      const { error } = await admin.from('entry_extractions').insert({
+        entry_id: entry.id as string,
+        status: 'pending',
+        model: result.model,
+        prompt_version: result.promptVersion,
+        transcript_sha256: createHash('sha256').update(transcript, 'utf8').digest('hex'),
+        proposal,
+        raw_response: result.raw as object,
+        input_tokens: result.inputTokens,
+        output_tokens: result.outputTokens,
+      });
+
+      extracted.push({
+        entry: entry.id,
+        ok: !error,
+        reason: stale ? `re-extracted: was ${pending?.prompt_version}` : 'first extraction',
+        prompt: result.promptVersion,
+        ...(error ? { error: error.message } : {}),
+      });
+    } catch (error) {
+      extracted.push({
+        entry: entry.id,
+        ok: false,
+        error: error instanceof Error ? error.message.slice(0, 200) : String(error),
+      });
+    }
+  }
+
+  return { segments: transcribed, extractions: extracted };
+}
+
+async function probeBrowser() {
+  const started = Date.now();
+  try {
+    const { renderDailyPdf } = await import('@/lib/pdf/render');
+    // A minimal entry is enough: this is asking whether Chromium starts and
+    // lays out a page at all, not whether the docket is right.
+    const pdf = await renderDailyPdf({
+      entry: {
+        id: 'probe', entry_no: 'PROBE', entry_date: '2026-01-01', status: 'draft',
+        signed_at: null, content_hash: null, supersedes_entry_id: null, notes: null,
+        supersedes_entry_no: null, project_id: 'probe', org_name: 'Probe', org_code: 'PRB',
+        project_name: 'Probe', project_code: 'P001', principal_contractor: null,
+        author_name: 'Probe', labour: [], plant: [], work_items: [], variations: [],
+        delays: [], pours: [], quantities: [], photos: [], weather: null, sections: {},
+      },
+      photos: [],
+    });
+    return { ok: true, bytes: pdf.length, ms: Date.now() - started };
+  } catch (error) {
+    return {
+      ok: false,
+      ms: Date.now() - started,
+      error: error instanceof Error ? error.message : String(error),
+    };
+  }
+}
