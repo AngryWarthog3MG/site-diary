@@ -67,18 +67,51 @@ export async function POST(request: Request) {
   const dailyPdfs: Uint8Array[] = [];
   try {
     for (const entry of entries) {
-      const dailyPath = `${project.id}/${entry.entry_no}.pdf`;
+      const fileName = `${entry.entry_no}.pdf`;
+      const dailyPath = `${project.id}/${fileName}`;
       const existing = await admin.storage.from(EXPORTS_BUCKET).download(dailyPath);
       if (existing.data) {
         dailyPdfs.push(new Uint8Array(await existing.data.arrayBuffer()));
         continue;
       }
+
+      // A failed download is not proof the export is absent — a transient
+      // Storage error looks identical here. The stored daily PDF of a signed
+      // entry is the record, so this path must never overwrite one it merely
+      // failed to read. Establish absence before rendering anything.
+      const listing = await admin.storage
+        .from(EXPORTS_BUCKET)
+        .list(project.id, { search: fileName, limit: 100 });
+      if (listing.error) {
+        return fail(
+          'server_error',
+          `Could not confirm whether ${entry.entry_no} is already exported: ${listing.error.message}`,
+          503,
+        );
+      }
+      if (listing.data?.some((object) => object.name === fileName)) {
+        return fail(
+          'server_error',
+          `The stored daily PDF for ${entry.entry_no} exists but could not be read. ` +
+            'Retry in a moment — it will not be regenerated over the top of the record.',
+          503,
+        );
+      }
+
       const docket = await loadDocketEntry(supabase, entry.id);
       if (!docket) return fail('not_found', `Entry ${entry.entry_no} could not be loaded.`, 404);
       const pdf = await renderDailyPdf({ entry: docket, photos: await collectPhotos(supabase, docket) });
-      await admin.storage
+      // upsert:false so a race with another export cannot replace the record.
+      const { error: storeError } = await admin.storage
         .from(EXPORTS_BUCKET)
-        .upload(dailyPath, Buffer.from(pdf), { contentType: 'application/pdf', upsert: true });
+        .upload(dailyPath, Buffer.from(pdf), { contentType: 'application/pdf', upsert: false });
+      if (storeError) {
+        return fail(
+          'server_error',
+          `Could not store the daily PDF for ${entry.entry_no}: ${storeError.message}`,
+          500,
+        );
+      }
       dailyPdfs.push(pdf);
     }
   } catch (error) {

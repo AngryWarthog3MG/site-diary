@@ -495,6 +495,43 @@ $$;
 reset role;
 select set_config('request.jwt.claims', '', true);
 
+-- ---------------------------------------------------------------------------
+-- The database owns the signature. A client cannot supply it.
+--
+-- entries_update_own_draft lets an author move their own draft to 'signed',
+-- and its WITH CHECK constrains only author_id. Without this guard a
+-- supervisor could back-date signed_at and attribute signed_by to someone
+-- else, and the content hash would not show it because it excludes the
+-- signature block.
+-- ---------------------------------------------------------------------------
+insert into public.entries (id, project_id, entry_date, author_id)
+values ('cccccccc-0000-0000-0000-0000000000f1', 'bbbbbbbb-0000-0000-0000-000000000001',
+        date '2026-08-19', '22222222-2222-2222-2222-222222222222');
+
+select tests.expect_error($q$
+  update public.entries
+     set status    = 'signed',
+         signed_at = timestamptz '2020-01-01 00:00:00+08',
+         signed_by = '11111111-1111-1111-1111-111111111111'
+   where id = 'cccccccc-0000-0000-0000-0000000000f1'
+$q$, 'signature is issued by the database');
+
+select tests.expect_error($q$
+  update public.entries
+     set status    = 'signed',
+         signed_at = timestamptz '2020-01-01 00:00:00+08'
+   where id = 'cccccccc-0000-0000-0000-0000000000f1'
+$q$, 'signature is issued by the database');
+
+do $$
+begin
+  assert (select status from public.entries
+           where id = 'cccccccc-0000-0000-0000-0000000000f1') = 'draft',
+         'entry moved to signed despite a refused signature';
+  raise notice 'PASS  a client cannot supply signed_at or signed_by';
+end;
+$$;
+
 do $$ begin raise notice ''; raise notice 'ALL TESTS PASSED'; end; $$;
 
 rollback;

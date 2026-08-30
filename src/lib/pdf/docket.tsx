@@ -1,3 +1,4 @@
+import { BOM_ATTRIBUTION } from '../weather/attribution';
 import type { DocketEntry, Row } from './load';
 import { formatInstant, num, text, timeOnly } from './load';
 
@@ -193,7 +194,7 @@ function WeatherBlock({ entry }: { entry: DocketEntry }) {
         {w?.station_name
           ? `${String(w.station_name)}${
               w.station_distance_km != null ? ` · ${num(w.station_distance_km, 1)} km from site` : ''
-            } · ${w.source === 'manual' ? 'entered on site' : 'Bureau of Meteorology'}`
+            } · ${w.source === 'manual' ? 'entered on site' : BOM_ATTRIBUTION}`
           : 'No weather recorded'}
       </p>
       {w?.observed_impact ? <p className="impact">{String(w.observed_impact)}</p> : null}

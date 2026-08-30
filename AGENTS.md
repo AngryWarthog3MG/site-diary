@@ -99,6 +99,12 @@ Change three of them and the app silently stops capturing what supervisors say. 
 - **PDF determinism**: fonts embedded as base64, timestamps and `/ID` rewritten from the
   entry, rows ordered by content never by id, UTC formatted by hand — never
   `toLocaleString`. Each of those was a real bug; see README §P1–P6.
+- **The docket template compiles standalone.** `tsconfig.pdf.json` builds only
+  `src/lib/pdf/**` (plus anything explicitly added to its `include`) to CommonJS for the
+  determinism check, and it does not resolve the `@/` alias. So `src/lib/pdf/docket.tsx`
+  may import only relatively, and only from modules that build is given. Anything it needs
+  from elsewhere goes in a dependency-free leaf module added to that `include` — never an
+  import that drags a runtime client (FTP, Supabase) into the PDF build.
 - **Weather windows must belong to the entry date.** BOM windows move through the day;
   recording tonight's minimum as today's is inventing a number. Observations merge across
   the day rather than replace, manual readings are never overwritten, and nothing is taken

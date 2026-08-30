@@ -17,7 +17,8 @@
   },
   "include": [
     "src/lib/pdf/**/*.ts",
-    "src/lib/pdf/**/*.tsx"
+    "src/lib/pdf/**/*.tsx",
+    "src/lib/weather/attribution.ts"
   ],
   "exclude": [
     "node_modules",
