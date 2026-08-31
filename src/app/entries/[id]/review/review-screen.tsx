@@ -25,6 +25,7 @@ import {
   type DocketRead,
   type PourLike,
 } from '@/lib/docket/reconcile';
+import { compressPhoto } from '@/lib/photos/compress';
 import type { ReviewWeather } from './page';
 
 type Item = Record<string, unknown>;
@@ -591,11 +592,11 @@ function PhotosBlock({
     setUploadError(null);
     try {
       const supabase = createClient();
-      const extension = file.name.split('.').pop()?.toLowerCase() || 'jpg';
-      const path = `${projectId}/${entryId}/${crypto.randomUUID()}.${extension}`;
+      const photo = await compressPhoto(file);
+      const path = `${projectId}/${entryId}/${crypto.randomUUID()}.${photo.extension}`;
       const { error } = await supabase.storage
         .from(PHOTO_BUCKET)
-        .upload(path, file, { contentType: file.type || 'image/jpeg', upsert: false });
+        .upload(path, photo.blob, { contentType: photo.contentType, upsert: false });
       if (error) throw new Error(error.message);
       onChange([
         ...photos,
@@ -1073,11 +1074,11 @@ function ListField({
     setUploadError(null);
     try {
       const supabase = createClient();
-      const extension = file.name.split('.').pop()?.toLowerCase() || 'jpg';
-      const path = `${projectId}/${entryId}/${crypto.randomUUID()}.${extension}`;
+      const photo = await compressPhoto(file);
+      const path = `${projectId}/${entryId}/${crypto.randomUUID()}.${photo.extension}`;
       const { error } = await supabase.storage
         .from(PHOTO_BUCKET)
-        .upload(path, file, { contentType: file.type || 'image/jpeg', upsert: false });
+        .upload(path, photo.blob, { contentType: photo.contentType, upsert: false });
       if (error) throw new Error(error.message);
       onChange([...value, path]);
     } catch (err) {

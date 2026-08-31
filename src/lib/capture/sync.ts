@@ -172,11 +172,13 @@ async function syncItem(item: QueueItem): Promise<'synced' | 'failed' | 'blocked
     await progress(item, { stage: 'extracting' });
     const { response, json } = await postJson(`/api/entries/${entryId}/extract`, {});
     if (!response.ok) {
-      // 409: the day was signed while this waited — the text is already on
-      // the server and no proposal can help a signed entry. Work is done,
-      // not failed; retrying forever would wedge the queue on a 409 that
-      // never changes.
-      if (response.status === 409) {
+      // Terminal outcomes are done, not stuck. 409: signed while queued — a
+      // signed entry takes no proposal. 400/422: there is nothing extractable
+      // (silence, or a permanent extraction failure) and retrying cannot
+      // change that — the words are safe on the server and the review screen
+      // handles an empty proposal. Retrying any of these forever would wedge
+      // the queue on an answer that never changes.
+      if (response.status === 409 || response.status === 400 || response.status === 422) {
         await queue.remove(item.id);
         return 'synced';
       }
@@ -281,9 +283,16 @@ async function syncItem(item: QueueItem): Promise<'synced' | 'failed' | 'blocked
   await progress(item, { stage: 'extracting' });
   const extracted = await postJson(`/api/entries/${entryId}/extract`, {});
   if (!extracted.response.ok) {
-    // Signed while queued: the recording and transcript are on the server,
-    // and a signed entry takes no proposal. Done, not stuck.
-    if (extracted.response.status === 409) {
+    // Terminal outcomes are done, not stuck: 409 signed while queued; 400 an
+    // empty transcript (a recording of wind and silence still transcribed —
+    // there is simply nothing to extract); 422 a permanent extraction
+    // failure. The recording and transcript are safe on the server and the
+    // review screen handles an empty proposal by hand.
+    if (
+      extracted.response.status === 409 ||
+      extracted.response.status === 400 ||
+      extracted.response.status === 422
+    ) {
       await queue.remove(item.id);
       return 'synced';
     }
