@@ -1209,6 +1209,17 @@ function WeatherBlock({
     onReadingChange({ ...reading, ...patch });
   }
 
+  // One blank-vs-NaN rule for every numeric weather field — the schema test
+  // "manual weather readings keep blanks as null" pins these semantics, and
+  // four hand-rolled copies of them had already started to accumulate.
+  const numberChange =
+    (key: 'temp_min' | 'temp_max' | 'rainfall_mm' | 'wind_kmh') =>
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      const raw = event.target.value;
+      const parsed = Number(raw);
+      patch({ [key]: raw === '' || !Number.isFinite(parsed) ? null : parsed });
+    };
+
   return (
     <section>
       <div className="review-section-head">
@@ -1249,11 +1260,7 @@ function WeatherBlock({
             inputMode="decimal"
             step="0.1"
             value={numberValue(reading.temp_min)}
-            onChange={(event) => {
-              const raw = event.target.value;
-              const parsed = Number(raw);
-              patch({ temp_min: raw === '' || !Number.isFinite(parsed) ? null : parsed });
-            }}
+            onChange={numberChange('temp_min')}
           />
         </label>
         <label className="fieldcell fieldcell--narrow">
@@ -1264,11 +1271,7 @@ function WeatherBlock({
             inputMode="decimal"
             step="0.1"
             value={numberValue(reading.temp_max)}
-            onChange={(event) => {
-              const raw = event.target.value;
-              const parsed = Number(raw);
-              patch({ temp_max: raw === '' || !Number.isFinite(parsed) ? null : parsed });
-            }}
+            onChange={numberChange('temp_max')}
           />
         </label>
         <label className="fieldcell fieldcell--narrow">
@@ -1280,11 +1283,7 @@ function WeatherBlock({
             min="0"
             step="0.1"
             value={numberValue(reading.rainfall_mm)}
-            onChange={(event) => {
-              const raw = event.target.value;
-              const parsed = Number(raw);
-              patch({ rainfall_mm: raw === '' || !Number.isFinite(parsed) ? null : parsed });
-            }}
+            onChange={numberChange('rainfall_mm')}
           />
         </label>
         <label className="fieldcell fieldcell--narrow">
@@ -1307,11 +1306,7 @@ function WeatherBlock({
             min="0"
             step="1"
             value={numberValue(reading.wind_kmh)}
-            onChange={(event) => {
-              const raw = event.target.value;
-              const parsed = Number(raw);
-              patch({ wind_kmh: raw === '' || !Number.isFinite(parsed) ? null : parsed });
-            }}
+            onChange={numberChange('wind_kmh')}
           />
         </label>
       </div>
@@ -1376,7 +1371,7 @@ function CrewShortcuts({
           .from('project_keywords')
           .select('term')
           .eq('project_id', projectId)
-          .eq('category', 'crew')
+          .eq('category', 'person')
           .limit(30),
       ]);
       if (cancelled) return;

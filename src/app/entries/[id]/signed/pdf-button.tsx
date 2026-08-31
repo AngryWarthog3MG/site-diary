@@ -9,10 +9,32 @@ import { useState } from 'react';
  * stored copy rather than launching Chromium again — which is why this can be
  * pressed as often as anyone likes.
  */
-export function PdfButton({ entryId }: { entryId: string }) {
+export function PdfButton({ entryId, entryNo }: { entryId: string; entryNo?: string | null }) {
   const [state, setState] = useState<'idle' | 'working' | 'ready'>('idle');
   const [url, setUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [shared, setShared] = useState<null | 'shared' | 'copied'>(null);
+
+  /**
+   * Hand the PDF link to whatever the phone shares with — on site that means
+   * straight into the WhatsApp thread with the PM. Falls back to copying the
+   * link where the share sheet does not exist (desktop browsers).
+   */
+  async function share() {
+    if (!url) return;
+    const title = entryNo ? `Site diary ${entryNo}` : 'Site diary PDF';
+    try {
+      if (navigator.share) {
+        await navigator.share({ title, url });
+        setShared('shared');
+        return;
+      }
+      await navigator.clipboard.writeText(url);
+      setShared('copied');
+    } catch {
+      // A dismissed share sheet is not an error worth reporting.
+    }
+  }
 
   async function generate() {
     setState('working');
@@ -39,6 +61,14 @@ export function PdfButton({ entryId }: { entryId: string }) {
         <a className="button" href={url} target="_blank" rel="noreferrer">
           Open the PDF
         </a>
+        <button
+          className="button button--quiet"
+          type="button"
+          onClick={share}
+          style={{ marginTop: '0.5rem' }}
+        >
+          {shared === 'copied' ? 'Link copied' : shared === 'shared' ? 'Shared' : 'Share the PDF'}
+        </button>
         <p style={{ marginTop: '0.5rem', color: 'var(--ink-60)', fontSize: '0.8125rem' }}>
           The link works for an hour. Generate it again for a fresh one.
         </p>

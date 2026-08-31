@@ -44,6 +44,35 @@ export function VocabularyForm({
     [keywords],
   );
 
+  /**
+   * One runner for every mutation: busy key in, one query, success notice,
+   * refresh. Three hand-rolled copies of this choreography had already begun
+   * to drift; the members form uses the same shape.
+   */
+  async function request(
+    busyKey: string,
+    // PromiseLike: a PostgREST query builder is a thenable, not a Promise.
+    action: () => PromiseLike<{ error: { message: string } | null }>,
+    successMessage: string,
+    failureMessage: string,
+  ): Promise<boolean> {
+    setBusy(busyKey);
+    setError(null);
+    setNotice(null);
+    try {
+      const { error: actionError } = await action();
+      if (actionError) throw new Error(actionError.message);
+      setNotice(successMessage);
+      router.refresh();
+      return true;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : failureMessage);
+      return false;
+    } finally {
+      setBusy(null);
+    }
+  }
+
   async function addKeyword() {
     const clean = term.trim().replace(/\s+/g, ' ');
     if (clean.length < 2) {
@@ -54,64 +83,32 @@ export function VocabularyForm({
       setError('Keep each term under 60 characters.');
       return;
     }
-
-    setBusy('add');
-    setError(null);
-    setNotice(null);
-    const supabase = createClient();
-    try {
-      const { error: insertError } = await supabase
-        .from('project_keywords')
-        .insert({ project_id: projectId, term: clean, category });
-      if (insertError) throw new Error(insertError.message);
-      setTerm('');
-      setNotice(`${clean} added.`);
-      router.refresh();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'That term did not save.');
-    } finally {
-      setBusy(null);
-    }
+    const ok = await request(
+      'add',
+      () =>
+        createClient().from('project_keywords').insert({ project_id: projectId, term: clean, category }),
+      `${clean} added.`,
+      'That term did not save.',
+    );
+    if (ok) setTerm('');
   }
 
   async function updateCategory(keyword: KeywordRow, next: KeywordCategory) {
-    setBusy(`category:${keyword.id}`);
-    setError(null);
-    setNotice(null);
-    const supabase = createClient();
-    try {
-      const { error: updateError } = await supabase
-        .from('project_keywords')
-        .update({ category: next })
-        .eq('id', keyword.id);
-      if (updateError) throw new Error(updateError.message);
-      setNotice(`${keyword.term} moved to ${next}.`);
-      router.refresh();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'That change did not save.');
-    } finally {
-      setBusy(null);
-    }
+    await request(
+      `category:${keyword.id}`,
+      () => createClient().from('project_keywords').update({ category: next }).eq('id', keyword.id),
+      `${keyword.term} moved to ${next}.`,
+      'That change did not save.',
+    );
   }
 
   async function removeKeyword(keyword: KeywordRow) {
-    setBusy(`remove:${keyword.id}`);
-    setError(null);
-    setNotice(null);
-    const supabase = createClient();
-    try {
-      const { error: deleteError } = await supabase
-        .from('project_keywords')
-        .delete()
-        .eq('id', keyword.id);
-      if (deleteError) throw new Error(deleteError.message);
-      setNotice(`${keyword.term} removed.`);
-      router.refresh();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'That term was not removed.');
-    } finally {
-      setBusy(null);
-    }
+    await request(
+      `remove:${keyword.id}`,
+      () => createClient().from('project_keywords').delete().eq('id', keyword.id),
+      `${keyword.term} removed.`,
+      'That term was not removed.',
+    );
   }
 
   return (

@@ -63,6 +63,7 @@ export function TodayPanel({
   const [weatherNote, setWeatherNote] = useState<string | null>(null);
   const [attribution, setAttribution] = useState<string | null>(null);
   const [missingDays, setMissingDays] = useState<string[]>([]);
+  const [week, setWeek] = useState<Array<{ date: string; label: string; state: string }>>([]);
   const [loading, setLoading] = useState(true);
   const [offline, setOffline] = useState(false);
   /**
@@ -132,7 +133,7 @@ export function TodayPanel({
         const sinceStr = since.toISOString().slice(0, 10);
         const { data: recent } = await supabase
           .from('entries')
-          .select('entry_date')
+          .select('entry_date, status')
           .eq('project_id', projectId)
           .gte('entry_date', sinceStr);
         const { data: first } = await supabase
@@ -142,6 +143,40 @@ export function TodayPanel({
           .order('entry_date', { ascending: true })
           .limit(1)
           .maybeSingle();
+
+        // The week at a glance: the trailing seven days, each with its
+        // strongest state — a signed day beats a lingering draft on the
+        // same date. The strip is the habit made visible.
+        {
+          const byDate = new Map<string, string>();
+          for (const row of recent ?? []) {
+            const date = row.entry_date as string;
+            const status = row.status as string;
+            if (status === 'signed' || !byDate.has(date)) byDate.set(date, status);
+          }
+          const DOW = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+          const strip: Array<{ date: string; label: string; state: string }> = [];
+          const cursor = new Date(`${today}T00:00:00`);
+          cursor.setDate(cursor.getDate() - 6);
+          for (let i = 0; i < 7; i += 1) {
+            const date = cursor.toISOString().slice(0, 10);
+            const status = byDate.get(date);
+            strip.push({
+              date,
+              label: DOW[cursor.getDay()],
+              state:
+                status === 'signed'
+                  ? 'signed'
+                  : status
+                    ? 'draft'
+                    : date === today
+                      ? 'today'
+                      : 'gap',
+            });
+            cursor.setDate(cursor.getDate() + 1);
+          }
+          setWeek(strip);
+        }
 
         if (first) {
           const have = new Set((recent ?? []).map((r) => r.entry_date as string));
@@ -268,6 +303,20 @@ export function TodayPanel({
         </div>
 
         <div className="home-card home-card--capture">
+      {week.length > 0 && (
+        <div className="weekstrip" aria-label="This week">
+          {week.map((day) => (
+            <span
+              key={day.date}
+              className={`weekstrip__day weekstrip__day--${day.state}`}
+              title={`${day.date} — ${day.state === 'signed' ? 'signed' : day.state === 'draft' ? 'draft' : day.state === 'today' ? 'today, not yet recorded' : 'no record'}`}
+            >
+              {day.label}
+            </span>
+          ))}
+        </div>
+      )}
+
       {missingDays.length > 0 && (
         <p className="notice gap">
           No record for {missingDays.length === 1 ? missingDays[0] : `${missingDays.length} recent day${missingDays.length === 1 ? '' : 's'} (${missingDays.slice(0, 3).join(', ')}${missingDays.length > 3 ? '…' : ''})`}.{' '}
