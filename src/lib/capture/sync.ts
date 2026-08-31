@@ -46,6 +46,21 @@ async function notify() {
   listeners.forEach((l) => l(rows));
 }
 
+/**
+ * Coalesced notify for the sync pipeline's stage transitions. Each stage used
+ * to trigger a full IndexedDB read-and-sort — seven per item, seventy for a
+ * ten-item backlog. The UI only needs the latest state, so trailing-edge
+ * debounce: many transitions, one rescan.
+ */
+let notifyTimer: ReturnType<typeof setTimeout> | null = null;
+function notifySoon() {
+  if (notifyTimer) clearTimeout(notifyTimer);
+  notifyTimer = setTimeout(() => {
+    notifyTimer = null;
+    void notify();
+  }, 150);
+}
+
 function backoffMs(attempts: number): number {
   return Math.min(MAX_BACKOFF_MS, 15_000 * 2 ** Math.min(attempts, 8));
 }
@@ -75,7 +90,7 @@ function isTextItem(item: QueueItem): boolean {
 
 async function progress(item: QueueItem, changes: Partial<QueueItem>): Promise<void> {
   await queue.patch(item.id, changes);
-  await notify();
+  notifySoon();
 }
 
 async function syncItem(item: QueueItem): Promise<'synced' | 'failed' | 'blocked'> {

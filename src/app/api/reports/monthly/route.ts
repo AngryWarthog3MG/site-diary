@@ -65,6 +65,8 @@ export async function POST(request: Request) {
 
   const admin = createAdminClient();
   const dailyPdfs: Uint8Array[] = [];
+  // Lazily fetched once, shared by every entry that misses its cached export.
+  let exportListing: Set<string> | null = null;
   try {
     for (const entry of entries) {
       const fileName = `${entry.entry_no}.pdf`;
@@ -78,18 +80,22 @@ export async function POST(request: Request) {
       // A failed download is not proof the export is absent — a transient
       // Storage error looks identical here. The stored daily PDF of a signed
       // entry is the record, so this path must never overwrite one it merely
-      // failed to read. Establish absence before rendering anything.
-      const listing = await admin.storage
-        .from(EXPORTS_BUCKET)
-        .list(project.id, { search: fileName, limit: 100 });
-      if (listing.error) {
-        return fail(
-          'server_error',
-          `Could not confirm whether ${entry.entry_no} is already exported: ${listing.error.message}`,
-          503,
-        );
+      // failed to read. Establish absence before rendering anything — from
+      // ONE listing of the project's exports, not a listing per entry.
+      if (!exportListing) {
+        const listing = await admin.storage
+          .from(EXPORTS_BUCKET)
+          .list(project.id, { limit: 1000 });
+        if (listing.error) {
+          return fail(
+            'server_error',
+            `Could not confirm whether ${entry.entry_no} is already exported: ${listing.error.message}`,
+            503,
+          );
+        }
+        exportListing = new Set((listing.data ?? []).map((object) => object.name));
       }
-      if (listing.data?.some((object) => object.name === fileName)) {
+      if (exportListing.has(fileName)) {
         return fail(
           'server_error',
           `The stored daily PDF for ${entry.entry_no} exists but could not be read. ` +

@@ -21,11 +21,12 @@ interface AskResponse {
 }
 
 const EXAMPLES = [
-  'Total labour hours in August',
+  'Total labour hours this week',
   'When did we pour concrete and what volumes',
   'How many rain days this month',
   'Any variations still without a VR reference',
-  'Any issues with access to Area B',
+  'Total hours lost to delays this month, by cause',
+  'Dayworks recorded this month and their docket numbers',
 ];
 
 /**

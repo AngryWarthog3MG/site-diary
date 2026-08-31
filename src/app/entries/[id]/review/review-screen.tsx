@@ -56,6 +56,40 @@ const REVIEW_TABS: Array<{ key: ReviewTab; label: string }> = [
   { key: 'notes', label: 'Notes' },
 ];
 
+/**
+ * One signing request for a batch of storage paths instead of one per photo.
+ * A review with a dozen photos on a weak on-site connection should not fire
+ * a dozen separate calls for thumbnails.
+ */
+function useSignedUrls(paths: readonly string[]): Record<string, string> {
+  const [urls, setUrls] = useState<Record<string, string>>({});
+  const key = paths.join('\n');
+  useEffect(() => {
+    if (!key) {
+      setUrls({});
+      return;
+    }
+    let cancelled = false;
+    void (async () => {
+      const supabase = createClient();
+      const { data } = await supabase.storage
+        .from(PHOTO_BUCKET)
+        .createSignedUrls(key.split('\n'), 3600);
+      if (!cancelled) {
+        const next: Record<string, string> = {};
+        for (const row of data ?? []) {
+          if (row.path && row.signedUrl) next[row.path] = row.signedUrl;
+        }
+        setUrls(next);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [key]);
+  return urls;
+}
+
 const PHOTO_LABELS: Record<PhotoCategory, string> = {
   progress: 'Progress',
   works: 'Works',
@@ -145,6 +179,23 @@ export function ReviewScreen(props: {
       const items = [...(prev[group] as Item[])];
       items[index] = { ...items[index], ...patch };
       return { ...prev, [group]: items };
+    });
+  }, []);
+
+  // Several rows at once — crew chips and copy-from-last-entry land as a
+  // batch, and answer the section's nil question the same way adding one does.
+  const bulkAdd = useCallback((group: ItemGroup, items: Item[]) => {
+    if (items.length === 0) return;
+    setPayload((prev) => ({
+      ...prev,
+      [group]: [...(prev[group] as Item[]), ...items],
+    }));
+    setNilConfirmed((prev) => {
+      const next = new Set(prev);
+      for (const [key, mapped] of Object.entries(REQUIRED_GROUP)) {
+        if (mapped === group) next.delete(key as SectionKey);
+      }
+      return next;
     });
   }, []);
 
@@ -398,9 +449,11 @@ export function ReviewScreen(props: {
             items={payload[activeSection.group] as Item[]}
             projectId={props.projectId}
             entryId={props.entryId}
+            entryDate={props.entryDate}
             onChange={update}
             onPatch={patchItem}
             onAdd={addItem}
+            onBulkAdd={bulkAdd}
             onRemove={removeItem}
           />
         )}
@@ -531,6 +584,7 @@ function PhotosBlock({
 }) {
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const photoUrls = useSignedUrls(photos.map((photo) => photo.url));
 
   async function upload(file: File) {
     setUploading(true);
@@ -602,6 +656,7 @@ function PhotosBlock({
               key={photo.url}
               photo={photo}
               index={index}
+              src={photoUrls[photo.url] ?? null}
               onPatch={(change) => patch(index, change)}
               onRemove={() => onChange(photos.filter((_, i) => i !== index))}
             />
@@ -615,28 +670,16 @@ function PhotosBlock({
 function PhotoCard({
   photo,
   index,
+  src,
   onPatch,
   onRemove,
 }: {
   photo: ReviewPhoto;
   index: number;
+  src: string | null;
   onPatch: (patch: Partial<ReviewPhoto>) => void;
   onRemove: () => void;
 }) {
-  const [src, setSrc] = useState<string | null>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-    void (async () => {
-      const supabase = createClient();
-      const { data } = await supabase.storage.from(PHOTO_BUCKET).createSignedUrl(photo.url, 3600);
-      if (!cancelled) setSrc(data?.signedUrl ?? null);
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [photo.url]);
-
   return (
     <article className="photo-card">
       <div className="photo-card__image">
@@ -695,9 +738,11 @@ function DocketSection({
   items,
   projectId,
   entryId,
+  entryDate,
   onChange,
   onPatch,
   onAdd,
+  onBulkAdd,
   onRemove,
 }: {
   section: SectionDef;
@@ -705,9 +750,11 @@ function DocketSection({
   items: Item[];
   projectId: string;
   entryId: string;
+  entryDate: string;
   onChange: (group: ItemGroup, index: number, key: string, value: unknown) => void;
   onPatch: (group: ItemGroup, index: number, patch: Item) => void;
   onAdd: (section: SectionDef) => void;
+  onBulkAdd: (group: ItemGroup, items: Item[]) => void;
   onRemove: (group: ItemGroup, index: number) => void;
 }) {
   return (
@@ -723,6 +770,16 @@ function DocketSection({
           Add {section.noun}
         </button>
       </div>
+
+      {section.group === 'labour' && (
+        <CrewShortcuts
+          projectId={projectId}
+          entryId={entryId}
+          entryDate={entryDate}
+          existingNames={items.map((item) => String(item.person_name ?? ''))}
+          onBulkAdd={onBulkAdd}
+        />
+      )}
 
       {reasons.map((reason) => (
         <p key={reason} className="notice gap">
@@ -1009,32 +1066,7 @@ function ListField({
   const [text, setText] = useState('');
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
-  const [signedUrls, setSignedUrls] = useState<Record<string, string>>({});
-
-  useEffect(() => {
-    if (!isPhotos || value.length === 0) {
-      setSignedUrls({});
-      return;
-    }
-
-    let cancelled = false;
-    void (async () => {
-      const supabase = createClient();
-      const pairs = await Promise.all(
-        value.map(async (path) => {
-          const { data } = await supabase.storage.from(PHOTO_BUCKET).createSignedUrl(path, 3600);
-          return [path, data?.signedUrl ?? ''] as const;
-        }),
-      );
-      if (!cancelled) {
-        setSignedUrls(Object.fromEntries(pairs.filter(([, url]) => url)));
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [isPhotos, value]);
+  const signedUrls = useSignedUrls(isPhotos ? value : []);
 
   async function upload(file: File) {
     setUploading(true);
@@ -1294,5 +1326,145 @@ function WeatherBlock({
         />
       </label>
     </section>
+  );
+}
+
+/**
+ * The fastest way to fill a normal day: yesterday's crew and plant in one
+ * tap, and chips for the people this project already knows. Everything added
+ * this way is "Added by hand" — no source quote, no confidence — because it
+ * came from the supervisor's thumb, not the recording.
+ */
+function CrewShortcuts({
+  projectId,
+  entryId,
+  entryDate,
+  existingNames,
+  onBulkAdd,
+}: {
+  projectId: string;
+  entryId: string;
+  entryDate: string;
+  existingNames: string[];
+  onBulkAdd: (group: ItemGroup, items: Item[]) => void;
+}) {
+  const [last, setLast] = useState<null | {
+    entryNo: string;
+    date: string;
+    labour: Item[];
+    plant: Item[];
+  }>(null);
+  const [crew, setCrew] = useState<string[]>([]);
+  const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      const supabase = createClient();
+      const [{ data: prev }, { data: keywords }] = await Promise.all([
+        supabase
+          .from('entries')
+          .select('id, entry_no, entry_date')
+          .eq('project_id', projectId)
+          .eq('status', 'signed')
+          .lt('entry_date', entryDate)
+          .order('entry_date', { ascending: false })
+          .order('signed_at', { ascending: false })
+          .limit(1)
+          .maybeSingle(),
+        supabase
+          .from('project_keywords')
+          .select('term')
+          .eq('project_id', projectId)
+          .eq('category', 'crew')
+          .limit(30),
+      ]);
+      if (cancelled) return;
+
+      const names = new Set((keywords ?? []).map((k) => String(k.term)));
+      if (prev) {
+        const [{ data: labour }, { data: plant }] = await Promise.all([
+          supabase
+            .from('labour')
+            .select('person_name, role, area, hours, overtime_hours')
+            .eq('entry_id', prev.id),
+          supabase
+            .from('plant')
+            .select('item, hire_type, hours, idle_hours, supplier')
+            .eq('entry_id', prev.id),
+        ]);
+        if (cancelled) return;
+        for (const row of labour ?? []) names.add(String(row.person_name));
+        setLast({
+          entryNo: String(prev.entry_no),
+          date: String(prev.entry_date),
+          labour: (labour ?? []) as Item[],
+          plant: (plant ?? []) as Item[],
+        });
+      }
+      setCrew([...names].sort());
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [projectId, entryId, entryDate]);
+
+  const have = new Set(existingNames.map((name) => name.trim().toLowerCase()).filter(Boolean));
+  const chips = crew.filter((name) => !have.has(name.trim().toLowerCase()));
+
+  const byHand = { source_quote: null, confidence: null };
+
+  function copyLast() {
+    if (!last) return;
+    onBulkAdd(
+      'labour',
+      last.labour
+        .filter((row) => !have.has(String(row.person_name ?? '').trim().toLowerCase()))
+        .map((row) => ({ ...row, ...byHand })),
+    );
+    onBulkAdd('plant', last.plant.map((row) => ({ ...row, ...byHand })));
+    setCopied(true);
+  }
+
+  if (!last && chips.length === 0) return null;
+
+  return (
+    <div className="crew-shortcuts">
+      {last && !copied && existingNames.filter(Boolean).length === 0 && (
+        <button type="button" className="button button--quiet" onClick={copyLast}>
+          Same crew &amp; plant as {last.date} ({last.labour.length}{' '}
+          {last.labour.length === 1 ? 'person' : 'people'}
+          {last.plant.length > 0 ? `, ${last.plant.length} plant` : ''})
+        </button>
+      )}
+      {chips.length > 0 && (
+        <ul className="chips crew-chips">
+          {chips.map((name) => (
+            <li key={name}>
+              <button
+                type="button"
+                className="chip"
+                onClick={() =>
+                  onBulkAdd('labour', [
+                    {
+                      person_name: name,
+                      role: null,
+                      area: null,
+                      // The site's standard day; the supervisor corrects the
+                      // exceptions rather than typing the rule every time.
+                      hours: 8,
+                      overtime_hours: null,
+                      ...byHand,
+                    },
+                  ])
+                }
+              >
+                + {name}
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
   );
 }

@@ -25,16 +25,16 @@ async function requireProjectAdmin(projectId: string) {
 }
 
 async function findUserIdByEmail(email: string): Promise<string | null> {
+  // One indexed query, not a walk of the whole auth user list: every account
+  // this app creates has a profiles row carrying its email.
   const admin = createAdminClient();
-  let page = 1;
-  for (;;) {
-    const { data, error } = await admin.auth.admin.listUsers({ page, perPage: 1000 });
-    if (error) throw new Error(error.message);
-    const found = data.users.find((user) => (user.email ?? '').toLowerCase() === email);
-    if (found) return found.id;
-    if (data.users.length < 1000) return null;
-    page += 1;
-  }
+  const { data, error } = await admin
+    .from('profiles')
+    .select('id')
+    .ilike('email', email)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  return data?.id ?? null;
 }
 
 async function adminCount(projectId: string): Promise<number> {
@@ -122,13 +122,15 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
   }
 
   try {
-    const currentAdmins = await adminCount(projectId);
-    const { data: member } = await auth.supabase
-      .from('project_members')
-      .select('role')
-      .eq('project_id', projectId)
-      .eq('user_id', userId)
-      .maybeSingle();
+    const [currentAdmins, { data: member }] = await Promise.all([
+      adminCount(projectId),
+      auth.supabase
+        .from('project_members')
+        .select('role')
+        .eq('project_id', projectId)
+        .eq('user_id', userId)
+        .maybeSingle(),
+    ]);
     if (member?.role === 'admin' && role !== 'admin' && currentAdmins <= 1) {
       return fail('bad_request', 'A project needs at least one admin.', 400);
     }
@@ -161,13 +163,15 @@ export async function DELETE(request: Request, context: { params: Promise<{ id: 
   }
 
   try {
-    const currentAdmins = await adminCount(projectId);
-    const { data: member } = await auth.supabase
-      .from('project_members')
-      .select('role')
-      .eq('project_id', projectId)
-      .eq('user_id', userId)
-      .maybeSingle();
+    const [currentAdmins, { data: member }] = await Promise.all([
+      adminCount(projectId),
+      auth.supabase
+        .from('project_members')
+        .select('role')
+        .eq('project_id', projectId)
+        .eq('user_id', userId)
+        .maybeSingle(),
+    ]);
     if (member?.role === 'admin' && currentAdmins <= 1) {
       return fail('bad_request', 'A project needs at least one admin.', 400);
     }
