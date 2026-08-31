@@ -21,9 +21,10 @@
   --paper: #fdfdfc;
   --paper-dim: #f6f7f4;
 
-  --teal: #0e4f52;
-  --teal-deep: #0a3d40;
-  --teal-tint: #e4eeed;
+  --teal: #0d5a58;
+  --teal-deep: #073f3e;
+  --teal-tint: #dfeeea;
+  --hivis: #f0a41f;
   --amber: #9a6a09;
   --amber-tint: #f8f0dd;
   --signal: #b8341f;
@@ -1069,14 +1070,8 @@ mark {
 
 /* ---- Colour pass --------------------------------------------------------- */
 
-/* A touch more life in the primary, and a hi-vis cue in the binding. */
-:root {
-  --teal: #0d5a58;
-  --teal-deep: #073f3e;
-  --teal-tint: #dfeeea;
-  --hivis: #f0a41f;
-}
-
+/* A touch more life in the primary, and a hi-vis cue in the binding.
+   (The values live in the :root block at the top — one definition per token.) */
 .sheet::before {
   background: linear-gradient(
     90deg,
@@ -2344,3 +2339,8 @@ body {
 .weekstrip__day--draft { border-color: var(--teal, #0e4f52); color: var(--teal, #0e4f52); background: transparent; }
 .weekstrip__day--gap { border-color: var(--amber, #9a6a09); color: var(--amber, #9a6a09); background: transparent; border-style: dashed; }
 .weekstrip__day--today { border-color: var(--ink, #16211f); color: var(--ink, #16211f); background: transparent; }
+
+/* Register filter. */
+.register-search { margin-bottom: 0.75rem; }
+.register-search .field { max-width: 26rem; }
+.register-search__count { margin: 0.375rem 0 0; font-size: 0.8125rem; color: var(--ink-60); }
