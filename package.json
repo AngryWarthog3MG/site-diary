@@ -22,7 +22,8 @@
     "onboard": "node --env-file-if-exists=.env.local scripts/onboard.mjs",
     "signin": "node --env-file-if-exists=.env.local scripts/signin-link.mjs",
     "drill:offline": "node --env-file-if-exists=.env.local scripts/offline-drill.mjs",
-    "docket:eval": "node --env-file-if-exists=.env.local scripts/docket-eval.ts"
+    "docket:eval": "node --env-file-if-exists=.env.local scripts/docket-eval.ts",
+    "seed:demo": "node --env-file-if-exists=.env.local scripts/seed-demo-week.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.120.0",
