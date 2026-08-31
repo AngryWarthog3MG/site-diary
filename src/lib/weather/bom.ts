@@ -79,8 +79,4 @@ export async function fetchProduct(productId: string): Promise<BomSnapshot> {
   return parseObservations(xml, productId);
 }
 
-/**
- * Required wherever these numbers are shown or exported. The product itself
- * points at http://www.bom.gov.au/other/copyright.shtml.
- */
-export const BOM_ATTRIBUTION = 'Observations © Commonwealth of Australia, Bureau of Meteorology';
+export { BOM_ATTRIBUTION } from './attribution';

@@ -37,6 +37,9 @@ diary.pours          entry_no, entry_date, project_id, project_name,
                      docket_nos text[], start_time time, finish_time time
 diary.quantities     entry_no, entry_date, project_id, project_name,
                      item_type text, area text, quantity numeric, unit text
+diary.dayworks       entry_no, entry_date, project_id, project_name,
+                     description text, labour text, plant text, materials text,
+                     hours numeric, docket_ref text
 diary.weather        entry_no, entry_date, project_id, project_name,
                      temp_max numeric, temp_min numeric, rainfall_mm numeric, wind_dir text,
                      wind_kmh numeric, source text ('bom_auto'|'manual'), observed_impact text,
@@ -58,6 +61,8 @@ Notes that matter for getting numbers right:
   included in it. Add them only if the question asks for total time on site.
 - Concrete volume is diary.pours.volume_m3, already in cubic metres.
 - diary.quantities is generic: filter by item_type for a particular material.
+- Dayworks are in diary.dayworks; use hours only when the supervisor confirmed a dayworks
+  hour total.
 - Time lost to a delay is duration_mins, which may be null even when start_time
   and end_time are set.`;
 

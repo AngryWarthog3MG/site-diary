@@ -6,16 +6,23 @@ Tool-neutral procedure. Run in order; stop and fix on any failure.
    ```bash
    npx tsc --noEmit && node --test 'src/**/*.test.ts'
    ```
-2. **PDF determinism** — only if anything under `src/lib/pdf/` changed:
+2. **SQL suites** — required if anything under `supabase/` changed:
+   ```bash
+   npm run db:test
+   ```
+   The database triggers are the hard gate on signing, immutability and RLS. `npm test`
+   does not touch them and neither does `npm run test:all`. A migration that weakens a
+   signing gap will pass every other check in this list.
+3. **PDF determinism** — only if anything under `src/lib/pdf/` changed:
    ```bash
    npm run pdf:check
    ```
    The daily docket must stay byte-identical across renders.
-3. **Local production build** — catches Next/Turbopack issues before Vercel does:
+4. **Local production build** — catches Next/Turbopack issues before Vercel does:
    ```bash
    npm run build
    ```
-4. **Deploy**
+5. **Deploy**
    ```bash
    npx vercel deploy --prod --yes
    ```
@@ -23,7 +30,7 @@ Tool-neutral procedure. Run in order; stop and fix on any failure.
    plus the `Aliased https://site-diary-eight.vercel.app` line. If neither appears, check
    `npx vercel ls` — a missing new deployment means the deploy silently failed; rerun with
    full output.
-5. **Live smoke test.** Sign in through production exactly as a phone does. Never assume —
+6. **Live smoke test.** Sign in through production exactly as a phone does. Never assume —
    the register once shipped dead. Mint a magic link with the service role
    (`auth.admin.generateLink`), open
    `https://site-diary-eight.vercel.app/auth/confirm?token_hash=...&type=magiclink&next=%2F`
@@ -31,7 +38,7 @@ Tool-neutral procedure. Run in order; stop and fix on any failure.
    Use `mitchell.vanzyl@gmail.com` for Curtin. `danny.test@example.com` only sees Test
    Site, which is deliberately `active=false` — activate it for a drill and deactivate in a
    `finally`.
-6. **Drills, when relevant**
+7. **Drills, when relevant**
    ```bash
    npm run drill:offline     # offline queue survives app death
    npm run docket:eval       # docket OCR
@@ -51,3 +58,14 @@ Tool-neutral procedure. Run in order; stop and fix on any failure.
   or delete one as part of a fix.
 - **Service worker changes require a `VERSION` bump** in `public/sw.js`, or phones keep the
   stale cache.
+
+## What each command actually covers
+
+| | typecheck | unit tests | SQL suites | PDF determinism |
+|---|---|---|---|---|
+| `npm test` | ✓ | ✓ | | |
+| `npm run db:test` | | | ✓ | |
+| `npm run pdf:check` | | | | ✓ |
+| `npm run test:all` | ✓ | ✓ | | ✓ |
+
+Nothing runs all four. `npm run db:test` has to be chosen deliberately.

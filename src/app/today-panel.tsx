@@ -216,50 +216,58 @@ export function TodayPanel({
 
   return (
     <>
-      <div className="stats">
-        <div className="stat">
-          <p className="label">Temp</p>
-          <p className="mono stat__value">{weather ? n(weather.temp_max, '°') : '—'}</p>
-          <p className="mono stat__sub">min {weather ? n(weather.temp_min, '°') : '—'}</p>
-        </div>
-        <div className="stat">
-          <p className="label">Rain</p>
-          <p className="mono stat__value">{weather ? n(weather.rainfall_mm, '') : '—'}</p>
-          <p className="mono stat__sub">mm since 9am</p>
-        </div>
-        <div className="stat">
-          <p className="label">Wind</p>
-          <p className="mono stat__value">
-            {weather?.wind_dir ?? '—'} {weather ? n(weather.wind_kmh, '', 0) : ''}
-          </p>
-          <p className="mono stat__sub">km/h</p>
-        </div>
-      </div>
+      <section className="home-grid" aria-label="Today">
+        <div className="home-card home-card--weather">
+          <div className="home-card__head">
+            <div>
+              <p className="label">Conditions</p>
+              <h2 className="home-card__title">Weather on site</h2>
+            </div>
+          </div>
+          <div className="stats">
+            <div className="stat">
+              <p className="label">Temp</p>
+              <p className="mono stat__value">{weather ? n(weather.temp_max, '°') : '—'}</p>
+              <p className="mono stat__sub">min {weather ? n(weather.temp_min, '°') : '—'}</p>
+            </div>
+            <div className="stat">
+              <p className="label">Rain</p>
+              <p className="mono stat__value">{weather ? n(weather.rainfall_mm, '') : '—'}</p>
+              <p className="mono stat__sub">mm since 9am</p>
+            </div>
+            <div className="stat">
+              <p className="label">Wind</p>
+              <p className="mono stat__value">
+                {weather?.wind_dir ?? '—'} {weather ? n(weather.wind_kmh, '', 0) : ''}
+              </p>
+              <p className="mono stat__sub">km/h</p>
+            </div>
+          </div>
 
-      {weather?.station_name && (
-        <p className="caption mono">
-          {weather.source === 'manual'
-            ? 'Entered by hand'
-            : `${weather.station_name}${
-                weather.station_distance_km != null
-                  ? ` · ${weather.station_distance_km.toFixed(1)} km from site`
-                  : ''
-              } · Bureau of Meteorology`}
-        </p>
-      )}
-      {weatherNote && <p className="notice gap">{weatherNote}</p>}
+          {weather?.station_name && (
+            <p className="caption mono">
+              {weather.source === 'manual'
+                ? 'Entered by hand'
+                : `${weather.station_name}${
+                    weather.station_distance_km != null
+                      ? ` · ${weather.station_distance_km.toFixed(1)} km from site`
+                      : ''
+                  } · Bureau of Meteorology`}
+            </p>
+          )}
+          {weatherNote && <p className="notice gap">{weatherNote}</p>}
 
-      {lastSigned && (
-        <div className="factrow">
-          <span className="label">Last signed</span>
-          <span className="mono" style={{ fontSize: '0.875rem' }}>
-            {lastSigned.entry_no} · {lastSigned.entry_date}
-          </span>
+          {lastSigned && (
+            <div className="factrow">
+              <span className="label">Last signed</span>
+              <span className="mono" style={{ fontSize: '0.875rem' }}>
+                {lastSigned.entry_no} · {lastSigned.entry_date}
+              </span>
+            </div>
+          )}
         </div>
-      )}
 
-      <hr className="rule" />
-
+        <div className="home-card home-card--capture">
       {missingDays.length > 0 && (
         <p className="notice gap">
           No record for {missingDays.length === 1 ? missingDays[0] : `${missingDays.length} recent day${missingDays.length === 1 ? '' : 's'} (${missingDays.slice(0, 3).join(', ')}${missingDays.length > 3 ? '…' : ''})`}.{' '}
@@ -270,7 +278,12 @@ export function TodayPanel({
         </p>
       )}
 
-      <p className="label">Today · {date}</p>
+      <div className="home-card__head">
+        <div>
+          <p className="label">Today · {date}</p>
+          <h2 className="home-card__title">Capture progress</h2>
+        </div>
+      </div>
 
       <div style={{ marginTop: '0.75rem' }}>
         <SectionChips covered={covered} />
@@ -294,8 +307,7 @@ export function TodayPanel({
 
       <QueueStatus />
 
-      <hr className="rule" />
-
+      <div className="home-actions">
       {entry?.status === 'signed' ? (
         <>
           <Link className="button" href={`/entries/${entry.id}/signed`}>
@@ -320,6 +332,7 @@ export function TodayPanel({
           You are on this project as a PM. Recording is done by the site supervisor.
         </p>
       )}
+      </div>
 
       {canRecord && entry && entry.status !== 'signed' && (entry.hasProposal || entry.hasRecord) && (
         <Link className="button" href={`/entries/${entry.id}/review`}>
@@ -328,6 +341,8 @@ export function TodayPanel({
       )}
 
       <ReminderToggle />
+        </div>
+      </section>
 
       <nav className="toolbar" aria-label="Project">
         <Link href={`/entries?project=${projectId}`}>Entries &amp; PDFs</Link>
@@ -337,9 +352,15 @@ export function TodayPanel({
         <Link href={`/ask?project=${projectId}`}>Ask</Link>
         <span aria-hidden>·</span>
         <Link href={`/settings?project=${projectId}`}>Settings</Link>
+        {canRecord && (
+          <>
+            <span aria-hidden>·</span>
+            <Link href={`/settings/members?project=${projectId}`}>Members</Link>
+            <span aria-hidden>·</span>
+            <Link href={`/settings/vocabulary?project=${projectId}`}>Vocabulary</Link>
+          </>
+        )}
       </nav>
-
-
     </>
   );
 }

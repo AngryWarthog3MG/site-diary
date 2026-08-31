@@ -57,6 +57,18 @@ Postmark, SES — all have free tiers), then uncomment `content_path` in `config
 run `npx supabase config push`. That restores both the phone-proof link and the code
 fallback in one step.
 
+**Current rollout path: QR sign-in.** Until SMTP is worth doing, do not fight email on
+site. Seat the crew, then mint one-use QR codes from the operator script:
+
+```bash
+npm run signin -- --project KBS_C001 --qr-pack
+npm run signin -- --project KBS_C001 --qr-pack --role supervisor
+```
+
+That opens a printable pack, one QR per existing project member. Each QR is a single-use
+magic link for the named person, so hand cards out directly and generate a fresh pack when
+they expire. For one person, use `npm run signin -- --email danny@example.com --qr`.
+
 ---
 
 ## What's here

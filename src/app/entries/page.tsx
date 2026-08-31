@@ -37,39 +37,63 @@ export default async function EntriesPage({
     .limit(100);
 
   const rows = entries ?? [];
+  const signedCount = rows.filter((entry) => entry.status === 'signed').length;
+  const draftCount = rows.filter((entry) => entry.status !== 'signed').length;
+  const correctionCount = rows.filter((entry) => Boolean(entry.supersedes_entry_id)).length;
 
   return (
-    <main className="sheet">
-      <p className="label">{current.project.name}</p>
-      <h1 style={{ margin: '0.25rem 0 0', fontSize: '1.375rem', fontWeight: 600 }}>Entries</h1>
-      <p style={{ margin: '0.25rem 0 0', color: 'var(--ink-60)', fontSize: '0.9375rem' }}>
-        Signed entries carry the docket and its PDF. Drafts are still being worked on.
-      </p>
+    <main className="entries-shell">
+      <section className="entries-board">
+        <header className="entries-hero">
+          <div>
+            <p className="entries-kicker">{current.project.org.name}</p>
+            <h1>{current.project.name}</h1>
+            <p className="entries-subtitle">
+              Signed entries carry the docket and its PDF. Drafts are still being worked on.
+            </p>
+          </div>
+          <Link className="entries-back" href={`/?project=${current.project_id}`}>
+            Today
+          </Link>
+        </header>
 
-      <hr className="rule" />
+        <section className="entries-summary" aria-label="Register summary">
+          <div>
+            <p className="label">Signed PDFs</p>
+            <p className="entries-summary__value mono">{signedCount}</p>
+          </div>
+          <div>
+            <p className="label">Drafts</p>
+            <p className="entries-summary__value mono">{draftCount}</p>
+          </div>
+          <div>
+            <p className="label">Corrections</p>
+            <p className="entries-summary__value mono">{correctionCount}</p>
+          </div>
+        </section>
 
-      <RegisterList
-        projectId={current.project_id}
-        rows={rows.map((entry): RegisterRow => {
-          const author = (Array.isArray(entry.author) ? entry.author[0] : entry.author) as
-            | { full_name: string | null; email: string | null }
-            | null;
-          return {
-            id: entry.id,
-            entry_no: entry.entry_no,
-            entry_date: entry.entry_date,
-            status: entry.status,
-            mine: entry.author_id === userId,
-            authorName: author?.full_name ?? author?.email ?? '—',
-            correction: Boolean(entry.supersedes_entry_id),
-          };
-        })}
-      />
+        <RegisterList
+          projectId={current.project_id}
+          rows={rows.map((entry): RegisterRow => {
+            const author = (Array.isArray(entry.author) ? entry.author[0] : entry.author) as
+              | { full_name: string | null; email: string | null }
+              | null;
+            return {
+              id: entry.id,
+              entry_no: entry.entry_no,
+              entry_date: entry.entry_date,
+              status: entry.status,
+              mine: entry.author_id === userId,
+              authorName: author?.full_name ?? author?.email ?? '—',
+              correction: Boolean(entry.supersedes_entry_id),
+            };
+          })}
+        />
 
-      <hr className="rule" />
-      <Link className="button button--quiet" href="/">
-        Back to today
-      </Link>
+        <Link className="button button--quiet entries-footer-action" href="/">
+          Back to today
+        </Link>
+      </section>
     </main>
   );
 }

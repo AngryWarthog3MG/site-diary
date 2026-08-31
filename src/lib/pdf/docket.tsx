@@ -1,3 +1,4 @@
+import { BOM_ATTRIBUTION } from '../weather/attribution';
 import type { DocketEntry, Row } from './load';
 import { formatInstant, num, text, timeOnly } from './load';
 
@@ -24,6 +25,7 @@ const SECTION_LABELS: Record<string, string> = {
 };
 
 export function DailyDocket({ entry, photos }: { entry: DocketEntry; photos: PhotoImage[] }) {
+  const dayworks = entry.dayworks ?? [];
   return (
     <article className="docket">
       <Header entry={entry} />
@@ -116,6 +118,25 @@ export function DailyDocket({ entry, photos }: { entry: DocketEntry; photos: Pho
         />
       )}
 
+      {dayworks.length > 0 && (
+        <Table
+          section={null}
+          title="Dayworks"
+          entry={entry}
+          rows={dayworks}
+          columns={[
+            ['Description', (r) => text(r.description), 'w'],
+            ['Docket / ref', (r) => text(r.docket_ref), 'k'],
+            ['Hours', (r) => num(r.hours), 'n'],
+            ['Labour', (r) => text(r.labour)],
+            ['Plant', (r) => text(r.plant)],
+            ['Materials', (r) => text(r.materials)],
+            ['Photos', (r) => String(((r.photo_urls as string[] | null) ?? []).length), 'n'],
+          ]}
+          total={['Total hours', totalOf(dayworks, 2, 'hours')]}
+        />
+      )}
+
       {entry.quantities.length > 0 && (
         <Table
           section={null}
@@ -193,7 +214,7 @@ function WeatherBlock({ entry }: { entry: DocketEntry }) {
         {w?.station_name
           ? `${String(w.station_name)}${
               w.station_distance_km != null ? ` · ${num(w.station_distance_km, 1)} km from site` : ''
-            } · ${w.source === 'manual' ? 'entered on site' : 'Bureau of Meteorology'}`
+            } · ${w.source === 'manual' ? 'entered on site' : BOM_ATTRIBUTION}`
           : 'No weather recorded'}
       </p>
       {w?.observed_impact ? <p className="impact">{String(w.observed_impact)}</p> : null}

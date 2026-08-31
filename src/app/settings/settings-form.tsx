@@ -87,20 +87,32 @@ export function SettingsForm({ initial }: { initial: SettingsData }) {
   const locked = !form.canEdit;
 
   return (
-    <main className="sheet">
-      <p className="label">Settings</p>
-      <h1 style={{ margin: '0.25rem 0 0', fontSize: '1.375rem', fontWeight: 600 }}>
-        {form.projectName || 'Project'}
-      </h1>
-      <p className="mono" style={{ margin: '0.25rem 0 0', color: 'var(--ink-60)' }}>
-        Next entry: {nextEntryNo}
-      </p>
+    <main className="app-shell app-shell--narrow">
+      <section className="sheet">
+      <header className="page-header">
+        <div>
+          <p className="label">Settings</p>
+          <h1 className="page-title">{form.projectName || 'Project'}</h1>
+          <p className="mono page-subtitle">Next entry: {nextEntryNo}</p>
+        </div>
+      </header>
 
       {locked && (
         <p className="notice" style={{ marginTop: '1rem' }}>
           You are on this project as a supervisor. Settings are shown for reference; only an
           admin can change them.
         </p>
+      )}
+
+      {form.canEdit && (
+        <div className="settings-actions">
+          <Link className="button button--quiet" href={`/settings/members?project=${form.projectId}`}>
+            Manage members
+          </Link>
+          <Link className="button button--quiet" href={`/settings/vocabulary?project=${form.projectId}`}>
+            Manage vocabulary
+          </Link>
+        </div>
       )}
 
       <hr className="rule" />
@@ -214,6 +226,7 @@ export function SettingsForm({ initial }: { initial: SettingsData }) {
       <Link className="button button--quiet" href="/">
         Back to today
       </Link>
+      </section>
     </main>
   );
 }

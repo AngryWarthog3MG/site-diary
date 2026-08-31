@@ -29,7 +29,13 @@ export function RegisterList({ rows, projectId }: { rows: RegisterRow[]; project
   useEffect(() => setToday(localDate()), []);
 
   if (rows.length === 0) {
-    return <p style={{ color: 'var(--ink-40)' }}>Nothing recorded on this project yet.</p>;
+    return (
+      <section className="entries-empty">
+        <p className="label">Register</p>
+        <h2>No entries yet</h2>
+        <p>Once a supervisor records and signs the first diary, it will appear here.</p>
+      </section>
+    );
   }
   if (!today) return null;
 
@@ -55,56 +61,91 @@ export function RegisterList({ rows, projectId }: { rows: RegisterRow[]; project
   }
 
   return (
-    <>
-      {days.map((day) =>
-        day.kind === 'gap' ? (
-          <Link
-            key={day.date}
-            href={`/record?project=${projectId}&date=${day.date}`}
-            className="register-row register-row--gap"
-          >
-            <div>
-              <p style={{ margin: 0, fontSize: '0.9375rem', fontWeight: 500 }}>
-                No record — {day.date}
-              </p>
-              <p style={{ margin: '0.125rem 0 0', fontSize: '0.8125rem', opacity: 0.8 }}>
-                {day.date === today ? 'Nothing yet today.' : 'This day is a hole in the diary.'}
-              </p>
+    <section className="entries-timeline" aria-label="Entry register">
+      {days.map((day) => {
+        const entries = day.kind === 'entries' ? byDate.get(day.date) ?? [] : [];
+        return (
+          <section key={day.date} className="entries-day">
+            <div className="entries-date">
+              <p className="mono entries-date__day">{day.date.slice(8, 10)}</p>
+              <div>
+                <p className="label">{dateLabel(day.date, today)}</p>
+                <p className="mono entries-date__full">{day.date}</p>
+              </div>
             </div>
-            <span className="chip chip--gap">Record it</span>
-          </Link>
-        ) : (
-          (byDate.get(day.date) ?? []).map((entry) => {
-            const signed = entry.status === 'signed';
-            const href = signed
-              ? `/entries/${entry.id}/signed`
-              : entry.mine
-                ? `/entries/${entry.id}/review`
-                : `/entries/${entry.id}/signed`;
-            return (
-              <Link key={entry.id} href={href} className="register-row">
-                <div>
-                  <p className="mono" style={{ margin: 0, fontSize: '0.9375rem', fontWeight: 500 }}>
-                    {entry.entry_no ?? 'DRAFT'}
-                  </p>
-                  <p style={{ margin: '0.125rem 0 0', color: 'var(--ink-60)', fontSize: '0.8125rem' }}>
-                    {entry.entry_date} · {entry.authorName}
-                    {entry.correction ? ' · correction' : ''}
-                  </p>
-                </div>
-                <span className={`chip${signed ? ' chip--on' : ''}`}>
-                  {signed ? 'Signed · PDF' : entry.mine ? 'Resume' : 'Draft'}
-                </span>
-              </Link>
-            );
-          })
-        ),
-      )}
-    </>
+
+            <div className="entries-day__body">
+              {day.kind === 'gap' ? (
+                <Link
+                  href={`/record?project=${projectId}&date=${day.date}`}
+                  className="register-card register-card--gap"
+                >
+                  <div>
+                    <p className="register-card__title">No record</p>
+                    <p className="register-card__meta">
+                      {day.date === today ? 'Nothing yet today.' : 'This day is a hole in the diary.'}
+                    </p>
+                  </div>
+                  <span className="status-pill status-pill--gap">Record it</span>
+                </Link>
+              ) : (
+                entries.map((entry) => {
+                  const signed = entry.status === 'signed';
+                  const href = signed
+                    ? `/entries/${entry.id}/signed`
+                    : entry.mine
+                      ? `/entries/${entry.id}/review`
+                      : `/entries/${entry.id}/signed`;
+                  return (
+                    <Link key={entry.id} href={href} className="register-card">
+                      <div className="register-card__main">
+                        <p className="mono register-card__title">{entry.entry_no ?? 'DRAFT'}</p>
+                        <p className="register-card__meta">
+                          {entry.authorName}
+                          {entry.correction ? ' · correction' : ''}
+                        </p>
+                      </div>
+                      <div className="register-card__actions">
+                        {entry.correction && (
+                          <span className="status-pill status-pill--correction">Correction</span>
+                        )}
+                        <span
+                          className={`status-pill${
+                            signed
+                              ? ' status-pill--signed'
+                              : entry.mine
+                                ? ' status-pill--resume'
+                                : ' status-pill--draft'
+                          }`}
+                        >
+                          {signed ? 'Signed PDF' : entry.mine ? 'Resume draft' : 'Draft'}
+                        </span>
+                      </div>
+                    </Link>
+                  );
+                })
+              )}
+            </div>
+          </section>
+        );
+      })}
+    </section>
   );
 }
 
 function fmt(d: Date): string {
   const pad = (n: number) => String(n).padStart(2, '0');
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
+
+function dateLabel(date: string, today: string): string {
+  if (date === today) return 'Today';
+  const yesterday = new Date(`${today}T00:00:00`);
+  yesterday.setDate(yesterday.getDate() - 1);
+  if (date === fmt(yesterday)) return 'Yesterday';
+  return new Intl.DateTimeFormat('en-AU', {
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+  }).format(new Date(`${date}T00:00:00`));
 }

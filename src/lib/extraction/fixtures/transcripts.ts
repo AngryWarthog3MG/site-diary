@@ -470,6 +470,45 @@ export const FIXTURES: Fixture[] = [
       sections: { plant: S.gap, work_items: S.gap, variations: S.gap, delays: S.gap, weather: S.gap },
     }),
   },
+  {
+    id: '24-dayworks',
+    tests:
+      'Dayworks land in the dayworks array, not work_items or labour; a spoken docket ref is kept, hours only when stated.',
+    entryDate: '2026-08-28',
+    vocabulary: VOCAB,
+    transcript: `Kel and Toby spent four hours on dayworks this morning, exposing the Telstra conduit for the principal, docket DW-114. Rest of the crew, Danny and Sam, were on the kerb line all day as normal.`,
+    expected: proposal({
+      labour: [
+        // Ordinary contract work stays in labour; the dayworks pair are
+        // accounted for in the dayworks item, not duplicated here.
+        L('Danny Rowe', {}),
+        L('Sam Whitely', {}),
+      ],
+      work_items: [
+        {
+          area: null,
+          description: 'Kerb line',
+          percent_complete: null,
+          source_quote: 'were on the kerb line all day as normal',
+          confidence: 'high',
+        },
+      ],
+      dayworks: [
+        {
+          description: 'Exposing the Telstra conduit for the principal',
+          labour: 'Kel Brady, Toby Nguyen',
+          plant: null,
+          materials: null,
+          hours: 4,
+          docket_ref: 'DW-114',
+          source_quote:
+            'Kel and Toby spent four hours on dayworks this morning, exposing the Telstra conduit for the principal, docket DW-114',
+          confidence: 'high',
+        },
+      ],
+      sections: { plant: S.gap, variations: S.gap, delays: S.gap, weather: S.gap },
+    }),
+  },
 ];
 
 export const FIXTURES_BY_ID = new Map(FIXTURES.map((f) => [f.id, f]));

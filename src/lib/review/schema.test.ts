@@ -1,6 +1,12 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { ReviewPayload, reviewBlockingGaps, GAP_PROMPTS } from './schema.ts';
+import {
+  ReviewPayload,
+  reviewBlockingGaps,
+  reviewQualityWarnings,
+  GAP_PROMPTS,
+  WARNING_PROMPTS,
+} from './schema.ts';
 
 /**
  * The blocking gaps are implemented twice on purpose — once here, so the amber
@@ -18,6 +24,7 @@ const empty = {
   delays: [],
   pours: [],
   quantities: [],
+  dayworks: [],
   sections: [],
   weather_impact: null,
 };
@@ -143,6 +150,46 @@ test('empty strings become null, so "not stated" stays not stated', () => {
   assert.equal(payload.labour[0].area, null);
 });
 
+test('manual weather readings keep blanks as null', () => {
+  const payload = ReviewPayload.parse({
+    ...empty,
+    weather: {
+      temp_max: 23.4,
+      temp_min: '',
+      rainfall_mm: 0,
+      wind_dir: '  WSW ',
+      wind_kmh: null,
+    },
+  });
+
+  assert.equal(payload.weather.temp_max, 23.4);
+  assert.equal(payload.weather.temp_min, null);
+  assert.equal(payload.weather.rainfall_mm, 0);
+  assert.equal(payload.weather.wind_dir, 'WSW');
+  assert.equal(payload.weather.wind_kmh, null);
+});
+
+test('dayworks keep photos and never invent missing hours', () => {
+  const payload = ReviewPayload.parse({
+    ...empty,
+    dayworks: [
+      {
+        description: 'Expose and shore the existing Telstra conduit',
+        labour: 'Kel and Toby',
+        plant: '',
+        materials: null,
+        docket_ref: 'DW-017',
+        photo_urls: ['project/entry/dayworks.jpg'],
+      },
+    ],
+  });
+
+  assert.equal(payload.dayworks[0].hours, null);
+  assert.equal(payload.dayworks[0].plant, null);
+  assert.deepEqual(payload.dayworks[0].photo_urls, ['project/entry/dayworks.jpg']);
+  assert.deepEqual(reviewBlockingGaps(payload), []);
+});
+
 test('an extraction-shaped variation — no photo fields at all — parses and gates', () => {
   // The first real site recording contained a variation, and the raw
   // extraction shape (which never carries photo_urls) crashed the review
@@ -170,4 +217,53 @@ test('an extraction-shaped variation — no photo fields at all — parses and g
     'pour_missing_volume_m3',
     'variation_missing_vr_ref',
   ]);
+});
+
+test('quality warnings catch soft review issues without becoming blocking gaps', () => {
+  const payload = ReviewPayload.parse({
+    ...empty,
+    labour: [{ person_name: 'Danny Rowe' }],
+    plant: [{ item: 'Excavator' }],
+    delays: [{ category: 'weather', personnel_affected: 3, start_time: '09:00', end_time: '10:00' }],
+    pours: [{ location: 'Slab', volume_m3: 6 }],
+    variations: [{ ...variation({ vr_ref: 'VR-12', directed_by: null }) }],
+    quantities: [{ item_type: 'Topsoil', quantity: 12 }],
+  });
+
+  assert.deepEqual(reviewBlockingGaps(payload), []);
+  assert.deepEqual(reviewQualityWarnings(payload), [
+    'delay_people_without_cause',
+    'labour_missing_hours',
+    'plant_missing_hours',
+    'pour_volume_without_docket',
+    'quantity_missing_unit',
+    'variation_ref_without_directed_by',
+    'weather_delay_without_impact',
+  ]);
+});
+
+test('weather impact and low confidence get review warnings', () => {
+  const payload = ReviewPayload.parse({
+    ...empty,
+    labour: [{ person_name: 'Danny Rowe', hours: 8, confidence: 'low' }],
+    weather_impact: 'Rain slowed backfill.',
+  });
+
+  assert.deepEqual(reviewQualityWarnings(payload), [
+    'low_confidence_items',
+    'weather_impact_without_weather_delay',
+  ]);
+});
+
+test('every quality warning has text for the supervisor', () => {
+  const payload = ReviewPayload.parse({
+    ...empty,
+    labour: [{ person_name: 'Danny Rowe' }],
+    weather_impact: 'Wind stopped crane lifts.',
+  });
+
+  for (const warning of reviewQualityWarnings(payload)) {
+    assert.ok(WARNING_PROMPTS[warning], `${warning} has no prompt`);
+    assert.ok(WARNING_PROMPTS[warning].length > 20, `${warning} prompt is too thin`);
+  }
 });

@@ -7,9 +7,15 @@ import { createClient } from '@/lib/supabase/client';
 import { SECTIONS, PHOTO_FIELDS, type FieldDef, type SectionDef } from '@/lib/review/fields';
 import {
   GAP_PROMPTS,
+  PHOTO_CATEGORIES,
+  WARNING_GROUPS,
   WARNING_PROMPTS,
   reviewBlockingGaps,
+  reviewQualityWarnings,
   type ItemGroup,
+  type PhotoCategory,
+  type ReviewPhoto,
+  type ReviewWeatherReading,
   type ReviewPayload,
 } from '@/lib/review/schema';
 import { SECTION_KEYS, type SectionKey } from '@/lib/extraction/schema';
@@ -42,6 +48,23 @@ const REQUIRED_GROUP: Partial<Record<SectionKey, ItemGroup>> = {
 };
 
 const PHOTO_BUCKET = 'entry-photos';
+type ReviewTab = ItemGroup | 'photos' | 'weather' | 'notes';
+const REVIEW_TABS: Array<{ key: ReviewTab; label: string }> = [
+  ...SECTIONS.map((section) => ({ key: section.group, label: section.title })),
+  { key: 'photos', label: 'Photos' },
+  { key: 'weather', label: 'Weather' },
+  { key: 'notes', label: 'Notes' },
+];
+
+const PHOTO_LABELS: Record<PhotoCategory, string> = {
+  progress: 'Progress',
+  works: 'Works',
+  delay: 'Delay',
+  variation: 'Variation',
+  pour: 'Pour',
+  safety: 'Safety',
+  general: 'General',
+};
 
 export function ReviewScreen(props: {
   entryId: string;
@@ -63,10 +86,19 @@ export function ReviewScreen(props: {
   );
   const [busy, setBusy] = useState<null | 'saving' | 'signing'>(null);
   const [error, setError] = useState<string | null>(null);
-  const [warnings, setWarnings] = useState<string[]>([]);
   const [showTranscript, setShowTranscript] = useState(false);
+  const [activeTab, setActiveTab] = useState<ReviewTab>('labour');
 
   const gaps = useMemo(() => reviewBlockingGaps(payload), [payload]);
+  const qualityWarnings = useMemo(() => reviewQualityWarnings(payload), [payload]);
+  const gapGroups = useMemo(
+    () => new Set(gaps.map((gap) => GAP_PROMPTS[gap]?.group).filter(Boolean) as ItemGroup[]),
+    [gaps],
+  );
+  const warningTabs = useMemo(
+    () => new Set(qualityWarnings.map((warning) => WARNING_GROUPS[warning]).filter(Boolean)),
+    [qualityWarnings],
+  );
 
   /**
    * Autosave, debounced.
@@ -90,7 +122,7 @@ export function ReviewScreen(props: {
       void fetch(`/api/entries/${props.entryId}/apply`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...payload, sections: sectionsForSubmit() }),
+        body: JSON.stringify(bodyForSubmit()),
       }).catch(() => {});
     }, 2500);
     return () => window.clearTimeout(timer);
@@ -138,6 +170,24 @@ export function ReviewScreen(props: {
     }));
   }, []);
 
+  /**
+   * The request body. The weather object is included only when it actually
+   * holds a reading — an all-null weather block is not a manual entry, and
+   * sending one would have the server treat prefilled emptiness as intent.
+   */
+  function bodyForSubmit() {
+    const w = payload.weather;
+    const hasReading =
+      w != null &&
+      (w.temp_max != null ||
+        w.temp_min != null ||
+        w.rainfall_mm != null ||
+        w.wind_kmh != null ||
+        Boolean(w.wind_dir?.trim()));
+    const { weather: _weather, ...rest } = payload;
+    return { ...rest, ...(hasReading ? { weather: w } : {}), sections: sectionsForSubmit() };
+  }
+
   function sectionsForSubmit() {
     return SECTION_KEYS.map((key) => {
       const group = REQUIRED_GROUP[key];
@@ -155,9 +205,8 @@ export function ReviewScreen(props: {
   async function submit(mode: 'saving' | 'signing') {
     setBusy(mode);
     setError(null);
-    setWarnings([]);
 
-    const body = { ...payload, sections: sectionsForSubmit() };
+    const body = bodyForSubmit();
     const url =
       mode === 'signing'
         ? `/api/entries/${props.entryId}/sign`
@@ -199,21 +248,76 @@ export function ReviewScreen(props: {
         : 0;
     return count === 0 && !nilConfirmed.has(key);
   });
+  const unansweredSet = new Set(unanswered);
+  const activeSection = SECTIONS.find((section) => section.group === activeTab);
+  const activeReasons =
+    activeSection == null
+      ? []
+      : gaps
+          .filter((gap) => GAP_PROMPTS[gap]?.group === activeSection.group)
+          .map((gap) => `${GAP_PROMPTS[gap].short}. ${GAP_PROMPTS[gap].why}`);
+
+  function tabMeta(tab: ReviewTab) {
+    if (tab === 'weather') {
+      return {
+        count: payload.weather_impact?.trim() ? 1 : 0,
+        needsAnswer: unansweredSet.has('weather'),
+        hasGap: warningTabs.has('weather'),
+        low: false,
+      };
+    }
+    if (tab === 'notes') {
+      return {
+        count: payload.notes?.trim() ? 1 : 0,
+        needsAnswer: false,
+        hasGap: false,
+        low: false,
+      };
+    }
+    if (tab === 'photos') {
+      return {
+        count: payload.photos.length,
+        needsAnswer: false,
+        hasGap: false,
+        low: false,
+      };
+    }
+    const section = SECTIONS.find((s) => s.group === tab);
+    const items = (payload[tab] as Item[]) ?? [];
+    const sectionKey = Object.entries(REQUIRED_GROUP).find(([, group]) => group === tab)?.[0] as
+      | SectionKey
+      | undefined;
+      return {
+        count: items.length,
+        needsAnswer: sectionKey ? unansweredSet.has(sectionKey) : false,
+        hasGap: gapGroups.has(tab) || warningTabs.has(tab),
+        low: section ? items.some((item) => item.confidence === 'low') : false,
+      };
+  }
 
   return (
-    <main className="sheet">
-      <p className="label">{props.projectName}</p>
-      <p className="mono" style={{ margin: '0.25rem 0 0', color: 'var(--ink-60)' }}>
-        {props.projectCode} · {props.entryDate}
-      </p>
-      <h1 style={{ margin: '0.5rem 0 0', fontSize: '1.375rem', fontWeight: 600 }}>Review</h1>
-      <p style={{ margin: '0.25rem 0 0', color: 'var(--ink-60)', fontSize: '0.9375rem' }}>
-        {props.hasStored
-          ? 'Your saved entry. Change anything that is not right.'
-          : props.hasProposal
-            ? 'Taken from your recording. Nothing here is on the record until you sign it.'
-            : 'Nothing extracted yet. Add what happened by hand.'}
-      </p>
+    <main className="app-shell review-shell">
+      <section className="sheet review-sheet">
+        <header className="review-hero">
+          <div>
+            <p className="label">{props.projectName}</p>
+            <h1 className="page-title">Review diary</h1>
+            <p className="mono page-subtitle">
+              {props.projectCode} · {props.entryDate}
+            </p>
+          </div>
+          <div className="review-state" aria-label="Review status">
+            <strong>{gaps.length}</strong>
+            <span>signing gaps</span>
+          </div>
+        </header>
+        <p className="review-intro">
+          {props.hasStored
+            ? 'Your saved entry. Change anything that is not right.'
+            : props.hasProposal
+              ? 'Taken from your capture. Nothing here is on the record until you sign it.'
+              : 'Nothing extracted yet. Add what happened by hand.'}
+        </p>
 
       {props.hasProposal && !props.hasStored && payload.labour.length === 0 &&
         payload.plant.length === 0 && payload.work_items.length === 0 &&
@@ -227,17 +331,16 @@ export function ReviewScreen(props: {
       )}
 
       {props.transcript && (
-        <>
+        <section className="review-transcript">
           <button
             type="button"
             className="quotebtn"
             onClick={() => setShowTranscript((v) => !v)}
-            style={{ marginTop: '0.75rem' }}
           >
             {showTranscript ? 'Hide transcript' : 'Show full transcript'}
           </button>
           {showTranscript && <blockquote className="quote">{props.transcript}</blockquote>}
-        </>
+        </section>
       )}
 
       {gaps.length > 0 && (
@@ -253,65 +356,112 @@ export function ReviewScreen(props: {
         </div>
       )}
 
-      {warnings.map((warning) => (
-        <p key={warning} className="notice gap">
-          {WARNING_PROMPTS[warning] ?? warning}
-        </p>
-      ))}
+      {qualityWarnings.length > 0 && (
+        <section className="quality-panel">
+          <div>
+            <p className="label">Quality check</p>
+            <p>{qualityWarnings.length} warning{qualityWarnings.length === 1 ? '' : 's'} before signing.</p>
+          </div>
+          <ul className="gaplist">
+            {qualityWarnings.map((warning) => (
+              <li key={warning}>{WARNING_PROMPTS[warning] ?? warning}</li>
+            ))}
+          </ul>
+        </section>
+      )}
 
-      {SECTIONS.map((section) => (
-        <DocketSection
-          key={section.group}
-          section={section}
-          reasons={gaps
-            .filter((gap) => GAP_PROMPTS[gap]?.group === section.group)
-            .map((gap) => `${GAP_PROMPTS[gap].short}. ${GAP_PROMPTS[gap].why}`)}
-          items={payload[section.group] as Item[]}
-          projectId={props.projectId}
-          entryId={props.entryId}
-          onChange={update}
-          onPatch={patchItem}
-          onAdd={addItem}
-          onRemove={removeItem}
-        />
-      ))}
+      <nav className="review-tabs" aria-label="Review sections">
+        {REVIEW_TABS.map((tab) => {
+          const meta = tabMeta(tab.key);
+          const attention = meta.hasGap || meta.needsAnswer || meta.low;
+          return (
+            <button
+              key={tab.key}
+              type="button"
+              className={`review-tab${activeTab === tab.key ? ' is-active' : ''}${
+                attention ? ' review-tab--attention' : ''
+              }`}
+              onClick={() => setActiveTab(tab.key)}
+            >
+              <span>{tab.label}</span>
+              <span className="review-tab__count mono">{meta.count}</span>
+            </button>
+          );
+        })}
+      </nav>
 
-      <WeatherBlock
-        weather={props.weather}
-        impact={payload.weather_impact}
-        onChange={(value) => setPayload((prev) => ({ ...prev, weather_impact: value }))}
-      />
-
-      <section style={{ marginTop: '1.5rem' }}>
-        <hr className="rule" />
-        <p className="label">Additional notes</p>
-        <p style={{ margin: '0.25rem 0 0.5rem', color: 'var(--ink-60)', fontSize: '0.8125rem' }}>
-          Anything worth recording that fits no section above. Part of the signed record.
-        </p>
-        <label className="fieldcell">
-          <textarea
-            className="field field--sm"
-            rows={3}
-            value={payload.notes ?? ''}
-            placeholder="Toolbox talk held. Concrete booked for Thursday."
-            onChange={(e) =>
-              setPayload((prev) => ({ ...prev, notes: e.target.value === '' ? null : e.target.value }))
-            }
+      <section className="review-panel">
+        {activeSection && (
+          <DocketSection
+            section={activeSection}
+            reasons={activeReasons}
+            items={payload[activeSection.group] as Item[]}
+            projectId={props.projectId}
+            entryId={props.entryId}
+            onChange={update}
+            onPatch={patchItem}
+            onAdd={addItem}
+            onRemove={removeItem}
           />
-        </label>
+        )}
+
+        {activeTab === 'weather' && (
+          <WeatherBlock
+            weather={props.weather}
+            reading={payload.weather}
+            impact={payload.weather_impact}
+            onReadingChange={(weather) => setPayload((prev) => ({ ...prev, weather }))}
+            onChange={(value) => setPayload((prev) => ({ ...prev, weather_impact: value }))}
+          />
+        )}
+
+        {activeTab === 'photos' && (
+          <PhotosBlock
+            photos={payload.photos}
+            projectId={props.projectId}
+            entryId={props.entryId}
+            onChange={(photos) => setPayload((prev) => ({ ...prev, photos }))}
+          />
+        )}
+
+        {activeTab === 'notes' && (
+          <section>
+            <div className="review-section-head">
+              <div>
+                <p className="label">Additional notes</p>
+                <h2>Notes</h2>
+              </div>
+            </div>
+            <p className="review-muted">
+              Anything worth recording that fits no section above. Part of the signed record.
+            </p>
+            <label className="fieldcell">
+              <textarea
+                className="field field--sm"
+                rows={5}
+                value={payload.notes ?? ''}
+                placeholder="Toolbox talk held. Concrete booked for Thursday."
+                onChange={(e) =>
+                  setPayload((prev) => ({
+                    ...prev,
+                    notes: e.target.value === '' ? null : e.target.value,
+                  }))
+                }
+              />
+            </label>
+          </section>
+        )}
       </section>
 
       {unanswered.length > 0 && (
-        <>
-          <hr className="rule" />
+        <section className="review-unanswered">
           <p className="label">Still to answer</p>
           {unanswered.map((key) => (
-            <div key={key} className="notice gap" style={{ marginTop: '0.5rem' }}>
+            <div key={key} className="notice gap review-question">
               <p style={{ margin: 0 }}>{SECTION_QUESTIONS[key]}</p>
               <button
                 type="button"
                 className="button button--quiet"
-                style={{ marginTop: '0.5rem' }}
                 onClick={() =>
                   setNilConfirmed((prev) => {
                     const next = new Set(prev);
@@ -324,7 +474,7 @@ export function ReviewScreen(props: {
               </button>
             </div>
           ))}
-        </>
+        </section>
       )}
 
       <hr className="rule" />
@@ -363,7 +513,179 @@ export function ReviewScreen(props: {
       <Link className="button button--quiet" href="/">
         Back to today
       </Link>
+      </section>
     </main>
+  );
+}
+
+function PhotosBlock({
+  photos,
+  projectId,
+  entryId,
+  onChange,
+}: {
+  photos: ReviewPhoto[];
+  projectId: string;
+  entryId: string;
+  onChange: (photos: ReviewPhoto[]) => void;
+}) {
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+
+  async function upload(file: File) {
+    setUploading(true);
+    setUploadError(null);
+    try {
+      const supabase = createClient();
+      const extension = file.name.split('.').pop()?.toLowerCase() || 'jpg';
+      const path = `${projectId}/${entryId}/${crypto.randomUUID()}.${extension}`;
+      const { error } = await supabase.storage
+        .from(PHOTO_BUCKET)
+        .upload(path, file, { contentType: file.type || 'image/jpeg', upsert: false });
+      if (error) throw new Error(error.message);
+      onChange([
+        ...photos,
+        {
+          url: path,
+          caption: null,
+          category: 'progress',
+          taken_at: new Date().toISOString(),
+          lat: null,
+          lng: null,
+        },
+      ]);
+    } catch (err) {
+      setUploadError(
+        err instanceof Error
+          ? `Photo did not upload: ${err.message}`
+          : 'Photo did not upload.',
+      );
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  function patch(index: number, patch: Partial<ReviewPhoto>) {
+    onChange(photos.map((photo, i) => (i === index ? { ...photo, ...patch } : photo)));
+  }
+
+  return (
+    <section>
+      <div className="review-section-head">
+        <div>
+          <p className="label">Site photos {photos.length > 0 && <span className="mono">· {photos.length}</span>}</p>
+          <h2>Daily progress photos</h2>
+        </div>
+        <label className="button button--quiet review-add">
+          {uploading ? 'Uploading…' : 'Add photo'}
+          <input
+            type="file"
+            accept="image/*"
+            capture="environment"
+            hidden
+            onChange={(event) => {
+              const file = event.target.files?.[0];
+              if (file) void upload(file);
+              event.target.value = '';
+            }}
+          />
+        </label>
+      </div>
+
+      {uploadError && <p className="alert">{uploadError}</p>}
+      {photos.length === 0 && <p className="review-empty">No daily progress photos attached.</p>}
+
+      {photos.length > 0 && (
+        <div className="photo-review-grid">
+          {photos.map((photo, index) => (
+            <PhotoCard
+              key={photo.url}
+              photo={photo}
+              index={index}
+              onPatch={(change) => patch(index, change)}
+              onRemove={() => onChange(photos.filter((_, i) => i !== index))}
+            />
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
+function PhotoCard({
+  photo,
+  index,
+  onPatch,
+  onRemove,
+}: {
+  photo: ReviewPhoto;
+  index: number;
+  onPatch: (patch: Partial<ReviewPhoto>) => void;
+  onRemove: () => void;
+}) {
+  const [src, setSrc] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      const supabase = createClient();
+      const { data } = await supabase.storage.from(PHOTO_BUCKET).createSignedUrl(photo.url, 3600);
+      if (!cancelled) setSrc(data?.signedUrl ?? null);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [photo.url]);
+
+  return (
+    <article className="photo-card">
+      <div className="photo-card__image">
+        {src ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={src} alt={photo.caption ?? `Site photo ${index + 1}`} />
+        ) : (
+          <span className="mono">Photo {index + 1}</span>
+        )}
+      </div>
+
+      <div className="photo-card__body">
+        <div className="itemhead">
+          <div>
+            <p className="label">Photo {index + 1}</p>
+            <h3>{PHOTO_LABELS[(photo.category ?? 'general') as PhotoCategory]}</h3>
+          </div>
+          <button type="button" className="quotebtn quotebtn--remove" onClick={onRemove}>
+            Remove
+          </button>
+        </div>
+
+        <label className="fieldcell">
+          <span className="label">Section</span>
+          <select
+            className="field field--sm"
+            value={photo.category ?? 'general'}
+            onChange={(event) => onPatch({ category: event.target.value as PhotoCategory })}
+          >
+            {PHOTO_CATEGORIES.map((category) => (
+              <option key={category} value={category}>
+                {PHOTO_LABELS[category]}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <label className="fieldcell" style={{ marginTop: '0.65rem' }}>
+          <span className="label">Caption</span>
+          <textarea
+            className="field field--sm"
+            rows={2}
+            value={photo.caption ?? ''}
+            placeholder="Area, detail, or reason this matters."
+            onChange={(event) => onPatch({ caption: event.target.value === '' ? null : event.target.value })}
+          />
+        </label>
+      </div>
+    </article>
   );
 }
 
@@ -389,20 +711,27 @@ function DocketSection({
   onRemove: (group: ItemGroup, index: number) => void;
 }) {
   return (
-    <section style={{ marginTop: '1.5rem' }}>
-      <hr className="rule" />
-      <p className="label">
-        {section.title} {items.length > 0 && <span className="mono">· {items.length}</span>}
-      </p>
+    <section>
+      <div className="review-section-head">
+        <div>
+          <p className="label">
+            {section.title} {items.length > 0 && <span className="mono">· {items.length}</span>}
+          </p>
+          <h2>{section.title}</h2>
+        </div>
+        <button type="button" className="button button--quiet review-add" onClick={() => onAdd(section)}>
+          Add {section.noun}
+        </button>
+      </div>
 
       {reasons.map((reason) => (
-        <p key={reason} className="notice gap" style={{ marginTop: '0.5rem' }}>
+        <p key={reason} className="notice gap">
           {reason}
         </p>
       ))}
 
       {items.length === 0 && (
-        <p style={{ margin: '0.5rem 0 0', color: 'var(--ink-30)', fontSize: '0.9375rem' }}>
+        <p className="review-empty">
           Nothing recorded.
         </p>
       )}
@@ -420,15 +749,6 @@ function DocketSection({
           onRemove={onRemove}
         />
       ))}
-
-      <button
-        type="button"
-        className="button button--quiet"
-        style={{ marginTop: '0.75rem' }}
-        onClick={() => onAdd(section)}
-      >
-        Add {section.noun}
-      </button>
     </section>
   );
 }
@@ -461,6 +781,7 @@ function ItemCard({
   const [docket, setDocket] = useState<DocketState | null>(null);
   const quote = item.source_quote as string | null;
   const low = item.confidence === 'low';
+  const heading = String(item[section.identity] ?? '').trim() || `${section.noun} ${index + 1}`;
 
   /**
    * A new docket photo on a pour gets read straight away (brief §4): OCR the
@@ -501,6 +822,20 @@ function ItemCard({
 
   return (
     <article className={`item${low ? ' item--low' : ''}`}>
+      <header className="itemhead">
+        <div>
+          <p className="label">{section.noun} {index + 1}</p>
+          <h3>{heading}</h3>
+        </div>
+        <button
+          type="button"
+          className="quotebtn quotebtn--remove"
+          onClick={() => onRemove(section.group, index)}
+        >
+          Remove
+        </button>
+      </header>
+
       {low && (
         <p className="label" style={{ color: 'var(--amber)' }}>
           Check this one
@@ -569,13 +904,6 @@ function ItemCard({
         ) : (
           <span className="quotebtn quotebtn--muted">Added by hand</span>
         )}
-        <button
-          type="button"
-          className="quotebtn quotebtn--remove"
-          onClick={() => onRemove(section.group, index)}
-        >
-          Remove
-        </button>
       </div>
 
       {showQuote && quote && <blockquote className="quote">“{quote}”</blockquote>}
@@ -681,6 +1009,32 @@ function ListField({
   const [text, setText] = useState('');
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [signedUrls, setSignedUrls] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    if (!isPhotos || value.length === 0) {
+      setSignedUrls({});
+      return;
+    }
+
+    let cancelled = false;
+    void (async () => {
+      const supabase = createClient();
+      const pairs = await Promise.all(
+        value.map(async (path) => {
+          const { data } = await supabase.storage.from(PHOTO_BUCKET).createSignedUrl(path, 3600);
+          return [path, data?.signedUrl ?? ''] as const;
+        }),
+      );
+      if (!cancelled) {
+        setSignedUrls(Object.fromEntries(pairs.filter(([, url]) => url)));
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isPhotos, value]);
 
   async function upload(file: File) {
     setUploading(true);
@@ -709,11 +1063,11 @@ function ListField({
     <div className="fieldcell">
       <span className="label">{field.label}</span>
 
-      {value.length > 0 && (
+      {!isPhotos && value.length > 0 && (
         <ul className="chips" style={{ marginBottom: '0.5rem' }}>
           {value.map((entry) => (
             <li key={entry} className="chip chip--on">
-              {isPhotos ? entry.split('/').pop()?.slice(0, 8) : entry}
+              {entry}
               <button
                 type="button"
                 className="chipx"
@@ -729,6 +1083,32 @@ function ListField({
 
       {isPhotos ? (
         <>
+          {value.length > 0 && (
+            <div className="inline-photo-grid">
+              {value.map((path, index) => (
+                <figure key={path} className="inline-photo">
+                  <div className="inline-photo__image">
+                    {signedUrls[path] ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={signedUrls[path]} alt={`${field.label} ${index + 1}`} />
+                    ) : (
+                      <span className="mono">Photo {index + 1}</span>
+                    )}
+                  </div>
+                  <figcaption>
+                    <span className="mono">{path.split('/').pop()?.slice(0, 12) ?? `Photo ${index + 1}`}</span>
+                    <button
+                      type="button"
+                      className="quotebtn quotebtn--remove"
+                      onClick={() => onChange(value.filter((v) => v !== path))}
+                    >
+                      Remove
+                    </button>
+                  </figcaption>
+                </figure>
+              ))}
+            </div>
+          )}
           <label className="button button--quiet" style={{ marginTop: 0 }}>
             {uploading ? 'Uploading…' : 'Take photo'}
             <input
@@ -774,27 +1154,44 @@ function ListField({
 
 function WeatherBlock({
   weather,
+  reading,
   impact,
+  onReadingChange,
   onChange,
 }: {
   weather: ReviewWeather | null;
+  reading: ReviewWeatherReading;
   impact: string | null;
+  onReadingChange: (value: ReviewWeatherReading) => void;
   onChange: (value: string | null) => void;
 }) {
   const n = (value: number | null, unit: string, digits = 1) =>
     value == null ? '—' : `${value.toFixed(digits)}${unit}`;
+  const hasStation = Boolean(weather?.station_name);
+
+  function numberValue(value: number | null | undefined): string {
+    return value == null ? '' : String(value);
+  }
+
+  function patch(patch: Partial<ReviewWeatherReading>) {
+    onReadingChange({ ...reading, ...patch });
+  }
 
   return (
-    <section style={{ marginTop: '1.5rem' }}>
-      <hr className="rule" />
-      <p className="label">Weather</p>
+    <section>
+      <div className="review-section-head">
+        <div>
+          <p className="label">Weather</p>
+          <h2>Weather</h2>
+        </div>
+      </div>
 
       <p className="mono" style={{ margin: '0.5rem 0 0' }}>
-        {weather
-          ? `${n(weather.temp_min, '°')} / ${n(weather.temp_max, '°')} · ${n(
-              weather.rainfall_mm,
+        {reading
+          ? `${n(reading.temp_min, '°')} / ${n(reading.temp_max, '°')} · ${n(
+              reading.rainfall_mm,
               ' mm',
-            )} · ${weather.wind_dir ?? '—'} ${n(weather.wind_kmh, ' km/h', 0)}`
+            )} · ${reading.wind_dir ?? '—'} ${n(reading.wind_kmh, ' km/h', 0)}`
           : '—'}
       </p>
       {weather?.station_name && (
@@ -806,8 +1203,86 @@ function WeatherBlock({
         </p>
       )}
       <p style={{ margin: '0.25rem 0 0.75rem', color: 'var(--ink-60)', fontSize: '0.8125rem' }}>
-        Readings come from the Bureau of Meteorology and are not editable.
+        {hasStation
+          ? 'Readings came from the Bureau of Meteorology. Change them only when the site reading is better.'
+          : 'No Bureau reading is attached. Enter the site reading if you have one.'}
       </p>
+
+      <div className="fieldgrid" style={{ marginBottom: '0.75rem' }}>
+        <label className="fieldcell fieldcell--narrow">
+          <span className="label">Minimum temp (°C)</span>
+          <input
+            className="field field--sm"
+            type="number"
+            inputMode="decimal"
+            step="0.1"
+            value={numberValue(reading.temp_min)}
+            onChange={(event) => {
+              const raw = event.target.value;
+              const parsed = Number(raw);
+              patch({ temp_min: raw === '' || !Number.isFinite(parsed) ? null : parsed });
+            }}
+          />
+        </label>
+        <label className="fieldcell fieldcell--narrow">
+          <span className="label">Maximum temp (°C)</span>
+          <input
+            className="field field--sm"
+            type="number"
+            inputMode="decimal"
+            step="0.1"
+            value={numberValue(reading.temp_max)}
+            onChange={(event) => {
+              const raw = event.target.value;
+              const parsed = Number(raw);
+              patch({ temp_max: raw === '' || !Number.isFinite(parsed) ? null : parsed });
+            }}
+          />
+        </label>
+        <label className="fieldcell fieldcell--narrow">
+          <span className="label">Rainfall (mm)</span>
+          <input
+            className="field field--sm"
+            type="number"
+            inputMode="decimal"
+            min="0"
+            step="0.1"
+            value={numberValue(reading.rainfall_mm)}
+            onChange={(event) => {
+              const raw = event.target.value;
+              const parsed = Number(raw);
+              patch({ rainfall_mm: raw === '' || !Number.isFinite(parsed) ? null : parsed });
+            }}
+          />
+        </label>
+        <label className="fieldcell fieldcell--narrow">
+          <span className="label">Wind direction</span>
+          <input
+            className="field field--sm"
+            value={reading.wind_dir ?? ''}
+            placeholder="SW"
+            onChange={(event) =>
+              patch({ wind_dir: event.target.value.trim() === '' ? null : event.target.value })
+            }
+          />
+        </label>
+        <label className="fieldcell fieldcell--narrow">
+          <span className="label">Wind (km/h)</span>
+          <input
+            className="field field--sm"
+            type="number"
+            inputMode="decimal"
+            min="0"
+            step="1"
+            value={numberValue(reading.wind_kmh)}
+            onChange={(event) => {
+              const raw = event.target.value;
+              const parsed = Number(raw);
+              patch({ wind_kmh: raw === '' || !Number.isFinite(parsed) ? null : parsed });
+            }}
+          />
+        </label>
+      </div>
 
       <label className="fieldcell">
         <span className="label">What it did to the work</span>

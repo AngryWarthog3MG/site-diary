@@ -11,8 +11,10 @@ import * as sync from '@/lib/capture/sync';
 import { createClient } from '@/lib/supabase/client';
 import { SectionChips } from '@/components/section-chips';
 import { Waveform } from '@/components/waveform';
+import { QueueStatus } from '@/components/queue-status';
 
 type Phase = 'idle' | 'starting' | 'recording' | 'paused' | 'saving' | 'saved' | 'error';
+type CaptureMode = 'voice' | 'text';
 
 /**
  * The live transcript is decoration that costs real money: it streams the
@@ -63,11 +65,14 @@ export function RecordScreen({
   const [elapsed, setElapsed] = useState(0);
   const [finalText, setFinalText] = useState('');
   const [interim, setInterim] = useState('');
+  const [typedText, setTypedText] = useState('');
   const [covered, setCovered] = useState<Set<EntrySection>>(new Set());
   const [error, setError] = useState<string | null>(null);
   const [liveOn, setLiveOn] = useState(false);
+  const [mode, setMode] = useState<CaptureMode>('voice');
 
   const active = phase === 'recording';
+  const textReady = typedText.trim().length > 0;
 
   /**
    * The day this recording is FOR. Normally the device's today; a gap row in
@@ -108,8 +113,8 @@ export function RecordScreen({
 
   // Chips follow whatever transcript exists so far.
   useEffect(() => {
-    setCovered(detectSections(`${finalText} ${interim}`, termsRef.current));
-  }, [finalText, interim]);
+    setCovered(detectSections(`${finalText} ${interim} ${typedText}`, termsRef.current));
+  }, [finalText, interim, typedText]);
 
   const getLevel = useCallback(() => recorderRef.current?.level() ?? 0, []);
 
@@ -202,6 +207,42 @@ export function RecordScreen({
     }
   }
 
+  async function saveText() {
+    const text = typedText.trim();
+    if (!text) {
+      setPhase('error');
+      setError('Type a diary note before saving.');
+      return;
+    }
+
+    setError(null);
+    setPhase('saving');
+
+    try {
+      await queue.enqueueText({
+        projectId,
+        entryDate: targetDate,
+        text,
+        writtenAt: new Date().toISOString(),
+      });
+
+      setTypedText('');
+      setPhase('saved');
+      void sync.drain();
+      window.setTimeout(() => router.push('/'), 1200);
+    } catch {
+      setPhase('error');
+      setError('The text could not be saved on this phone. Try again before leaving the page.');
+    }
+  }
+
+  function chooseMode(nextMode: CaptureMode) {
+    if (active || phase === 'paused' || phase === 'starting' || phase === 'saving') return;
+    setError(null);
+    setPhase('idle');
+    setMode(nextMode);
+  }
+
   function togglePause() {
     const recorder = recorderRef.current;
     if (!recorder) return;
@@ -226,23 +267,16 @@ export function RecordScreen({
     };
   }, []);
 
-  if (!supported) {
-    return (
-      <main className="sheet">
-        <p className="label">Recording</p>
-        <p className="alert">
-          This browser cannot record audio. Use Safari on iPhone or Chrome on Android.
-        </p>
-      </main>
-    );
-  }
-
   return (
-    <main className={`sheet${active ? ' sheet--recording' : ''}`}>
-      <p className="label">{projectName}</p>
-      <p className="mono" style={{ margin: '0.25rem 0 0', color: 'var(--ink-60)' }}>
-        NEXT: {orgCode}-{targetDate}
-      </p>
+    <main className="app-shell app-shell--narrow">
+      <section className={`sheet record-sheet${active ? ' sheet--recording' : ''}`}>
+      <header className="page-header">
+        <div>
+          <p className="label">{projectName}</p>
+          <h1 className="page-title">Record diary</h1>
+          <p className="mono page-subtitle">Next: {orgCode}-{targetDate}</p>
+        </div>
+      </header>
       {backdated && (
         <p className="notice gap" style={{ marginTop: '0.75rem' }}>
           Recording for {targetDate} — a day with no entry. The record will show it was
@@ -252,39 +286,82 @@ export function RecordScreen({
 
       <hr className="rule" />
 
-      <p className={`timer mono${active ? ' timer--live' : ''}`}>
-        {active && <span className="recdot" aria-hidden />}
-        {clock(elapsed)}
-      </p>
-      <Waveform getLevel={getLevel} active={active} />
+      <div className="capture-switch" role="group" aria-label="Diary input method">
+        <button
+          className={mode === 'voice' ? 'capture-switch__option is-active' : 'capture-switch__option'}
+          type="button"
+          onClick={() => chooseMode('voice')}
+        >
+          Talk
+        </button>
+        <button
+          className={mode === 'text' ? 'capture-switch__option is-active' : 'capture-switch__option'}
+          type="button"
+          onClick={() => chooseMode('text')}
+        >
+          Type
+        </button>
+      </div>
+
+      {mode === 'voice' ? (
+        <>
+          <p className={`timer mono${active ? ' timer--live' : ''}`}>
+            {active && <span className="recdot" aria-hidden />}
+            {clock(elapsed)}
+          </p>
+          <Waveform getLevel={getLevel} active={active} />
+        </>
+      ) : (
+        <label className="typed-diary">
+          <span className="label">Typed diary</span>
+          <textarea
+            className="field typed-diary__input"
+            value={typedText}
+            onChange={(event) => setTypedText(event.target.value)}
+            placeholder="Type it the same way you would say it: labour, plant, works, delays, weather, pours, quantities..."
+            rows={8}
+            maxLength={20_000}
+          />
+        </label>
+      )}
 
       <SectionChips covered={covered} />
 
       <hr className="rule" />
 
       <p className="label">
-        Transcript
+        {mode === 'text' ? 'Preview' : 'Transcript'}
         {active && !liveOn ? ' · not live — the full recording is transcribed on send' : ''}
       </p>
       <p className="transcript">
-        {finalText}
-        {interim && <span className="transcript__interim"> {interim}</span>}
-        {!finalText && !interim && (
+        {mode === 'text' ? typedText : finalText}
+        {mode === 'voice' && interim && <span className="transcript__interim"> {interim}</span>}
+        {mode === 'voice' && !finalText && !interim && (
           <span style={{ color: 'var(--ink-30)' }}>
             {active ? 'Listening…' : 'Nothing yet.'}
           </span>
+        )}
+        {mode === 'text' && !typedText && (
+          <span style={{ color: 'var(--ink-30)' }}>Nothing typed yet.</span>
         )}
       </p>
 
       <hr className="rule" />
 
-      {phase === 'idle' || phase === 'error' ? (
-        <button className="button button--record" type="button" onClick={start}>
+      {mode === 'voice' && !supported && (
+        <p className="alert">
+          This browser cannot record audio. You can still type the diary, or use Safari on
+          iPhone or Chrome on Android for voice.
+        </p>
+      )}
+
+      {mode === 'voice' && (phase === 'idle' || phase === 'error') ? (
+        <button className="button button--record" type="button" onClick={start} disabled={!supported}>
           Start recording
         </button>
       ) : null}
 
-      {(phase === 'recording' || phase === 'paused') && (
+      {mode === 'voice' && (phase === 'recording' || phase === 'paused') && (
         <>
           <button className="button button--record" type="button" onClick={stop}>
             Stop and save
@@ -295,12 +372,21 @@ export function RecordScreen({
         </>
       )}
 
+      {mode === 'text' && (phase === 'idle' || phase === 'error') ? (
+        <button className="button button--record" type="button" onClick={saveText} disabled={!textReady}>
+          Save typed diary
+        </button>
+      ) : null}
+
       {phase === 'starting' && <p className="notice">Opening the microphone…</p>}
       {phase === 'saving' && <p className="notice">Saving to this phone…</p>}
       {phase === 'saved' && (
         <p className="notice">Saved on this phone. It will send itself when there is signal.</p>
       )}
       {error && <p className="alert">{error}</p>}
+
+      <QueueStatus />
+      </section>
     </main>
   );
 }

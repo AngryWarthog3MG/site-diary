@@ -2,6 +2,83 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import type { PhotoImage } from './docket';
 import type { DocketEntry } from './load';
 
+export const PHOTO_CONTEXT: Record<string, string> = {
+  progress: 'Progress photograph',
+  works: 'Works photograph',
+  delay: 'Delay photograph',
+  variation: 'Variation photograph',
+  pour: 'Pour photograph',
+  safety: 'Safety photograph',
+  general: 'Site photograph',
+};
+
+export const PHOTO_BUCKET = 'entry-photos';
+
+export interface PhotoPath {
+  bucket: string;
+  path: string;
+  context: string;
+  caption: string | null;
+}
+
+/**
+ * Every photograph the entry carries, with its caption, in appendix order.
+ *
+ * ONE list for both renderings of the record: the PDF embeds these paths as
+ * data URIs and the screen docket signs URLs for them. The gathering used to
+ * be duplicated in the docket page with its own caption map — which promptly
+ * drifted (it lost 'progress', the default category, and never learned about
+ * dayworks photos), so screen and signed PDF disagreed about the same photo.
+ */
+export function collectPhotoPaths(entry: DocketEntry): PhotoPath[] {
+  const wanted: PhotoPath[] = [];
+
+  entry.variations.forEach((variation, index) => {
+    for (const path of (variation.photo_urls as string[] | null) ?? []) {
+      wanted.push({
+        bucket: PHOTO_BUCKET,
+        path,
+        context: `Variation ${(variation.vr_ref as string | null) ?? index + 1}`,
+        caption: null,
+      });
+    }
+  });
+
+  entry.pours.forEach((pour, index) => {
+    for (const path of (pour.docket_photo_urls as string[] | null) ?? []) {
+      wanted.push({
+        bucket: PHOTO_BUCKET,
+        path,
+        context: `Concrete docket — ${(pour.location as string | null) ?? `pour ${index + 1}`}`,
+        caption: null,
+      });
+    }
+  });
+
+  entry.dayworks.forEach((daywork, index) => {
+    for (const path of (daywork.photo_urls as string[] | null) ?? []) {
+      wanted.push({
+        bucket: PHOTO_BUCKET,
+        path,
+        context: `Dayworks — ${(daywork.docket_ref as string | null) ?? `item ${index + 1}`}`,
+        caption: null,
+      });
+    }
+  });
+
+  for (const photo of entry.photos) {
+    const category = typeof photo.category === 'string' ? photo.category : 'general';
+    wanted.push({
+      bucket: PHOTO_BUCKET,
+      path: photo.url as string,
+      context: PHOTO_CONTEXT[category] ?? 'Site photograph',
+      caption: (photo.caption as string | null) ?? null,
+    });
+  }
+
+  return wanted;
+}
+
 /**
  * Collect the entry's photographs for the appendix.
  *
@@ -13,42 +90,8 @@ export async function collectPhotos(
   supabase: SupabaseClient,
   entry: DocketEntry,
 ): Promise<PhotoImage[]> {
-  const wanted: Array<{ bucket: string; path: string; context: string; caption: string | null }> =
-    [];
-
-  entry.variations.forEach((variation, index) => {
-    for (const path of (variation.photo_urls as string[] | null) ?? []) {
-      wanted.push({
-        bucket: 'entry-photos',
-        path,
-        context: `Variation ${(variation.vr_ref as string | null) ?? index + 1}`,
-        caption: null,
-      });
-    }
-  });
-
-  entry.pours.forEach((pour, index) => {
-    for (const path of (pour.docket_photo_urls as string[] | null) ?? []) {
-      wanted.push({
-        bucket: 'entry-photos',
-        path,
-        context: `Concrete docket — ${(pour.location as string | null) ?? `pour ${index + 1}`}`,
-        caption: null,
-      });
-    }
-  });
-
-  for (const photo of entry.photos) {
-    wanted.push({
-      bucket: 'entry-photos',
-      path: photo.url as string,
-      context: 'Site photograph',
-      caption: (photo.caption as string | null) ?? null,
-    });
-  }
-
   const images: PhotoImage[] = [];
-  for (const item of wanted) {
+  for (const item of collectPhotoPaths(entry)) {
     const { data } = await supabase.storage.from(item.bucket).download(item.path);
     if (!data) continue;
     const bytes = Buffer.from(await data.arrayBuffer());

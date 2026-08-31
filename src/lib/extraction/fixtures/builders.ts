@@ -135,6 +135,7 @@ export function proposal(
     delays,
     pours: parts.pours ?? [],
     quantities: parts.quantities ?? [],
+    dayworks: parts.dayworks ?? [],
     weather_impact,
     notes,
     sections: {

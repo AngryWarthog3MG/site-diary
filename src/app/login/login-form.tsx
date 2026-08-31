@@ -103,8 +103,9 @@ export function LoginForm({ next, initialError }: { next: string; initialError?:
 
       {sent && !CODE_ENABLED && (
         <p className="notice">
-          Open the link in that email on this phone. It expires shortly, and it only works
-          once — send another if it has gone stale.
+          Open the link on the phone you record on. It expires shortly, and it only works
+          once. For site rollout, use the QR from your admin instead of forwarding emails
+          around.
         </p>
       )}
     </>

@@ -27,7 +27,8 @@ export default async function TodayPage({
 
   if (!current) {
     return (
-      <main className="sheet">
+      <main className="app-shell app-shell--narrow">
+        <section className="sheet">
         <p className="label">Site Diary</p>
         <hr className="rule" />
         <p className="notice gap">
@@ -37,6 +38,7 @@ export default async function TodayPage({
         </p>
         <hr className="rule" />
         <SignOutButton />
+        </section>
       </main>
     );
   }
@@ -52,34 +54,40 @@ export default async function TodayPage({
     .maybeSingle();
 
   return (
-    <main className="sheet">
-      <p className="label">{current.project.org.name}</p>
-      <h1 style={{ margin: '0.125rem 0 0', fontSize: '1.375rem', fontWeight: 600 }}>
-        {current.project.name}
-      </h1>
-      <NextEntryLine orgCode={current.project.org.code} />
+    <main className="app-shell home-shell">
+      <section className="home-board">
+        <header className="home-hero">
+          <div className="home-hero__content">
+            <div className="home-eyebrow">
+              <span>{current.project.org.name}</span>
+              <span className="home-role">{current.role}</span>
+            </div>
+            <h1 className="home-title">{current.project.name}</h1>
+            <div className="home-serial">
+              <NextEntryLine orgCode={current.project.org.code} />
+            </div>
+          </div>
+          <div className="home-hero__switcher">
+            <ProjectSwitcher memberships={memberships} currentId={current.project_id} />
+          </div>
+        </header>
 
-      <ProjectSwitcher memberships={memberships} currentId={current.project_id} />
-
-      <hr className="rule" />
-
-      <TodayPanel
-        projectId={current.project_id}
-        canRecord={canAuthorEntries(current.role)}
-        lastSigned={lastSigned ?? null}
-      />
-
-      <hr className="rule" />
-
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-        <div>
-          <p className="label">Signed in as</p>
-          <p className="mono" style={{ margin: '0.25rem 0 0', fontSize: '0.875rem', color: 'var(--ink-60)' }}>
-            {profile?.full_name ?? email}
-          </p>
+        <div className="home-content">
+          <TodayPanel
+            projectId={current.project_id}
+            canRecord={canAuthorEntries(current.role)}
+            lastSigned={lastSigned ?? null}
+          />
         </div>
-      </div>
-      <SignOutButton />
+
+        <footer className="account-bar">
+          <div>
+            <p className="label">Signed in as</p>
+            <p className="mono account-bar__name">{profile?.full_name ?? email}</p>
+          </div>
+          <SignOutButton />
+        </footer>
+      </section>
     </main>
   );
 }
