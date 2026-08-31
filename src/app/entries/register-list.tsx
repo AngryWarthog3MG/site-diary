@@ -26,6 +26,7 @@ export interface RegisterRow {
  */
 export function RegisterList({ rows, projectId }: { rows: RegisterRow[]; projectId: string }) {
   const [today, setToday] = useState<string | null>(null);
+  const [query, setQuery] = useState('');
   useEffect(() => setToday(localDate()), []);
 
   if (rows.length === 0) {
@@ -38,6 +39,20 @@ export function RegisterList({ rows, projectId }: { rows: RegisterRow[]; project
     );
   }
   if (!today) return null;
+
+  // A filter, not a search engine: substring match on reference, date and
+  // author. While filtering, gap rows stand down — the person is looking for
+  // an entry, not for holes.
+  const needle = query.trim().toLowerCase();
+  const matches = needle
+    ? rows.filter((row) =>
+        [row.entry_no ?? '', row.entry_date, row.authorName]
+          .join(' ')
+          .toLowerCase()
+          .includes(needle),
+      )
+    : rows;
+  const visibleRows = matches;
 
   const covered = new Set(rows.map((r) => r.entry_date));
   const oldest = rows[rows.length - 1].entry_date;
@@ -54,15 +69,34 @@ export function RegisterList({ rows, projectId }: { rows: RegisterRow[]; project
   }
 
   const byDate = new Map<string, RegisterRow[]>();
-  for (const row of rows) {
+  for (const row of visibleRows) {
     const list = byDate.get(row.entry_date) ?? [];
     list.push(row);
     byDate.set(row.entry_date, list);
   }
 
+  const visibleDays = needle
+    ? days.filter((day) => day.kind === 'entries' && (byDate.get(day.date)?.length ?? 0) > 0)
+    : days;
+
   return (
     <section className="entries-timeline" aria-label="Entry register">
-      {days.map((day) => {
+      <div className="register-search">
+        <input
+          className="field field--sm"
+          type="search"
+          placeholder="Find an entry — reference, date or name"
+          value={query}
+          onChange={(event) => setQuery(event.target.value)}
+          aria-label="Filter the register"
+        />
+        {needle && (
+          <p className="register-search__count">
+            {matches.length} match{matches.length === 1 ? '' : 'es'}
+          </p>
+        )}
+      </div>
+      {visibleDays.map((day) => {
         const entries = day.kind === 'entries' ? byDate.get(day.date) ?? [] : [];
         return (
           <section key={day.date} className="entries-day">
