@@ -2383,3 +2383,10 @@ body {
     margin: 0 0.75rem 0.75rem;
   }
 }
+
+/* Crew shortcuts on the review labour tab. */
+.crew-shortcuts { margin: 0.75rem 0 0.25rem; }
+.crew-shortcuts .button { width: auto; }
+.crew-chips { margin-top: 0.5rem; }
+.crew-chips .chip { cursor: pointer; border-style: dashed; background: transparent; }
+.crew-chips .chip:active { background: var(--paper-deep, #e7e8e4); }

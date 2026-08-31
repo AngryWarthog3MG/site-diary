@@ -105,33 +105,35 @@ async function findProject(ref) {
 }
 
 async function projectMembers(projectId, role) {
-  const [{ data: members, error: memberError }, { data: profiles, error: profileError }, users] =
-    await Promise.all([
-      supabase
-        .from('project_members')
-        .select('user_id, role')
-        .eq('project_id', projectId)
-        .order('role'),
-      supabase.from('profiles').select('id, full_name, email'),
-      supabase.auth.admin.listUsers({ perPage: 1000 }),
-    ]);
-
+  // Members first, then ONE filtered profiles query for exactly those ids.
+  // The old version pulled the whole profiles table plus the first 1000 auth
+  // users — and silently dropped any member past page one as the user base
+  // grew. profiles carries the email, so listUsers is not needed at all.
+  const { data: members, error: memberError } = await supabase
+    .from('project_members')
+    .select('user_id, role')
+    .eq('project_id', projectId)
+    .order('role');
   if (memberError) throw new Error(`Could not read project members: ${memberError.message}`);
+
+  const wanted = (members ?? []).filter((member) => !role || member.role === role);
+  if (wanted.length === 0) return [];
+
+  const { data: profiles, error: profileError } = await supabase
+    .from('profiles')
+    .select('id, full_name, email')
+    .in('id', wanted.map((member) => member.user_id));
   if (profileError) throw new Error(`Could not read profiles: ${profileError.message}`);
-  if (users.error) throw new Error(`Could not read auth users: ${users.error.message}`);
 
   const profileById = new Map((profiles ?? []).map((profile) => [profile.id, profile]));
-  const userById = new Map((users.data?.users ?? []).map((user) => [user.id, user]));
-  return (members ?? [])
-    .filter((member) => !role || member.role === role)
+  return wanted
     .map((member) => {
       const profile = profileById.get(member.user_id);
-      const user = userById.get(member.user_id);
       return {
         id: member.user_id,
         role: member.role,
-        name: profile?.full_name ?? user?.email ?? profile?.email ?? member.user_id,
-        email: (user?.email ?? profile?.email ?? '').toLowerCase(),
+        name: profile?.full_name ?? profile?.email ?? member.user_id,
+        email: (profile?.email ?? '').toLowerCase(),
       };
     })
     .filter((member) => member.email);
