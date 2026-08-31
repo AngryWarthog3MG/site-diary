@@ -107,7 +107,7 @@ export default async function SignedPage({ params }: { params: Promise<{ id: str
       <p style={{ margin: '0.25rem 0 0.75rem', color: 'var(--ink-60)', fontSize: '0.9375rem' }}>
         Rendered from the stored fields. The same entry always produces the same document.
       </p>
-      <PdfButton entryId={id} />
+      <PdfButton entryId={id} entryNo={entry.entry_no as string | null} />
 
       <Link className="button button--quiet" href={`/entries/${id}/docket`}>
         View the docket on screen
