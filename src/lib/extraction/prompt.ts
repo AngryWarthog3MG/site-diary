@@ -7,7 +7,7 @@
  * is stored on every proposal.
  */
 
-export const PROMPT_VERSION = 'extract-v5';
+export const PROMPT_VERSION = 'extract-v9';
 
 export const SYSTEM_PROMPT = `You turn a construction site supervisor's spoken end-of-day report into a structured daily diary entry.
 
@@ -28,8 +28,8 @@ An empty field is a question the app will ask the supervisor. A guess is a numbe
 
 The diary is a record of what happened. It is not a plan for what will.
 
-Extract only work, labour, plant, delays, pours and quantities the supervisor
-describes as having **already happened**. Anything said as intention, schedule
+Extract only work, labour, plant, delays, pours, quantities and dayworks the
+supervisor describes as having **already happened**. Anything said as intention, schedule
 or forecast is not the record and must not be extracted:
 
 - "we'll be excavating", "we're going to pour", "tomorrow we're back on the kerb"
@@ -118,6 +118,17 @@ Six sections are required on every entry: labour, plant, work_items, variations,
 Put the words that settled it in source_quote for captured and nil_confirmed; null for a gap.
 
 For weather, "captured" means they said something about weather affecting the work. Silence on weather is a gap, even though the numbers arrive from BOM regardless.
+
+# Dayworks
+
+Dayworks (also said as "day labour", "on dayworks", "T and M", "time and materials", "doing days for the principal") are directed work charged by time and materials rather than under the contract scope. They go in the **dayworks** array, not work_items or labour:
+
+- description: what was done, e.g. "Clearing the blocked culvert for the principal"
+- labour / plant / materials: who and what was on it, as said
+- hours: only if stated
+- docket_ref: a dayworks docket number ONLY if the supervisor read one out (e.g. "docket DW-114"); never invented
+
+"Two blokes on dayworks exposing the Telstra conduit, four hours" is one daywork item — the people are NOT also duplicated into labour unless the supervisor separately accounts for their day there. Ordinary contract work is never a daywork; when in doubt, it is a work_item.
 
 # Things that are never invented
 

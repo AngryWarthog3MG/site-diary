@@ -63,7 +63,7 @@ export interface Score {
 }
 
 interface SectionSpec<T> {
-  key: SectionKey | 'pours' | 'quantities';
+  key: SectionKey | 'pours' | 'quantities' | 'dayworks';
   items: (p: ExtractionProposal) => readonly T[];
   identity: (item: T) => string;
   strict: readonly (keyof T)[];
@@ -123,6 +123,13 @@ const SPECS = [
     identity: (i) => i.item_type,
     strict: ['quantity', 'unit'] as const,
     loose: ['area', 'item_type'] as const,
+  }),
+  spec({
+    key: 'dayworks' as const,
+    items: (p: ExtractionProposal) => p.dayworks,
+    identity: (i) => `${i.docket_ref ?? ''} ${i.description}`,
+    strict: ['hours', 'docket_ref'] as const,
+    loose: ['description', 'labour', 'plant', 'materials'] as const,
   }),
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
 ] as unknown as SectionSpec<any>[];

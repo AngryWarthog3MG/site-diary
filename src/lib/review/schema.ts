@@ -98,6 +98,45 @@ export const ReviewQuantity = z.object({
   confidence,
 });
 
+export const ReviewDaywork = z.object({
+  description: z.string().trim().min(1),
+  labour: nullableText,
+  plant: nullableText,
+  materials: nullableText,
+  hours: nullableNumber,
+  docket_ref: nullableText,
+  photo_urls: urls,
+  source_quote: nullableText,
+  confidence,
+});
+
+export const PHOTO_CATEGORIES = [
+  'progress',
+  'works',
+  'delay',
+  'variation',
+  'pour',
+  'safety',
+  'general',
+] as const;
+
+export const ReviewPhoto = z.object({
+  url: z.string().trim().min(1),
+  caption: nullableText,
+  category: z.enum(PHOTO_CATEGORIES).nullable().catch(null),
+  taken_at: z.string().nullable().catch(null),
+  lat: z.number().nullable().catch(null),
+  lng: z.number().nullable().catch(null),
+});
+
+export const ReviewWeatherReading = z.object({
+  temp_max: nullableNumber,
+  temp_min: nullableNumber,
+  rainfall_mm: nullableNumber,
+  wind_dir: nullableText,
+  wind_kmh: nullableNumber,
+});
+
 export const ReviewSection = z.object({
   section: z.enum(SECTION_KEYS as [SectionKey, ...SectionKey[]]),
   state: z.enum(['gap', 'captured', 'nil_confirmed']),
@@ -112,6 +151,15 @@ export const ReviewPayload = z.object({
   delays: z.array(ReviewDelay).default([]),
   pours: z.array(ReviewPour).default([]),
   quantities: z.array(ReviewQuantity).default([]),
+  dayworks: z.array(ReviewDaywork).default([]),
+  photos: z.array(ReviewPhoto).default([]),
+  weather: ReviewWeatherReading.default({
+    temp_max: null,
+    temp_min: null,
+    rainfall_mm: null,
+    wind_dir: null,
+    wind_kmh: null,
+  }),
   sections: z.array(ReviewSection).default([]),
   weather_impact: nullableText,
   notes: nullableText,
@@ -125,6 +173,10 @@ export type ReviewVariation = z.infer<typeof ReviewVariation>;
 export type ReviewDelay = z.infer<typeof ReviewDelay>;
 export type ReviewPour = z.infer<typeof ReviewPour>;
 export type ReviewQuantity = z.infer<typeof ReviewQuantity>;
+export type ReviewDaywork = z.infer<typeof ReviewDaywork>;
+export type ReviewPhoto = z.infer<typeof ReviewPhoto>;
+export type ReviewWeatherReading = z.infer<typeof ReviewWeatherReading>;
+export type PhotoCategory = (typeof PHOTO_CATEGORIES)[number];
 
 export type ItemGroup =
   | 'labour'
@@ -133,7 +185,8 @@ export type ItemGroup =
   | 'variations'
   | 'delays'
   | 'pours'
-  | 'quantities';
+  | 'quantities'
+  | 'dayworks';
 
 /**
  * The four gates from §4, evaluated against what is on screen right now.
@@ -160,6 +213,73 @@ export function reviewBlockingGaps(payload: ReviewPayload): string[] {
   }
 
   return [...gaps].sort();
+}
+
+export type ReviewQualityWarning =
+  | 'labour_missing_hours'
+  | 'plant_missing_hours'
+  | 'delay_people_without_cause'
+  | 'pour_volume_without_docket'
+  | 'variation_ref_without_directed_by'
+  | 'quantity_missing_unit'
+  | 'weather_impact_without_weather_delay'
+  | 'weather_delay_without_impact'
+  | 'low_confidence_items';
+
+export function reviewQualityWarnings(payload: ReviewPayload): ReviewQualityWarning[] {
+  const warnings = new Set<ReviewQualityWarning>();
+
+  if (payload.labour.some((item) => item.hours == null)) {
+    warnings.add('labour_missing_hours');
+  }
+  if (payload.plant.some((item) => item.hours == null)) {
+    warnings.add('plant_missing_hours');
+  }
+  if (payload.delays.some((item) => item.personnel_affected != null && !item.cause?.trim())) {
+    warnings.add('delay_people_without_cause');
+  }
+  if (
+    payload.pours.some(
+      (item) =>
+        item.volume_m3 != null &&
+        item.docket_nos.length === 0 &&
+        item.docket_photo_urls.length === 0,
+    )
+  ) {
+    warnings.add('pour_volume_without_docket');
+  }
+  if (payload.variations.some((item) => item.vr_ref?.trim() && !item.directed_by?.trim())) {
+    warnings.add('variation_ref_without_directed_by');
+  }
+  if (payload.quantities.some((item) => item.quantity != null && !item.unit?.trim())) {
+    warnings.add('quantity_missing_unit');
+  }
+
+  const hasWeatherImpact = Boolean(payload.weather_impact?.trim());
+  const hasWeatherDelay = payload.delays.some((item) => item.category === 'weather');
+  if (hasWeatherImpact && !hasWeatherDelay) {
+    warnings.add('weather_impact_without_weather_delay');
+  }
+  if (hasWeatherDelay && !hasWeatherImpact) {
+    warnings.add('weather_delay_without_impact');
+  }
+
+  if (
+    [
+      ...payload.labour,
+      ...payload.plant,
+      ...payload.work_items,
+      ...payload.variations,
+      ...payload.delays,
+      ...payload.pours,
+      ...payload.quantities,
+      ...payload.dayworks,
+    ].some((item) => item.confidence === 'low')
+  ) {
+    warnings.add('low_confidence_items');
+  }
+
+  return [...warnings].sort();
 }
 
 /**
@@ -195,4 +315,33 @@ export const WARNING_PROMPTS: Record<string, string> = {
     'You have claimed a weather delay and there is no weather on this entry yet.',
   weather_station_far_from_site:
     'The weather on this entry came from a station well away from site.',
+  labour_missing_hours:
+    'Labour has a person with no hours. Leave it blank only if the hours genuinely were not stated.',
+  plant_missing_hours:
+    'Plant has an item with no hours. Check whether working or idle time should be recorded.',
+  delay_people_without_cause:
+    'A delay records people affected but no cause. Add the cause if you know it.',
+  pour_volume_without_docket:
+    'A concrete pour has volume but no docket number or docket photo. Attach the docket where possible.',
+  variation_ref_without_directed_by:
+    'A variation has a VR reference but no “directed by”. Add who instructed it if known.',
+  quantity_missing_unit:
+    'A quantity has a number but no unit. Add the unit so the total makes sense later.',
+  weather_impact_without_weather_delay:
+    'Weather impact is described, but there is no weather delay item. Check whether a delay should be added.',
+  weather_delay_without_impact:
+    'A weather delay is listed, but the Weather tab has no impact note. Add what the weather did to the work.',
+  low_confidence_items:
+    'One or more extracted items were low confidence. Open the highlighted section and check them before signing.',
+};
+
+export const WARNING_GROUPS: Partial<Record<ReviewQualityWarning, ItemGroup | 'weather'>> = {
+  labour_missing_hours: 'labour',
+  plant_missing_hours: 'plant',
+  delay_people_without_cause: 'delays',
+  pour_volume_without_docket: 'pours',
+  variation_ref_without_directed_by: 'variations',
+  quantity_missing_unit: 'quantities',
+  weather_impact_without_weather_delay: 'weather',
+  weather_delay_without_impact: 'weather',
 };

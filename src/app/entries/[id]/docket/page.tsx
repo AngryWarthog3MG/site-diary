@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 import { requireUser } from '@/lib/auth';
 import { loadDocketEntry } from '@/lib/pdf/load';
 import { DailyDocket, type PhotoImage } from '@/lib/pdf/docket';
+import { collectPhotoPaths } from '@/lib/pdf/photos';
 import { DOCKET_CSS } from '@/lib/pdf/styles';
 
 export const dynamic = 'force-dynamic';
@@ -26,28 +27,11 @@ export default async function DocketPage({ params }: { params: Promise<{ id: str
   const entry = await loadDocketEntry(supabase, id);
   if (!entry) notFound();
 
+  // The same path-and-caption list the PDF embeds, signed for the browser —
+  // the two renderings of the record must not gather photos independently.
   const photos: PhotoImage[] = [];
-  const paths: Array<{ path: string; context: string; caption: string | null }> = [];
-
-  entry.variations.forEach((variation, index) => {
-    for (const path of (variation.photo_urls as string[] | null) ?? []) {
-      paths.push({
-        path,
-        context: `Variation ${(variation.vr_ref as string | null) ?? index + 1}`,
-        caption: null,
-      });
-    }
-  });
-  for (const photo of entry.photos) {
-    paths.push({
-      path: photo.url as string,
-      context: 'Site photograph',
-      caption: (photo.caption as string | null) ?? null,
-    });
-  }
-
-  for (const item of paths) {
-    const { data } = await supabase.storage.from('entry-photos').createSignedUrl(item.path, 3600);
+  for (const item of collectPhotoPaths(entry)) {
+    const { data } = await supabase.storage.from(item.bucket).createSignedUrl(item.path, 3600);
     if (data?.signedUrl) {
       photos.push({ src: data.signedUrl, caption: item.caption, context: item.context });
     }

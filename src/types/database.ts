@@ -11,6 +11,7 @@ export type HireType      = 'wet' | 'dry';
 export type DelayCategory = 'weather' | 'access' | 'design' | 'other';
 export type WeatherSource = 'bom_auto' | 'manual';
 export type Confidence    = 'high' | 'low';
+export type KeywordCategory = 'person' | 'plant' | 'area' | 'supplier' | 'other';
 export type EntrySection  =
   | 'labour' | 'plant' | 'work_items' | 'variations' | 'delays' | 'weather';
 export type SectionState  = 'gap' | 'captured' | 'nil_confirmed';
@@ -89,5 +90,20 @@ export interface Weather {
   observed_from: string | null;
   observed_to: string | null;
   fetched_at: string | null;
+  created_at: string;
+}
+
+export interface Daywork {
+  id: string;
+  entry_id: string;
+  description: string;
+  labour: string | null;
+  plant: string | null;
+  materials: string | null;
+  hours: number | null;
+  docket_ref: string | null;
+  photo_urls: string[];
+  source_quote: string | null;
+  confidence: Confidence | null;
   created_at: string;
 }

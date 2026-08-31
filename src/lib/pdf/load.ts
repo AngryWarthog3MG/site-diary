@@ -41,6 +41,7 @@ export interface DocketEntry {
   delays: Row[];
   pours: Row[];
   quantities: Row[];
+  dayworks: Row[];
   photos: Row[];
   weather: Row | null;
   sections: Record<string, { state: string; note: string | null }>;
@@ -81,7 +82,7 @@ export async function loadDocketEntry(
        project:projects!inner(name, code, principal_contractor,
                               org:organisations!inner(name, code)),
        labour(*), plant(*), work_items(*), variations(*), delays(*), pours(*),
-       quantities(*), photos(*), weather(*), entry_sections(*)`,
+       quantities(*), dayworks(*), photos(*), weather(*), entry_sections(*)`,
     )
     .eq('id', entryId)
     .maybeSingle();
@@ -147,6 +148,7 @@ export async function loadDocketEntry(
     delays: list('delays'),
     pours: list('pours'),
     quantities: list('quantities'),
+    dayworks: list('dayworks'),
     photos: list('photos'),
     weather: first(row.weather),
     sections,

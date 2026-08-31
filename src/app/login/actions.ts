@@ -12,6 +12,7 @@ export interface LoginState {
 }
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const CODE_ENABLED = process.env.NEXT_PUBLIC_EMAIL_OTP === '1';
 
 /**
  * Step one: send a magic link. The same mail carries a six-digit code, which
@@ -47,7 +48,9 @@ export async function sendMagicLink(
     stage: 'code',
     email,
     error: null,
-    notice: `Sent to ${email}. Open the link, or key in the six-digit code.`,
+    notice: CODE_ENABLED
+      ? `Sent to ${email}. Open the link, or key in the six-digit code.`
+      : `Sent to ${email}. Open the link on the phone you record on.`,
   };
 }
 

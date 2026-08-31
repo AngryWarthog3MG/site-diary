@@ -3,30 +3,43 @@
 import { createStore, get, set, del, entries as idbEntries } from 'idb-keyval';
 
 /**
- * The offline queue (brief §2.6). Audio blobs and their draft metadata live in
- * IndexedDB from the moment recording stops, and are only deleted once the
- * server has confirmed the segment row exists. Nothing about capture requires
- * a network.
+ * The offline queue (brief §2.6). Captures and their draft metadata live in
+ * IndexedDB from the moment the supervisor saves, and are only deleted once
+ * the server has confirmed the raw material exists. Nothing about capture
+ * requires a network.
  */
 
 const store = createStore('site-diary', 'capture-queue');
 
 export type QueueState = 'queued' | 'syncing' | 'blocked' | 'failed';
+export type QueueStage =
+  | 'saved_local'
+  | 'opening_entry'
+  | 'uploading'
+  | 'registering'
+  | 'appending_text'
+  | 'transcribing'
+  | 'extracting';
 
 export interface QueueItem {
   /** Also the `clientRef` the server dedupes on, and the storage filename. */
   id: string;
+  kind?: 'audio' | 'text';
   projectId: string;
   /** The device's local date. On site, "today" is the supervisor's day, not UTC's. */
   entryDate: string;
-  blob: Blob;
-  mimeType: string;
-  durationMs: number;
-  recordedAt: string;
+  blob?: Blob;
+  mimeType?: string;
+  durationMs?: number;
+  recordedAt?: string;
+  text?: string;
+  writtenAt?: string;
 
   state: QueueState;
+  stage?: QueueStage;
   attempts: number;
   nextAttemptAt: number;
+  lastAttemptAt?: number;
   lastError?: string;
 
   /** The day was signed, so this recording opens a superseding correction. */
@@ -69,8 +82,10 @@ export async function enqueue(input: {
 }): Promise<QueueItem> {
   const item: QueueItem = {
     id: newId(),
+    kind: 'audio',
     ...input,
     state: 'queued',
+    stage: 'saved_local',
     attempts: 0,
     nextAttemptAt: 0,
   };
@@ -78,12 +93,35 @@ export async function enqueue(input: {
   return item;
 }
 
+export async function enqueueText(input: {
+  projectId: string;
+  entryDate: string;
+  text: string;
+  writtenAt: string;
+}): Promise<QueueItem> {
+  const item: QueueItem = {
+    id: newId(),
+    kind: 'text',
+    ...input,
+    state: 'queued',
+    stage: 'saved_local',
+    attempts: 0,
+    nextAttemptAt: 0,
+  };
+  await set(item.id, item, store);
+  return item;
+}
+
+function capturedAt(item: QueueItem): string {
+  return item.recordedAt ?? item.writtenAt ?? '';
+}
+
 export async function all(): Promise<QueueItem[]> {
   const rows = await idbEntries<string, QueueItem>(store);
   return rows
     .map(([, value]) => value)
     .filter((v): v is QueueItem => Boolean(v?.id))
-    .sort((a, b) => a.recordedAt.localeCompare(b.recordedAt));
+    .sort((a, b) => capturedAt(a).localeCompare(capturedAt(b)));
 }
 
 export async function summaries(): Promise<QueueSummary[]> {

@@ -25,6 +25,7 @@ const SECTION_LABELS: Record<string, string> = {
 };
 
 export function DailyDocket({ entry, photos }: { entry: DocketEntry; photos: PhotoImage[] }) {
+  const dayworks = entry.dayworks ?? [];
   return (
     <article className="docket">
       <Header entry={entry} />
@@ -114,6 +115,25 @@ export function DailyDocket({ entry, photos }: { entry: DocketEntry; photos: Pho
             ['Dockets', (r) => joinList(r.docket_nos), 'k'],
           ]}
           total={['Total m³', totalOf(entry.pours, 2, 'volume_m3')]}
+        />
+      )}
+
+      {dayworks.length > 0 && (
+        <Table
+          section={null}
+          title="Dayworks"
+          entry={entry}
+          rows={dayworks}
+          columns={[
+            ['Description', (r) => text(r.description), 'w'],
+            ['Docket / ref', (r) => text(r.docket_ref), 'k'],
+            ['Hours', (r) => num(r.hours), 'n'],
+            ['Labour', (r) => text(r.labour)],
+            ['Plant', (r) => text(r.plant)],
+            ['Materials', (r) => text(r.materials)],
+            ['Photos', (r) => String(((r.photo_urls as string[] | null) ?? []).length), 'n'],
+          ]}
+          total={['Total hours', totalOf(dayworks, 2, 'hours')]}
         />
       )}
 

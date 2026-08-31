@@ -13,10 +13,10 @@ import type { QueueItem, QueueSummary } from './queue';
  * where it stopped rather than starting over:
  *
  *   1. find or create the day's draft entry      -> item.entryId
- *   2. upload the blob to Supabase Storage       -> item.storagePath
- *   3. register the segment against the entry    -> item.registered
- *   4. transcribe (retryable, never blocking)
- *   5. only then delete the local blob
+ *   2. upload/register the raw capture           -> item.storagePath/item.registered
+ *   3. transcribe audio, or append typed text
+ *   4. extract from the raw transcript
+ *   5. only then delete the local copy
  *
  * The blob is never deleted before step 3 confirms the server has it.
  */
@@ -69,12 +69,22 @@ function errorCode(json: Record<string, unknown>): string | undefined {
   return (json.error as { code?: string } | undefined)?.code;
 }
 
+function isTextItem(item: QueueItem): boolean {
+  return item.kind === 'text';
+}
+
+async function progress(item: QueueItem, changes: Partial<QueueItem>): Promise<void> {
+  await queue.patch(item.id, changes);
+  await notify();
+}
+
 async function syncItem(item: QueueItem): Promise<'synced' | 'failed' | 'blocked'> {
   const supabase = createClient();
 
   // 1. The day's draft entry.
   let entryId = item.entryId;
   if (!entryId) {
+    await progress(item, { stage: 'opening_entry' });
     const { response, json } = await postJson('/api/entries', {
       projectId: item.projectId,
       entryDate: item.entryDate,
@@ -86,7 +96,7 @@ async function syncItem(item: QueueItem): Promise<'synced' | 'failed' | 'blocked
       // entry superseding the signed one. That is the record model's own
       // answer to "something happened after signing", and a supervisor who
       // recorded onto a closed day plainly meant it to count.
-      await queue.patch(item.id, { asCorrection: true });
+      await progress(item, { asCorrection: true });
       const retry = await postJson('/api/entries', {
         projectId: item.projectId,
         entryDate: item.entryDate,
@@ -96,10 +106,10 @@ async function syncItem(item: QueueItem): Promise<'synced' | 'failed' | 'blocked
         throw new Error(errorMessage(retry.json, 'Could not open a correction entry.'));
       }
       entryId = retry.json.entryId as string;
-      await queue.patch(item.id, { entryId });
+      await progress(item, { entryId });
     }
     if (response.status === 403) {
-      await queue.patch(item.id, {
+      await progress(item, {
         state: 'blocked',
         lastError: errorMessage(json, 'You cannot record on this project.'),
       });
@@ -110,13 +120,79 @@ async function syncItem(item: QueueItem): Promise<'synced' | 'failed' | 'blocked
         throw new Error(errorMessage(json, 'Could not open the day’s entry.'));
       }
       entryId = json.entryId as string;
-      await queue.patch(item.id, { entryId });
+      await progress(item, { entryId });
     }
+  }
+
+  if (isTextItem(item)) {
+    if (!item.text) {
+      throw new Error('Typed diary text is missing.');
+    }
+
+    if (!item.registered) {
+      await progress(item, { stage: 'appending_text' });
+      const { response, json } = await postJson(`/api/entries/${entryId}/text`, {
+        text: item.text,
+        writtenAt: item.writtenAt,
+        // The queue item's id is the idempotency key: a request that timed
+        // out but landed must not append the note twice on retry.
+        clientRef: item.id,
+      });
+
+      if (response.status === 409) {
+        await progress(item, {
+          state: 'blocked',
+          lastError: errorMessage(json, 'That entry has been signed.'),
+        });
+        return 'blocked';
+      }
+      if (!response.ok) {
+        throw new Error(errorMessage(json, 'Could not attach the typed diary text.'));
+      }
+      await progress(item, { registered: true });
+    }
+
+    void postJson(`/api/entries/${entryId}/weather`, {}).catch(() => {});
+
+    await progress(item, { stage: 'extracting' });
+    const { response, json } = await postJson(`/api/entries/${entryId}/extract`, {});
+    if (!response.ok) {
+      // 409: the day was signed while this waited — the text is already on
+      // the server and no proposal can help a signed entry. Work is done,
+      // not failed; retrying forever would wedge the queue on a 409 that
+      // never changes.
+      if (response.status === 409) {
+        await queue.remove(item.id);
+        return 'synced';
+      }
+      if (response.status === 403 || response.status === 404) {
+        await progress(item, {
+          state: 'blocked',
+          lastError: errorMessage(json, 'This capture needs attention.'),
+        });
+        return 'blocked';
+      }
+      await progress(item, {
+        state: 'queued',
+        attempts: item.attempts + 1,
+        nextAttemptAt: Date.now() + backoffMs(item.attempts + 1),
+        lastError: errorMessage(json, 'Typed text is safe. Extraction will be retried.'),
+      });
+      return 'failed';
+    }
+
+    await queue.remove(item.id);
+    return 'synced';
+  }
+
+  if (!item.blob || !item.mimeType || typeof item.durationMs !== 'number' || !item.recordedAt) {
+    throw new Error('Recording data is missing.');
   }
 
   // 2. Upload the audio, straight to storage under the caller's own RLS.
   let storagePath = item.storagePath;
   if (!storagePath) {
+    await progress(item, { stage: 'uploading' });
     storagePath = `${item.projectId}/${entryId}/${item.id}.${extensionFor(item.mimeType)}`;
     const { error } = await supabase.storage
       .from(AUDIO_BUCKET)
@@ -125,11 +201,12 @@ async function syncItem(item: QueueItem): Promise<'synced' | 'failed' | 'blocked
         upsert: true, // a retry re-sends the same bytes to the same path
       });
     if (error) throw new Error(`Upload failed: ${error.message}`);
-    await queue.patch(item.id, { storagePath });
+    await progress(item, { storagePath });
   }
 
   // 3. Register it. Past this point the recording is safe on the server.
   if (!item.registered) {
+    await progress(item, { stage: 'registering' });
     const { response, json } = await postJson(`/api/entries/${entryId}/audio`, {
       clientRef: item.id,
       storagePath,
@@ -139,7 +216,7 @@ async function syncItem(item: QueueItem): Promise<'synced' | 'failed' | 'blocked
     });
 
     if (response.status === 409) {
-      await queue.patch(item.id, {
+      await progress(item, {
         state: 'blocked',
         lastError: errorMessage(json, 'That entry has been signed.'),
       });
@@ -148,7 +225,7 @@ async function syncItem(item: QueueItem): Promise<'synced' | 'failed' | 'blocked
     if (!response.ok) {
       throw new Error(errorMessage(json, 'Could not attach the recording.'));
     }
-    await queue.patch(item.id, { registered: true });
+    await progress(item, { registered: true });
   }
 
   // Attach the day's observations while there is signal. Best effort: weather
@@ -158,21 +235,58 @@ async function syncItem(item: QueueItem): Promise<'synced' | 'failed' | 'blocked
 
   // 4. Transcription. A failure here is not a lost recording — the segment is
   //    stored and the transcribe route can be called again at any time.
-  const { response } = await postJson(`/api/entries/${entryId}/transcribe`, {});
+  await progress(item, { stage: 'transcribing' });
+  const { response, json } = await postJson(`/api/entries/${entryId}/transcribe`, {});
   if (!response.ok) {
-    await queue.patch(item.id, {
+    // 409: the entry was signed with the recording safely registered — the
+    // record is closed and there is nothing left for this item to do.
+    if (response.status === 409) {
+      await queue.remove(item.id);
+      return 'synced';
+    }
+    if (response.status === 403 || response.status === 404) {
+      await progress(item, {
+        state: 'blocked',
+        lastError: errorMessage(json, 'This capture needs attention.'),
+      });
+      return 'blocked';
+    }
+    await progress(item, {
       state: 'queued',
       attempts: item.attempts + 1,
       nextAttemptAt: Date.now() + backoffMs(item.attempts + 1),
-      lastError: 'Recording is safe. Transcription will be retried.',
+      lastError: errorMessage(json, 'Recording is safe. Transcription will be retried.'),
     });
     return 'failed';
   }
 
   // 5. Extraction, once there are words to extract from. The proposal waits
   //    for the supervisor on the review screen — nothing it produces reaches
-  //    the record without them. Best effort: it can be re-run at any time.
-  void postJson(`/api/entries/${entryId}/extract`, {}).catch(() => {});
+  //    the record without them.
+  await progress(item, { stage: 'extracting' });
+  const extracted = await postJson(`/api/entries/${entryId}/extract`, {});
+  if (!extracted.response.ok) {
+    // Signed while queued: the recording and transcript are on the server,
+    // and a signed entry takes no proposal. Done, not stuck.
+    if (extracted.response.status === 409) {
+      await queue.remove(item.id);
+      return 'synced';
+    }
+    if (extracted.response.status === 403 || extracted.response.status === 404) {
+      await progress(item, {
+        state: 'blocked',
+        lastError: errorMessage(extracted.json, 'This capture needs attention.'),
+      });
+      return 'blocked';
+    }
+    await progress(item, {
+      state: 'queued',
+      attempts: item.attempts + 1,
+      nextAttemptAt: Date.now() + backoffMs(item.attempts + 1),
+      lastError: errorMessage(extracted.json, 'Recording and transcript are safe. Extraction will be retried.'),
+    });
+    return 'failed';
+  }
 
   // 6. Server has everything. Let the local copy go.
   await queue.remove(item.id);
@@ -201,7 +315,11 @@ export async function drain(): Promise<SyncReport> {
       }
       if (item.nextAttemptAt > Date.now()) continue;
 
-      await queue.patch(item.id, { state: 'syncing' });
+      await queue.patch(item.id, {
+        state: 'syncing',
+        lastAttemptAt: Date.now(),
+        lastError: undefined,
+      });
       await notify();
 
       try {

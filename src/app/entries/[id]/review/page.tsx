@@ -29,7 +29,7 @@ export default async function ReviewPage({ params }: { params: Promise<{ id: str
       `id, project_id, entry_date, status, author_id, transcript_raw, entry_no, notes,
        project:projects!inner(id, name, code, org:organisations!inner(code)),
        labour(*), plant(*), work_items(*), variations(*), delays(*), pours(*),
-       quantities(*), entry_sections(*), weather(*)`,
+       quantities(*), dayworks(*), photos(*), entry_sections(*), weather(*)`,
     )
     .eq('id', id)
     .maybeSingle();
@@ -53,9 +53,17 @@ export default async function ReviewPage({ params }: { params: Promise<{ id: str
 
   const rows = (key: string) => ((stored[key] as Row[] | null) ?? []);
   const hasStored =
-    ['labour', 'plant', 'work_items', 'variations', 'delays', 'pours', 'quantities'].some(
-      (key) => rows(key).length > 0,
-    );
+    [
+      'labour',
+      'plant',
+      'work_items',
+      'variations',
+      'delays',
+      'pours',
+      'quantities',
+      'dayworks',
+      'photos',
+    ].some((key) => rows(key).length > 0);
 
   const pick = <T,>(key: string, fallback: T[]): T[] =>
     hasStored ? (rows(key) as unknown as T[]) : fallback;
@@ -70,6 +78,28 @@ export default async function ReviewPage({ params }: { params: Promise<{ id: str
     delays: pick('delays', proposal?.delays ?? []),
     pours: pick('pours', proposal?.pours ?? []),
     quantities: pick('quantities', proposal?.quantities ?? []),
+    dayworks: pick('dayworks', proposal?.dayworks ?? []),
+    photos: pick('photos', proposal?.photos ?? []),
+    // Only a reading the supervisor entered by hand seeds the editable form.
+    // BOM numbers are shown read-only from the stored row; putting them in
+    // the payload would round-trip them back as "manual" and destroy the
+    // station provenance the record depends on.
+    weather:
+      weather?.source === 'manual'
+        ? {
+            temp_max: (weather?.temp_max as number | null) ?? null,
+            temp_min: (weather?.temp_min as number | null) ?? null,
+            rainfall_mm: (weather?.rainfall_mm as number | null) ?? null,
+            wind_dir: (weather?.wind_dir as string | null) ?? null,
+            wind_kmh: (weather?.wind_kmh as number | null) ?? null,
+          }
+        : {
+            temp_max: null,
+            temp_min: null,
+            rainfall_mm: null,
+            wind_dir: null,
+            wind_kmh: null,
+          },
     sections: [],
     weather_impact:
       (weather?.observed_impact as string | null) ??

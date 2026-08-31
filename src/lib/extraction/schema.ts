@@ -128,6 +128,17 @@ const QuantityItem = z.object({
   confidence,
 });
 
+const DayworkItem = z.object({
+  description: z.string().min(1),
+  labour: nullableText,
+  plant: nullableText,
+  materials: nullableText,
+  hours: nullableNumber,
+  docket_ref: nullableText,
+  source_quote: sourceQuote,
+  confidence,
+});
+
 /**
  * Per-section outcome (§4).
  *
@@ -149,6 +160,7 @@ export {
   DelayItem,
   PourItem,
   QuantityItem,
+  DayworkItem,
   SectionOutcome,
 };
 
@@ -160,6 +172,7 @@ export const ExtractionProposal = z.object({
   delays: z.array(DelayItem).default([]),
   pours: z.array(PourItem).default([]),
   quantities: z.array(QuantityItem).default([]),
+  dayworks: z.array(DayworkItem).default([]),
   weather_impact: nullableText,
 
   /**
@@ -187,6 +200,7 @@ export type VariationItem = z.infer<typeof VariationItem>;
 export type DelayItem = z.infer<typeof DelayItem>;
 export type PourItem = z.infer<typeof PourItem>;
 export type QuantityItem = z.infer<typeof QuantityItem>;
+export type DayworkItem = z.infer<typeof DayworkItem>;
 export type SectionOutcome = z.infer<typeof SectionOutcome>;
 export type SectionKey = keyof ExtractionProposal['sections'];
 
@@ -210,6 +224,7 @@ export function emptyProposal(): ExtractionProposal {
     delays: [],
     pours: [],
     quantities: [],
+    dayworks: [],
     weather_impact: null,
     notes: null,
     sections: {

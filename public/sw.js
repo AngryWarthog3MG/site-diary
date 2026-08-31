@@ -18,7 +18,7 @@
 // stale app shells to the one real phone in the field — three separate
 // debugging sessions traced back to it. Offline still works (network-first
 // with fallback), but a version bump now nukes old caches on activate.
-const VERSION = 'v4';
+const VERSION = 'v5';
 const PAGES = `pages-${VERSION}`;
 const ASSETS = `assets-${VERSION}`;
 const OFFLINE_URL = '/offline.html';

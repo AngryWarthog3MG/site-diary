@@ -270,6 +270,47 @@ export function WeeklyReport({ data, narrative, narrativeNote }: WeeklyReportPro
       </section>
 
       <section className="sect">
+        <p className="lbl">Dayworks</p>
+        {data.dayworks.rows.length === 0 ? (
+          <Nil>No dayworks recorded in this period</Nil>
+        ) : (
+          <table>
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th className="w">Description</th>
+                <th>Labour</th>
+                <th>Plant</th>
+                <th className="n">Hours</th>
+                <th>Docket</th>
+              </tr>
+            </thead>
+            <tbody>
+              {data.dayworks.rows.map((row, i) => (
+                <tr key={i}>
+                  <td className="k mono">{row.date}</td>
+                  <td className="w">{row.description}</td>
+                  <td>{row.labour ?? '—'}</td>
+                  <td>{row.plant ?? '—'}</td>
+                  <td className="n mono">{fmt(row.hours)}</td>
+                  <td className={row.docket_ref ? 'mono' : 'vr-missing'}>
+                    {row.docket_ref ?? 'NO DOCKET'}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+            <tfoot>
+              <tr>
+                <td colSpan={4}>Total dayworks hours</td>
+                <td className="n mono">{fmt(data.dayworks.totalHours)}</td>
+                <td />
+              </tr>
+            </tfoot>
+          </table>
+        )}
+      </section>
+
+      <section className="sect">
         <p className="lbl">Delays &amp; standdown</p>
         {delays.rows.length === 0 ? (
           <Nil>No delays recorded in this period</Nil>
