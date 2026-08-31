@@ -66,7 +66,8 @@ export async function POST(request: Request) {
     );
   }
 
-  const { result: narrative, rejected } = await generateNarrative(data);
+  const { result: narrative, rejected, failure } = await generateNarrative(data);
+  if (failure) console.error(`weekly narrative failed for ${project.code} ${start}..${end}: ${failure}`);
   const narrativeNote = rejected
     ? 'Commentary was withheld: the draft referenced figures not present in the record.'
     : narrative

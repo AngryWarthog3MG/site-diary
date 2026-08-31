@@ -108,7 +108,10 @@ async function callOnce(data: WeeklyData, correction?: string): Promise<Narrativ
 
   const response = await client().messages.create({
     model: NARRATIVE_MODEL,
-    max_tokens: 2000,
+    // Adaptive thinking spends from the same budget as the text: a rich week
+    // gives the model plenty to reason about, and 2000 was small enough that
+    // thinking alone could consume it, leaving no commentary at all.
+    max_tokens: 8000,
     thinking: { type: 'adaptive' },
     system: [{ type: 'text', text: SYSTEM_PROMPT, cache_control: { type: 'ephemeral' } }],
     messages,
@@ -137,7 +140,7 @@ async function callOnce(data: WeeklyData, correction?: string): Promise<Narrativ
  */
 export async function generateNarrative(
   data: WeeklyData,
-): Promise<{ result: NarrativeResult | null; rejected?: string[] }> {
+): Promise<{ result: NarrativeResult | null; rejected?: string[]; failure?: string }> {
   const allowed = allowedNumbers({
     data: narrativeInput(data),
     start: data.start,
@@ -147,8 +150,10 @@ export async function generateNarrative(
   let attempt: NarrativeResult;
   try {
     attempt = await callOnce(data);
-  } catch {
-    return { result: null };
+  } catch (error) {
+    // Named, not swallowed: a report without commentary should say why in
+    // the route's logs rather than leaving the absence to be guessed at.
+    return { result: null, failure: error instanceof Error ? error.message : String(error) };
   }
 
   let offending = unaccountedNumbers(attempt.narrative, allowed);
@@ -164,7 +169,11 @@ export async function generateNarrative(
     offending = unaccountedNumbers(retry.narrative, allowed);
     if (offending.length === 0) return { result: retry };
     return { result: null, rejected: offending };
-  } catch {
-    return { result: null, rejected: offending };
+  } catch (error) {
+    return {
+      result: null,
+      rejected: offending,
+      failure: error instanceof Error ? error.message : String(error),
+    };
   }
 }

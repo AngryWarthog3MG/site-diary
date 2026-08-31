@@ -72,16 +72,24 @@ improvising; the register once shipped dead because a live smoke test was skippe
 - `README.md` — the design record, including why each decision went the way it did.
   Read the relevant section before changing behaviour in that area.
 
-## Changing a diary field touches five places
+## Changing a diary field touches six places
 
-Change three of them and the app silently stops capturing what supervisors say. In order:
+Change four of them and the app silently stops capturing what supervisors say. In order:
 
-1. **Migration** + `npm run db:types`
-2. **Extraction** — `src/lib/extraction/schema.ts` and `prompt.ts`, plus fixtures
+1. **Migration** + `npm run db:types` — including the `diary.*` view and, if the field
+   belongs in the signed record, `app.canonical_entry_json` (conditionally — an
+   unconditional new key invalidates every existing signed hash; see the notes and
+   dayworks migrations for the pattern)
+2. **Extraction** — `src/lib/extraction/schema.ts` and `prompt.ts` (the prompt must
+   actually teach the field, not just carry it in the JSON schema), plus fixtures
 3. **Review** — `src/lib/review/schema.ts` / `fields.ts` and the review screen
 4. **Gap rules** — the TypeScript half *and* the SQL trigger (see below)
 5. **PDF** — `src/lib/pdf/docket.tsx`. A field that doesn't reach the export doesn't
    exist as far as a claim is concerned.
+6. **Reports** — `src/lib/weekly/load.ts` + `report.tsx` (and the narrative sees the
+   same aggregates automatically). Dayworks skipped this layer once: every daily
+   docket showed them while the weekly a PM actually reads showed nothing, and the
+   absence read as "none happened". Money leaks through this step, not the others.
 
 ## Invariants that break quietly
 
