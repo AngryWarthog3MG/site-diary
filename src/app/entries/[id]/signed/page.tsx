@@ -1,8 +1,9 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
-import { requireUser } from '@/lib/auth';
+import { requireUser, canAuthorEntries } from '@/lib/auth';
 import { PdfButton } from './pdf-button';
+import { CorrectButton } from './correct-button';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Signed · Site Diary' };
@@ -16,13 +17,13 @@ export const metadata = { title: 'Signed · Site Diary' };
  */
 export default async function SignedPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  await requireUser();
+  const { memberships } = await requireUser();
   const supabase = await createClient();
 
   const { data: entry } = await supabase
     .from('entries')
     .select(
-      `id, entry_no, entry_date, status, signed_at, content_hash, supersedes_entry_id, author_id,
+      `id, entry_no, entry_date, status, signed_at, content_hash, supersedes_entry_id, author_id, project_id,
        project:projects!inner(name, code, org:organisations!inner(name, code))`,
     )
     .eq('id', id)
@@ -112,6 +113,16 @@ export default async function SignedPage({ params }: { params: Promise<{ id: str
       <Link className="button button--quiet" href={`/entries/${id}/docket`}>
         View the docket on screen
       </Link>
+
+      {memberships.some(
+        (m) => m.project_id === (entry.project_id as string) && canAuthorEntries(m.role),
+      ) && (
+        <>
+          <hr className="rule" />
+          <p className="label">Something missing?</p>
+          <CorrectButton entryId={id} />
+        </>
+      )}
 
       <Link className="button button--quiet" href="/">
         Back to today

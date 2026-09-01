@@ -69,6 +69,13 @@ function client(): Anthropic {
 const Classification = z.object({
   path: z.enum(['structured', 'semantic']),
   reason: z.string(),
+  /**
+   * The content words worth searching for, question scaffolding stripped.
+   * Full-text search ANDs its terms, so "what happened with the Telstra
+   * crossing" finds nothing — no entry contains "happened". "Telstra
+   * crossing" finds the record.
+   */
+  search_terms: z.string(),
 });
 
 const GeneratedSql = z.object({
@@ -83,9 +90,13 @@ const CLASSIFIER_PROMPT = `You are routing a question about a construction site 
 
 **semantic** — the question is about what someone said or described, and needs the supervisor's own words. "What did Lendlease say about the sub-meters", "any issues with access to Area B", "what happened with the retaining wall".
 
-If a question could be either, prefer **structured**: a table of rows with entry numbers is more use to a project manager than a quotation, and the structured path shows its working.`;
+If a question could be either, prefer **structured**: a table of rows with entry numbers is more use to a project manager than a quotation, and the structured path shows its working.
 
-async function classify(question: string): Promise<QueryPath> {
+Also return search_terms: just the content words someone would grep the diary for, with the question scaffolding stripped. "What happened with the Telstra crossing?" -> "Telstra crossing". "Any issues with access to Area B?" -> "access Area B".`;
+
+async function classify(
+  question: string,
+): Promise<{ path: QueryPath; searchTerms: string | null }> {
   try {
     const response = await client().messages.parse({
       model: CLASSIFIER_MODEL,
@@ -94,11 +105,14 @@ async function classify(question: string): Promise<QueryPath> {
       messages: [{ role: 'user', content: question }],
       output_config: { format: zodOutputFormat(Classification) },
     });
-    return response.parsed_output?.path ?? 'structured';
+    return {
+      path: response.parsed_output?.path ?? 'structured',
+      searchTerms: response.parsed_output?.search_terms?.trim() || null,
+    };
   } catch {
     // The classifier is an optimisation, not a gate. If it fails, take the
     // path that shows its working.
-    return 'structured';
+    return { path: 'structured', searchTerms: null };
   }
 }
 
@@ -246,11 +260,11 @@ export async function ask(
     hits: [] as SearchHit[],
   };
 
-  const path = await classify(trimmed);
+  const { path, searchTerms } = await classify(trimmed);
 
   if (path === 'semantic') {
     const { data, error } = await supabase.rpc('diary_search', {
-      p_query: trimmed,
+      p_query: searchTerms ?? trimmed,
       p_project_id: options.projectId ?? null,
       p_limit: 20,
     });
