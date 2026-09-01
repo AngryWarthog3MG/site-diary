@@ -2363,3 +2363,10 @@ body {
 .brandrow img { display: inline-block; }
 .brandrow__name { font-weight: 700; letter-spacing: 0.08em; }
 .home-eyebrow .brandrow img, .weekly-kicker .brandrow img { filter: drop-shadow(0 0 1px rgba(255,255,255,0.6)); }
+
+/* Email-the-PDF on the signed screen. */
+.email-pdf { margin-top: 1rem; }
+.email-pdf__row { display: flex; gap: 0.5rem; margin-top: 0.375rem; }
+.email-pdf__row .field { flex: 1; }
+.email-pdf__row .button { width: auto; margin-top: 0; padding: 0 1rem; }
+.email-pdf__ok { margin: 0.375rem 0 0; font-size: 0.875rem; color: var(--teal); }

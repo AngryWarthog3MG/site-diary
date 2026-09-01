@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server';
 import { requireUser, canAuthorEntries } from '@/lib/auth';
 import { PdfButton } from './pdf-button';
 import { CorrectButton } from './correct-button';
+import { EmailPdfButton } from './email-button';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Signed · Site Diary' };
@@ -109,6 +110,7 @@ export default async function SignedPage({ params }: { params: Promise<{ id: str
         Rendered from the stored fields. The same entry always produces the same document.
       </p>
       <PdfButton entryId={id} entryNo={entry.entry_no as string | null} />
+      <EmailPdfButton entryId={id} />
 
       <Link className="button button--quiet" href={`/entries/${id}/docket`}>
         View the docket on screen
