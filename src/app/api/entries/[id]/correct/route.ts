@@ -62,24 +62,11 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
     return ok({ entryId: superseder.id, created: false });
   }
 
-  // The unique (project, date, author) key: if the caller already has their
-  // own unrelated entry on this date, a correction under their name cannot
-  // coexist with it.
-  const { data: clash } = await supabase
-    .from('entries')
-    .select('id, status')
-    .eq('project_id', entry.project_id)
-    .eq('entry_date', entry.entry_date)
-    .eq('author_id', user.id)
-    .maybeSingle();
-  if (clash) {
-    return fail(
-      'bad_request',
-      'You already have an entry of your own on this date, so the correction needs to come from another supervisor or admin.',
-      409,
-    );
-  }
-
+  // No same-date clash check: uniqueness only binds ORIGINALS
+  // (entries_one_original_per_author_per_day is partial on
+  // supersedes_entry_id IS NULL), so a correction can share its author and
+  // date with the entry it corrects — correcting your own day is the most
+  // common case of all.
   const { data: draft, error: draftError } = await supabase
     .from('entries')
     .insert({
