@@ -1,6 +1,6 @@
 import { LoginForm } from './login-form';
 
-export const metadata = { title: 'Sign in · Site Diary' };
+export const metadata = { title: 'Sign in · KBS Daily Diary' };
 
 export default async function LoginPage({
   searchParams,
@@ -14,8 +14,9 @@ export default async function LoginPage({
     <main className="app-shell app-shell--narrow">
       <section className="sheet auth-card">
         <div className="brand">
-          <span className="brand__mark" aria-hidden />
-          <span className="brand__name">Site Diary</span>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img className="brand__frog" src="/brand/frog.png" alt="" width={34} height={38} />
+          <span className="brand__name">KBS Daily Diary</span>
         </div>
         <h1 className="page-title">Sign in</h1>
         <p className="page-subtitle">
@@ -24,7 +25,9 @@ export default async function LoginPage({
         </p>
         <hr className="rule" />
         <LoginForm next={next} initialError={params.error} />
+        <p className="brand__org">Kooboolong Services Pty Ltd</p>
       </section>
+      <div className="brand__wave" aria-hidden />
     </main>
   );
 }

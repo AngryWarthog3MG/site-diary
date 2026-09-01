@@ -1,4 +1,5 @@
 import { BOM_ATTRIBUTION } from '../weather/attribution';
+import { LOGO_DATA_URI } from './logo';
 import type { DocketEntry, Row } from './load';
 import { formatInstant, num, text, timeOnly } from './load';
 
@@ -176,7 +177,9 @@ function Header({ entry }: { entry: DocketEntry }) {
   return (
     <header className="head">
       <div className="head__left">
-        <p className="lbl">{entry.org_name}</p>
+        <p className="lbl">
+          <img className="brandmark" src={LOGO_DATA_URI} alt="" /> {entry.org_name}
+        </p>
         <h1>{entry.project_name}</h1>
         <p className="mono sub">
           {entry.org_code}_{entry.project_code}

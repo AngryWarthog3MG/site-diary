@@ -10,7 +10,7 @@ export const DOCKET_CSS = `
   --ink: #131A1E;
   --ink-muted: #5A6469;
   --ink-soft: #EEF1ED;
-  --teal: #0D5A58;
+  --teal: #1F5C33;
   --teal-deep: #073F3E;
   --teal-soft: #E4F1ED;
   --amber: #A8730A;
@@ -44,6 +44,9 @@ body {
   color: #5A6469;
 }
 
+/* The Kooboolong frog, sitting with the org name. */
+.brandmark { height: 7mm; width: auto; vertical-align: -2mm; margin-right: 1.5mm; }
+
 /* Header */
 .head {
   display: flex;
@@ -54,7 +57,7 @@ body {
   padding: 6mm 6mm 5mm;
   border-bottom: 0;
   border-radius: 2.5mm;
-  background: linear-gradient(135deg, #073F3E 0%, #0D5A58 58%, #277B68 100%);
+  background: linear-gradient(135deg, #073F3E 0%, #1F5C33 58%, #277B68 100%);
   color: #FFFFFF;
   flex-wrap: wrap;
 }
@@ -124,7 +127,7 @@ body {
 }
 .sect .lbl {
   padding-bottom: 1.2mm;
-  color: #0D5A58;
+  color: #1F5C33;
   border-bottom: 0.45pt solid #D8DAD6;
 }
 table { width: 100%; border-collapse: collapse; }
@@ -159,7 +162,7 @@ th.w, td.w { width: 40%; }
 th:last-child, td:last-child { padding-right: 0; }
 tfoot td {
   border-bottom: 0;
-  border-top: 0.8pt solid #0D5A58;
+  border-top: 0.8pt solid #1F5C33;
   background: #F2FAF7;
   font-weight: 600;
   padding-top: 1.6mm;
@@ -196,7 +199,7 @@ tfoot td:first-child {
   padding: 2.5mm 3mm;
   background: #F8FAF7;
   border: 0.45pt solid #D8DAD6;
-  border-left: 2pt solid #0D5A58;
+  border-left: 2pt solid #1F5C33;
   border-radius: 1.5mm;
   font-size: 9pt;
   line-height: 1.5;
