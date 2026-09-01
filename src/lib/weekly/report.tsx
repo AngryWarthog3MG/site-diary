@@ -1,4 +1,5 @@
 import type { ReactElement } from 'react';
+import { LOGO_DATA_URI } from '@/lib/pdf/logo';
 import type { WeeklyData } from './load';
 
 /**
@@ -48,7 +49,9 @@ export function WeeklyReport({ data, narrative, narrativeNote }: WeeklyReportPro
     <div className="docket weekly">
       <header className="head">
         <div>
-          <p className="lbl">Weekly site report</p>
+          <p className="lbl">
+            <img className="brandmark" src={LOGO_DATA_URI} alt="" /> Weekly site report
+          </p>
           <h1>{data.project.name}</h1>
           <p className="sub">
             {data.project.orgCode}_{data.project.code} · {data.start} to {data.end}

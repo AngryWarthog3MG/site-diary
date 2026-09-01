@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { BrandMark } from '@/components/brand-mark';
 import { useRouter } from 'next/navigation';
 import type { EntrySection } from '@/types/database';
 import { Recorder, isSupported } from '@/lib/capture/recorder';
@@ -272,7 +273,7 @@ export function RecordScreen({
       <section className={`sheet record-sheet${active ? ' sheet--recording' : ''}`}>
       <header className="page-header">
         <div>
-          <p className="label">{projectName}</p>
+          <p className="label"><BrandMark size={18} /> {projectName}</p>
           <h1 className="page-title">Record diary</h1>
           <p className="mono page-subtitle">Next: {orgCode}-{targetDate}</p>
         </div>

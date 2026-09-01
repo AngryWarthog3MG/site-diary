@@ -1,4 +1,5 @@
 import type { ReactElement } from 'react';
+import { LOGO_DATA_URI } from '@/lib/pdf/logo';
 import type { MonthData } from './bundle';
 
 /**
@@ -32,7 +33,9 @@ export function MonthlyCover({ data }: { data: MonthData }): ReactElement {
     <div className="docket">
       <header className="head">
         <div>
-          <p className="lbl">Monthly diary bundle</p>
+          <p className="lbl">
+            <img className="brandmark" src={LOGO_DATA_URI} alt="" /> Monthly diary bundle
+          </p>
           <h1>{data.project.name}</h1>
           <p className="sub">
             {data.project.orgCode}_{data.project.code} · {monthTitle(data.month)}

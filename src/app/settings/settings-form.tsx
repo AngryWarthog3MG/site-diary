@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { BrandMark } from '@/components/brand-mark';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 
@@ -92,7 +93,7 @@ export function SettingsForm({ initial }: { initial: SettingsData }) {
       <header className="page-header">
         <div>
           <p className="label">Settings</p>
-          <h1 className="page-title">{form.projectName || 'Project'}</h1>
+          <h1 className="page-title"><BrandMark size={22} /> {form.projectName || 'Project'}</h1>
           <p className="mono page-subtitle">Next entry: {nextEntryNo}</p>
         </div>
       </header>

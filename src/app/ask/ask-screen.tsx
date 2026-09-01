@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { BrandMark } from '@/components/brand-mark';
 import Link from 'next/link';
 
 interface AskResponse {
@@ -84,7 +85,7 @@ export function AskScreen({
 
   return (
     <main className="sheet sheet--wide">
-      <p className="label">{projectName}</p>
+      <p className="label"><BrandMark size={18} /> {projectName}</p>
       <h1 style={{ margin: '0.25rem 0 0', fontSize: '1.375rem', fontWeight: 600 }}>Ask</h1>
       <p style={{ margin: '0.25rem 0 0', color: 'var(--ink-60)', fontSize: '0.9375rem' }}>
         Questions are answered from signed entries only, and every answer shows the rows it came

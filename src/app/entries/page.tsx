@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { BrandMark } from '@/components/brand-mark';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { requireUser, resolveProject } from '@/lib/auth';
@@ -46,7 +47,7 @@ export default async function EntriesPage({
       <section className="entries-board">
         <header className="entries-hero">
           <div>
-            <p className="entries-kicker">{current.project.org.name}</p>
+            <p className="entries-kicker"><BrandMark size={18} /> {current.project.org.name}</p>
             <h1>{current.project.name}</h1>
             <p className="entries-subtitle">
               Signed entries carry the docket and its PDF. Drafts are still being worked on.

@@ -2357,3 +2357,9 @@ body {
   pointer-events: none;
   z-index: -1;
 }
+
+/* Brand mark rows in screen headers. */
+.brandrow { display: inline-flex; align-items: center; gap: 0.4rem; vertical-align: middle; }
+.brandrow img { display: inline-block; }
+.brandrow__name { font-weight: 700; letter-spacing: 0.08em; }
+.home-eyebrow .brandrow img, .weekly-kicker .brandrow img { filter: drop-shadow(0 0 1px rgba(255,255,255,0.6)); }

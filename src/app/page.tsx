@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { BrandMark } from '@/components/brand-mark';
 import { createClient } from '@/lib/supabase/server';
 import {
   requireUser,
@@ -29,7 +30,7 @@ export default async function TodayPage({
     return (
       <main className="app-shell app-shell--narrow">
         <section className="sheet">
-        <p className="label">Site Diary</p>
+        <p className="label"><BrandMark size={20} withName /></p>
         <hr className="rule" />
         <p className="notice gap">
           You are signed in as <strong>{email}</strong>, and that account is not on a
@@ -59,6 +60,7 @@ export default async function TodayPage({
         <header className="home-hero">
           <div className="home-hero__content">
             <div className="home-eyebrow">
+              <BrandMark size={20} />
               <span>{current.project.org.name}</span>
               <span className="home-role">{current.role}</span>
             </div>

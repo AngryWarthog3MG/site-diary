@@ -26,6 +26,7 @@ import {
   type PourLike,
 } from '@/lib/docket/reconcile';
 import { compressPhoto } from '@/lib/photos/compress';
+import { BrandMark } from '@/components/brand-mark';
 import type { ReviewWeather } from './page';
 
 type Item = Record<string, unknown>;
@@ -352,7 +353,7 @@ export function ReviewScreen(props: {
       <section className="sheet review-sheet">
         <header className="review-hero">
           <div>
-            <p className="label">{props.projectName}</p>
+            <p className="label"><BrandMark size={18} /> {props.projectName}</p>
             <h1 className="page-title">Review diary</h1>
             <p className="mono page-subtitle">
               {props.projectCode} · {props.entryDate}

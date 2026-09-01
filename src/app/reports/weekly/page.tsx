@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { BrandMark } from '@/components/brand-mark';
 import { createClient } from '@/lib/supabase/server';
 import { requireUser, resolveProject } from '@/lib/auth';
 import { loadWeeklyData, type WeeklyData } from '@/lib/weekly/load';
@@ -84,7 +85,7 @@ export default async function WeeklyReportPage({
       <main className="weekly-shell">
         <section className="weekly-hero">
           <div>
-            <p className="weekly-kicker">Weekly report</p>
+            <p className="weekly-kicker"><BrandMark size={18} /> Weekly report</p>
             <h1>{current.project.name}</h1>
             <p className="weekly-range mono">
               {start} to {end}
