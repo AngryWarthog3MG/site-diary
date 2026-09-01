@@ -113,6 +113,9 @@ export function SettingsForm({ initial }: { initial: SettingsData }) {
           <Link className="button button--quiet" href={`/settings/vocabulary?project=${form.projectId}`}>
             Manage vocabulary
           </Link>
+          <Link className="button button--quiet" href={`/settings/new-project?project=${form.projectId}`}>
+            New job for {form.orgName}
+          </Link>
         </div>
       )}
 
