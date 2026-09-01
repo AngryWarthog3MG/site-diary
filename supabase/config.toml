@@ -37,13 +37,16 @@ site_url = "http://localhost:3000"
 # wildcard saves re-registering the redirect on each restart. Narrow this to a
 # fixed hostname before anything but testing runs through it.
 additional_redirect_urls = ["http://localhost:3000/**", "https://*.trycloudflare.com/**", "https://*.vercel.app/**", "https://kbsdailydiary.me/**", "https://www.kbsdailydiary.me/**"]
-jwt_expiry = 3600
+# 12 hours, up from 1: fewer refresh events means fewer rotation races, and a
+# rotation race is what signs a phone out mid-week. Tokens are RLS-scoped;
+# the trade is acceptable for a site tool.
+jwt_expiry = 43200
 enable_refresh_token_rotation = true
 # 60s, up from the 10s default: a phone waking with several stale PWA tabs
 # replays the old refresh token in a burst, and the mid-pilot logout came from
 # exactly that race. Inside the interval the old token still answers; outside
 # it, reuse revokes the whole session family.
-refresh_token_reuse_interval = 60
+refresh_token_reuse_interval = 300
 enable_signup = true
 enable_anonymous_sign_ins = false
 

@@ -2377,3 +2377,14 @@ body {
 .verify-result--bad { background: #fbeaea; border: 1px solid var(--signal); }
 .verify-result__headline { margin: 0 0 0.5rem; font-weight: 700; }
 .verify-result ul { margin: 0; padding-left: 1.1rem; }
+
+/* Claims register. */
+.claims-total { margin: 0.375rem 0 0.625rem; font-size: 0.875rem; color: var(--ink-60); }
+.claims-nil { margin: 0.375rem 0 0; color: var(--ink-40); font-size: 0.9375rem; }
+.claims-flag { color: var(--amber); font-weight: 700; font-size: 0.8125rem; letter-spacing: 0.04em; }
+.claims-cite { color: var(--teal); text-decoration: none; font-weight: 600; }
+.claims-tablewrap { overflow-x: auto; }
+.claims-table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+.claims-table th { text-align: left; font-size: 0.6875rem; letter-spacing: 0.07em; text-transform: uppercase; color: var(--ink-60); padding: 0.375rem 0.625rem 0.375rem 0; border-bottom: 1px solid var(--ink-12); white-space: nowrap; }
+.claims-table td { padding: 0.5rem 0.625rem 0.5rem 0; border-bottom: 1px solid var(--ink-08); vertical-align: top; }
+.claims-table .n { text-align: right; }
