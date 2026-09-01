@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 
 // Reachable without a session. Everything else requires a signed-in user.
-const PUBLIC_PATHS = ['/login', '/auth/confirm', '/auth/signout'];
+const PUBLIC_PATHS = ['/login', '/auth/confirm', '/auth/signout', '/verify'];
 
 /** Routes that carry their own authentication and must not be session-gated. */
 const SELF_AUTHENTICATING = ['/api/ops'];
