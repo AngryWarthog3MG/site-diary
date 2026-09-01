@@ -509,6 +509,35 @@ export const FIXTURES: Fixture[] = [
       sections: { plant: S.gap, variations: S.gap, delays: S.gap, weather: S.gap },
     }),
   },
+  {
+    id: '25-start-finish-break',
+    tests:
+      'Spoken start/finish land as clock times, a stated break in break_mins, and hours are the net arithmetic.',
+    entryDate: '2026-09-01',
+    vocabulary: VOCAB,
+    transcript: `Danny started at seven and knocked off at half three, half hour smoko as usual. Sam did seven till three with no break today.`,
+    expected: proposal({
+      labour: [
+        // 07:00–15:30 minus 30 = 8.0
+        L('Danny Rowe', {
+          start_time: '07:00',
+          finish_time: '15:30',
+          break_mins: 30,
+          hours: 8,
+          source_quote: 'Danny started at seven and knocked off at half three, half hour smoko as usual',
+        }),
+        // 07:00–15:00 minus 0 = 8.0
+        L('Sam Whitely', {
+          start_time: '07:00',
+          finish_time: '15:00',
+          break_mins: 0,
+          hours: 8,
+          source_quote: 'Sam did seven till three with no break today',
+        }),
+      ],
+      sections: { plant: S.gap, work_items: S.gap, variations: S.gap, delays: S.gap, weather: S.gap },
+    }),
+  },
 ];
 
 export const FIXTURES_BY_ID = new Map(FIXTURES.map((f) => [f.id, f]));

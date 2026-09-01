@@ -55,6 +55,10 @@ const LabourItem = z.object({
   person_name: z.string().min(1),
   role: nullableText,
   area: nullableText,
+  start_time: nullableTime,
+  finish_time: nullableTime,
+  /** Unpaid break in minutes — only when stated; usually 30 on this site. */
+  break_mins: nullableNumber,
   hours: nullableNumber,
   overtime_hours: nullableNumber,
   source_quote: sourceQuote,

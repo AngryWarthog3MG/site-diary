@@ -812,6 +812,30 @@ function DocketSection({
   );
 }
 
+/**
+ * Worked hours from the clock: span minus break, rolling past midnight when
+ * the finish reads earlier. Mirrors the computation apply_entry_review does
+ * at save time, so what the supervisor sees is what the record stores.
+ */
+function workedHours(
+  start: string | null | undefined,
+  finish: string | null | undefined,
+  breakMins: number | null | undefined,
+): number | null {
+  if (!start || !finish) return null;
+  const parse = (value: string) => {
+    const m = /^(\d{1,2}):(\d{2})/.exec(value);
+    return m ? Number(m[1]) * 60 + Number(m[2]) : null;
+  };
+  const from = parse(start);
+  const to = parse(finish);
+  if (from == null || to == null) return null;
+  let span = to - from;
+  if (span <= 0) span += 24 * 60;
+  const net = (span - (breakMins ?? 0)) / 60;
+  return net > 0 ? Math.round(net * 100) / 100 : null;
+}
+
 type DocketState =
   | { status: 'reading' }
   | { status: 'done'; changes: DocketChange[]; issue: string | null }
@@ -912,6 +936,18 @@ function ItemCard({
             entryId={entryId}
             onChange={(value) => {
               onChange(section.group, index, field.key, value);
+              if (
+                section.group === 'labour' &&
+                (field.key === 'start_time' || field.key === 'finish_time' || field.key === 'break_mins')
+              ) {
+                const next = { ...item, [field.key]: value } as {
+                  start_time?: string | null;
+                  finish_time?: string | null;
+                  break_mins?: number | null;
+                };
+                const computed = workedHours(next.start_time, next.finish_time, next.break_mins);
+                if (computed != null) onPatch(section.group, index, { hours: computed });
+              }
               if (section.group === 'pours' && field.key === 'docket_photo_urls') {
                 const previous = (item[field.key] as string[] | null) ?? [];
                 const next = (value as string[] | null) ?? [];
@@ -1019,7 +1055,18 @@ function Field({
           onChange={(e) => onChange(e.target.value === '' ? null : e.target.value)}
         />
       ) : field.kind === 'select' ? (
-        <select {...common} onChange={(e) => onChange(e.target.value === '' ? null : e.target.value)}>
+        <select
+          {...common}
+          onChange={(e) =>
+            onChange(
+              e.target.value === ''
+                ? null
+                : field.numeric
+                  ? Number(e.target.value)
+                  : e.target.value,
+            )
+          }
+        >
           <option value="">—</option>
           {field.options?.map((option) => (
             <option key={option.value} value={option.value}>

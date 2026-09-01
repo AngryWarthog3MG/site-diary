@@ -10,7 +10,7 @@
     "typecheck": "tsc --noEmit",
     "db:reset": "supabase db reset",
     "db:test": "node --env-file-if-exists=.env.local scripts/db-test.mjs",
-    "db:types": "supabase gen types typescript --local --schema public > src/types/database.ts",
+    "db:types": "supabase gen types typescript --linked --schema public > src/types/database.ts",
     "test:unit": "node --test 'src/**/*.test.ts'",
     "test": "npm run typecheck && npm run test:unit",
     "extraction:eval": "node --env-file-if-exists=.env.local scripts/extraction-eval.ts",

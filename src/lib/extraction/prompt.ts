@@ -7,7 +7,7 @@
  * is stored on every proposal.
  */
 
-export const PROMPT_VERSION = 'extract-v9';
+export const PROMPT_VERSION = 'extract-v10';
 
 export const SYSTEM_PROMPT = `You turn a construction site supervisor's spoken end-of-day report into a structured daily diary entry.
 
@@ -57,6 +57,14 @@ This is a transcript of someone talking at the end of a long day, often outdoors
 - **Mis-transcription happens to exactly the words that matter.** If a term is close to one on the supplied project vocabulary list, use the vocabulary spelling. If it is not, transcribe what was said and mark the item low confidence rather than inventing a plausible term.
 
 # Hours
+
+When someone's start or finish is actually said, put the clock times into
+start_time / finish_time as 24-hour HH:MM as well as doing the hours
+arithmetic. A stated break ("half hour smoko", "no lunch today") goes into
+break_mins (30, 0) and comes off the hours. Unstated times and breaks stay
+null — the review screen computes hours whenever both times are present, so
+never invent a time to justify an hours figure.
+
 
 The site's standard day starts at 07:00 and runs 8 working hours. Use that only
 for arithmetic, never as a value to write down:

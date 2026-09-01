@@ -40,6 +40,7 @@ export function DailyDocket({ entry, photos }: { entry: DocketEntry; photos: Pho
           ['Name', (r) => text(r.person_name)],
           ['Role', (r) => text(r.role)],
           ['Area', (r) => text(r.area)],
+          ['Times', (r) => workedSpan(r), 'k'],
           ['Hours', (r) => num(r.hours), 'n'],
           ['O/T', (r) => num(r.overtime_hours), 'n'],
         ]}
@@ -347,6 +348,16 @@ function Signature({ entry }: { entry: DocketEntry }) {
       )}
     </section>
   );
+}
+
+/** "07:00–15:30 · 30m brk", or a dash when no clock was recorded. */
+function workedSpan(r: Row): string {
+  const start = timeOnly(r.start_time);
+  const finish = timeOnly(r.finish_time);
+  if (start === '—' && finish === '—') return '—';
+  const brk =
+    r.break_mins == null ? '' : r.break_mins === 0 ? ' · no brk' : ` · ${r.break_mins}m brk`;
+  return `${start}–${finish}${brk}`;
 }
 
 function totalOf(rows: Row[], digits: number, ...keys: string[]): string | null {

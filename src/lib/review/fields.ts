@@ -16,6 +16,8 @@ export interface FieldDef {
   label: string;
   kind: FieldKind;
   options?: { value: string; label: string }[];
+  /** Select stores a number rather than the option string. */
+  numeric?: boolean;
   suffix?: string;
   step?: string;
   placeholder?: string;
@@ -46,6 +48,21 @@ export const SECTIONS: SectionDef[] = [
       { key: 'person_name', label: 'Name', kind: 'text' },
       { key: 'role', label: 'Role', kind: 'text' },
       { key: 'area', label: 'Area', kind: 'text' },
+      { key: 'start_time', label: 'Start', kind: 'time', narrow: true },
+      { key: 'finish_time', label: 'Finish', kind: 'time', narrow: true },
+      {
+        key: 'break_mins',
+        label: 'Break',
+        kind: 'select',
+        numeric: true,
+        narrow: true,
+        options: [
+          { value: '0', label: 'No break' },
+          { value: '30', label: '30 min' },
+          { value: '45', label: '45 min' },
+          { value: '60', label: '60 min' },
+        ],
+      },
       { key: 'hours', label: 'Hours', kind: 'number', step: '0.25', narrow: true },
       { key: 'overtime_hours', label: 'Overtime', kind: 'number', step: '0.25', narrow: true },
     ],
@@ -53,6 +70,9 @@ export const SECTIONS: SectionDef[] = [
       person_name: '',
       role: null,
       area: null,
+      start_time: null,
+      finish_time: null,
+      break_mins: null,
       hours: null,
       overtime_hours: null,
       ...CONFIDENCE_BLANK,
