@@ -2,7 +2,7 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { fetchProduct } from '@/lib/weather/bom';
 import { BOM_PRODUCT_IDS } from '@/lib/weather/derive';
 
-export const maxDuration = 120;
+export const maxDuration = 300;
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
@@ -45,7 +45,13 @@ export async function GET(request: Request) {
 
   report.bom = await refreshProducts(products);
   if (url.searchParams.get('browser') === '1') report.browser = await probeBrowser();
-  if (url.searchParams.get('resume') === '1') report.resumed = await resumeStalled();
+  if (url.searchParams.get('resume') === '1') {
+    report.resumed = await resumeStalled();
+    report.exports = await backfillExports();
+  }
+  if (url.searchParams.get('weekly') === '1') {
+    report.weekly = await sendWeeklyReports(url.searchParams.get('force') === '1');
+  }
   if (url.searchParams.get('remind') === '1') {
     // force=1 bypasses the decision rules — drill support only, so the send
     // and dead-subscription cleanup paths can be proven on a weekend.
@@ -131,6 +137,143 @@ async function sendKnockOffReminders(force = false): Promise<Record<string, numb
   }
 
   return { subscriptions: subs.length, sent, skipped, removed, failed };
+}
+
+/**
+ * Friday at Perth knock-off: every active project with a distribution list
+ * gets the signed week's PDF by email. The sent-marker keeps a retried cron
+ * from double-sending; force is drill support.
+ */
+/**
+ * Any signed entry without a stored export gets one — the safety net behind
+ * the sign-time render. Two per run keeps the sweep inside the budget.
+ */
+async function backfillExports(): Promise<Record<string, unknown>> {
+  const [{ loadDocketEntry }, { collectPhotos }, { renderDailyPdf }] = await Promise.all([
+    import('@/lib/pdf/load'),
+    import('@/lib/pdf/photos'),
+    import('@/lib/pdf/render'),
+  ]);
+  const admin = createAdminClient();
+  const { data: signed } = await admin
+    .from('entries')
+    .select('id, entry_no, project_id')
+    .eq('status', 'signed')
+    .order('signed_at', { ascending: false })
+    .limit(25);
+  // Existence from ONE listing per project — downloading a 7 MB PDF to learn
+  // that it exists is how this sweep once timed the whole function out.
+  const listed = new Map<string, Set<string>>();
+  const exportsOf = async (projectId: string): Promise<Set<string>> => {
+    const cached = listed.get(projectId);
+    if (cached) return cached;
+    const { data } = await admin.storage.from('exports').list(projectId, { limit: 1000 });
+    const names = new Set((data ?? []).map((object) => object.name));
+    listed.set(projectId, names);
+    return names;
+  };
+  const rendered: string[] = [];
+  for (const entry of signed ?? []) {
+    if (rendered.length >= 2) break;
+    const path = `${entry.project_id}/${entry.entry_no}.pdf`;
+    if ((await exportsOf(entry.project_id as string)).has(`${entry.entry_no}.pdf`)) continue;
+    try {
+      const docket = await loadDocketEntry(admin, entry.id as string);
+      if (!docket) continue;
+      const pdf = await renderDailyPdf({ entry: docket, photos: await collectPhotos(admin, docket) });
+      await admin.storage
+        .from('exports')
+        .upload(path, Buffer.from(pdf), { contentType: 'application/pdf', upsert: false });
+      rendered.push(entry.entry_no as string);
+    } catch (error) {
+      console.error(`export backfill failed for ${entry.entry_no}:`, error);
+    }
+  }
+  return { rendered };
+}
+
+async function sendWeeklyReports(force = false): Promise<Record<string, unknown>> {
+  const [{ generateWeeklyReport }, { perthToday }] = await Promise.all([
+    import('@/lib/weekly/generate'),
+    import('@/lib/push/decide'),
+  ]);
+  const admin = createAdminClient();
+  const today = perthToday();
+
+  const monday = (() => {
+    const t = new Date(`${today}T00:00:00Z`);
+    t.setUTCDate(t.getUTCDate() - ((t.getUTCDay() + 6) % 7));
+    return t.toISOString().slice(0, 10);
+  })();
+  const sunday = (() => {
+    const t = new Date(`${monday}T00:00:00Z`);
+    t.setUTCDate(t.getUTCDate() + 6);
+    return t.toISOString().slice(0, 10);
+  })();
+
+  const { data: projects, error } = await admin
+    .from('projects')
+    .select('id, name, code, report_emails, weekly_report_last_sent, org:organisations!inner(code)')
+    .eq('active', true);
+  if (error) return { error: error.message };
+
+  const results: Array<Record<string, unknown>> = [];
+  for (const project of projects ?? []) {
+    const list = (project.report_emails as string[] | null) ?? [];
+    if (list.length === 0) continue;
+    if (!force && project.weekly_report_last_sent === today) {
+      results.push({ project: project.code, skipped: 'already sent today' });
+      continue;
+    }
+    const orgCode = (Array.isArray(project.org) ? project.org[0] : project.org)?.code as string;
+    try {
+      const generation = await generateWeeklyReport(
+        admin,
+        { id: project.id as string, name: project.name as string, code: project.code as string, orgCode },
+        monday,
+        sunday,
+      );
+      if ('empty' in generation) {
+        results.push({ project: project.code, skipped: 'no signed entries this week' });
+        continue;
+      }
+      const send = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${process.env.SMTP_PASS?.trim()}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          from: `Site Diary <${process.env.SMTP_SENDER ?? 'diary@kbsdailydiary.me'}>`,
+          to: list,
+          subject: `Weekly site report — ${project.name}, ${monday} to ${sunday}`,
+          html:
+            `<div style="font-family:Arial,sans-serif;max-width:560px">` +
+            `<p style="font-size:11px;letter-spacing:.08em;color:#1f5c33;font-weight:bold;text-transform:uppercase">Weekly site report</p>` +
+            `<h2 style="margin:.25em 0">${project.name}</h2>` +
+            `<p style="margin:.25em 0">${monday} to ${sunday} · ${generation.data.counts.entryCount} signed ${generation.data.counts.entryCount === 1 ? 'entry' : 'entries'}</p>` +
+            `<p style="margin:.25em 0;color:#555">The report is attached. Tables are the signed record; the commentary is AI-drafted and labelled as such.</p>` +
+            `</div>`,
+          attachments: [
+            {
+              filename: `${orgCode}_${project.code}_weekly_${monday}.pdf`,
+              content: Buffer.from(generation.pdf).toString('base64'),
+            },
+          ],
+        }),
+      });
+      if (!send.ok) {
+        const detail = (await send.json().catch(() => ({}))) as { message?: string };
+        results.push({ project: project.code, error: detail.message ?? send.status });
+        continue;
+      }
+      await admin.from('projects').update({ weekly_report_last_sent: today }).eq('id', project.id);
+      results.push({ project: project.code, sent: list.length, commentary: generation.commentary });
+    } catch (err) {
+      results.push({ project: project.code, error: err instanceof Error ? err.message : String(err) });
+    }
+  }
+  return { week: `${monday}..${sunday}`, projects: results };
 }
 
 /** Only refresh states that a project actually sits in. */

@@ -17,6 +17,7 @@ export interface SettingsData {
   siteLng: number | null;
   bomStationId: string | null;
   active: boolean;
+  reportEmails: string;
   canEdit: boolean;
   codeLocked: boolean;
   orgCodeLocked: boolean;
@@ -62,6 +63,10 @@ export function SettingsForm({ initial }: { initial: SettingsData }) {
       if (orgError) throw new Error(orgError.message);
 
       const projectPatch: Record<string, unknown> = {
+        report_emails: form.reportEmails
+          .split(/[,;\s]+/)
+          .map((address) => address.trim().toLowerCase())
+          .filter((address) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(address)),
         name: form.projectName.trim(),
         principal_contractor: clean(form.principalContractor),
         site_lat: form.siteLat,
@@ -117,6 +122,22 @@ export function SettingsForm({ initial }: { initial: SettingsData }) {
             New job for {form.orgName}
           </Link>
         </div>
+      )}
+
+      {form.canEdit && (
+        <label className="fieldcell">
+          <span className="label">Weekly report emails</span>
+          <input
+            className="field"
+            value={form.reportEmails}
+            placeholder="pm@example.com, ca@example.com"
+            onChange={(e) => set('reportEmails', e.target.value)}
+          />
+          <span className="fieldhint">
+            Every Friday at knock-off, the week&apos;s signed report is emailed here
+            automatically. Leave empty for no automatic send.
+          </span>
+        </label>
       )}
 
       <hr className="rule" />

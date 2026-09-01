@@ -1,3 +1,4 @@
+import { after } from 'next/server';
 import { fail, ok, requireApiUser, isUuid, readJson } from '@/lib/api';
 import { ReviewPayload } from '@/lib/review/schema';
 
@@ -14,6 +15,8 @@ import { ReviewPayload } from '@/lib/review/schema';
  * remain, issues the serial, sets the signature and computes the content hash.
  * None of that is decided here.
  */
+export const maxDuration = 300;
+
 export async function POST(request: Request, context: { params: Promise<{ id: string }> }) {
   const { supabase, user, response } = await requireApiUser();
   if (response) return response;
@@ -68,6 +71,32 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
     .update({ status: 'applied', applied_at: new Date().toISOString(), applied_by: user.id })
     .eq('entry_id', entryId)
     .eq('status', 'pending');
+
+  // The export renders NOW, after the response, while the signing is still
+  // warm — so sharing, emailing and bundling never wait on Chromium again.
+  // Best effort: the ops backfill sweeps any signing this misses.
+  after(async () => {
+    try {
+      const [{ loadDocketEntry }, { collectPhotos }, { renderDailyPdf }, { createAdminClient }] =
+        await Promise.all([
+          import('@/lib/pdf/load'),
+          import('@/lib/pdf/photos'),
+          import('@/lib/pdf/render'),
+          import('@/lib/supabase/admin'),
+        ]);
+      const entry = await loadDocketEntry(supabase, entryId);
+      if (!entry) return;
+      const pdf = await renderDailyPdf({ entry, photos: await collectPhotos(supabase, entry) });
+      await createAdminClient()
+        .storage.from('exports')
+        .upload(`${entry.project_id}/${entry.entry_no}.pdf`, Buffer.from(pdf), {
+          contentType: 'application/pdf',
+          upsert: false,
+        });
+    } catch (error) {
+      console.error(`sign-time export render failed for ${entryId}:`, error);
+    }
+  });
 
   return ok({ entry: signed });
 }

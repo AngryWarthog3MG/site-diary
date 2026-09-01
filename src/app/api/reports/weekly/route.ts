@@ -1,8 +1,7 @@
 import { fail, ok, requireApiUser, isUuid, isDate } from '@/lib/api';
 import { createAdminClient } from '@/lib/supabase/admin';
-import { loadWeeklyData, WeeklyLoadError } from '@/lib/weekly/load';
-import { generateNarrative } from '@/lib/weekly/narrative';
-import { renderWeeklyPdf } from '@/lib/weekly/render';
+import { WeeklyLoadError } from '@/lib/weekly/load';
+import { generateWeeklyReport } from '@/lib/weekly/generate';
 import { BrowserUnavailableError } from '@/lib/pdf/render';
 
 // Chromium plus a narrative call — the slowest route in the app.
@@ -45,9 +44,9 @@ export async function POST(request: Request) {
   if (!project) return fail('not_found', 'That project is not on your account.', 404);
   const orgCode = (Array.isArray(project.org) ? project.org[0] : project.org)?.code as string;
 
-  let data;
+  let generation;
   try {
-    data = await loadWeeklyData(
+    generation = await generateWeeklyReport(
       supabase,
       { id: project.id, name: project.name, code: project.code, orgCode },
       start,
@@ -55,47 +54,23 @@ export async function POST(request: Request) {
     );
   } catch (error) {
     if (error instanceof WeeklyLoadError) return fail('bad_request', error.message, 400);
-    throw error;
+    if (error instanceof BrowserUnavailableError) return fail('server_error', error.message, 501);
+    const message = error instanceof Error ? error.message : 'Weekly generation failed.';
+    return fail('server_error', message, 500);
   }
-
-  if (data.entries.length === 0) {
+  if ('empty' in generation) {
     return fail(
       'not_found',
       'No signed entries in that range. The weekly report only reports the signed record.',
       404,
     );
   }
-
-  const { result: narrative, rejected, failure } = await generateNarrative(data);
-  if (failure) console.error(`weekly narrative failed for ${project.code} ${start}..${end}: ${failure}`);
-  const narrativeNote = rejected
-    ? 'Commentary was withheld: the draft referenced figures not present in the record.'
-    : narrative
-      ? undefined
-      : 'Commentary could not be generated for this report.';
-
-  let pdf: Uint8Array;
-  try {
-    pdf = await renderWeeklyPdf({
-      data,
-      narrative: narrative?.narrative ?? null,
-      narrativeNote,
-    });
-  } catch (error) {
-    if (error instanceof BrowserUnavailableError) return fail('server_error', error.message, 501);
-    const message = error instanceof Error ? error.message : 'PDF rendering failed.';
-    return fail('server_error', `Could not render the weekly PDF: ${message}`, 500);
+  if (generation.narrativeFailure) {
+    console.error(`weekly narrative failed for ${project.code} ${start}..${end}: ${generation.narrativeFailure}`);
   }
+  const objectPath = generation.objectPath;
 
   const admin = createAdminClient();
-  const objectPath = `${project.id}/weekly/${start}_${end}.pdf`;
-  const { error: uploadError } = await admin.storage
-    .from(EXPORTS_BUCKET)
-    .upload(objectPath, Buffer.from(pdf), { contentType: 'application/pdf', upsert: true });
-  if (uploadError) {
-    return fail('server_error', `Could not store the weekly PDF: ${uploadError.message}`, 500);
-  }
-
   const { data: link, error: linkError } = await admin.storage
     .from(EXPORTS_BUCKET)
     .createSignedUrl(objectPath, LINK_TTL_SECONDS);
@@ -106,8 +81,8 @@ export async function POST(request: Request) {
   return ok({
     url: link.signedUrl,
     path: objectPath,
-    entries: data.counts.entryCount,
-    commentary: narrative != null,
-    bytes: pdf.length,
+    entries: generation.data.counts.entryCount,
+    commentary: generation.commentary,
+    bytes: generation.pdf.length,
   });
 }

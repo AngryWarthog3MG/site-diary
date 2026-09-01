@@ -21,7 +21,7 @@ export default async function SettingsPage({
   const [{ data: row }, { data: state }] = await Promise.all([
     supabase
       .from('projects')
-      .select('id, name, code, principal_contractor, site_lat, site_lng, bom_station_id, active, org:organisations!inner(id, name, code)')
+      .select('id, name, code, principal_contractor, site_lat, site_lng, bom_station_id, active, report_emails, org:organisations!inner(id, name, code)')
       .eq('id', current.project_id)
       .single(),
     supabase.rpc('project_settings_state', { p_project_id: current.project_id }),
@@ -53,6 +53,7 @@ export default async function SettingsPage({
     siteLng: row.site_lng,
     bomStationId: row.bom_station_id,
     active: row.active,
+    reportEmails: ((row.report_emails as string[] | null) ?? []).join(', '),
     canEdit: Boolean(flags.can_edit),
     codeLocked: Boolean(flags.code_locked),
     orgCodeLocked: Boolean(flags.org_code_locked),
