@@ -36,7 +36,7 @@ site_url = "http://localhost:3000"
 # A quick Cloudflare tunnel gets a fresh hostname every time it starts, so the
 # wildcard saves re-registering the redirect on each restart. Narrow this to a
 # fixed hostname before anything but testing runs through it.
-additional_redirect_urls = ["http://localhost:3000/**", "https://*.trycloudflare.com/**", "https://*.vercel.app/**"]
+additional_redirect_urls = ["http://localhost:3000/**", "https://*.trycloudflare.com/**", "https://*.vercel.app/**", "https://kbsdailydiary.me/**", "https://www.kbsdailydiary.me/**"]
 jwt_expiry = 3600
 enable_refresh_token_rotation = true
 # 60s, up from the 10s default: a phone waking with several stale PWA tabs
