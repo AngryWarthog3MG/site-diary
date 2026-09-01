@@ -12,7 +12,7 @@
   "functions": {
     "src/app/api/entries/[id]/pdf/route.ts": {
       "memory": 2048,
-      "maxDuration": 120
+      "maxDuration": 300
     }
   },
   "crons": [

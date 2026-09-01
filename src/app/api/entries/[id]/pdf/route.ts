@@ -5,7 +5,7 @@ import { collectPhotos } from '@/lib/pdf/photos';
 import { renderDailyPdf, BrowserUnavailableError } from '@/lib/pdf/render';
 
 // Launching Chromium and laying out a document is not a fast request.
-export const maxDuration = 180;
+export const maxDuration = 300;
 export const runtime = 'nodejs';
 
 const EXPORTS_BUCKET = 'exports';
