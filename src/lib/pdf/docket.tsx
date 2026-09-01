@@ -369,7 +369,7 @@ function totalOf(rows: Row[], digits: number, ...keys: string[]): string | null 
 /** Date and time without seconds — the docket is short of width, not precision. */
 function shortInstant(value: string | null): string {
   const full = formatInstant(value);
-  return full === '—' ? full : full.replace(/:\d{2} UTC$/, ' UTC');
+  return full === '—' ? full : full.replace(/:\d{2} AWST$/, ' AWST');
 }
 
 function joinList(value: unknown): string {

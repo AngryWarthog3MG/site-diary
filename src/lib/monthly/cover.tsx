@@ -23,9 +23,10 @@ function formatSigned(iso: string | null): string {
   if (!iso) return '—';
   const t = Date.parse(iso);
   if (!Number.isFinite(t)) return '—';
-  const d = new Date(t);
+  // AWST: fixed UTC+8, no daylight saving — arithmetic keeps it deterministic.
+  const d = new Date(t + 480 * 60000);
   const pad = (n: number) => String(n).padStart(2, '0');
-  return `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())} ${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())} UTC`;
+  return `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())} ${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())} AWST`;
 }
 
 export function MonthlyCover({ data }: { data: MonthData }): ReactElement {

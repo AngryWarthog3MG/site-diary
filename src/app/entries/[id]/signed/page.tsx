@@ -82,7 +82,7 @@ export default async function SignedPage({ params }: { params: Promise<{ id: str
         <div>
           <p className="label">Signed at</p>
           <p className="mono" style={{ margin: '0.25rem 0 0', fontSize: '0.875rem' }}>
-            {entry.signed_at ? new Date(entry.signed_at).toLocaleString('en-AU') : '—'}
+            {entry.signed_at ? `${new Date(entry.signed_at).toLocaleString('en-AU', { timeZone: 'Australia/Perth' })} AWST` : '—'}
           </p>
         </div>
       </div>

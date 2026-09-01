@@ -8,16 +8,17 @@ import { formatInstant, num, sortRows, text, timeOnly } from './load.ts';
  * someone reaches for a locale formatter or an id-based sort later.
  */
 
-test('a stored instant prints as an unambiguous UTC time', () => {
-  assert.equal(formatInstant('2026-08-25T09:31:04.000+00:00'), '2026-08-25 09:31:04 UTC');
-  assert.equal(formatInstant('2026-08-25T09:31:04Z'), '2026-08-25 09:31:04 UTC');
+test('a stored instant prints as site time — AWST, labelled', () => {
+  // 09:31 UTC is 17:31 on site. AWST is a fixed +8 with no daylight saving,
+  // so the shift is arithmetic and the render stays deterministic.
+  assert.equal(formatInstant('2026-08-25T09:31:04.000+00:00'), '2026-08-25 17:31:04 AWST');
+  assert.equal(formatInstant('2026-08-25T09:31:04Z'), '2026-08-25 17:31:04 AWST');
 });
 
-test('an offset is resolved rather than printed as local time', () => {
-  // 17:31 in Perth is 09:31 UTC. The docket must not claim two different times
-  // for the same moment depending on where it was rendered.
-  assert.equal(formatInstant('2026-08-25T17:31:04+08:00'), '2026-08-25 09:31:04 UTC');
-  assert.equal(formatInstant('2026-08-25T04:31:04-05:00'), '2026-08-25 09:31:04 UTC');
+test('an offset is resolved to the same site time wherever it was written', () => {
+  // Both of these are the same instant; the docket must print one time for it.
+  assert.equal(formatInstant('2026-08-25T17:31:04+08:00'), '2026-08-25 17:31:04 AWST');
+  assert.equal(formatInstant('2026-08-25T04:31:04-05:00'), '2026-08-25 17:31:04 AWST');
 });
 
 test('the same instant prints identically however it was written down', () => {

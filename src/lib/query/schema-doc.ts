@@ -70,7 +70,8 @@ Notes that matter for getting numbers right:
  * Rules for writing the SQL itself. Separate from the schema so the schema can
  * change without touching the instructions and the other way round.
  */
-export const SQL_RULES = `Write one PostgreSQL SELECT statement, and nothing else.
+export const SQL_RULES = `- Timestamps are stored in UTC. When you SELECT a timestamptz column for display, convert it to site time: \`column at time zone 'Australia/Perth'\` and label it AWST.
+Write one PostgreSQL SELECT statement, and nothing else.
 
 - One statement. No semicolon, no comments, no CTE that writes.
 - Read only from diary.* views. Common table expressions are fine.

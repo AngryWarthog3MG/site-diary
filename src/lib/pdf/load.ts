@@ -182,11 +182,13 @@ export function formatInstant(value: string | null): string {
     return `${y}-${mo}-${d} ${h}:${mi}:${s}`;
   }
 
-  const at = new Date(minutes * 60000);
+  // Site time: AWST is UTC+8 with no daylight saving, ever — a fixed shift,
+  // so the render stays deterministic with no timezone database involved.
+  const at = new Date((minutes + 480) * 60000);
   const pad = (n: number) => String(n).padStart(2, '0');
   return (
     `${at.getUTCFullYear()}-${pad(at.getUTCMonth() + 1)}-${pad(at.getUTCDate())} ` +
-    `${pad(at.getUTCHours())}:${pad(at.getUTCMinutes())}:${pad(at.getUTCSeconds())} UTC`
+    `${pad(at.getUTCHours())}:${pad(at.getUTCMinutes())}:${pad(at.getUTCSeconds())} AWST`
   );
 }
 
