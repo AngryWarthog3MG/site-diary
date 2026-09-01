@@ -49,6 +49,11 @@ export async function GET(request: Request) {
     report.resumed = await resumeStalled();
     report.exports = await backfillExports();
   }
+  if (url.searchParams.get('backup') === '1') report.backup = await snapshotRecord();
+  if (url.searchParams.get('errors') === '1') report.errors = await errorDigest();
+  if (url.searchParams.get('monthly') === '1') {
+    report.monthly = await sendMonthlyBundles(url.searchParams.get('force') === '1');
+  }
   if (url.searchParams.get('weekly') === '1') {
     report.weekly = await sendWeeklyReports(url.searchParams.get('force') === '1');
   }
@@ -137,6 +142,192 @@ async function sendKnockOffReminders(force = false): Promise<Record<string, numb
   }
 
   return { subscriptions: subs.length, sent, skipped, removed, failed };
+}
+
+/**
+ * The nightly snapshot: every record table as JSON, into a reserved prefix
+ * of the exports bucket that no project member can read (the policy reads
+ * the first path segment as a project id). Fourteen dailies are kept. Not a
+ * substitute for real point-in-time recovery — it is the copy the record
+ * owns when the worst happens on a free tier.
+ */
+async function snapshotRecord(): Promise<Record<string, unknown>> {
+  const admin = createAdminClient();
+  const tables = [
+    'organisations', 'projects', 'project_members', 'project_keywords', 'profiles',
+    'entries', 'entry_sections', 'entry_audio', 'entry_text', 'entry_extractions',
+    'labour', 'plant', 'work_items', 'variations', 'delays', 'pours', 'quantities',
+    'dayworks', 'photos', 'weather', 'push_subscriptions',
+  ];
+  const snapshot: Record<string, unknown[]> = {};
+  for (const table of tables) {
+    const rows: unknown[] = [];
+    for (let fromRow = 0; ; fromRow += 1000) {
+      const { data, error } = await admin.from(table).select('*').range(fromRow, fromRow + 999);
+      if (error) return { error: `${table}: ${error.message}` };
+      rows.push(...(data ?? []));
+      if (!data || data.length < 1000) break;
+    }
+    snapshot[table] = rows;
+  }
+
+  const { perthToday } = await import('@/lib/push/decide');
+  const today = perthToday();
+  const body = Buffer.from(JSON.stringify({ taken_at: new Date().toISOString(), tables: snapshot }));
+  const { error: uploadError } = await admin.storage
+    .from('exports')
+    .upload(`_backups/${today}.json`, body, { contentType: 'application/json', upsert: true });
+  if (uploadError) return { error: uploadError.message };
+
+  // Retention: fourteen dailies.
+  const { data: existing } = await admin.storage.from('exports').list('_backups', { limit: 100 });
+  const stale = (existing ?? [])
+    .map((object) => object.name)
+    .sort()
+    .slice(0, -14);
+  if (stale.length > 0) {
+    await admin.storage.from('exports').remove(stale.map((name) => `_backups/${name}`));
+  }
+  return { stored: `_backups/${today}.json`, bytes: body.length, pruned: stale.length };
+}
+
+/**
+ * The nightly error digest: anything phones reported in the last 24 hours is
+ * summarised and emailed to the operator; rows older than 30 days are
+ * trimmed. Finding out from the digest beats finding out from the phone call.
+ */
+async function errorDigest(): Promise<Record<string, unknown>> {
+  const admin = createAdminClient();
+  const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+  const { data: recent, error } = await admin
+    .from('client_errors')
+    .select('message, path, occurred_at')
+    .gte('occurred_at', since)
+    .order('occurred_at', { ascending: false })
+    .limit(50);
+  if (error) return { error: error.message };
+
+  await admin
+    .from('client_errors')
+    .delete()
+    .lt('occurred_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString());
+
+  if (!recent || recent.length === 0) return { last24h: 0 };
+
+  const byMessage = new Map<string, { count: number; path: string | null }>();
+  for (const row of recent) {
+    const key = row.message as string;
+    const bucket = byMessage.get(key) ?? { count: 0, path: row.path as string | null };
+    bucket.count += 1;
+    byMessage.set(key, bucket);
+  }
+  const lines = [...byMessage.entries()]
+    .sort((a, b) => b[1].count - a[1].count)
+    .map(([message, info]) => `<li><b>${info.count}×</b> ${message.slice(0, 160)} <i>${info.path ?? ''}</i></li>`)
+    .join('');
+
+  await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${process.env.SMTP_PASS?.trim()}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      from: `Site Diary <${process.env.SMTP_SENDER ?? 'diary@kbsdailydiary.me'}>`,
+      to: ['mitchell.vanzyl@gmail.com'],
+      subject: `KBS Daily Diary: ${recent.length} client error${recent.length === 1 ? '' : 's'} in the last 24h`,
+      html: `<div style="font-family:Arial,sans-serif"><p>Phones reported these in the last 24 hours:</p><ul>${lines}</ul></div>`,
+    }),
+  }).catch(() => {});
+
+  return { last24h: recent.length, distinct: byMessage.size, emailed: true };
+}
+
+/**
+ * First of the month, Perth time: the previous month's bundle goes to the
+ * same distribution list as the weekly. Bundles can be heavy, so past 30 MB
+ * the email carries a seven-day link instead of the attachment.
+ */
+async function sendMonthlyBundles(force = false): Promise<Record<string, unknown>> {
+  const [{ generateMonthlyBundle }, { perthToday }] = await Promise.all([
+    import('@/lib/monthly/generate'),
+    import('@/lib/push/decide'),
+  ]);
+  const admin = createAdminClient();
+  const today = perthToday();
+  if (!force && !today.endsWith('-01')) return { skipped: 'not the first of the month' };
+
+  const previousMonth = (() => {
+    const t = new Date(`${today.slice(0, 7)}-01T00:00:00Z`);
+    t.setUTCMonth(t.getUTCMonth() - 1);
+    return t.toISOString().slice(0, 7);
+  })();
+
+  const { data: projects } = await admin
+    .from('projects')
+    .select('id, name, code, report_emails, monthly_report_last_sent, org:organisations!inner(code)')
+    .eq('active', true);
+
+  const results: Array<Record<string, unknown>> = [];
+  for (const project of projects ?? []) {
+    const list = (project.report_emails as string[] | null) ?? [];
+    if (list.length === 0) continue;
+    if (!force && project.monthly_report_last_sent === today) {
+      results.push({ project: project.code, skipped: 'already sent' });
+      continue;
+    }
+    const orgCode = (Array.isArray(project.org) ? project.org[0] : project.org)?.code as string;
+    try {
+      const generation = await generateMonthlyBundle(
+        admin,
+        { id: project.id as string, name: project.name as string, code: project.code as string, orgCode },
+        previousMonth,
+      );
+      if ('empty' in generation) {
+        results.push({ project: project.code, skipped: 'no signed entries that month' });
+        continue;
+      }
+      const heavy = generation.pdf.length > 30 * 1024 * 1024;
+      let linkUrl: string | null = null;
+      if (heavy) {
+        const { data: link } = await admin.storage
+          .from('exports')
+          .createSignedUrl(generation.objectPath, 7 * 24 * 60 * 60);
+        linkUrl = link?.signedUrl ?? null;
+      }
+      const send = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${process.env.SMTP_PASS?.trim()}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          from: `Site Diary <${process.env.SMTP_SENDER ?? 'diary@kbsdailydiary.me'}>`,
+          to: list,
+          subject: `Monthly diary bundle — ${project.name}, ${previousMonth}`,
+          html:
+            `<div style="font-family:Arial,sans-serif;max-width:560px">` +
+            `<p style="font-size:11px;letter-spacing:.08em;color:#1f5c33;font-weight:bold;text-transform:uppercase">Monthly diary bundle</p>` +
+            `<h2 style="margin:.25em 0">${project.name} — ${previousMonth}</h2>` +
+            `<p style="margin:.25em 0;color:#555">${generation.data.entries.length} signed dockets behind a cover index of serials and content hashes. Verify any docket at kbsdailydiary.me/verify.</p>` +
+            (heavy && linkUrl ? `<p><a href="${linkUrl}">Download the bundle</a> (link valid seven days — too large to attach).</p>` : '') +
+            `</div>`,
+          attachments: heavy
+            ? []
+            : [
+                {
+                  filename: `${orgCode}_${project.code}_${previousMonth}.pdf`,
+                  content: Buffer.from(generation.pdf).toString('base64'),
+                },
+              ],
+        }),
+      });
+      if (!send.ok) {
+        const detail = (await send.json().catch(() => ({}))) as { message?: string };
+        results.push({ project: project.code, error: detail.message ?? send.status });
+        continue;
+      }
+      await admin.from('projects').update({ monthly_report_last_sent: today }).eq('id', project.id);
+      results.push({ project: project.code, sent: list.length, month: previousMonth, heavy });
+    } catch (err) {
+      results.push({ project: project.code, error: err instanceof Error ? err.message : String(err) });
+    }
+  }
+  return { month: previousMonth, projects: results };
 }
 
 /**

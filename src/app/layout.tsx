@@ -39,6 +39,8 @@ export const viewport: Viewport = {
   viewportFit: 'cover',
 };
 
+import { ErrorReporter } from '@/components/error-reporter';
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html
@@ -46,6 +48,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       className={`${plexSans.variable} ${plexCondensed.variable} ${plexMono.variable}`}
     >
       <body>
+        <ErrorReporter />
         {children}
         <ServiceWorkerRegistration />
       </body>
