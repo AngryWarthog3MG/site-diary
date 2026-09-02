@@ -10,6 +10,8 @@ jobs:
   sql-suites:
     name: SQL suites against the hosted database
     runs-on: ubuntu-latest
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
     # The suites gate signing, immutability and RLS — the checks nothing in
     # the default test path touches. Skips cleanly if the secret is absent.
     steps:
@@ -18,9 +20,7 @@ jobs:
         with:
           version: latest
       - name: Run every suite
-        if: ${{ secrets.SUPABASE_ACCESS_TOKEN != '' }}
-        env:
-          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+        if: ${{ env.SUPABASE_ACCESS_TOKEN != '' }}
         run: |
           set -e
           for f in supabase/tests/0*.sql; do
