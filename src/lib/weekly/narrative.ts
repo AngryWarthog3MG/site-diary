@@ -65,8 +65,11 @@ export function allowedNumbers(data: unknown): Set<number> {
 
 /** The numerals in a narrative that the data cannot account for. */
 export function unaccountedNumbers(narrative: string, allowed: Set<number>): string[] {
+  // "$4,500" is the figure 4500, not a 4 and a 500 — fold digit-grouping
+  // commas before scanning, or every currency amount is a false rejection.
+  const folded = narrative.replace(/(\d),(?=\d{3}(?!\d))/g, '$1');
   const offending: string[] = [];
-  for (const match of narrative.matchAll(/\d+(?:\.\d+)?/g)) {
+  for (const match of folded.matchAll(/\d+(?:\.\d+)?/g)) {
     if (!allowed.has(Number(match[0]))) offending.push(match[0]);
   }
   return [...new Set(offending)];

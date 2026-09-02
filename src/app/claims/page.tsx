@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { DraftClaimButton } from './draft-button';
 import { createClient } from '@/lib/supabase/server';
 import { requireUser, resolveProject } from '@/lib/auth';
 import { loadClaimsData, type ClaimsData } from '@/lib/claims/load';
@@ -75,7 +76,8 @@ export default async function ClaimsPage({
           download
         >
           Export CSV
-        </a>
+        </a>{' '}
+        <DraftClaimButton projectId={current.project_id} />
       </div>
       <hr className="rule" />
 

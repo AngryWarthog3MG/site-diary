@@ -20,3 +20,9 @@ test('an invented decimal is caught even when its integer part exists', () => {
   const allowed = allowedNumbers({ volume: 12 });
   assert.deepEqual(unaccountedNumbers('Poured 12.5 cubes.', allowed), ['12.5']);
 });
+
+test('digit-grouping commas fold before the scan — $4,500 is 4500', () => {
+  const allowed = allowedNumbers({ estimated_cost: 4500 });
+  assert.deepEqual(unaccountedNumbers('Directed work valued at $4,500.', allowed), []);
+  assert.deepEqual(unaccountedNumbers('Roughly $4,600 of work.', allowed), ['4600']);
+});

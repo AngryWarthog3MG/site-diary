@@ -2423,3 +2423,9 @@ body {
 .sigpad__actions .button { width: auto; margin: 0; padding: 0.4rem 1rem; }
 .sigslot { margin-top: 0.75rem; }
 .sigslot__image { max-height: 6rem; background: #fff; border: 1px solid var(--ink-12); border-radius: 0.5rem; padding: 0.25rem 0.75rem; }
+
+/* The drafted claim skeleton. */
+.claim-draft { margin-top: 1rem; border: 1px solid var(--amber); border-radius: 0.5rem; background: var(--amber-tint); }
+.claim-draft__head { display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding: 0.625rem 0.875rem; border-bottom: 1px dashed var(--amber); }
+.claim-draft__head .label { color: var(--amber); margin: 0; }
+.claim-draft__body { margin: 0; padding: 0.875rem; font-family: inherit; font-size: 0.875rem; line-height: 1.55; white-space: pre-wrap; }
