@@ -4,6 +4,7 @@ import { loadMonthEntries, monthRange, type MonthData } from './bundle';
 import { renderMonthlyBundle } from './render';
 import { loadDocketEntry } from '@/lib/pdf/load';
 import { collectPhotos } from '@/lib/pdf/photos';
+import { collectSignatures } from '@/lib/pdf/photos';
 import { renderDailyPdf } from '@/lib/pdf/render';
 
 /**
@@ -40,7 +41,11 @@ export async function generateMonthlyBundle(
     }
     const docket = await loadDocketEntry(supabase, entry.id);
     if (!docket) throw new Error(`Entry ${entry.entry_no} could not be loaded.`);
-    const pdf = await renderDailyPdf({ entry: docket, photos: await collectPhotos(supabase, docket) });
+    const pdf = await renderDailyPdf({
+      entry: docket,
+      photos: await collectPhotos(supabase, docket),
+      signatures: await collectSignatures(supabase, docket),
+    });
     await admin.storage
       .from('exports')
       .upload(path, Buffer.from(pdf), { contentType: 'application/pdf', upsert: false });

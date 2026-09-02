@@ -340,7 +340,7 @@ async function sendMonthlyBundles(force = false): Promise<Record<string, unknown
  * the sign-time render. Two per run keeps the sweep inside the budget.
  */
 async function backfillExports(): Promise<Record<string, unknown>> {
-  const [{ loadDocketEntry }, { collectPhotos }, { renderDailyPdf }] = await Promise.all([
+  const [{ loadDocketEntry }, { collectPhotos, collectSignatures }, { renderDailyPdf }] = await Promise.all([
     import('@/lib/pdf/load'),
     import('@/lib/pdf/photos'),
     import('@/lib/pdf/render'),
@@ -371,7 +371,11 @@ async function backfillExports(): Promise<Record<string, unknown>> {
     try {
       const docket = await loadDocketEntry(admin, entry.id as string);
       if (!docket) continue;
-      const pdf = await renderDailyPdf({ entry: docket, photos: await collectPhotos(admin, docket) });
+      const pdf = await renderDailyPdf({
+        entry: docket,
+        photos: await collectPhotos(admin, docket),
+        signatures: await collectSignatures(admin, docket),
+      });
       await admin.storage
         .from('exports')
         .upload(path, Buffer.from(pdf), { contentType: 'application/pdf', upsert: false });
@@ -703,7 +707,7 @@ async function probeBrowser() {
         signed_at: null, content_hash: null, supersedes_entry_id: null, notes: null,
         supersedes_entry_no: null, project_id: 'probe', org_name: 'Probe', org_code: 'PRB',
         project_name: 'Probe', project_code: 'P001', principal_contractor: null,
-        author_name: 'Probe', labour: [], plant: [], work_items: [], variations: [],
+        author_name: 'Probe', labour: [], plant: [], work_items: [], variations: [], signatures: [],
         delays: [], pours: [], quantities: [], dayworks: [], photos: [], weather: null, sections: {},
       },
       photos: [],

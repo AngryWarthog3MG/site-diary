@@ -1,6 +1,7 @@
 import { PDFDocument } from 'pdf-lib';
 import type { Browser } from 'playwright-core';
 import { DailyDocket, type PhotoImage } from './docket';
+import type { SignatureImage } from './photos';
 import { DOCKET_CSS } from './styles';
 import { EMBEDDED_FONT_CSS } from './fonts';
 import type { DocketEntry } from './load';
@@ -32,6 +33,7 @@ import type { DocketEntry } from './load';
 export interface RenderInput {
   entry: DocketEntry;
   photos: PhotoImage[];
+  signatures?: SignatureImage[];
 }
 
 /**
@@ -39,9 +41,9 @@ export interface RenderInput {
  * `react-dom/server` import anywhere in a route's graph, and this only ever
  * runs on the server anyway.
  */
-export async function buildDocketHtml({ entry, photos }: RenderInput): Promise<string> {
+export async function buildDocketHtml({ entry, photos, signatures }: RenderInput): Promise<string> {
   const { renderToStaticMarkup } = await import('react-dom/server');
-  const markup = renderToStaticMarkup(DailyDocket({ entry, photos }));
+  const markup = renderToStaticMarkup(DailyDocket({ entry, photos, signatures: signatures ?? [] }));
   return [
     '<!doctype html>',
     '<html lang="en-AU"><head><meta charset="utf-8">',

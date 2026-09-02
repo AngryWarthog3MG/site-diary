@@ -1,6 +1,7 @@
 import { BOM_ATTRIBUTION } from '../weather/attribution';
 import { LOGO_DATA_URI } from './logo';
 import type { DocketEntry, Row } from './load';
+import type { SignatureImage } from './photos';
 import { formatInstant, num, text, timeOnly } from './load';
 
 /**
@@ -25,7 +26,15 @@ const SECTION_LABELS: Record<string, string> = {
   weather: 'Weather',
 };
 
-export function DailyDocket({ entry, photos }: { entry: DocketEntry; photos: PhotoImage[] }) {
+export function DailyDocket({
+  entry,
+  photos,
+  signatures = [],
+}: {
+  entry: DocketEntry;
+  photos: PhotoImage[];
+  signatures?: SignatureImage[];
+}) {
   const dayworks = entry.dayworks ?? [];
   return (
     <article className="docket">
@@ -162,7 +171,7 @@ export function DailyDocket({ entry, photos }: { entry: DocketEntry; photos: Pho
       )}
 
       <Photos photos={photos} />
-      <Signature entry={entry} />
+      <Signature entry={entry} signatures={signatures} />
     </article>
   );
 }
@@ -316,13 +325,34 @@ function Photos({ photos }: { photos: PhotoImage[] }) {
   );
 }
 
-function Signature({ entry }: { entry: DocketEntry }) {
+function Signature({
+  entry,
+  signatures,
+}: {
+  entry: DocketEntry;
+  signatures: SignatureImage[];
+}) {
   const signed = entry.status === 'signed';
   return (
     <section className="sig">
       <p className="lbl">{signed ? 'Signed' : 'Unsigned draft'}</p>
       {signed ? (
         <>
+          {signatures.length > 0 && (
+            <div className="sig__drawn">
+              {signatures.map((signature) => (
+                <figure key={signature.role}>
+                  <img src={signature.src} alt="" />
+                  <figcaption>
+                    <span className="lbl">
+                      {signature.role === 'supervisor' ? 'Supervisor' : 'Client / principal'}
+                    </span>
+                    {signature.name}
+                  </figcaption>
+                </figure>
+              ))}
+            </div>
+          )}
           <div className="sig__grid">
             <div>
               <p className="lbl">Signatory</p>

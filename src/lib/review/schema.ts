@@ -146,6 +146,13 @@ export const ReviewSection = z.object({
   note: nullableText,
 });
 
+export const ReviewSignature = z.object({
+  role: z.enum(['supervisor', 'client']),
+  signatory_name: z.string().trim().min(1),
+  image_path: z.string().min(1),
+});
+export type ReviewSignature = z.infer<typeof ReviewSignature>;
+
 export const ReviewPayload = z.object({
   labour: z.array(ReviewLabour).default([]),
   plant: z.array(ReviewPlant).default([]),
@@ -166,6 +173,7 @@ export const ReviewPayload = z.object({
   sections: z.array(ReviewSection).default([]),
   weather_impact: nullableText,
   notes: nullableText,
+  signatures: z.array(ReviewSignature).default([]),
 });
 
 export type ReviewPayload = z.infer<typeof ReviewPayload>;

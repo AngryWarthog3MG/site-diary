@@ -15,6 +15,7 @@ import {
   type ItemGroup,
   type PhotoCategory,
   type ReviewPhoto,
+  type ReviewSignature,
   type ReviewWeatherReading,
   type ReviewPayload,
 } from '@/lib/review/schema';
@@ -27,6 +28,7 @@ import {
 } from '@/lib/docket/reconcile';
 import { compressPhoto } from '@/lib/photos/compress';
 import { BrandMark } from '@/components/brand-mark';
+import { SignaturePad } from './signature-pad';
 import type { ReviewWeather } from './page';
 
 type Item = Record<string, unknown>;
@@ -50,12 +52,13 @@ const REQUIRED_GROUP: Partial<Record<SectionKey, ItemGroup>> = {
 };
 
 const PHOTO_BUCKET = 'entry-photos';
-type ReviewTab = ItemGroup | 'photos' | 'weather' | 'notes';
+type ReviewTab = ItemGroup | 'photos' | 'weather' | 'notes' | 'signoff';
 const REVIEW_TABS: Array<{ key: ReviewTab; label: string }> = [
   ...SECTIONS.map((section) => ({ key: section.group, label: section.title })),
   { key: 'photos', label: 'Photos' },
   { key: 'weather', label: 'Weather' },
   { key: 'notes', label: 'Notes' },
+  { key: 'signoff', label: 'Sign-off' },
 ];
 
 /**
@@ -335,6 +338,14 @@ export function ReviewScreen(props: {
         low: false,
       };
     }
+    if (tab === 'signoff') {
+      return {
+        count: payload.signatures.length,
+        needsAnswer: false,
+        hasGap: false,
+        low: false,
+      };
+    }
     const section = SECTIONS.find((s) => s.group === tab);
     const items = (payload[tab] as Item[]) ?? [];
     const sectionKey = Object.entries(REQUIRED_GROUP).find(([, group]) => group === tab)?.[0] as
@@ -457,6 +468,15 @@ export function ReviewScreen(props: {
             onAdd={addItem}
             onBulkAdd={bulkAdd}
             onRemove={removeItem}
+          />
+        )}
+
+        {activeTab === 'signoff' && (
+          <SignaturesBlock
+            projectId={props.projectId}
+            entryId={props.entryId}
+            signatures={payload.signatures}
+            onChange={(signatures) => setPayload((prev) => ({ ...prev, signatures }))}
           />
         )}
 
@@ -1510,5 +1530,132 @@ function CrewShortcuts({
         </ul>
       )}
     </div>
+  );
+}
+
+
+/**
+ * The sign-off tab: the supervisor's mark and the client's, drawn on the
+ * phone before the database issues the formal signature. Both are optional —
+ * a client is not always on site — and each saved mark is an image in the
+ * entry's own storage path, frozen with everything else at signing.
+ */
+function SignaturesBlock({
+  projectId,
+  entryId,
+  signatures,
+  onChange,
+}: {
+  projectId: string;
+  entryId: string;
+  signatures: ReviewSignature[];
+  onChange: (signatures: ReviewSignature[]) => void;
+}) {
+  const urls = useSignedUrls(signatures.map((s) => s.image_path));
+
+  return (
+    <section>
+      <div className="review-section-head">
+        <div>
+          <p className="label">Sign-off</p>
+          <h2>Sign-off</h2>
+        </div>
+      </div>
+      <p style={{ margin: '0.25rem 0 1rem', color: 'var(--ink-60)', fontSize: '0.875rem' }}>
+        Sign with a finger. Both marks print on the docket beside the entry&apos;s serial and
+        hash. The client&apos;s is optional — capture it when they are on site.
+      </p>
+      {(['supervisor', 'client'] as const).map((role) => (
+        <SignatureSlot
+          key={role}
+          role={role}
+          projectId={projectId}
+          entryId={entryId}
+          existing={signatures.find((s) => s.role === role) ?? null}
+          existingUrl={
+            urls[signatures.find((s) => s.role === role)?.image_path ?? ''] ?? null
+          }
+          onSaved={(signature) =>
+            onChange([...signatures.filter((s) => s.role !== role), signature])
+          }
+          onRemoved={() => onChange(signatures.filter((s) => s.role !== role))}
+        />
+      ))}
+    </section>
+  );
+}
+
+function SignatureSlot({
+  role,
+  projectId,
+  entryId,
+  existing,
+  existingUrl,
+  onSaved,
+  onRemoved,
+}: {
+  role: 'supervisor' | 'client';
+  projectId: string;
+  entryId: string;
+  existing: ReviewSignature | null;
+  existingUrl: string | null;
+  onSaved: (signature: ReviewSignature) => void;
+  onRemoved: () => void;
+}) {
+  const [name, setName] = useState(existing?.signatory_name ?? '');
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function save(blob: Blob) {
+    const trimmed = name.trim();
+    if (!trimmed) {
+      setError('Put the signatory’s name in first.');
+      return;
+    }
+    setSaving(true);
+    setError(null);
+    try {
+      const supabase = createClient();
+      const path = `${projectId}/${entryId}/signature-${role}-${crypto.randomUUID()}.png`;
+      const { error: uploadError } = await supabase.storage
+        .from(PHOTO_BUCKET)
+        .upload(path, blob, { contentType: 'image/png', upsert: false });
+      if (uploadError) throw new Error(uploadError.message);
+      onSaved({ role, signatory_name: trimmed, image_path: path });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'The signature did not save.');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <article className="item sigslot">
+      <p className="label">{role === 'supervisor' ? 'Supervisor' : 'Client / principal'}</p>
+      {existing && existingUrl ? (
+        <>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img className="sigslot__image" src={existingUrl} alt={`${existing.signatory_name} signature`} />
+          <p style={{ margin: '0.25rem 0 0.5rem' }}>{existing.signatory_name}</p>
+          <button type="button" className="quotebtn quotebtn--remove" onClick={onRemoved}>
+            Remove and redo
+          </button>
+        </>
+      ) : (
+        <>
+          <label className="fieldcell">
+            <span className="label">Name</span>
+            <input
+              className="field field--sm"
+              value={name}
+              placeholder={role === 'supervisor' ? 'Matty' : 'J. Smith — Lendlease'}
+              onChange={(event) => setName(event.target.value)}
+            />
+          </label>
+          <SignaturePad saving={saving} onSave={save} />
+          {error && <p className="alert">{error}</p>}
+        </>
+      )}
+    </article>
   );
 }

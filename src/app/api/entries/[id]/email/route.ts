@@ -2,6 +2,7 @@ import { fail, ok, requireApiUser, isUuid, readJson } from '@/lib/api';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { loadDocketEntry } from '@/lib/pdf/load';
 import { collectPhotos } from '@/lib/pdf/photos';
+import { collectSignatures } from '@/lib/pdf/photos';
 import { renderDailyPdf, BrowserUnavailableError } from '@/lib/pdf/render';
 
 export const maxDuration = 300;
@@ -56,6 +57,7 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
       const rendered = await renderDailyPdf({
         entry,
         photos: await collectPhotos(supabase, entry),
+        signatures: await collectSignatures(supabase, entry),
       });
       pdf = Buffer.from(rendered);
       await admin.storage

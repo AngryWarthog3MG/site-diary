@@ -2,6 +2,7 @@ import { fail, ok, requireApiUser, isUuid } from '@/lib/api';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { loadDocketEntry } from '@/lib/pdf/load';
 import { collectPhotos } from '@/lib/pdf/photos';
+import { collectSignatures } from '@/lib/pdf/photos';
 import { renderDailyPdf, BrowserUnavailableError } from '@/lib/pdf/render';
 
 // Launching Chromium and laying out a document is not a fast request.
@@ -58,7 +59,11 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
 
   let pdf: Uint8Array;
   try {
-    pdf = await renderDailyPdf({ entry, photos: await collectPhotos(supabase, entry) });
+    pdf = await renderDailyPdf({
+      entry,
+      photos: await collectPhotos(supabase, entry),
+      signatures: await collectSignatures(supabase, entry),
+    });
   } catch (error) {
     // A host without a browser is a deployment gap, not a broken record — say
     // which it is rather than handing back a stack trace.

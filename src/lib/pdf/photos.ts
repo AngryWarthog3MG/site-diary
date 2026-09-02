@@ -105,3 +105,31 @@ export async function collectPhotos(
 
   return images;
 }
+
+
+export interface SignatureImage {
+  role: string;
+  name: string;
+  /** data: URI for the PDF; the screen docket substitutes signed URLs. */
+  src: string;
+}
+
+/** The drawn sign-off marks, embedded the same archival way as photographs. */
+export async function collectSignatures(
+  supabase: SupabaseClient,
+  entry: DocketEntry,
+): Promise<SignatureImage[]> {
+  const images: SignatureImage[] = [];
+  for (const row of entry.signatures ?? []) {
+    const { data } = await supabase.storage.from(PHOTO_BUCKET).download(row.image_path as string);
+    if (!data) continue;
+    const bytes = Buffer.from(await data.arrayBuffer());
+    images.push({
+      role: String(row.role),
+      name: String(row.signatory_name),
+      src: `data:image/png;base64,${bytes.toString('base64')}`,
+    });
+  }
+  // Supervisor before client, always — order is part of the layout.
+  return images.sort((a, b) => (a.role === 'supervisor' ? -1 : 1) - (b.role === 'supervisor' ? -1 : 1));
+}

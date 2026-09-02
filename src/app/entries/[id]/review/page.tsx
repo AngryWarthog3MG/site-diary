@@ -29,7 +29,7 @@ export default async function ReviewPage({ params }: { params: Promise<{ id: str
       `id, project_id, entry_date, status, author_id, transcript_raw, entry_no, notes,
        project:projects!inner(id, name, code, org:organisations!inner(code)),
        labour(*), plant(*), work_items(*), variations(*), delays(*), pours(*),
-       quantities(*), dayworks(*), photos(*), entry_sections(*), weather(*)`,
+       quantities(*), dayworks(*), photos(*), entry_signatures(*), entry_sections(*), weather(*)`,
     )
     .eq('id', id)
     .maybeSingle();
@@ -104,6 +104,13 @@ export default async function ReviewPage({ params }: { params: Promise<{ id: str
     weather_impact:
       (weather?.observed_impact as string | null) ??
       ((proposal as { weather_impact?: string | null } | null)?.weather_impact ?? null),
+    signatures: (rows('entry_signatures') as unknown as Array<Record<string, unknown>>).map(
+      (row) => ({
+        role: row.role,
+        signatory_name: row.signatory_name,
+        image_path: row.image_path,
+      }),
+    ),
     notes:
       (stored.notes as string | null) ??
       ((proposal as { notes?: string | null } | null)?.notes ?? null),

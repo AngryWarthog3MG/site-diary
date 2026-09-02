@@ -77,7 +77,7 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
   // Best effort: the ops backfill sweeps any signing this misses.
   after(async () => {
     try {
-      const [{ loadDocketEntry }, { collectPhotos }, { renderDailyPdf }, { createAdminClient }] =
+      const [{ loadDocketEntry }, { collectPhotos, collectSignatures }, { renderDailyPdf }, { createAdminClient }] =
         await Promise.all([
           import('@/lib/pdf/load'),
           import('@/lib/pdf/photos'),
@@ -86,7 +86,11 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
         ]);
       const entry = await loadDocketEntry(supabase, entryId);
       if (!entry) return;
-      const pdf = await renderDailyPdf({ entry, photos: await collectPhotos(supabase, entry) });
+      const pdf = await renderDailyPdf({
+        entry,
+        photos: await collectPhotos(supabase, entry),
+        signatures: await collectSignatures(supabase, entry),
+      });
       await createAdminClient()
         .storage.from('exports')
         .upload(`${entry.project_id}/${entry.entry_no}.pdf`, Buffer.from(pdf), {

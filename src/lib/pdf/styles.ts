@@ -220,6 +220,13 @@ tfoot td:first-child {
 }
 .photos figcaption { margin-top: 1mm; font-size: 7.5pt; color: #5A6469; }
 
+/* Drawn sign-off marks. */
+.sig__drawn { display: flex; gap: 10mm; margin: 2mm 0 3mm; }
+.sig__drawn figure { margin: 0; }
+.sig__drawn img { height: 16mm; width: auto; display: block; border-bottom: 0.6pt solid #131A1E; }
+.sig__drawn figcaption { margin-top: 1mm; font-size: 8.5pt; }
+.sig__drawn figcaption .lbl { display: block; }
+
 /* Signature */
 .sig {
   margin-top: 6mm;
