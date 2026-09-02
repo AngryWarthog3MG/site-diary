@@ -24,7 +24,7 @@ jobs:
         run: |
           set -e
           for f in supabase/tests/0*.sql; do
-            out=$(supabase db query --project-ref upnkkqqwstwtmfqmmbjh -f "$f" 2>&1) || { echo "FAIL $f"; echo "$out" | tail -5; exit 1; }
+            out=$(supabase db query --linked --project-ref upnkkqqwstwtmfqmmbjh -f "$f" 2>&1) || { echo "FAIL $f"; echo "$out" | tail -5; exit 1; }
             if echo "$out" | grep -qiE '"_tag":"Error"|exception'; then
               echo "FAIL $f"; echo "$out" | grep -i message | head -3; exit 1
             fi
