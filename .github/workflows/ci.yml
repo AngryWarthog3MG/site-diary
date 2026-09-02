@@ -1,0 +1,26 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  gates:
+    name: Typecheck, unit tests, PDF byte-identity
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 26
+          cache: npm
+      - run: npm ci
+      - name: Typecheck
+        run: npx tsc --noEmit
+      - name: Unit tests
+        run: node --test 'src/**/*.test.ts'
+      - name: Playwright Chromium (for the PDF determinism check)
+        run: npx playwright install chromium --with-deps
+      - name: PDF byte-identity
+        run: npm run pdf:check
