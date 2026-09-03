@@ -1723,6 +1723,17 @@ body {
   margin-top: 0;
 }
 
+/* Camera and gallery, side by side — a phone offers both ways in. */
+.photo-add-pair {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.photo-add-pair .review-add {
+  min-width: 0;
+}
+
 .review-muted,
 .review-empty {
   margin: 0.5rem 0 0;
@@ -1943,6 +1954,16 @@ body {
   .review-question .button {
     width: 100%;
     margin-top: 0.75rem;
+  }
+
+  .photo-add-pair {
+    margin-top: 0.75rem;
+  }
+
+  .photo-add-pair .button {
+    width: auto;
+    flex: 1;
+    margin-top: 0;
   }
 
   .photo-card {

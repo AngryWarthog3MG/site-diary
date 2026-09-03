@@ -608,28 +608,32 @@ function PhotosBlock({
   const [uploadError, setUploadError] = useState<string | null>(null);
   const photoUrls = useSignedUrls(photos.map((photo) => photo.url));
 
-  async function upload(file: File) {
+  async function upload(files: File[]) {
     setUploading(true);
     setUploadError(null);
     try {
       const supabase = createClient();
-      const photo = await compressPhoto(file);
-      const path = `${projectId}/${entryId}/${crypto.randomUUID()}.${photo.extension}`;
-      const { error } = await supabase.storage
-        .from(PHOTO_BUCKET)
-        .upload(path, photo.blob, { contentType: photo.contentType, upsert: false });
-      if (error) throw new Error(error.message);
-      onChange([
-        ...photos,
-        {
+      const added: ReviewPhoto[] = [];
+      for (const file of files) {
+        const photo = await compressPhoto(file);
+        const path = `${projectId}/${entryId}/${crypto.randomUUID()}.${photo.extension}`;
+        const { error } = await supabase.storage
+          .from(PHOTO_BUCKET)
+          .upload(path, photo.blob, { contentType: photo.contentType, upsert: false });
+        if (error) throw new Error(error.message);
+        added.push({
           url: path,
           caption: null,
           category: 'progress',
-          taken_at: new Date().toISOString(),
+          // A photo picked from the gallery was taken when the file says it
+          // was, not when it was attached — the gap between the two can be
+          // a whole shift, and the record cares which end of it is true.
+          taken_at: new Date(file.lastModified || Date.now()).toISOString(),
           lat: null,
           lng: null,
-        },
-      ]);
+        });
+      }
+      onChange([...photos, ...added]);
     } catch (err) {
       setUploadError(
         err instanceof Error
@@ -652,20 +656,38 @@ function PhotosBlock({
           <p className="label">Site photos {photos.length > 0 && <span className="mono">· {photos.length}</span>}</p>
           <h2>Daily progress photos</h2>
         </div>
-        <label className="button button--quiet review-add">
-          {uploading ? 'Uploading…' : 'Add photo'}
-          <input
-            type="file"
-            accept="image/*"
-            capture="environment"
-            hidden
-            onChange={(event) => {
-              const file = event.target.files?.[0];
-              if (file) void upload(file);
-              event.target.value = '';
-            }}
-          />
-        </label>
+        <div className="photo-add-pair">
+          <label className="button button--quiet review-add">
+            {uploading ? 'Uploading…' : 'Take photo'}
+            <input
+              type="file"
+              accept="image/*"
+              capture="environment"
+              hidden
+              disabled={uploading}
+              onChange={(event) => {
+                const file = event.target.files?.[0];
+                if (file) void upload([file]);
+                event.target.value = '';
+              }}
+            />
+          </label>
+          <label className="button button--quiet review-add">
+            {uploading ? 'Uploading…' : 'From phone'}
+            <input
+              type="file"
+              accept="image/*"
+              multiple
+              hidden
+              disabled={uploading}
+              onChange={(event) => {
+                const files = Array.from(event.target.files ?? []);
+                if (files.length > 0) void upload(files);
+                event.target.value = '';
+              }}
+            />
+          </label>
+        </div>
       </div>
 
       {uploadError && <p className="alert">{uploadError}</p>}
@@ -1137,18 +1159,22 @@ function ListField({
   const [uploadError, setUploadError] = useState<string | null>(null);
   const signedUrls = useSignedUrls(isPhotos ? value : []);
 
-  async function upload(file: File) {
+  async function upload(files: File[]) {
     setUploading(true);
     setUploadError(null);
     try {
       const supabase = createClient();
-      const photo = await compressPhoto(file);
-      const path = `${projectId}/${entryId}/${crypto.randomUUID()}.${photo.extension}`;
-      const { error } = await supabase.storage
-        .from(PHOTO_BUCKET)
-        .upload(path, photo.blob, { contentType: photo.contentType, upsert: false });
-      if (error) throw new Error(error.message);
-      onChange([...value, path]);
+      const added: string[] = [];
+      for (const file of files) {
+        const photo = await compressPhoto(file);
+        const path = `${projectId}/${entryId}/${crypto.randomUUID()}.${photo.extension}`;
+        const { error } = await supabase.storage
+          .from(PHOTO_BUCKET)
+          .upload(path, photo.blob, { contentType: photo.contentType, upsert: false });
+        if (error) throw new Error(error.message);
+        added.push(path);
+      }
+      onChange([...value, ...added]);
     } catch (err) {
       setUploadError(
         err instanceof Error
@@ -1210,20 +1236,38 @@ function ListField({
               ))}
             </div>
           )}
-          <label className="button button--quiet" style={{ marginTop: 0 }}>
-            {uploading ? 'Uploading…' : 'Take photo'}
-            <input
-              type="file"
-              accept="image/*"
-              capture="environment"
-              hidden
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (file) void upload(file);
-                e.target.value = '';
-              }}
-            />
-          </label>
+          <div className="photo-add-pair">
+            <label className="button button--quiet" style={{ marginTop: 0 }}>
+              {uploading ? 'Uploading…' : 'Take photo'}
+              <input
+                type="file"
+                accept="image/*"
+                capture="environment"
+                hidden
+                disabled={uploading}
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) void upload([file]);
+                  e.target.value = '';
+                }}
+              />
+            </label>
+            <label className="button button--quiet" style={{ marginTop: 0 }}>
+              {uploading ? 'Uploading…' : 'From phone'}
+              <input
+                type="file"
+                accept="image/*"
+                multiple
+                hidden
+                disabled={uploading}
+                onChange={(e) => {
+                  const files = Array.from(e.target.files ?? []);
+                  if (files.length > 0) void upload(files);
+                  e.target.value = '';
+                }}
+              />
+            </label>
+          </div>
           {uploadError && <p className="alert">{uploadError}</p>}
         </>
       ) : (
