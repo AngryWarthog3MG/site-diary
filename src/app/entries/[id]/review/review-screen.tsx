@@ -27,6 +27,7 @@ import {
   type PourLike,
 } from '@/lib/docket/reconcile';
 import { compressPhoto } from '@/lib/photos/compress';
+import { localDate } from '@/lib/capture/queue';
 import { BrandMark } from '@/components/brand-mark';
 import { SignaturePad } from '@/components/signature-pad';
 import type { ReviewWeather } from './page';
@@ -365,14 +366,23 @@ export function ReviewScreen(props: {
         <header className="review-hero">
           <div>
             <p className="label"><BrandMark size={18} /> {props.projectName}</p>
-            <h1 className="page-title">Review diary</h1>
+            {/*
+              "Review diary" told you what the screen was for only if you had
+              arrived from a recording. Half the time you have come here to
+              write the day up from nothing, and there is nothing to review
+              yet. Name it after the thing itself — the day's diary — and let
+              the date say which day.
+            */}
+            <h1 className="page-title">
+              {props.entryDate === localDate() ? 'Today’s diary' : `Diary for ${props.entryDate}`}
+            </h1>
             <p className="mono page-subtitle">
               {props.projectCode} · {props.entryDate}
             </p>
           </div>
-          <div className="review-state" aria-label="Review status">
+          <div className="review-state" aria-label="What is blocking signing">
             <strong>{gaps.length}</strong>
-            <span>signing gaps</span>
+            <span>to fix before signing</span>
           </div>
         </header>
         <p className="review-intro">

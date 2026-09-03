@@ -6,7 +6,7 @@ import type { SectionKey } from '@/lib/extraction/schema';
 import { ReviewScreen } from './review-screen';
 
 export const dynamic = 'force-dynamic';
-export const metadata = { title: 'Review · Site Diary' };
+export const metadata = { title: 'Diary entry · KBS Daily Diary' };
 
 type Row = Record<string, unknown>;
 
