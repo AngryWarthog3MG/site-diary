@@ -2560,3 +2560,54 @@ body {
 .talk-attendee { display: flex; align-items: center; gap: 0.75rem; padding: 0.375rem 0; border-bottom: 1px dashed var(--ink-12); }
 .talk-attendee img { height: 2.25rem; width: auto; background: #fff; border-radius: 0.25rem; }
 .talk-attendee__pending { width: 3rem; height: 2rem; background: var(--paper-dim); border-radius: 0.25rem; }
+
+/* The talk as it is read off the phone: the same blocks the PDF prints. */
+.talkread { margin-top: 0.5rem; }
+.talkread__head {
+  margin: 1.25rem 0 0.35rem;
+  color: var(--teal, #0e4f52);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.talkread > .talkread__head:first-child { margin-top: 0; }
+.talkread__para { margin: 0 0 0.65rem; font-size: 1rem; line-height: 1.55; }
+.talkread__points { margin: 0 0 0.65rem; padding-left: 1.15rem; font-size: 1rem; line-height: 1.55; }
+.talkread__points li { margin-bottom: 0.3rem; }
+
+/* Where the talk is up to, in a sentence rather than a status word. */
+.talkstate {
+  margin: 0.5rem 0 0;
+  padding: 0.55rem 0.75rem;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  line-height: 1.4;
+}
+.talkstate--open { background: rgba(240, 164, 31, 0.12); color: var(--amber-ink, #6b4a06); }
+.talkstate--done { background: rgba(13, 90, 88, 0.1); color: var(--teal, #0e4f52); }
+
+/* The talk screen's Edit sits beside the heading, not across the page —
+   it must not read as the thing you came here to press. */
+.talkread-head .review-add {
+  width: auto;
+  min-width: 0;
+  margin-top: 0;
+  padding: 0.45rem 0.8rem;
+  font-size: 0.8125rem;
+}
+
+@media (max-width: 640px) {
+  .talkread-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.75rem;
+  }
+
+  .talkread-head .review-add {
+    width: auto;
+    flex: 0 0 auto;
+    margin-top: 0.25rem;
+  }
+}

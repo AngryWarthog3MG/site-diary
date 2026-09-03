@@ -40,8 +40,9 @@ export default async function ToolboxPage({
       </p>
       <h1 className="page-title">Toolbox talks</h1>
       <p className="page-subtitle">
-        One a week, a different topic each time. The crew sign on, and a completed talk is
-        frozen — topic, summary and signatures export as one PDF.
+        One a week, a different topic each time. Read the talk out, get the crew to sign on
+        the phone, and finish it — that turns it into a one-page PDF you can send anyone who
+        asks for your safety records.
       </p>
       {canRun && (
         <Link className="button" href={`/toolbox/new?project=${current.project_id}`}>
@@ -51,7 +52,10 @@ export default async function ToolboxPage({
       <hr className="rule" />
 
       {(talks ?? []).length === 0 && (
-        <p className="claims-nil">No talks yet. The first one takes two minutes to set up.</p>
+        <p className="claims-nil">
+          No talks yet. Setting the first one up takes about two minutes — a topic, a few
+          lines on what you will cover, and who is giving it.
+        </p>
       )}
 
       <div className="talklist">
@@ -63,11 +67,12 @@ export default async function ToolboxPage({
                 <p className="mono talkcard__date">{talk.talk_date}</p>
                 <p className="talkcard__topic">{talk.topic}</p>
                 <p className="talkcard__meta">
-                  {talk.presenter_name} · {attendees} signed on
+                  {talk.presenter_name} ·{' '}
+                  {attendees === 0 ? 'nobody signed on yet' : `${attendees} signed on`}
                 </p>
               </div>
               <span className={`status-pill ${talk.completed_at ? 'status-pill--signed' : 'status-pill--resume'}`}>
-                {talk.completed_at ? 'Completed' : 'Open'}
+                {talk.completed_at ? 'Done' : 'To run'}
               </span>
             </Link>
           );

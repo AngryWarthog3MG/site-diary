@@ -6,7 +6,7 @@ import { loadClaimsData, type ClaimsData } from '@/lib/claims/load';
 import { BrandMark } from '@/components/brand-mark';
 
 export const dynamic = 'force-dynamic';
-export const metadata = { title: 'Claims register · KBS Daily Diary' };
+export const metadata = { title: 'Claims · KBS Daily Diary' };
 
 /**
  * The claims register: the whole project's delays, variations and dayworks
@@ -63,10 +63,11 @@ export default async function ClaimsPage({
       <p className="label">
         <BrandMark size={18} /> {current.project.name}
       </p>
-      <h1 className="page-title">Claims register</h1>
+      <h1 className="page-title">What you can claim for</h1>
       <p className="page-subtitle">
-        Every delay, variation and daywork on the signed record, whole of project. Each line
-        cites its signed entry; each entry carries its content hash.
+        Every delay, variation and daywork you have signed off, across the whole job. Each
+        line names the day it came from, so anything here can be traced back and stands up
+        months later.
       </p>
       <div style={{ margin: '0.75rem 0' }}>
         <a
@@ -75,7 +76,7 @@ export default async function ClaimsPage({
           href={`/api/reports/claims?project=${current.project_id}`}
           download
         >
-          Export CSV
+          Download as a spreadsheet
         </a>{' '}
         <DraftClaimButton projectId={current.project_id} />
       </div>
@@ -87,11 +88,13 @@ export default async function ClaimsPage({
         <>
           <section style={{ marginTop: '1rem' }}>
             <p className="label">
-              Delays &amp; standdown · {data.delays.rows.length} event
+              Time lost · {data.delays.rows.length} event
               {data.delays.rows.length === 1 ? '' : 's'}
             </p>
             {data.delays.rows.length === 0 ? (
-              <p className="claims-nil">No delays on the record.</p>
+              <p className="claims-nil">
+                Nothing yet. Delays turn up here once you sign a day that has one.
+              </p>
             ) : (
               <>
                 <p className="claims-total">
@@ -146,7 +149,9 @@ export default async function ClaimsPage({
               )}
             </p>
             {data.variations.rows.length === 0 ? (
-              <p className="claims-nil">No variations on the record.</p>
+              <p className="claims-nil">
+                Nothing yet. Variations turn up here once you sign a day that has one.
+              </p>
             ) : (
               <>
                 <p className="claims-total">
@@ -196,7 +201,9 @@ export default async function ClaimsPage({
               )}
             </p>
             {data.dayworks.rows.length === 0 ? (
-              <p className="claims-nil">No dayworks on the record.</p>
+              <p className="claims-nil">
+                Nothing yet. Dayworks turn up here once you sign a day that has one.
+              </p>
             ) : (
               <>
                 <p className="claims-total">{data.dayworks.totalHours} T&amp;M hours recorded</p>

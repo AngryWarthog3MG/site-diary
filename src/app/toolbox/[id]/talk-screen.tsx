@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { BrandMark } from '@/components/brand-mark';
 import { SignaturePad } from '@/components/signature-pad';
+import { parseTalkSummary } from '@/lib/toolbox/summary';
 
 /**
  * The talk itself. While open: the phone goes around the crew — name, sign,
@@ -161,7 +162,11 @@ export function TalkScreen({
       <h1 className="page-title">{talk.topic}</h1>
       <p className="mono page-subtitle">
         {talk.date} · presented by {talk.presenter}
-        {talk.completed ? ' · COMPLETED' : ''}
+      </p>
+      <p className={talk.completed ? 'talkstate talkstate--done' : 'talkstate talkstate--open'}>
+        {talk.completed
+          ? 'Done and signed. This talk is locked and cannot be changed.'
+          : 'Not run yet. Read it out, get the crew to sign, then finish it.'}
       </p>
       <hr className="rule" />
 
@@ -204,8 +209,11 @@ export function TalkScreen({
         </>
       ) : (
         <>
-          <div className="review-section-head">
-            <p className="label">What was covered</p>
+          <div className="review-section-head talkread-head">
+            <div>
+              <p className="label">Read this out</p>
+              <h2 className="home-card__title">What to cover</h2>
+            </div>
             {!talk.completed && canRun && (
               <button className="button button--quiet review-add" type="button"
                 onClick={() => setEditing(true)}>
@@ -213,12 +221,44 @@ export function TalkScreen({
               </button>
             )}
           </div>
-          <p className="notes" style={{ whiteSpace: 'pre-wrap' }}>{talk.summary}</p>
+          {/*
+            Laid out, not dumped. This is the screen the supervisor reads the
+            talk off, so headings and points have to look like headings and
+            points — the PDF renders the same blocks from the same parser.
+          */}
+          <div className="talkread">
+            {parseTalkSummary(talk.summary).map((block, i) =>
+              block.kind === 'heading' ? (
+                <p key={i} className="talkread__head">{block.text}</p>
+              ) : block.kind === 'points' ? (
+                <ul key={i} className="talkread__points">
+                  {block.items.map((item, j) => <li key={j}>{item}</li>)}
+                </ul>
+              ) : (
+                <p key={i} className="talkread__para">{block.text}</p>
+              ),
+            )}
+          </div>
         </>
       )}
 
       <hr className="rule" />
-      {!editing && <p className="label">Sign-on · {attendees.length}</p>}
+      {!editing && (
+        <>
+          <p className="label">Who was there</p>
+          <h2 className="home-card__title">
+            {attendees.length === 0
+              ? 'Nobody has signed on yet'
+              : `${attendees.length} signed on`}
+          </h2>
+          {!talk.completed && attendees.length === 0 && canRun && (
+            <p className="way-hint">
+              Read the talk out, then hand the phone around. Each person types their
+              name and signs with a finger.
+            </p>
+          )}
+        </>
+      )}
       {!editing && attendees.map((a) => (
         <div key={a.id} className="talk-attendee">
           {urls[a.signature_path] ? (
@@ -233,7 +273,7 @@ export function TalkScreen({
 
       {!talk.completed && canRun && !editing && (
         <div className="sigslot item" style={{ marginTop: '1rem' }}>
-          <p className="label">Add attendee — hand them the phone</p>
+          <p className="label">Hand them the phone</p>
           <label className="fieldcell">
             <span className="label">Name</span>
             <input className="field field--sm" value={name} placeholder="Kel Brady"
@@ -246,17 +286,30 @@ export function TalkScreen({
       {error && <p className="alert">{error}</p>}
 
       {!talk.completed && canRun && !editing && (
-        <button className="button" type="button" disabled={completing || attendees.length === 0} onClick={complete}>
-          {completing ? 'Completing…' : `Complete the talk (${attendees.length} signed on)`}
-        </button>
+        <>
+          <button className="button" type="button" disabled={completing || attendees.length === 0} onClick={complete}>
+            {completing ? 'Finishing…' : 'Finish the talk'}
+          </button>
+          <p className="way-hint">
+            {attendees.length === 0
+              ? 'You need at least one signature before you can finish.'
+              : `Locks it with ${attendees.length === 1 ? 'the one signature' : `all ${attendees.length} signatures`}. After this the talk cannot be changed — that is what makes it a record.`}
+          </p>
+        </>
       )}
       {talk.completed && (
-        <button className="button" type="button" disabled={pdfBusy} onClick={downloadPdf}>
-          {pdfBusy ? 'Generating…' : 'Download the PDF'}
-        </button>
+        <>
+          <button className="button" type="button" disabled={pdfBusy} onClick={downloadPdf}>
+            {pdfBusy ? 'Making the PDF…' : 'Get the PDF'}
+          </button>
+          <p className="way-hint">
+            One page with the talk, everyone&rsquo;s signature and the Kooboolong logo —
+            what you send the principal when they ask for the safety records.
+          </p>
+        </>
       )}
       <Link className="button button--quiet" href={`/toolbox?project=${talk.projectId}`}>
-        Back to talks
+        All toolbox talks
       </Link>
     </main>
   );

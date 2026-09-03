@@ -47,13 +47,16 @@ export function DraftClaimButton({ projectId }: { projectId: string }) {
   return (
     <>
       <button className="button button--quiet" type="button" onClick={generate} disabled={busy}>
-        {busy ? 'Drafting…' : 'Draft claim narrative'}
+        {busy ? 'Writing…' : 'Write a first draft'}
       </button>
       {error && <p className="alert">{error}</p>}
       {draft && (
         <section className="claim-draft">
           <div className="claim-draft__head">
-            <p className="label">Draft — AI-prepared from the register. Review before issuing.</p>
+            <p className="label">
+              A rough first draft, written from the entries above. Read it properly and fix
+              it before this goes anywhere near the principal.
+            </p>
             <button className="quotebtn" type="button" onClick={copy}>
               {copied ? 'Copied' : 'Copy text'}
             </button>

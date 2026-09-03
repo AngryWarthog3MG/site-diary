@@ -1,5 +1,6 @@
 import type { ReactElement } from 'react';
 import { LOGO_DATA_URI } from '@/lib/pdf/logo';
+import { parseTalkSummary } from './summary';
 
 /**
  * The toolbox talk as a document: topic, what was covered, and every
@@ -21,62 +22,31 @@ export interface TalkPdfData {
   attendees: Array<{ name: string; src: string }>;
 }
 
-/**
- * A talk worth signing onto runs to more than one paragraph, so the summary
- * is laid out rather than dumped: blank lines separate blocks, a line ending
- * in a colon is a heading for the block under it, and a line opening with
- * "- " is a point in a list. Nothing is interpreted beyond that — the words
- * printed are the words the supervisor wrote.
- */
+/** The parsed talk, dressed for print. The screen renders the same blocks. */
 function summaryBlocks(summary: string): ReactElement[] {
-  const blocks: ReactElement[] = [];
-  const chunks = summary.replace(/\r\n/g, '\n').split(/\n\s*\n/);
-
-  chunks.forEach((chunk, index) => {
-    const lines = chunk.split('\n').map((line) => line.trim()).filter(Boolean);
-    if (lines.length === 0) return;
-
-    if (lines[0].endsWith(':') && lines.length > 1) {
-      blocks.push(
-        <p key={`h${index}`} className="talkhead">
-          {lines[0].slice(0, -1)}
-        </p>,
+  return parseTalkSummary(summary).map((block, i) => {
+    if (block.kind === 'heading') {
+      return (
+        <p key={i} className="talkhead">
+          {block.text}
+        </p>
       );
-      lines.shift();
     }
-
-    // A block can mix the two: a sentence or two of setup, then the points.
-    // Take them in runs so a "- " never ends up printed mid-paragraph.
-    let run: string[] = [];
-    let runIsList = false;
-    const flush = (key: string) => {
-      if (run.length === 0) return;
-      blocks.push(
-        runIsList ? (
-          <ul key={key} className="talkpoints">
-            {run.map((line, i) => (
-              <li key={i}>{line.slice(2)}</li>
-            ))}
-          </ul>
-        ) : (
-          <p key={key} className="talkpara">
-            {run.join(' ')}
-          </p>
-        ),
+    if (block.kind === 'points') {
+      return (
+        <ul key={i} className="talkpoints">
+          {block.items.map((item, j) => (
+            <li key={j}>{item}</li>
+          ))}
+        </ul>
       );
-      run = [];
-    };
-
-    lines.forEach((line, i) => {
-      const isBullet = line.startsWith('- ');
-      if (run.length > 0 && isBullet !== runIsList) flush(`${index}-${i}`);
-      runIsList = isBullet;
-      run.push(line);
-    });
-    flush(`${index}-end`);
+    }
+    return (
+      <p key={i} className="talkpara">
+        {block.text}
+      </p>
+    );
   });
-
-  return blocks;
 }
 
 export function ToolboxTalkDoc({ data }: { data: TalkPdfData }): ReactElement {
