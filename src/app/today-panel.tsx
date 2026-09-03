@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import type { EntrySection } from '@/types/database';
 import { createClient } from '@/lib/supabase/client';
 import { detectSections } from '@/lib/capture/sections';
@@ -57,7 +58,9 @@ export function TodayPanel({
   canRecord: boolean;
   lastSigned: { entry_no: string | null; entry_date: string } | null;
 }) {
+  const router = useRouter();
   const [date, setDate] = useState('');
+  const [writingOut, setWritingOut] = useState(false);
   const [entry, setEntry] = useState<TodayEntry | null>(null);
   const [weather, setWeather] = useState<WeatherRow | null>(null);
   const [weatherNote, setWeatherNote] = useState<string | null>(null);
@@ -247,6 +250,40 @@ export function TodayPanel({
     return sync.subscribe(() => void load());
   }, [load]);
 
+  /**
+   * The written way in.
+   *
+   * Talking is faster on a good day, but not every day is one — a supervisor
+   * on a quiet site, or one who would simply rather type, should not have to
+   * record a word to keep the diary. This opens today's draft (the same draft
+   * a recording would open) and goes straight to the review screen, where
+   * every section already takes items by hand.
+   */
+  async function writeItOut() {
+    setWritingOut(true);
+    try {
+      if (entry) {
+        router.push(`/entries/${entry.id}/review`);
+        return;
+      }
+      const response = await fetch('/api/entries', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ projectId, entryDate: localDate() }),
+      });
+      const json = await response.json().catch(() => null);
+      if (response.ok && json?.entryId) {
+        router.push(`/entries/${json.entryId}/review`);
+        return;
+      }
+      setWritingOut(false);
+    } catch {
+      // No signal. Recording still queues offline; typing needs the server.
+      setOffline(true);
+      setWritingOut(false);
+    }
+  }
+
   const covered: Set<EntrySection> = detectSections(entry?.transcript_raw ?? '');
 
   return (
@@ -304,17 +341,25 @@ export function TodayPanel({
 
         <div className="home-card home-card--capture">
       {week.length > 0 && (
-        <div className="weekstrip" aria-label="This week">
-          {week.map((day) => (
-            <span
-              key={day.date}
-              className={`weekstrip__day weekstrip__day--${day.state}`}
-              title={`${day.date} — ${day.state === 'signed' ? 'signed' : day.state === 'draft' ? 'draft' : day.state === 'today' ? 'today, not yet recorded' : 'no record'}`}
-            >
-              {day.label}
-            </span>
-          ))}
-        </div>
+        <>
+          <p className="label">The last seven days</p>
+          <div className="weekstrip" aria-label="The last seven days">
+            {week.map((day) => (
+              <span
+                key={day.date}
+                className={`weekstrip__day weekstrip__day--${day.state}`}
+                title={`${day.date} — ${day.state === 'signed' ? 'signed' : day.state === 'draft' ? 'started, not signed' : day.state === 'today' ? 'today' : 'nothing written down'}`}
+              >
+                {day.label}
+              </span>
+            ))}
+          </div>
+          <p className="weekstrip__key">
+            <span className="weekstrip__day weekstrip__day--signed" aria-hidden>&nbsp;</span> signed
+            <span className="weekstrip__day weekstrip__day--draft" aria-hidden>&nbsp;</span> started
+            <span className="weekstrip__day weekstrip__day--gap" aria-hidden>&nbsp;</span> nothing written down
+          </p>
+        </>
       )}
 
       {missingDays.length > 0 && (
@@ -330,28 +375,31 @@ export function TodayPanel({
       <div className="home-card__head">
         <div>
           <p className="label">Today · {date}</p>
-          <h2 className="home-card__title">Capture progress</h2>
+          <h2 className="home-card__title">Today&rsquo;s diary</h2>
         </div>
       </div>
 
-      <div style={{ marginTop: '0.75rem' }}>
-        <SectionChips covered={covered} />
-      </div>
-
       {!loading && (
-        <p style={{ marginTop: '0.75rem', color: 'var(--ink-60)', fontSize: '0.9375rem' }}>
+        <p className="today-status">
           {offline
-            ? 'Offline — showing what is on this phone.'
+            ? 'No signal — this is what is saved on the phone. It will sync when you are back in range.'
             : entry
               ? entry.status === 'signed'
-                ? `Today's entry is signed — ${entry.entry_no ?? 'done'}.`
+                ? `Signed and on the record as ${entry.entry_no ?? 'today’s entry'}. Nothing more to do today.`
                 : entry.awaitingTranscription > 0
-                  ? `${entry.segments} recording${entry.segments === 1 ? '' : 's'} attached · ${entry.awaitingTranscription} still transcribing`
+                  ? `${entry.segments} recording${entry.segments === 1 ? '' : 's'} saved. ${entry.awaitingTranscription} still turning into words — this takes a minute.`
                   : entry.transcript_raw
-                    ? `${entry.segments} recording${entry.segments === 1 ? '' : 's'} attached and transcribed`
-                    : 'Draft open, nothing recorded yet'
-              : 'Nothing recorded today.'}
+                    ? `${entry.segments} recording${entry.segments === 1 ? '' : 's'} saved and written up. Check it over, then sign.`
+                    : 'Started, but nothing in it yet. Talk it through or type it in.'
+              : 'Nothing written down for today yet.'}
         </p>
+      )}
+
+      {covered.size > 0 && (
+        <div style={{ marginTop: '0.75rem' }}>
+          <p className="caption">What you have talked about so far</p>
+          <SectionChips covered={covered} />
+        </div>
       )}
 
       <QueueStatus />
@@ -373,9 +421,22 @@ export function TodayPanel({
           </p>
         </>
       ) : canRecord ? (
-        <Link className="button button--record" href={`/record?project=${projectId}`}>
-          {entry?.segments ? 'Record more' : 'Record'}
-        </Link>
+        <>
+          <Link className="button button--record" href={`/record?project=${projectId}`}>
+            {entry?.segments ? 'Talk some more' : 'Talk it through'}
+          </Link>
+          <p className="way-hint">
+            Say what happened in your own words. It gets written up for you to check.
+          </p>
+
+          <button className="button button--quiet" type="button" disabled={writingOut}
+            onClick={writeItOut}>
+            {writingOut ? 'Opening…' : 'Type it in instead'}
+          </button>
+          <p className="way-hint">
+            Fill in labour, plant and works yourself, without recording anything.
+          </p>
+        </>
       ) : (
         <p className="notice">
           You are on this project as a PM. Recording is done by the site supervisor.
@@ -385,7 +446,7 @@ export function TodayPanel({
 
       {canRecord && entry && entry.status !== 'signed' && (entry.hasProposal || entry.hasRecord) && (
         <Link className="button" href={`/entries/${entry.id}/review`}>
-          {entry.hasRecord ? 'Back to review' : 'Review and sign'}
+          {entry.hasRecord ? 'Back to today’s entry' : 'Check it over and sign'}
         </Link>
       )}
 
@@ -393,30 +454,67 @@ export function TodayPanel({
         </div>
       </section>
 
-      <nav className="toolbar" aria-label="Project">
-        <Link href={`/entries?project=${projectId}`}>Entries &amp; PDFs</Link>
-        <span aria-hidden>·</span>
-        <Link href={`/reports/weekly?project=${projectId}`}>Weekly</Link>
-        <span aria-hidden>·</span>
-        <Link href={`/toolbox?project=${projectId}`}>Toolbox</Link>
-        <span aria-hidden>·</span>
-        <Link href={`/claims?project=${projectId}`}>Claims</Link>
-        <span aria-hidden>·</span>
-        <Link href={`/progress?project=${projectId}`}>Progress</Link>
-        <span aria-hidden>·</span>
-        <Link href="/portfolio">All jobs</Link>
-        <span aria-hidden>·</span>
-        <Link href={`/ask?project=${projectId}`}>Ask</Link>
-        <span aria-hidden>·</span>
-        <Link href={`/settings?project=${projectId}`}>Settings</Link>
-        {canRecord && (
-          <>
-            <span aria-hidden>·</span>
-            <Link href={`/settings/members?project=${projectId}`}>Members</Link>
-            <span aria-hidden>·</span>
-            <Link href={`/settings/vocabulary?project=${projectId}`}>Vocabulary</Link>
-          </>
-        )}
+      {/*
+        Ten links of equal weight told you nothing about where any of them
+        went. Grouped by what you came here to do, and each one says what it
+        is — "Claims" and "Vocabulary" mean nothing until they do.
+      */}
+      <nav className="navgroups" aria-label="Everything else">
+        <section className="navgroup">
+          <p className="label">The record</p>
+          <Link className="navitem" href={`/entries?project=${projectId}`}>
+            <span className="navitem__name">Past days</span>
+            <span className="navitem__what">Every signed day and its PDF, ready to send on</span>
+          </Link>
+          <Link className="navitem" href={`/reports/weekly?project=${projectId}`}>
+            <span className="navitem__name">Weekly report</span>
+            <span className="navitem__what">The week rolled up the way a PM wants to read it</span>
+          </Link>
+          <Link className="navitem" href={`/claims?project=${projectId}`}>
+            <span className="navitem__name">Claims</span>
+            <span className="navitem__what">Delays and variations gathered up for a claim</span>
+          </Link>
+          <Link className="navitem" href={`/progress?project=${projectId}`}>
+            <span className="navitem__name">Progress</span>
+            <span className="navitem__what">How far along each area is, over time</span>
+          </Link>
+        </section>
+
+        <section className="navgroup">
+          <p className="label">On site</p>
+          <Link className="navitem" href={`/toolbox?project=${projectId}`}>
+            <span className="navitem__name">Toolbox talks</span>
+            <span className="navitem__what">Run the weekly talk and get the crew to sign on</span>
+          </Link>
+          <Link className="navitem" href={`/ask?project=${projectId}`}>
+            <span className="navitem__name">Ask a question</span>
+            <span className="navitem__what">&ldquo;How many wet days in August?&rdquo; — answered from your own diary</span>
+          </Link>
+          <Link className="navitem" href="/portfolio">
+            <span className="navitem__name">All jobs</span>
+            <span className="navitem__what">Every active site on one screen</span>
+          </Link>
+        </section>
+
+        <section className="navgroup">
+          <p className="label">Setup</p>
+          <Link className="navitem" href={`/settings?project=${projectId}`}>
+            <span className="navitem__name">Settings</span>
+            <span className="navitem__what">Standard hours, who gets the weekly report</span>
+          </Link>
+          {canRecord && (
+            <>
+              <Link className="navitem" href={`/settings/members?project=${projectId}`}>
+                <span className="navitem__name">Who is on this job</span>
+                <span className="navitem__what">Add the crew, or a PM who only reads</span>
+              </Link>
+              <Link className="navitem" href={`/settings/vocabulary?project=${projectId}`}>
+                <span className="navitem__name">Words and names</span>
+                <span className="navitem__what">Names and site terms, so it hears them right</span>
+              </Link>
+            </>
+          )}
+        </section>
       </nav>
     </>
   );
