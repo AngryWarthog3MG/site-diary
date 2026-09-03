@@ -28,7 +28,7 @@ import {
 } from '@/lib/docket/reconcile';
 import { compressPhoto } from '@/lib/photos/compress';
 import { BrandMark } from '@/components/brand-mark';
-import { SignaturePad } from './signature-pad';
+import { SignaturePad } from '@/components/signature-pad';
 import type { ReviewWeather } from './page';
 
 type Item = Record<string, unknown>;

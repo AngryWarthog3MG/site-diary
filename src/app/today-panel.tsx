@@ -398,6 +398,8 @@ export function TodayPanel({
         <span aria-hidden>·</span>
         <Link href={`/reports/weekly?project=${projectId}`}>Weekly</Link>
         <span aria-hidden>·</span>
+        <Link href={`/toolbox?project=${projectId}`}>Toolbox</Link>
+        <span aria-hidden>·</span>
         <Link href={`/claims?project=${projectId}`}>Claims</Link>
         <span aria-hidden>·</span>
         <Link href={`/progress?project=${projectId}`}>Progress</Link>
