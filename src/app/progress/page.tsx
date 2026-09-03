@@ -38,10 +38,10 @@ export default async function ProgressPage({
       <p className="label">
         <BrandMark size={18} /> {current.project.name}
       </p>
-      <h1 className="page-title">Progress</h1>
+      <h1 className="page-title">How far along each area is</h1>
       <p className="page-subtitle">
-        Percent complete per area, as recorded in signed entries. An area only moves when a
-        supervisor says it moved.
+        Taken from the days you have signed. An area only moves when a supervisor says it
+        moved — nothing here is estimated, and nothing creeps up on its own.
       </p>
       <hr className="rule" />
 
@@ -49,8 +49,8 @@ export default async function ProgressPage({
 
       {data && data.series.length === 0 && (
         <p className="claims-nil">
-          No percentages on the record yet. When a supervisor gives an area a percent
-          complete — spoken or on review — it charts here.
+          Nothing to chart yet. Say how far along an area is when you record the day — or
+          type it into the works section — and it starts building a line here.
         </p>
       )}
 
@@ -59,8 +59,8 @@ export default async function ProgressPage({
           <ProgressChart series={data.charted} dates={data.dates} />
           {data.series.length > data.charted.length && (
             <p className="claims-total">
-              Charting the {MAX_CHARTED} most recently active areas; every area is in the
-              table.
+              The chart shows the {MAX_CHARTED} areas worked on most recently, so the lines
+              stay readable. Every area is in the table underneath.
             </p>
           )}
         </>
@@ -72,9 +72,9 @@ export default async function ProgressPage({
             <thead>
               <tr>
                 <th>Area</th>
-                <th className="n">Latest %</th>
-                <th>As of</th>
-                <th className="n">Points</th>
+                <th className="n">Now at</th>
+                <th>Last said</th>
+                <th className="n">Times recorded</th>
               </tr>
             </thead>
             <tbody>

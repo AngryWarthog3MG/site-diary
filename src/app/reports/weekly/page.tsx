@@ -8,7 +8,7 @@ import { DOCKET_CSS } from '@/lib/pdf/styles';
 import { GenerateWeeklyPdf, MonthlyBundleButton } from './generate-button';
 
 export const dynamic = 'force-dynamic';
-export const metadata = { title: 'Weekly report · Site Diary' };
+export const metadata = { title: 'Weekly report · KBS Daily Diary' };
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -53,11 +53,44 @@ export default async function WeeklyReportPage({
     );
   }
 
-  const start =
-    params.start && DATE_RE.test(params.start) ? params.start : mondayOf(perthToday());
-  const end = params.end && DATE_RE.test(params.end) ? params.end : addDays(start, 6);
-
   const supabase = await createClient();
+
+  /**
+   * Which week to open on.
+   *
+   * The current one, normally. But on a Monday — or any week whose days are
+   * still drafts — the current week is empty, and opening on "nothing to
+   * report" tells a PM nothing about a job that has been running for months.
+   * So when this week holds no signed day, fall back to the most recent week
+   * that does, and say on screen that is what happened.
+   */
+  let fellBackTo: string | null = null;
+  let start = params.start && DATE_RE.test(params.start) ? params.start : mondayOf(perthToday());
+  if (!params.start) {
+    const { data: latest } = await supabase
+      .from('entries')
+      .select('entry_date')
+      .eq('project_id', current.project_id)
+      .eq('status', 'signed')
+      .order('entry_date', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    const thisWeek = start;
+    const hasThisWeek = await supabase
+      .from('entries')
+      .select('id')
+      .eq('project_id', current.project_id)
+      .eq('status', 'signed')
+      .gte('entry_date', thisWeek)
+      .lte('entry_date', addDays(thisWeek, 6))
+      .limit(1)
+      .maybeSingle();
+    if (!hasThisWeek.data && latest?.entry_date) {
+      start = mondayOf(latest.entry_date as string);
+      fellBackTo = start;
+    }
+  }
+  const end = params.end && DATE_RE.test(params.end) ? params.end : addDays(start, 6);
   let data: WeeklyData | null = null;
   let loadError: string | null = null;
   try {
@@ -97,10 +130,16 @@ export default async function WeeklyReportPage({
         </section>
 
         <nav className="weekly-nav" aria-label="Week">
-          <Link href={weekNav(addDays(start, -7))}>Prev week</Link>
+          <Link href={weekNav(addDays(start, -7))}>← Week before</Link>
           <Link href={weekNav(mondayOf(perthToday()))}>This week</Link>
-          <Link href={weekNav(addDays(start, 7))}>Next week</Link>
+          <Link href={weekNav(addDays(start, 7))}>Week after →</Link>
         </nav>
+
+        {fellBackTo && (
+          <p className="weekly-fallback">
+            Nothing signed this week yet, so this is the most recent week with signed days.
+          </p>
+        )}
 
       {loadError && (
         <section className="weekly-state weekly-state--error">
@@ -112,11 +151,12 @@ export default async function WeeklyReportPage({
 
       {data && data.entries.length === 0 && (
         <section className="weekly-state">
-          <p className="weekly-kicker">No signed entries</p>
+          <p className="weekly-kicker">Nothing signed this week</p>
           <h2>Nothing to report yet</h2>
           <p>
-            No signed entries in this period. The weekly report only reports the signed
-            record — sign the week&apos;s entries first.
+            This report only ever shows days you have signed. Anything still sitting as a
+            draft is left out on purpose — it is not on the record until you sign it. Sign
+            the week&apos;s days and they will appear here.
           </p>
         </section>
       )}
@@ -130,7 +170,7 @@ export default async function WeeklyReportPage({
               href={`/api/reports/timesheet?project=${current.project_id}&start=${start}&end=${end}`}
               download
             >
-              Timesheet CSV
+              Hours as a spreadsheet
             </a>
             <MonthlyBundleButton projectId={current.project_id} start={start} />
             <p className="weekly-actions__hint">
@@ -212,6 +252,16 @@ const PAGE_CSS = `
   font-size: 9pt;
   font-weight: 700;
 }
+.weekly-fallback {
+  margin: 0.5rem 0 0;
+  padding: 0.6rem 0.85rem;
+  background: rgba(240, 164, 31, 0.12);
+  border-radius: 8px;
+  color: #6b4a06;
+  font-size: 0.875rem;
+  line-height: 1.4;
+}
+
 .weekly-nav {
   display: flex;
   justify-content: center;

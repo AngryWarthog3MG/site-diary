@@ -81,6 +81,65 @@ values ('cccccccc-0000-0000-0000-000000000003', 'bbbbbbbb-0000-0000-0000-0000000
 insert into public.labour (entry_id, person_name, hours)
 values ('cccccccc-0000-0000-0000-000000000003', 'Danny Rowe', 99);
 
+-- ---------------------------------------------------------------------------
+-- An UNSIGNED correction displaces nothing.
+--
+-- The bug this pins: diary.entries once excluded any entry something pointed
+-- at, draft or not. Opening a correction and not finishing it deleted the
+-- signed day it superseded from the weekly report, the claims register, the
+-- progress chart and Ask — while its stored PDF sat there intact. Only
+-- signing changes the record, so only a signed successor can displace.
+--
+-- Inside a savepoint: it signs an entry, and a signed entry cannot be removed
+-- afterwards, so the fixture is rolled back rather than cleaned up.
+-- ---------------------------------------------------------------------------
+savepoint before_unsigned_correction;
+
+insert into public.entries (id, project_id, entry_date, author_id, supersedes_entry_id, transcript_raw)
+values ('cccccccc-0000-0000-0000-00000000000b', 'bbbbbbbb-0000-0000-0000-000000000001',
+        date '2026-08-24', '11111111-1111-1111-1111-111111111111',
+        'cccccccc-0000-0000-0000-000000000002',
+        'Started a second correction and never signed it.');
+insert into public.labour (entry_id, person_name, hours)
+values ('cccccccc-0000-0000-0000-00000000000b', 'Danny Rowe', 6);
+
+do $$
+declare hours numeric;
+begin
+  -- Scoped to the fixture: this block runs before the role switch, so there
+  -- is no RLS and an unscoped count would sweep in every other project.
+  assert (select count(*) from diary.entries
+           where project_id = 'bbbbbbbb-0000-0000-0000-000000000001') = 1,
+         'an unsigned correction hid the signed entry it supersedes';
+  assert (select entry_no from diary.entries
+           where project_id = 'bbbbbbbb-0000-0000-0000-000000000001') = 'KBS-2026-08-24-2',
+         'the signed record changed because a draft pointed at it';
+  select coalesce(sum(l.hours), 0) into hours from diary.labour l
+   where l.project_id = 'bbbbbbbb-0000-0000-0000-000000000001';
+  assert hours = 5, format('child views lost their rows to a draft: %s hours', hours);
+  raise notice 'PASS  an unsigned correction does not displace a signed entry';
+end;
+$$;
+
+-- Sign it, and now it does displace.
+update public.entries set status = 'signed'
+ where id = 'cccccccc-0000-0000-0000-00000000000b';
+
+do $$
+declare hours numeric;
+begin
+  assert (select count(*) from diary.entries
+           where project_id = 'bbbbbbbb-0000-0000-0000-000000000001') = 1,
+         'signing the correction did not leave exactly one current entry';
+  select coalesce(sum(l.hours), 0) into hours from diary.labour l
+   where l.project_id = 'bbbbbbbb-0000-0000-0000-000000000001';
+  assert hours = 6, format('the signed correction did not take over: %s hours', hours);
+  raise notice 'PASS  a signed correction does displace the entry it supersedes';
+end;
+$$;
+
+rollback to savepoint before_unsigned_correction;
+
 select set_config('request.jwt.claims',
   '{"sub":"11111111-1111-1111-1111-111111111111","role":"authenticated"}', true);
 set local role authenticated;
