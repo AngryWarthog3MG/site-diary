@@ -37,6 +37,16 @@ export function TalkScreen({
   const [pdfBusy, setPdfBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [urls, setUrls] = useState<Record<string, string>>({});
+  // Editing an open talk: the topic gets tailored to the day right up until
+  // the crew sign onto it. Once completed the database refuses the update,
+  // so the button goes away with it.
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState({
+    topic: talk.topic,
+    summary: talk.summary,
+    presenter: talk.presenter,
+    date: talk.date,
+  });
 
   useEffect(() => {
     if (attendees.length === 0) return;
@@ -78,6 +88,30 @@ export function TalkScreen({
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'That sign-on did not save.');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function saveEdits() {
+    setSaving(true);
+    setError(null);
+    try {
+      const supabase = createClient();
+      const { error: updateError } = await supabase
+        .from('toolbox_talks')
+        .update({
+          topic: draft.topic.trim(),
+          summary: draft.summary.trim(),
+          presenter_name: draft.presenter.trim(),
+          talk_date: draft.date,
+        })
+        .eq('id', talk.id);
+      if (updateError) throw new Error(updateError.message);
+      setEditing(false);
+      router.refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Those changes did not save.');
     } finally {
       setSaving(false);
     }
@@ -130,12 +164,62 @@ export function TalkScreen({
         {talk.completed ? ' · COMPLETED' : ''}
       </p>
       <hr className="rule" />
-      <p className="label">What was covered</p>
-      <p className="notes" style={{ whiteSpace: 'pre-wrap' }}>{talk.summary}</p>
+
+      {editing ? (
+        <>
+          <label className="fieldcell">
+            <span className="label">Date</span>
+            <input className="field field--sm" type="date" value={draft.date}
+              onChange={(e) => setDraft({ ...draft, date: e.target.value })} />
+          </label>
+          <label className="fieldcell">
+            <span className="label">Topic</span>
+            <input className="field" value={draft.topic}
+              onChange={(e) => setDraft({ ...draft, topic: e.target.value })} />
+          </label>
+          <label className="fieldcell">
+            <span className="label">What was covered</span>
+            <textarea className="field" rows={16} value={draft.summary}
+              onChange={(e) => setDraft({ ...draft, summary: e.target.value })} />
+          </label>
+          <label className="fieldcell">
+            <span className="label">Presented by</span>
+            <input className="field field--sm" value={draft.presenter}
+              onChange={(e) => setDraft({ ...draft, presenter: e.target.value })} />
+          </label>
+          <div className="photo-add-pair">
+            <button className="button" type="button" onClick={saveEdits}
+              disabled={saving || !draft.topic.trim() || !draft.summary.trim() || !draft.presenter.trim()}>
+              {saving ? 'Saving…' : 'Save changes'}
+            </button>
+            <button className="button button--quiet" type="button" style={{ marginTop: 0 }}
+              disabled={saving}
+              onClick={() => {
+                setDraft({ topic: talk.topic, summary: talk.summary, presenter: talk.presenter, date: talk.date });
+                setEditing(false);
+              }}>
+              Cancel
+            </button>
+          </div>
+        </>
+      ) : (
+        <>
+          <div className="review-section-head">
+            <p className="label">What was covered</p>
+            {!talk.completed && canRun && (
+              <button className="button button--quiet review-add" type="button"
+                onClick={() => setEditing(true)}>
+                Edit talk
+              </button>
+            )}
+          </div>
+          <p className="notes" style={{ whiteSpace: 'pre-wrap' }}>{talk.summary}</p>
+        </>
+      )}
 
       <hr className="rule" />
-      <p className="label">Sign-on · {attendees.length}</p>
-      {attendees.map((a) => (
+      {!editing && <p className="label">Sign-on · {attendees.length}</p>}
+      {!editing && attendees.map((a) => (
         <div key={a.id} className="talk-attendee">
           {urls[a.signature_path] ? (
             /* eslint-disable-next-line @next/next/no-img-element */
@@ -147,7 +231,7 @@ export function TalkScreen({
         </div>
       ))}
 
-      {!talk.completed && canRun && (
+      {!talk.completed && canRun && !editing && (
         <div className="sigslot item" style={{ marginTop: '1rem' }}>
           <p className="label">Add attendee — hand them the phone</p>
           <label className="fieldcell">
@@ -161,7 +245,7 @@ export function TalkScreen({
 
       {error && <p className="alert">{error}</p>}
 
-      {!talk.completed && canRun && (
+      {!talk.completed && canRun && !editing && (
         <button className="button" type="button" disabled={completing || attendees.length === 0} onClick={complete}>
           {completing ? 'Completing…' : `Complete the talk (${attendees.length} signed on)`}
         </button>

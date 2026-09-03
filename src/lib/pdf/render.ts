@@ -4,6 +4,7 @@ import { DailyDocket, type PhotoImage } from './docket';
 import type { SignatureImage } from './photos';
 import { DOCKET_CSS } from './styles';
 import { EMBEDDED_FONT_CSS } from './fonts';
+import { LOGO_DATA_URI } from './logo';
 import type { DocketEntry } from './load';
 
 /**
@@ -191,11 +192,23 @@ export async function renderDailyPdf(input: RenderInput): Promise<Uint8Array> {
   });
 }
 
+/**
+ * The running footer, on every page of every document this pipeline makes.
+ *
+ * The mark belongs here rather than only in the page-1 header because pages
+ * get separated: a claim bundle lifts the photograph sheet out, a solicitor
+ * scans page 3 alone, and an unbranded sheet has nothing on it saying whose
+ * record it is. Every page now carries the frog, the document reference and
+ * its place in the document.
+ */
 function footer(left: string): string {
   return (
     `<div style="width:100%;padding:0 14mm;font-family:sans-serif;font-size:7pt;` +
-    `color:#5A6469;display:flex;justify-content:space-between;">` +
+    `color:#5A6469;display:flex;align-items:center;justify-content:space-between;">` +
+    `<span style="display:flex;align-items:center;gap:1.5mm;">` +
+    `<img src="${LOGO_DATA_URI}" style="height:4mm;width:auto;display:block;">` +
     `<span>${escapeHtml(left)}</span>` +
+    `</span>` +
     `<span>Page <span class="pageNumber"></span> of <span class="totalPages"></span></span>` +
     `</div>`
   );
