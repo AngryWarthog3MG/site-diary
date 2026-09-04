@@ -28,6 +28,13 @@ export default async function PrestartPage({ params }: { params: Promise<{ id: s
 
   // The people this job already knows, most recent first, so sign-on is a
   // tap on a name rather than typing it with a glove on.
+  const { data: roster } = await supabase
+    .from('crew')
+    .select('name')
+    .eq('project_id', row.project_id)
+    .eq('active', true)
+    .order('sort_order')
+    .order('name');
   const { data: recent } = await supabase
     .from('labour')
     .select('person_name, entry:entries!inner(project_id, entry_date)')
@@ -35,6 +42,10 @@ export default async function PrestartPage({ params }: { params: Promise<{ id: s
     .order('entry_date', { referencedTable: 'entry', ascending: false })
     .limit(300);
   const crew: string[] = [];
+  for (const r of roster ?? []) {
+    const name = String(r.name ?? '').trim();
+    if (name && !crew.includes(name)) crew.push(name);
+  }
   for (const r of recent ?? []) {
     const name = String(r.person_name ?? '').trim();
     if (name && !crew.includes(name)) crew.push(name);

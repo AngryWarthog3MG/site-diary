@@ -1474,12 +1474,14 @@ function CrewShortcuts({
   }>(null);
   const [crew, setCrew] = useState<string[]>([]);
   const [copied, setCopied] = useState(false);
+  // The project's own crew list — name and role — kept in Settings.
+  const [roster, setRoster] = useState<Array<{ name: string; role: string | null }>>([]);
 
   useEffect(() => {
     let cancelled = false;
     void (async () => {
       const supabase = createClient();
-      const [{ data: prev }, { data: keywords }] = await Promise.all([
+      const [{ data: prev }, { data: keywords }, { data: crewRows }] = await Promise.all([
         supabase
           .from('entries')
           .select('id, entry_no, entry_date')
@@ -1496,8 +1498,16 @@ function CrewShortcuts({
           .eq('project_id', projectId)
           .eq('category', 'person')
           .limit(30),
+        supabase
+          .from('crew')
+          .select('name, role')
+          .eq('project_id', projectId)
+          .eq('active', true)
+          .order('sort_order')
+          .order('name'),
       ]);
       if (cancelled) return;
+      setRoster(((crewRows ?? []) as Array<{ name: string; role: string | null }>));
 
       const names = new Set((keywords ?? []).map((k) => String(k.term)));
       if (prev) {
@@ -1528,9 +1538,29 @@ function CrewShortcuts({
   }, [projectId, entryId, entryDate]);
 
   const have = new Set(existingNames.map((name) => name.trim().toLowerCase()).filter(Boolean));
-  const chips = crew.filter((name) => !have.has(name.trim().toLowerCase()));
+  const onRoster = new Set(roster.map((r) => r.name.trim().toLowerCase()));
+  const listed = roster.filter((r) => !have.has(r.name.trim().toLowerCase()));
+  const others = crew.filter(
+    (name) => !have.has(name.trim().toLowerCase()) && !onRoster.has(name.trim().toLowerCase()),
+  );
 
   const byHand = { source_quote: null, confidence: null };
+
+  /** One pick from the dropdown is one labour row, name and role filled in. */
+  function addPerson(name: string, role: string | null) {
+    onBulkAdd('labour', [
+      {
+        person_name: name,
+        role,
+        area: null,
+        // The site's standard day; the supervisor corrects the exceptions
+        // rather than typing the rule every time.
+        hours: 8,
+        overtime_hours: null,
+        ...byHand,
+      },
+    ]);
+  }
 
   function copyLast() {
     if (!last) return;
@@ -1544,7 +1574,7 @@ function CrewShortcuts({
     setCopied(true);
   }
 
-  if (!last && chips.length === 0) return null;
+  if (!last && listed.length === 0 && others.length === 0) return null;
 
   return (
     <div className="crew-shortcuts">
@@ -1555,33 +1585,38 @@ function CrewShortcuts({
           {last.plant.length > 0 ? `, ${last.plant.length} plant` : ''})
         </button>
       )}
-      {chips.length > 0 && (
-        <ul className="chips crew-chips">
-          {chips.map((name) => (
-            <li key={name}>
-              <button
-                type="button"
-                className="chip"
-                onClick={() =>
-                  onBulkAdd('labour', [
-                    {
-                      person_name: name,
-                      role: null,
-                      area: null,
-                      // The site's standard day; the supervisor corrects the
-                      // exceptions rather than typing the rule every time.
-                      hours: 8,
-                      overtime_hours: null,
-                      ...byHand,
-                    },
-                  ])
-                }
-              >
-                + {name}
-              </button>
-            </li>
-          ))}
-        </ul>
+      {(listed.length > 0 || others.length > 0) && (
+        <label className="crew-select">
+          <span className="label">Add from the crew list</span>
+          <select
+            className="field field--sm"
+            value=""
+            onChange={(e) => {
+              const value = e.target.value;
+              if (!value) return;
+              const pick = listed.find((r) => r.name === value);
+              addPerson(value, pick?.role ?? null);
+            }}
+          >
+            <option value="">Choose a name…</option>
+            {listed.length > 0 && (
+              <optgroup label="Crew list">
+                {listed.map((r) => (
+                  <option key={r.name} value={r.name}>
+                    {r.name}{r.role ? ` — ${r.role}` : ''}
+                  </option>
+                ))}
+              </optgroup>
+            )}
+            {others.length > 0 && (
+              <optgroup label="Others this job has seen">
+                {others.map((name) => (
+                  <option key={name} value={name}>{name}</option>
+                ))}
+              </optgroup>
+            )}
+          </select>
+        </label>
       )}
     </div>
   );

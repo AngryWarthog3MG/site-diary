@@ -2758,3 +2758,21 @@ body {
 .menu-panel__who { margin: 0.15rem 0 0; font-size: 0.875rem; }
 .menu-panel__foot { margin-top: 1rem; padding-top: 0.75rem; border-top: 1px solid var(--ink-08); }
 .menu-panel__foot .button { margin-top: 0; }
+
+/* The crew list: a dropdown on the entry screen, an editor in Settings. */
+.crew-select { display: block; margin-top: 0.75rem; }
+.crew-select select { width: 100%; margin-top: 0.35rem; }
+.crewlist { margin-top: 1.5rem; }
+.crewrow {
+  display: flex; align-items: center; justify-content: space-between; gap: 0.75rem;
+  padding: 0.6rem 0.75rem; margin-top: 0.5rem;
+  border: 1px solid var(--ink-12); border-radius: 10px; background: var(--paper);
+}
+.crewrow--off { opacity: 0.55; }
+.crewrow__who { display: flex; align-items: center; gap: 0.6rem; flex: 1; min-width: 0; }
+.crewrow__name { font-weight: 600; white-space: nowrap; }
+.crewrow__role { max-width: 11rem; }
+.crewrow__rolestatic { color: var(--ink-60); font-size: 0.875rem; }
+.crewrow__actions { display: flex; gap: 0.4rem; flex: 0 0 auto; }
+.crewadd { display: grid; grid-template-columns: 1fr 1fr auto; gap: 0.5rem; margin-top: 0.75rem; }
+@media (max-width: 640px) { .crewadd { grid-template-columns: 1fr; } .crewrow { flex-wrap: wrap; } }

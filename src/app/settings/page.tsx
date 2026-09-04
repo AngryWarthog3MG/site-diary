@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { requireUser, resolveProject } from '@/lib/auth';
 import { SettingsForm, type SettingsData } from './settings-form';
+import { CrewList, type CrewRow } from './crew-list';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Settings · Site Diary' };
@@ -18,13 +19,19 @@ export default async function SettingsPage({
 
   const supabase = await createClient();
 
-  const [{ data: row }, { data: state }] = await Promise.all([
+  const [{ data: row }, { data: state }, { data: crew }] = await Promise.all([
     supabase
       .from('projects')
       .select('id, name, code, principal_contractor, site_lat, site_lng, bom_station_id, active, report_emails, org:organisations!inner(id, name, code)')
       .eq('id', current.project_id)
       .single(),
     supabase.rpc('project_settings_state', { p_project_id: current.project_id }),
+    supabase
+      .from('crew')
+      .select('id, name, role, active')
+      .eq('project_id', current.project_id)
+      .order('sort_order')
+      .order('name'),
   ]);
 
   if (!row) redirect('/');
@@ -60,5 +67,16 @@ export default async function SettingsPage({
     signedEntries: flags.signed_entries ?? 0,
   };
 
-  return <SettingsForm initial={initial} />;
+  return (
+    <>
+      <SettingsForm initial={initial} />
+      <div className="app-shell app-shell--narrow" style={{ paddingTop: 0 }}>
+        <CrewList
+          projectId={current.project_id}
+          initial={(crew ?? []) as CrewRow[]}
+          canEdit={current.role === 'supervisor' || current.role === 'admin'}
+        />
+      </div>
+    </>
+  );
 }
