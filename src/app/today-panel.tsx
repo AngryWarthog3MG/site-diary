@@ -71,7 +71,7 @@ export function TodayPanel({
     id: string; date: string; mine: boolean; labour: number; words: boolean; correctionOf: string | null;
   }>>([]);
   const [binning, setBinning] = useState<string | null>(null);
-  const [week, setWeek] = useState<Array<{ date: string; label: string; state: string }>>([]);
+  const [week, setWeek] = useState<Array<{ date: string; label: string; state: string; href: string | null }>>([]);
   const [loading, setLoading] = useState(true);
   const [offline, setOffline] = useState(false);
   /**
@@ -160,7 +160,7 @@ export function TodayPanel({
         const sinceStr = since.toISOString().slice(0, 10);
         const { data: recent } = await supabase
           .from('entries')
-          .select('entry_date, status')
+          .select('id, entry_date, status, author_id, supersedes_entry_id')
           .eq('project_id', projectId)
           .gte('entry_date', sinceStr);
         const { data: first } = await supabase
@@ -175,30 +175,38 @@ export function TodayPanel({
         // strongest state — a signed day beats a lingering draft on the
         // same date. The strip is the habit made visible.
         {
-          const byDate = new Map<string, string>();
-          for (const row of recent ?? []) {
-            const date = row.entry_date as string;
-            const status = row.status as string;
-            if (status === 'signed' || !byDate.has(date)) byDate.set(date, status);
+          // Each day's best row, and where a tap on it should go: the current
+          // signed version if there is one, otherwise the open draft (yours
+          // to finish, someone else's to look at), otherwise record that day.
+          type RecentRow = { id: string; entry_date: string; status: string; author_id: string; supersedes_entry_id: string | null };
+          const rows = (recent ?? []) as RecentRow[];
+          const replaced = new Set(rows.filter((r) => r.status === 'signed' && r.supersedes_entry_id).map((r) => r.supersedes_entry_id as string));
+          const byDate = new Map<string, { status: string; href: string }>();
+          for (const row of rows) {
+            const date = row.entry_date;
+            const have = byDate.get(date);
+            if (row.status === 'signed') {
+              if (replaced.has(row.id)) continue;
+              byDate.set(date, { status: 'signed', href: `/entries/${row.id}/signed` });
+            } else if (!have || have.status !== 'signed') {
+              const mine = row.author_id === user.id;
+              if (!have || (mine && !have.href.endsWith('/review'))) {
+                byDate.set(date, { status: 'draft', href: mine ? `/entries/${row.id}/review` : `/entries/${row.id}/signed` });
+              }
+            }
           }
           const DOW = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
-          const strip: Array<{ date: string; label: string; state: string }> = [];
+          const strip: Array<{ date: string; label: string; state: string; href: string | null }> = [];
           const cursor = new Date(`${today}T00:00:00`);
           cursor.setDate(cursor.getDate() - 6);
           for (let i = 0; i < 7; i += 1) {
             const date = cursor.toISOString().slice(0, 10);
-            const status = byDate.get(date);
+            const best = byDate.get(date);
             strip.push({
               date,
               label: DOW[cursor.getDay()],
-              state:
-                status === 'signed'
-                  ? 'signed'
-                  : status
-                    ? 'draft'
-                    : date === today
-                      ? 'today'
-                      : 'gap',
+              state: best ? best.status : date === today ? 'today' : 'gap',
+              href: best ? best.href : date === today ? null : `/record?project=${projectId}&date=${date}`,
             });
             cursor.setDate(cursor.getDate() + 1);
           }
@@ -419,15 +427,24 @@ export function TodayPanel({
         <>
           <p className="label">The last seven days</p>
           <div className="weekstrip" aria-label="The last seven days">
-            {week.map((day) => (
-              <span
-                key={day.date}
-                className={`weekstrip__day weekstrip__day--${day.state}`}
-                title={`${day.date} — ${day.state === 'signed' ? 'signed' : day.state === 'draft' ? 'started, not signed' : day.state === 'today' ? 'today' : 'nothing written down'}`}
-              >
-                {day.label}
-              </span>
-            ))}
+            {week.map((day) => {
+              const title = `${day.date} — ${day.state === 'signed' ? 'signed · open the diary' : day.state === 'draft' ? 'started, not signed · open it' : day.state === 'today' ? 'today' : 'nothing written down · record it'}`;
+              return day.href ? (
+                <Link
+                  key={day.date}
+                  href={day.href}
+                  className={`weekstrip__day weekstrip__day--${day.state} weekstrip__day--link`}
+                  title={title}
+                  aria-label={title}
+                >
+                  {day.label}
+                </Link>
+              ) : (
+                <span key={day.date} className={`weekstrip__day weekstrip__day--${day.state}`} title={title}>
+                  {day.label}
+                </span>
+              );
+            })}
           </div>
           <p className="weekstrip__key">
             <span className="weekstrip__day weekstrip__day--signed" aria-hidden>&nbsp;</span> signed
