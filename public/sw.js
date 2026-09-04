@@ -18,7 +18,10 @@
 // stale app shells to the one real phone in the field — three separate
 // debugging sessions traced back to it. Offline still works (network-first
 // with fallback), but a version bump now nukes old caches on activate.
-const VERSION = 'v5';
+// v6: forty deploys shipped on v5 without a bump, so a phone that opened the
+// app with no signal was handed a page shell from weeks ago and kept it.
+// Bumped alongside the update check in sw-register.tsx, which is the real fix.
+const VERSION = 'v6';
 const PAGES = `pages-${VERSION}`;
 const ASSETS = `assets-${VERSION}`;
 const OFFLINE_URL = '/offline.html';

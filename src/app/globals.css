@@ -2611,3 +2611,56 @@ body {
     margin-top: 0.25rem;
   }
 }
+
+/* The phone is behind the desktop. One tap fixes it; it never fixes itself
+   on a screen where something might be half-typed. */
+.update-banner {
+  position: fixed;
+  left: 0.75rem;
+  right: 0.75rem;
+  bottom: calc(0.75rem + env(safe-area-inset-bottom));
+  z-index: 50;
+  padding: 0.9rem 1rem;
+  border: 0;
+  border-radius: 12px;
+  background: var(--teal, #0e4f52);
+  color: #fff;
+  font: inherit;
+  font-weight: 600;
+  box-shadow: 0 10px 28px rgba(22, 33, 31, 0.28);
+}
+
+/* Prestart checks: on the form as toggles, on the screen as ticks. */
+.checklist { display: flex; flex-direction: column; gap: 0.4rem; margin-top: 0.5rem; }
+.checkrow {
+  display: flex; align-items: flex-start; gap: 0.6rem;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid var(--ink-12); border-radius: 10px; background: var(--paper);
+  font-size: 0.9375rem; line-height: 1.35;
+}
+.checkrow input { margin-top: 0.15rem; width: 1.15rem; height: 1.15rem; accent-color: var(--teal, #0e4f52); flex: 0 0 auto; }
+.checkrow--on { border-color: rgba(13, 90, 88, 0.35); background: var(--teal-tint, rgba(13,90,88,0.06)); }
+.checkread { list-style: none; margin: 0.5rem 0 0; padding: 0; }
+.checkread li { display: flex; gap: 0.6rem; align-items: flex-start; margin-bottom: 0.4rem; font-size: 0.9375rem; line-height: 1.4; }
+.checkread__mark { display: inline-block; width: 1.2rem; font-weight: 700; flex: 0 0 auto; }
+.checkread__yes .checkread__mark { color: var(--teal, #0e4f52); }
+.checkread__no .checkread__mark { color: #9a2f2f; }
+.crewchips { display: flex; flex-wrap: wrap; gap: 0.4rem; margin: 0.25rem 0 0.75rem; }
+.crewchip { border: 1px dashed var(--ink-30); border-radius: 999px; padding: 0.35rem 0.7rem; font-size: 0.75rem; background: transparent; }
+.crewchip--on { border-style: solid; border-color: var(--teal, #0e4f52); color: var(--teal, #0e4f52); }
+.fitrow { margin: 0.5rem 0 0.75rem; }
+.fitbtn--on { border-color: var(--teal, #0e4f52); color: var(--teal, #0e4f52); background: var(--teal-tint, rgba(13,90,88,0.06)); }
+.fitbtn--no { border-color: #9a2f2f; color: #9a2f2f; background: rgba(154, 47, 47, 0.06); }
+.talk-attendee--notfit { border-color: rgba(154, 47, 47, 0.4); }
+.notfit-tag { color: #9a2f2f; font-size: 0.8125rem; }
+
+/* Today's prestart, one glance. */
+.prestart-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 0.75rem;
+  margin-top: 0.75rem; padding: 0.65rem 0.8rem;
+  border: 1px solid var(--ink-12); border-radius: 10px; background: var(--paper);
+  font-size: 0.9375rem;
+}
+.prestart-row--done { border-color: rgba(13, 90, 88, 0.3); background: var(--teal-tint, rgba(13,90,88,0.06)); }
+.prestart-row--open { border-color: rgba(240, 164, 31, 0.5); background: rgba(240, 164, 31, 0.1); }
+.prestart-row a { font-weight: 600; white-space: nowrap; }

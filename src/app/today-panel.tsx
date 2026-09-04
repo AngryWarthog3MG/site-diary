@@ -62,6 +62,7 @@ export function TodayPanel({
   const [date, setDate] = useState('');
   const [writingOut, setWritingOut] = useState(false);
   const [entry, setEntry] = useState<TodayEntry | null>(null);
+  const [prestart, setPrestart] = useState<{ id: string; done: boolean; signed: number } | null>(null);
   const [weather, setWeather] = useState<WeatherRow | null>(null);
   const [weatherNote, setWeatherNote] = useState<string | null>(null);
   const [attribution, setAttribution] = useState<string | null>(null);
@@ -106,6 +107,25 @@ export function TodayPanel({
         .eq('author_id', user.id)
         .is('supersedes_entry_id', null)
         .maybeSingle();
+
+      // Today's prestart: done, open, or not started. It is the first thing
+      // that happens on a site each morning, so it sits at the top of Today.
+      {
+        const { data: ps } = await supabase
+          .from('prestarts')
+          .select('id, completed_at, prestart_attendees(id)')
+          .eq('project_id', projectId)
+          .eq('prestart_date', today)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        setPrestart(
+          ps
+            ? { id: ps.id as string, done: Boolean(ps.completed_at),
+                signed: ((ps.prestart_attendees ?? []) as unknown[]).length }
+            : null,
+        );
+      }
 
       if (data) {
         const segments = (data.entry_audio ?? []) as Array<{ transcript_status: string }>;
@@ -395,6 +415,23 @@ export function TodayPanel({
         </p>
       )}
 
+      {!loading && canRecord && (
+        <div className={`prestart-row ${prestart?.done ? 'prestart-row--done' : prestart ? 'prestart-row--open' : ''}`}>
+          <span>
+            {prestart?.done
+              ? `Prestart done · ${prestart.signed} signed on`
+              : prestart
+                ? `Prestart open · ${prestart.signed} signed on so far`
+                : 'No prestart yet today'}
+          </span>
+          {prestart ? (
+            <Link href={`/prestart/${prestart.id}`}>{prestart.done ? 'View' : 'Finish it'}</Link>
+          ) : (
+            <Link href={`/prestart/new?project=${projectId}`}>Start it</Link>
+          )}
+        </div>
+      )}
+
       {covered.size > 0 && (
         <div style={{ marginTop: '0.75rem' }}>
           <p className="caption">What you have talked about so far</p>
@@ -482,6 +519,10 @@ export function TodayPanel({
 
         <section className="navgroup">
           <p className="label">On site</p>
+          <Link className="navitem" href={`/prestart?project=${projectId}`}>
+            <span className="navitem__name">Prestarts</span>
+            <span className="navitem__what">Every morning&rsquo;s briefing, checks and crew sign-on</span>
+          </Link>
           <Link className="navitem" href={`/toolbox?project=${projectId}`}>
             <span className="navitem__name">Toolbox talks</span>
             <span className="navitem__what">Run the weekly talk and get the crew to sign on</span>

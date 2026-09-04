@@ -2,6 +2,10 @@ import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+  // The running build's identity, so an installed phone app can tell it is
+  // behind. On Vercel this is the deployment id (set for CLI deploys as well
+  // as git ones); locally a constant, so dev never reloads itself.
+  env: { NEXT_PUBLIC_BUILD_ID: process.env.VERCEL_DEPLOYMENT_ID ?? 'dev' },
   // The record is written on site; never cache an authenticated response.
   poweredByHeader: false,
   // Playwright ships browser binaries and native bindings — bundling it breaks
