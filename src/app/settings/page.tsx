@@ -71,11 +71,13 @@ export default async function SettingsPage({
     <>
       <SettingsForm initial={initial} />
       <div className="app-shell app-shell--narrow" style={{ paddingTop: 0 }}>
-        <CrewList
-          projectId={current.project_id}
-          initial={(crew ?? []) as CrewRow[]}
-          canEdit={current.role === 'supervisor' || current.role === 'admin'}
-        />
+        <section className="sheet">
+          <CrewList
+            projectId={current.project_id}
+            initial={(crew ?? []) as CrewRow[]}
+            canEdit={current.role === 'supervisor' || current.role === 'admin'}
+          />
+        </section>
       </div>
     </>
   );
