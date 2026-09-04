@@ -835,6 +835,14 @@ function DocketSection({
         />
       )}
 
+      {section.group === 'plant' && (
+        <PlantShortcuts
+          projectId={projectId}
+          existingItems={items.map((item) => String(item.item ?? ''))}
+          onBulkAdd={onBulkAdd}
+        />
+      )}
+
       {reasons.map((reason) => (
         <p key={reason} className="notice gap">
           {reason}
@@ -1622,6 +1630,78 @@ function CrewShortcuts({
   );
 }
 
+
+/**
+ * The plant list as a dropdown: one pick, one row, with whatever the list
+ * knows about the machine (hire type, supplier) already filled in. Hours are
+ * left for the supervisor — a machine's day is not a rule the way a
+ * person's standard day is.
+ */
+function PlantShortcuts({
+  projectId,
+  existingItems,
+  onBulkAdd,
+}: {
+  projectId: string;
+  existingItems: string[];
+  onBulkAdd: (group: ItemGroup, items: Item[]) => void;
+}) {
+  const [list, setList] = useState<Array<{ item: string; hire_type: string | null; supplier: string | null }>>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      const supabase = createClient();
+      const { data } = await supabase
+        .from('plant_list')
+        .select('item, hire_type, supplier')
+        .eq('project_id', projectId)
+        .eq('active', true)
+        .order('sort_order')
+        .order('item');
+      if (!cancelled) setList((data ?? []) as Array<{ item: string; hire_type: string | null; supplier: string | null }>);
+    })();
+    return () => { cancelled = true; };
+  }, [projectId]);
+
+  const have = new Set(existingItems.map((v) => v.trim().toLowerCase()).filter(Boolean));
+  const listed = list.filter((row) => !have.has(row.item.trim().toLowerCase()));
+  if (listed.length === 0) return null;
+
+  return (
+    <label className="crew-select">
+      <span className="label">Add from the plant list</span>
+      <select
+        className="field field--sm"
+        value=""
+        onChange={(e) => {
+          const pick = listed.find((row) => row.item === e.target.value);
+          if (!pick) return;
+          onBulkAdd('plant', [
+            {
+              item: pick.item,
+              hire_type: pick.hire_type,
+              supplier: pick.supplier,
+              hours: null,
+              idle_hours: null,
+              source_quote: null,
+              confidence: null,
+            },
+          ]);
+        }}
+      >
+        <option value="">Choose a machine…</option>
+        {listed.map((row) => (
+          <option key={row.item} value={row.item}>
+            {row.item}
+            {row.hire_type ? ` — ${row.hire_type} hire` : ''}
+            {row.supplier ? ` (${row.supplier})` : ''}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+}
 
 /**
  * The sign-off tab: the supervisor's mark and the client's, drawn on the
