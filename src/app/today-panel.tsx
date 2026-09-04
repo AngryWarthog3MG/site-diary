@@ -267,6 +267,11 @@ export function TodayPanel({
         );
       }
 
+      // Everything the screen needs to say what today is has arrived. The
+      // weather and any stalled-work retries below can take seconds on a
+      // weak connection; the status line and prestart row should not wait.
+      setLoading(false);
+
       // Pick up anything the sync queue started and could not finish.
       if (data) {
         const segments = (data.entry_audio ?? []) as Array<{ transcript_status: string }>;
