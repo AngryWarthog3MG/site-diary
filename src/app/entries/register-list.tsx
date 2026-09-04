@@ -223,9 +223,10 @@ function dateLabel(date: string, today: string): string {
   const yesterday = new Date(`${today}T00:00:00`);
   yesterday.setDate(yesterday.getDate() - 1);
   if (date === fmt(yesterday)) return 'Yesterday';
-  return new Intl.DateTimeFormat('en-AU', {
-    weekday: 'short',
-    day: 'numeric',
-    month: 'short',
-  }).format(new Date(`${date}T00:00:00`));
+  // "Thu 3 Sep": short enough for the phone's date column, no comma, no
+  // locale surprises ("Sept").
+  const d = new Date(`${date}T00:00:00`);
+  const wd = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][d.getDay()];
+  const mon = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][d.getMonth()];
+  return `${wd} ${d.getDate()} ${mon}`;
 }

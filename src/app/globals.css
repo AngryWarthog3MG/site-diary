@@ -2906,3 +2906,10 @@ body {
   .register-card__meta { font-size: 0.78rem; }
   .register-card__actions { justify-content: flex-end; margin-top: 0; }
 }
+
+@media (max-width: 760px) {
+  /* The date column: room for "Yesterday" or "Thu 3 Sep" without wrapping. */
+  .entries-day { grid-template-columns: 4.6rem minmax(0, 1fr); }
+  .entries-date { display: flex; flex-direction: column; align-items: flex-start; gap: 0.15rem; }
+  .entries-date .label { font-size: 0.625rem; letter-spacing: 0.04em; white-space: nowrap; }
+}
