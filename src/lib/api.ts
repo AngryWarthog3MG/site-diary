@@ -9,6 +9,7 @@ export type ApiErrorCode =
   | 'not_found'
   | 'bad_request'
   | 'day_signed'
+  | 'day_open'
   | 'entry_signed'
   | 'transcription_failed'
   | 'server_error';

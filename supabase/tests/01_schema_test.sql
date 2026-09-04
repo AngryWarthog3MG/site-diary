@@ -532,6 +532,30 @@ begin
 end;
 $$;
 
+-- ---------------------------------------------------------------------------
+-- One document per day: a second open entry for the same project and day is
+-- refused, whoever starts it — and an open correction counts as that one.
+-- ---------------------------------------------------------------------------
+savepoint one_open_document;
+do $$
+begin
+  begin
+    insert into public.entries (project_id, entry_date, author_id, transcript_raw)
+    values ('bbbbbbbb-0000-0000-0000-000000000001', date '2026-08-24',
+            '11111111-1111-1111-1111-111111111111', 'A second open document for a day.');
+    -- Whether or not a draft already exists for this day in the fixture, a
+    -- further one must never be accepted beside it.
+    insert into public.entries (project_id, entry_date, author_id, transcript_raw)
+    values ('bbbbbbbb-0000-0000-0000-000000000001', date '2026-08-24',
+            '11111111-1111-1111-1111-111111111111', 'A third.');
+    raise exception 'two open documents were accepted for the same day';
+  exception when unique_violation then
+    raise notice 'PASS  a second open document for the same day is refused';
+  end;
+end;
+$$;
+rollback to savepoint one_open_document;
+
 do $$ begin raise notice ''; raise notice 'ALL TESTS PASSED'; end; $$;
 
 rollback;

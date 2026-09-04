@@ -44,6 +44,31 @@ export async function POST(request: Request) {
     return ok({ entryId: existing.id, status: existing.status, created: false });
   }
 
+  // One open document per day, whoever started it. If someone else has the
+  // day open, say so rather than opening a second one beside it — the
+  // database refuses that anyway (entries_one_open_per_day).
+  const { data: openByOther } = await supabase
+    .from('entries')
+    .select('id, author:profiles!entries_author_profiles_fkey(full_name, email)')
+    .eq('project_id', projectId)
+    .eq('entry_date', entryDate)
+    .neq('status', 'signed')
+    .neq('author_id', user.id)
+    .limit(1)
+    .maybeSingle();
+  if (openByOther) {
+    const author = Array.isArray(openByOther.author) ? openByOther.author[0] : openByOther.author;
+    const who = (author as { full_name?: string | null; email?: string | null } | null)?.full_name
+      ?? (author as { email?: string | null } | null)?.email
+      ?? 'someone else';
+    return fail(
+      'day_open',
+      `${entryDate} is already open — ${who} started it. There is one document per day; ask them to finish or bin it.`,
+      409,
+      { entryId: openByOther.id },
+    );
+  }
+
   if (existing && !asCorrection) {
     return fail(
       'day_signed',
