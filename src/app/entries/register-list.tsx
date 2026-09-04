@@ -12,6 +12,7 @@ export interface RegisterRow {
   mine: boolean;
   authorName: string;
   correction: boolean;
+  supersedes: string | null;
 }
 
 /**
@@ -27,6 +28,14 @@ export interface RegisterRow {
 export function RegisterList({ rows, projectId }: { rows: RegisterRow[]; projectId: string }) {
   const [today, setToday] = useState<string | null>(null);
   const [query, setQuery] = useState('');
+  const [showEarlier, setShowEarlier] = useState<Set<string>>(new Set());
+
+  // One document per day. A signed entry that a later *signed* entry has
+  // replaced is an earlier version of the same day, not a second document:
+  // it is folded away under the current one, still there, still openable.
+  const replaced = new Set(
+    rows.filter((r) => r.status === 'signed' && r.supersedes).map((r) => r.supersedes as string),
+  );
   useEffect(() => setToday(localDate()), []);
 
   if (rows.length === 0) {
@@ -123,7 +132,44 @@ export function RegisterList({ rows, projectId }: { rows: RegisterRow[]; project
                   <span className="status-pill status-pill--gap">Record it</span>
                 </Link>
               ) : (
-                entries.map((entry) => {
+                <>
+                {(() => {
+                  const earlier = entries.filter((e) => replaced.has(e.id));
+                  const current = entries.filter((e) => !replaced.has(e.id));
+                  const open = showEarlier.has(day.date);
+                  return (
+                    <>
+                      {current.map((entry) => renderCard(entry, earlier.length))}
+                      {earlier.length > 0 && (
+                        <button
+                          type="button"
+                          className="register-earlier"
+                          onClick={() =>
+                            setShowEarlier((prev) => {
+                              const next = new Set(prev);
+                              if (next.has(day.date)) next.delete(day.date); else next.add(day.date);
+                              return next;
+                            })
+                          }
+                        >
+                          {open ? 'Hide' : 'Show'} {earlier.length} earlier version{earlier.length === 1 ? '' : 's'} of this day
+                        </button>
+                      )}
+                      {open && earlier.map((entry) => renderCard(entry, 0, true))}
+                    </>
+                  );
+                })()}
+                </>
+              )}
+            </div>
+          </section>
+        );
+      })}
+    </section>
+  );
+
+  function renderCard(entry: RegisterRow, earlierCount: number, isEarlier = false) {
+                {
                   const signed = entry.status === 'signed';
                   const href = signed
                     ? `/entries/${entry.id}/signed`
@@ -131,17 +177,23 @@ export function RegisterList({ rows, projectId }: { rows: RegisterRow[]; project
                       ? `/entries/${entry.id}/review`
                       : `/entries/${entry.id}/signed`;
                   return (
-                    <Link key={entry.id} href={href} className="register-card">
+                    <Link key={entry.id} href={href} className={`register-card${isEarlier ? ' register-card--earlier' : ''}`}>
                       <div className="register-card__main">
                         <p className="mono register-card__title">{entry.entry_no ?? 'DRAFT'}</p>
                         <p className="register-card__meta">
                           {entry.authorName}
-                          {entry.correction ? ' · correction' : ''}
+                          {isEarlier
+                            ? ' · earlier version, replaced'
+                            : earlierCount > 0
+                              ? ` · current version (${earlierCount} earlier)`
+                              : entry.correction && !signed
+                                ? ' · unsigned correction'
+                                : ''}
                         </p>
                       </div>
                       <div className="register-card__actions">
-                        {entry.correction && (
-                          <span className="status-pill status-pill--correction">Correction</span>
+                        {isEarlier && (
+                          <span className="status-pill status-pill--correction">Replaced</span>
                         )}
                         <span
                           className={`status-pill${
@@ -157,14 +209,8 @@ export function RegisterList({ rows, projectId }: { rows: RegisterRow[]; project
                       </div>
                     </Link>
                   );
-                })
-              )}
-            </div>
-          </section>
-        );
-      })}
-    </section>
-  );
+                }
+  }
 }
 
 function fmt(d: Date): string {

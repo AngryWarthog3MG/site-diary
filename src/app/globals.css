@@ -2848,3 +2848,14 @@ body {
 .unfinished__what { margin: 0.1rem 0 0; color: var(--ink-60); font-size: 0.8125rem; }
 .unfinished__actions { display: flex; align-items: center; gap: 0.6rem; flex: 0 0 auto; }
 .unfinished__actions .button { margin-top: 0; width: auto; padding: 0.45rem 0.8rem; font-size: 0.8125rem; }
+
+/* The sign button, armed: one more tap and the day is locked. */
+.button--armed { background: var(--amber, #9a6a09) !important; border-color: var(--amber, #9a6a09) !important; color: #fff !important; }
+
+/* Earlier versions of a day, folded away under the current one. */
+.register-earlier {
+  display: block; width: 100%; margin: 0.35rem 0 0; padding: 0.45rem 0.75rem;
+  border: 1px dashed var(--ink-30); border-radius: 10px; background: transparent;
+  color: var(--ink-60); font: inherit; font-size: 0.8125rem; text-align: left;
+}
+.register-card--earlier { opacity: 0.7; }

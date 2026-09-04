@@ -107,21 +107,17 @@ async function syncItem(item: QueueItem): Promise<'synced' | 'failed' | 'blocked
     });
 
     if (response.status === 409 && errorCode(json) === 'day_signed') {
-      // The day is signed, so this recording becomes a correction — a new
-      // entry superseding the signed one. That is the record model's own
-      // answer to "something happened after signing", and a supervisor who
-      // recorded onto a closed day plainly meant it to count.
-      await progress(item, { asCorrection: true });
-      const retry = await postJson('/api/entries', {
-        projectId: item.projectId,
-        entryDate: item.entryDate,
-        asCorrection: true,
+      // The day is already signed. This used to open a correction on its
+      // own — a new entry superseding the signed one — and a recording made
+      // in the same minute as signing produced a second document nobody
+      // asked for. Now it stops and asks: a correction is the supervisor's
+      // decision, made on Today, never the queue's.
+      await progress(item, {
+        state: 'blocked',
+        blockedReason: 'day_signed',
+        lastError: `${item.entryDate} is already signed. Add this as a correction, or bin it.`,
       });
-      if (!retry.response.ok) {
-        throw new Error(errorMessage(retry.json, 'Could not open a correction entry.'));
-      }
-      entryId = retry.json.entryId as string;
-      await progress(item, { entryId });
+      return 'blocked';
     }
     if (response.status === 403) {
       await progress(item, {

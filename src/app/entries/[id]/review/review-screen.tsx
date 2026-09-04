@@ -125,6 +125,15 @@ export function ReviewScreen(props: {
     new Set(props.initialNilConfirmed),
   );
   const [busy, setBusy] = useState<null | 'saving' | 'signing'>(null);
+  // Signing is the one thing here that cannot be undone, so it takes two
+  // taps: the first arms it and says so, the second signs. It disarms on
+  // its own if the second tap does not come.
+  const [signArmed, setSignArmed] = useState(false);
+  useEffect(() => {
+    if (!signArmed) return;
+    const timer = window.setTimeout(() => setSignArmed(false), 8000);
+    return () => window.clearTimeout(timer);
+  }, [signArmed]);
   const [error, setError] = useState<string | null>(null);
   const [showTranscript, setShowTranscript] = useState(false);
   const [activeTab, setActiveTab] = useState<ReviewTab>('labour');
@@ -568,12 +577,29 @@ export function ReviewScreen(props: {
 
       <button
         type="button"
-        className="button"
+        className={`button${signArmed ? ' button--armed' : ''}`}
         disabled={busy !== null || gaps.length > 0}
-        onClick={() => submit('signing')}
+        onClick={() => {
+          if (!signArmed) {
+            setSignArmed(true);
+            return;
+          }
+          setSignArmed(false);
+          submit('signing');
+        }}
       >
-        {busy === 'signing' ? 'Signing…' : 'Sign this entry'}
+        {busy === 'signing'
+          ? 'Signing…'
+          : signArmed
+            ? 'Tap again to sign — this locks the day'
+            : 'Sign this entry'}
       </button>
+      {signArmed && busy === null && (
+        <p className="way-hint" style={{ marginTop: '0.4rem' }}>
+          Once signed, nothing in this day can be changed. Not ready? Use &ldquo;Save and finish
+          later&rdquo; and come back to it — you can edit as much as you like until you sign.
+        </p>
+      )}
 
       {gaps.length > 0 && (
         <p style={{ marginTop: '0.5rem', color: 'var(--amber)', fontSize: '0.875rem' }}>

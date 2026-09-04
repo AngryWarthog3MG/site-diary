@@ -28,6 +28,7 @@ function lengthLabel(item: QueueSummary): string {
 }
 
 function statusLabel(item: QueueSummary, online: boolean): string {
+  if (item.blockedReason === 'day_signed') return 'That day is already signed';
   if (item.state === 'blocked') return 'Needs attention';
   if (item.state === 'syncing') return STAGE_TEXT[item.stage ?? 'saved_local'] ?? 'Sending';
   if (item.nextAttemptAt > Date.now()) return 'Waiting to retry';
@@ -35,6 +36,9 @@ function statusLabel(item: QueueSummary, online: boolean): string {
 }
 
 function detailLabel(item: QueueSummary): string {
+  if (item.blockedReason === 'day_signed') {
+    return `${item.entryDate} was signed before this ${item.kind === 'text' ? 'typed diary' : 'recording'} reached it. A signed day never changes — you can add this as a correction (a new entry that refers back to the signed one), or bin it.`;
+  }
   if (item.lastError) return item.lastError;
   if (item.entryId && item.registered) return 'Raw capture is on the server; finishing processing.';
   if (item.entryId) return 'Diary entry is open; raw capture is still on this phone.';
@@ -96,6 +100,23 @@ export function QueueStatus() {
     setBusy(`retry:${item.id}`);
     try {
       await queue.patch(item.id, {
+        state: 'queued',
+        nextAttemptAt: 0,
+        lastError: undefined,
+      });
+      await sync.drain();
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  /** The supervisor's decision, not the queue's: this becomes a correction. */
+  async function addAsCorrection(item: QueueSummary) {
+    setBusy(`correct:${item.id}`);
+    try {
+      await queue.patch(item.id, {
+        asCorrection: true,
+        blockedReason: undefined,
         state: 'queued',
         nextAttemptAt: 0,
         lastError: undefined,
@@ -178,6 +199,16 @@ export function QueueStatus() {
               </div>
 
               <div className="queue-card__actions">
+                {item.blockedReason === 'day_signed' && (
+                  <button
+                    type="button"
+                    className="button button--quiet"
+                    disabled={busy !== null || !online}
+                    onClick={() => void addAsCorrection(item)}
+                  >
+                    {busy === `correct:${item.id}` ? 'Adding…' : 'Add as a correction'}
+                  </button>
+                )}
                 {item.state !== 'blocked' && (
                   <button
                     type="button"

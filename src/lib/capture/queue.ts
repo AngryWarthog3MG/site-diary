@@ -42,8 +42,13 @@ export interface QueueItem {
   lastAttemptAt?: number;
   lastError?: string;
 
-  /** The day was signed, so this recording opens a superseding correction. */
+  /**
+   * Set only by the supervisor's own choice: this recording is a correction
+   * to a day already signed, and opens a new entry superseding it.
+   */
   asCorrection?: boolean;
+  /** Why the item stopped and is waiting on a decision rather than a retry. */
+  blockedReason?: 'day_signed';
 
   /** Progress markers, so a resumed sync never repeats work it has done. */
   entryId?: string;

@@ -87,6 +87,7 @@ export default async function EntriesPage({
               mine: entry.author_id === userId,
               authorName: author?.full_name ?? author?.email ?? '—',
               correction: Boolean(entry.supersedes_entry_id),
+              supersedes: (entry.supersedes_entry_id as string | null) ?? null,
             };
           })}
         />
