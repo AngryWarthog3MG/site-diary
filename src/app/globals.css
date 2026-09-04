@@ -2694,10 +2694,7 @@ body {
   position: sticky;
   top: 0;
   z-index: 41;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
+  display: block;
   padding: calc(0.5rem + env(safe-area-inset-top)) 0.9rem 0.5rem;
   background: rgba(253, 253, 252, 0.92);
   backdrop-filter: blur(8px);
@@ -2810,3 +2807,29 @@ body {
 .menu-panel .navitem__what,
 .menu-panel .menu-panel__who { color: var(--ink-60, #5a6469); }
 .menu-panel .navitem:hover { border-color: rgba(13, 90, 88, 0.28); background: var(--teal-tint); }
+
+/* The bar's row, and the drawer that opens beneath it. */
+.topbar__row { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; }
+.menu-slot:empty { display: none; }
+
+/* The menu as a drawer: in the page, under its button, pushing the rest down. */
+.menu-drawer {
+  margin-top: 0.75rem;
+  padding: 0.9rem;
+  border-radius: 12px;
+  background: var(--paper, #fdfdfc);
+  border: 1px solid var(--ink-12);
+  box-shadow: 0 10px 28px rgba(22, 33, 31, 0.12);
+  animation: drawer-open 180ms ease-out;
+  color: var(--ink, #16211f);
+}
+.topbar .menu-drawer { max-height: calc(100vh - 6rem); overflow-y: auto; }
+@keyframes drawer-open { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+.menu-drawer .navgroup { margin-top: 0.9rem; }
+.menu-drawer .navgroup:first-of-type { margin-top: 0; }
+.menu-drawer a, .menu-drawer .navitem, .menu-drawer .navitem__name { color: var(--ink, #16211f); }
+.menu-drawer .label, .menu-drawer .navitem__what, .menu-drawer .menu-drawer__who { color: var(--ink-60, #5a6469); }
+.menu-drawer .navitem:hover { border-color: rgba(13, 90, 88, 0.28); background: var(--teal-tint); }
+.menu-drawer__foot { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; margin-top: 1rem; padding-top: 0.75rem; border-top: 1px solid var(--ink-08); }
+.menu-drawer__foot .button { margin-top: 0; width: auto; padding: 0.5rem 0.9rem; }
+.menu-drawer__who { margin: 0; font-size: 0.875rem; }

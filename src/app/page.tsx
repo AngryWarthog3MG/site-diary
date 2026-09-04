@@ -73,10 +73,11 @@ export default async function TodayPage({
             </div>
             <div className="home-hero__tools">
               <Suspense fallback={null}>
-                <AppMenu />
+                <AppMenu slotId="menu-slot-hero" />
               </Suspense>
               <RefreshButton />
             </div>
+            <div id="menu-slot-hero" className="menu-slot" />
           </div>
           <div className="home-hero__switcher">
             <ProjectSwitcher memberships={memberships} currentId={current.project_id} />

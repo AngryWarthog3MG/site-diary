@@ -21,16 +21,19 @@ export function TopBar() {
 
   return (
     <header className="topbar">
-      <Link className="topbar__brand" href="/" aria-label="Today">
-        <BrandMark size={22} />
-        <span>Daily Diary</span>
-      </Link>
-      <div className="topbar__actions">
-        <Suspense fallback={null}>
-          <AppMenu />
-        </Suspense>
-        <RefreshButton />
+      <div className="topbar__row">
+        <Link className="topbar__brand" href="/" aria-label="Today">
+          <BrandMark size={22} />
+          <span>Daily Diary</span>
+        </Link>
+        <div className="topbar__actions">
+          <Suspense fallback={null}>
+            <AppMenu slotId="menu-slot-bar" />
+          </Suspense>
+          <RefreshButton />
+        </div>
       </div>
+      <div id="menu-slot-bar" className="menu-slot" />
     </header>
   );
 }
