@@ -61,8 +61,13 @@ export function AppMenu({ slotId }: { slotId: string }) {
   if (/^\/(signin|login|auth|verify|offline)/.test(pathname)) return null;
 
   const q = me?.project ? `?project=${me.project.id}` : projectParam ? `?project=${projectParam}` : '';
-  const item = (href: string, name: string, what: string) => (
-    <Link className="navitem" href={href} onClick={() => setOpen(false)}>
+  const item = (href: string, name: string, what: string, variant?: 'wide') => (
+    <Link
+      key={href}
+      className={`navitem${variant === 'wide' ? ' navitem--wide' : ''}`}
+      href={href}
+      onClick={() => setOpen(false)}
+    >
       <span className="navitem__name">{name}</span>
       <span className="navitem__what">{what}</span>
     </Link>
@@ -70,27 +75,35 @@ export function AppMenu({ slotId }: { slotId: string }) {
 
   const drawer = (
     <nav id="app-menu" className="menu-drawer" aria-label="Everything else">
+      {item(`/${q}`, 'Today', 'Record the day, or type it in', 'wide')}
+
       <section className="navgroup">
-        {item(`/${q}`, 'Today', 'Record the day, or type it in')}
-        {item(`/entries${q}`, 'Past days', 'Every signed day and its PDF, ready to send on')}
-        {item(`/reports/weekly${q}`, 'Weekly report', 'The week rolled up the way a PM wants to read it')}
-        {item(`/claims${q}`, 'Claims', 'Delays, variations and dayworks gathered up for a claim')}
-        {item(`/progress${q}`, 'Progress', 'How far along each area is, over time')}
+        <p className="label">The record</p>
+        <div className="navgrid">
+          {item(`/entries${q}`, 'Past days', 'Signed days and their PDFs')}
+          {item(`/reports/weekly${q}`, 'Weekly report', 'The week, rolled up')}
+          {item(`/claims${q}`, 'Claims', 'Delays, variations, dayworks')}
+          {item(`/progress${q}`, 'Progress', 'How far along each area is')}
+        </div>
       </section>
 
       <section className="navgroup">
         <p className="label">On site</p>
-        {item(`/prestart${q}`, 'Prestarts', 'Every morning’s briefing, checks and crew sign-on')}
-        {item(`/toolbox${q}`, 'Toolbox talks', 'Run the weekly talk and get the crew to sign on')}
-        {item(`/ask${q}`, 'Ask a question', '“How many wet days in August?” — answered from your own diary')}
-        {(me?.projects.length ?? 0) > 1 && item('/portfolio', 'All jobs', 'Every active site on one screen')}
+        <div className="navgrid">
+          {item(`/prestart${q}`, 'Prestarts', 'Morning briefing and sign-on')}
+          {item(`/toolbox${q}`, 'Toolbox talks', 'Weekly talk and sign-on')}
+          {item(`/ask${q}`, 'Ask a question', 'Answered from your own diary')}
+          {(me?.projects.length ?? 0) > 1 && item('/portfolio', 'All jobs', 'Every active site at once')}
+        </div>
       </section>
 
       <section className="navgroup">
         <p className="label">Setup</p>
-        {item(`/settings${q}`, 'Settings', 'Standard hours, who gets the weekly report, crew and plant lists')}
-        {me?.canRecord && item(`/settings/members${q}`, 'Who is on this job', 'Add the crew, or a PM who only reads')}
-        {me?.canRecord && item(`/settings/vocabulary${q}`, 'Words and names', 'Names and site terms, so it hears them right')}
+        <div className="navgrid">
+          {item(`/settings${q}`, 'Settings', 'Hours, emails, crew and plant lists')}
+          {me?.canRecord && item(`/settings/members${q}`, 'Who is on this job', 'Crew and PM access')}
+          {me?.canRecord && item(`/settings/vocabulary${q}`, 'Words and names', 'Names and site terms')}
+        </div>
       </section>
 
       <div className="menu-drawer__foot">
