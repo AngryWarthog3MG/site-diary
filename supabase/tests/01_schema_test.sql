@@ -122,19 +122,29 @@ insert into public.entries (id, project_id, entry_date, author_id) values
   ('cccccccc-0000-0000-0000-000000000009', 'bbbbbbbb-0000-0000-0000-000000000002',
    date '2026-08-25', '44444444-4444-4444-4444-444444444444');
 
--- One original entry per author per day.
+-- One document per day. The same author again is refused (either of the
+-- two uniqueness rules may be the one that fires; both begin entries_one_).
 select tests.expect_error($q$
   insert into public.entries (project_id, entry_date, author_id)
   values ('bbbbbbbb-0000-0000-0000-000000000001', date '2026-08-25',
           '11111111-1111-1111-1111-111111111111')
-$q$, 'entries_one_original_per_author_per_day');
+$q$, 'entries_one_');
 
--- A second supervisor on the same day is fine.
+-- And so is a second supervisor while the day is still open: there is one
+-- editable document for a day, whoever started it. (This used to be allowed,
+-- and read on site as two documents for the one day.)
+select tests.expect_error($q$
+  insert into public.entries (project_id, entry_date, author_id)
+  values ('bbbbbbbb-0000-0000-0000-000000000001', date '2026-08-25',
+          '22222222-2222-2222-2222-222222222222')
+$q$, 'entries_one_open_per_day');
+
+-- The second supervisor's own day, for the tests below.
 insert into public.entries (id, project_id, entry_date, author_id)
 values ('cccccccc-0000-0000-0000-000000000003', 'bbbbbbbb-0000-0000-0000-000000000001',
-        date '2026-08-25', '22222222-2222-2222-2222-222222222222');
+        date '2026-08-27', '22222222-2222-2222-2222-222222222222');
 
-do $$ begin raise notice 'PASS  one original per author per day'; end; $$;
+do $$ begin raise notice 'PASS  one open document per day'; end; $$;
 
 -- ---------------------------------------------------------------------------
 -- 2. Blocking gaps prevent signing
@@ -537,6 +547,7 @@ $$;
 -- refused, whoever starts it — and an open correction counts as that one.
 -- ---------------------------------------------------------------------------
 savepoint one_open_document;
+reset role;
 do $$
 begin
   begin
