@@ -389,9 +389,18 @@ export function ReviewScreen(props: {
               {props.projectCode} · {props.entryDate}
             </p>
           </div>
-          <div className="review-state" aria-label="What is blocking signing">
-            <strong>{gaps.length}</strong>
-            <span>to fix before signing</span>
+          <div
+            className={`review-state${gaps.length === 0 ? ' review-state--ready' : ' review-state--gaps'}`}
+            aria-label="What is blocking signing"
+          >
+            {gaps.length === 0 ? (
+              <span>Ready to sign</span>
+            ) : (
+              <>
+                <strong>{gaps.length}</strong>
+                <span>to fix before signing</span>
+              </>
+            )}
           </div>
         </header>
         <p className="review-intro">

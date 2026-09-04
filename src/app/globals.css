@@ -2972,3 +2972,31 @@ body {
 .menu-drawer .navitem--wide .navitem__name { color: var(--teal, #0e4f52); }
 @media (min-width: 721px) { .navgrid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 .menu-drawer .navitem--wide + .navgroup.navgroup { margin-top: 1rem; }
+
+/* ==========================================================================
+   The entry screen: a pill for the state, tighter cards, fields two across.
+   ========================================================================== */
+.review-state {
+  display: inline-flex; align-items: center; gap: 0.4rem;
+  min-width: 0; padding: 0.45rem 0.8rem; border-radius: 999px;
+  font-size: 0.8125rem; font-weight: 600; letter-spacing: 0.02em; text-align: left;
+}
+.review-state strong { font-size: 1rem; line-height: 1; }
+.review-state--ready { background: rgba(255, 255, 255, 0.18); border-color: rgba(255, 255, 255, 0.35); }
+.review-state--gaps { background: rgba(240, 164, 31, 0.28); border-color: rgba(240, 164, 31, 0.6); }
+.review-section-head h2 { font-size: 1.15rem; }
+.review-sheet .item { padding: 0.75rem 0.8rem; }
+.review-sheet .itemhead { margin-bottom: 0.5rem; }
+.review-sheet .itemhead h3 { margin: 0.1rem 0 0; font-size: 1rem; }
+@media (max-width: 720px) {
+  /* Fields two across on a phone: Start beside Finish, Break beside Hours.
+     A person card was eight rows tall; now it is five. */
+  .fieldgrid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.5rem 0.6rem; }
+  .review-state { width: auto; margin-top: 0.9rem; }
+  .itemhead { display: flex; align-items: center; }
+}
+@media (max-width: 720px) {
+  /* The section head keeps its title and its Add button on one line. */
+  .review-sheet .review-section-head { display: flex; align-items: center; justify-content: space-between; }
+  .review-sheet .review-add { width: auto; min-width: 0; margin-top: 0; padding: 0.45rem 0.85rem; font-size: 0.875rem; }
+}

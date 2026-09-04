@@ -46,8 +46,8 @@ export const SECTIONS: SectionDef[] = [
     identity: 'person_name',
     fields: [
       { key: 'person_name', label: 'Name', kind: 'text' },
-      { key: 'role', label: 'Role', kind: 'text' },
-      { key: 'area', label: 'Area', kind: 'text' },
+      { key: 'role', label: 'Role', kind: 'text', narrow: true },
+      { key: 'area', label: 'Area', kind: 'text', narrow: true },
       { key: 'start_time', label: 'Start', kind: 'time', narrow: true },
       { key: 'finish_time', label: 'Finish', kind: 'time', narrow: true },
       {
