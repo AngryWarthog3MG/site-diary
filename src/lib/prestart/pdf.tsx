@@ -92,7 +92,7 @@ export function PrestartDoc({ data }: { data: PrestartPdfData }): ReactElement {
             const yes = Boolean(data.checklist[item.key]);
             return (
               <li key={item.key} className={yes ? 'checks__yes' : 'checks__no'}>
-                <span className="checks__mark">{yes ? '✓' : '✗'}</span>
+                <span className="checks__mark" aria-hidden />
                 <span>{item.label}</span>
               </li>
             );
@@ -145,10 +145,18 @@ export const PRESTART_CSS = `
 .talkpoints { margin: 0 0 2mm; padding-left: 4.5mm; font-size: 9.5pt; line-height: 1.5; }
 .talkpoints li { margin-bottom: 0.8mm; }
 .checks { list-style: none; margin: 2mm 0 0; padding: 0; columns: 2; column-gap: 8mm; font-size: 9pt; }
-.checks li { display: flex; gap: 2mm; align-items: flex-start; margin-bottom: 1.5mm; break-inside: avoid; }
-.checks__mark { display: inline-block; width: 4.5mm; font-weight: 700; }
-.checks__yes .checks__mark { color: #2E6B4F; }
-.checks__no .checks__mark { color: #9A2F2F; }
+.checks li { display: flex; gap: 2.2mm; align-items: flex-start; margin-bottom: 1.6mm; break-inside: avoid; }
+/* Drawn, not typed: the embedded print face has no tick or cross glyph, and
+   a box that is filled or empty reads the same on paper as on the phone. */
+.checks__mark { flex: 0 0 auto; position: relative; display: inline-block; width: 3.6mm; height: 3.6mm;
+  margin-top: 0.5mm; border: 0.5pt solid #131A1E; border-radius: 0.6mm; background: #fff; }
+.checks__yes .checks__mark { background: #2E6B4F; border-color: #2E6B4F; }
+.checks__yes .checks__mark::after { content: ''; position: absolute; left: 1.15mm; top: 0.35mm; width: 0.9mm; height: 1.9mm;
+  border: solid #fff; border-width: 0 0.5mm 0.5mm 0; transform: rotate(45deg); }
+.checks__no .checks__mark { border-color: #9A2F2F; }
+.checks__no .checks__mark::before, .checks__no .checks__mark::after { content: ''; position: absolute; left: 0.55mm; top: 1.55mm;
+  width: 2.3mm; height: 0.45mm; background: #9A2F2F; transform: rotate(45deg); }
+.checks__no .checks__mark::after { transform: rotate(-45deg); }
 .talkgrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5mm 8mm; margin-top: 2mm; }
 .talkgrid figure { margin: 0; break-inside: avoid; }
 .talkgrid img { height: 14mm; width: auto; max-width: 100%; display: block; border-bottom: 0.6pt solid #131A1E; background: #fff; }
