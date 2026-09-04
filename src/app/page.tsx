@@ -92,11 +92,10 @@ export default async function TodayPage({
           />
         </div>
 
-        <footer className="account-bar">
-          <div>
-            <p className="label">Signed in as</p>
-            <p className="mono account-bar__name">{profile?.full_name ?? email}</p>
-          </div>
+        <footer className="account-bar account-bar--quiet">
+          <p className="account-bar__line">
+            Signed in as <span className="mono">{profile?.full_name ?? email}</span>
+          </p>
           <SignOutButton />
         </footer>
       </section>

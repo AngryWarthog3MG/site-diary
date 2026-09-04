@@ -2918,3 +2918,30 @@ body {
 .weekstrip__day--link { text-decoration: none; cursor: pointer; }
 .weekstrip__day--link:hover { filter: brightness(0.94); }
 .weekstrip__day--link:active { transform: translateY(1px); }
+
+/* ==========================================================================
+   Today's layout: the job first, then what needs attention, then the weather.
+   ========================================================================== */
+.home-card--weather { order: 1; }
+.home-card--attention {
+  order: 0;
+  grid-column: 1 / -1;
+  background: linear-gradient(180deg, rgba(255, 246, 226, 0.95), rgba(255, 255, 255, 0.85));
+  border-color: rgba(240, 164, 31, 0.45);
+}
+.home-card--attention .unfinished { margin: 0; padding: 0; border: 0; background: transparent; }
+.home-card__aside { text-align: right; flex: 0 0 auto; }
+.home-card__aside .mono { margin: 0.2rem 0 0; font-size: 0.8125rem; }
+.home-card__foot { margin-top: 1rem; padding-top: 0.9rem; border-top: 1px solid var(--ink-08); }
+.home-card__foot .label { margin-bottom: 0.4rem; }
+.home-card__foot .weekstrip { margin-top: 0.25rem; }
+.reminder-line { margin-top: 0.75rem; }
+.reminder-line--muted { color: var(--ink-40); font-size: 0.8125rem; }
+.account-bar--quiet { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 0.75rem 1rem; }
+.account-bar__line { margin: 0; color: var(--ink-60); font-size: 0.875rem; }
+.account-bar--quiet .button { width: auto; margin-top: 0; min-height: 38px; padding: 0 0.9rem; font-size: 0.875rem; }
+@media (max-width: 720px) {
+  .home-card__head { display: flex; }
+  .home-card__aside { text-align: right; }
+  .account-bar--quiet .button { width: auto; margin-top: 0; }
+}

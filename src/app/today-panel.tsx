@@ -411,102 +411,20 @@ export function TodayPanel({
             </p>
           )}
           {weatherNote && <p className="notice gap">{weatherNote}</p>}
-
-          {lastSigned && (
-            <div className="factrow">
-              <span className="label">Last signed</span>
-              <span className="mono" style={{ fontSize: '0.875rem' }}>
-                {lastSigned.entry_no} · {lastSigned.entry_date}
-              </span>
-            </div>
-          )}
         </div>
 
         <div className="home-card home-card--capture">
-      {week.length > 0 && (
-        <>
-          <p className="label">The last seven days</p>
-          <div className="weekstrip" aria-label="The last seven days">
-            {week.map((day) => {
-              const title = `${day.date} — ${day.state === 'signed' ? 'signed · open the diary' : day.state === 'draft' ? 'started, not signed · open it' : day.state === 'today' ? 'today' : 'nothing written down · record it'}`;
-              return day.href ? (
-                <Link
-                  key={day.date}
-                  href={day.href}
-                  className={`weekstrip__day weekstrip__day--${day.state} weekstrip__day--link`}
-                  title={title}
-                  aria-label={title}
-                >
-                  {day.label}
-                </Link>
-              ) : (
-                <span key={day.date} className={`weekstrip__day weekstrip__day--${day.state}`} title={title}>
-                  {day.label}
-                </span>
-              );
-            })}
-          </div>
-          <p className="weekstrip__key">
-            <span className="weekstrip__day weekstrip__day--signed" aria-hidden>&nbsp;</span> signed
-            <span className="weekstrip__day weekstrip__day--draft" aria-hidden>&nbsp;</span> started
-            <span className="weekstrip__day weekstrip__day--gap" aria-hidden>&nbsp;</span> nothing written down
-          </p>
-        </>
-      )}
-
-      {(unfinished.length > 0 || missingDays.length > 0) && (
-        <div className="unfinished">
-          <p className="label">
-            Days without a record · {unfinished.length + missingDays.filter((d) => !unfinished.some((u) => u.date === d)).length}
-          </p>
-          <p className="way-hint" style={{ margin: '0.15rem 0 0.5rem' }}>
-            A day counts once it is signed — not before, however much is typed into it.
-          </p>
-          {missingDays
-            .filter((d) => !unfinished.some((u) => u.date === d))
-            .map((d) => (
-              <div key={d} className="unfinished__row">
-                <div>
-                  <p className="mono unfinished__date">{d}</p>
-                  <p className="unfinished__what">nothing written down</p>
-                </div>
-                <div className="unfinished__actions">
-                  <Link className="button button--quiet" href={`/record?project=${projectId}&date=${d}`}>Record it</Link>
-                </div>
-              </div>
-            ))}
-          {unfinished.map((d) => (
-            <div key={d.id} className="unfinished__row">
-              <div>
-                <p className="mono unfinished__date">{d.date}</p>
-                <p className="unfinished__what">
-                  {d.correctionOf ? `Correction to ${d.correctionOf} · ` : ''}
-                  {d.labour > 0 ? `${d.labour} on labour` : 'no labour yet'}
-                  {d.words ? ' · recording made' : ''}
-                  {!d.mine ? ' · started by someone else' : ''}
-                </p>
-              </div>
-              {d.mine ? (
-                <div className="unfinished__actions">
-                  <Link className="button button--quiet" href={`/entries/${d.id}/review`}>Finish</Link>
-                  <button type="button" className="quotebtn quotebtn--remove" disabled={binning === d.id}
-                    onClick={() => void binDraft(d.id)}>
-                    {binning === d.id ? 'Binning…' : 'Bin'}
-                  </button>
-                </div>
-              ) : null}
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* holes in the record are rows in the box above */}
-
       <div className="home-card__head">
         <div>
           <p className="label">Today · {date}</p>
           <h2 className="home-card__title">Today&rsquo;s diary</h2>
         </div>
+        {lastSigned && (
+          <div className="home-card__aside">
+            <p className="label">Last signed</p>
+            <p className="mono">{lastSigned.entry_no} · {lastSigned.entry_date}</p>
+          </div>
+        )}
       </div>
 
       {!loading && (
@@ -597,8 +515,92 @@ export function TodayPanel({
         </Link>
       )}
 
+      <div className="home-card__foot">
+      {week.length > 0 && (
+        <>
+          <p className="label">The last seven days</p>
+          <div className="weekstrip" aria-label="The last seven days">
+            {week.map((day) => {
+              const title = `${day.date} — ${day.state === 'signed' ? 'signed · open the diary' : day.state === 'draft' ? 'started, not signed · open it' : day.state === 'today' ? 'today' : 'nothing written down · record it'}`;
+              return day.href ? (
+                <Link
+                  key={day.date}
+                  href={day.href}
+                  className={`weekstrip__day weekstrip__day--${day.state} weekstrip__day--link`}
+                  title={title}
+                  aria-label={title}
+                >
+                  {day.label}
+                </Link>
+              ) : (
+                <span key={day.date} className={`weekstrip__day weekstrip__day--${day.state}`} title={title}>
+                  {day.label}
+                </span>
+              );
+            })}
+          </div>
+          <p className="weekstrip__key">
+            <span className="weekstrip__day weekstrip__day--signed" aria-hidden>&nbsp;</span> signed
+            <span className="weekstrip__day weekstrip__day--draft" aria-hidden>&nbsp;</span> started
+            <span className="weekstrip__day weekstrip__day--gap" aria-hidden>&nbsp;</span> nothing written down
+          </p>
+        </>
+      )}
+
+      </div>
       <ReminderToggle />
         </div>
+
+        {(unfinished.length > 0 || missingDays.length > 0) && (
+          <div className="home-card home-card--attention">
+      {(unfinished.length > 0 || missingDays.length > 0) && (
+        <div className="unfinished">
+          <p className="label">
+            Days without a record · {unfinished.length + missingDays.filter((d) => !unfinished.some((u) => u.date === d)).length}
+          </p>
+          <p className="way-hint" style={{ margin: '0.15rem 0 0.5rem' }}>
+            A day counts once it is signed — not before, however much is typed into it.
+          </p>
+          {missingDays
+            .filter((d) => !unfinished.some((u) => u.date === d))
+            .map((d) => (
+              <div key={d} className="unfinished__row">
+                <div>
+                  <p className="mono unfinished__date">{d}</p>
+                  <p className="unfinished__what">nothing written down</p>
+                </div>
+                <div className="unfinished__actions">
+                  <Link className="button button--quiet" href={`/record?project=${projectId}&date=${d}`}>Record it</Link>
+                </div>
+              </div>
+            ))}
+          {unfinished.map((d) => (
+            <div key={d.id} className="unfinished__row">
+              <div>
+                <p className="mono unfinished__date">{d.date}</p>
+                <p className="unfinished__what">
+                  {d.correctionOf ? `Correction to ${d.correctionOf} · ` : ''}
+                  {d.labour > 0 ? `${d.labour} on labour` : 'no labour yet'}
+                  {d.words ? ' · recording made' : ''}
+                  {!d.mine ? ' · started by someone else' : ''}
+                </p>
+              </div>
+              {d.mine ? (
+                <div className="unfinished__actions">
+                  <Link className="button button--quiet" href={`/entries/${d.id}/review`}>Finish</Link>
+                  <button type="button" className="quotebtn quotebtn--remove" disabled={binning === d.id}
+                    onClick={() => void binDraft(d.id)}>
+                    {binning === d.id ? 'Binning…' : 'Bin'}
+                  </button>
+                </div>
+              ) : null}
+            </div>
+          ))}
+        </div>
+      )}
+
+          </div>
+        )}
       </section>
     </>
   );
