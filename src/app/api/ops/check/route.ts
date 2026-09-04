@@ -57,6 +57,12 @@ export async function GET(request: Request) {
   if (url.searchParams.get('weekly') === '1') {
     report.weekly = await sendWeeklyReports(url.searchParams.get('force') === '1');
   }
+  if (url.searchParams.get('prestart') === '1') {
+    report.prestart = await sendPrestartNudges(url.searchParams.get('force') === '1');
+  }
+  if (url.searchParams.get('talk') === '1') {
+    report.talk = await setupWeeklyTalks(url.searchParams.get('dry') === '1');
+  }
   if (url.searchParams.get('remind') === '1') {
     // force=1 bypasses the decision rules — drill support only, so the send
     // and dead-subscription cleanup paths can be proven on a weekend.
@@ -64,6 +70,190 @@ export async function GET(request: Request) {
   }
 
   return Response.json(report);
+}
+
+/**
+ * The morning nudge (06:30 Perth, weekdays): a supervisor with the reminder
+ * on, on an active job with no prestart yet today, gets one push. Its own
+ * "told them today" mark, so it never eats the knock-off reminder's.
+ */
+async function sendPrestartNudges(force = false): Promise<Record<string, number | string>> {
+  const [{ perthToday }, { sendPush, PushConfigError }] = await Promise.all([
+    import('@/lib/push/decide'),
+    import('@/lib/push/send'),
+  ]);
+  const admin = createAdminClient();
+  const today = perthToday();
+
+  const { data: subs, error } = await admin
+    .from('push_subscriptions')
+    .select('id, user_id, endpoint, p256dh, auth, last_prestart_notified_on');
+  if (error) return { error: error.message };
+  if (!subs || subs.length === 0) return { subscriptions: 0, sent: 0 };
+
+  const userIds = [...new Set(subs.map((s) => s.user_id as string))];
+  const { data: members } = await admin
+    .from('project_members')
+    .select('user_id, project_id, role, project:projects!inner(active)')
+    .in('user_id', userIds)
+    .in('role', ['supervisor', 'admin']);
+  const runs = new Map<string, string[]>();
+  for (const m of members ?? []) {
+    const project = Array.isArray(m.project) ? m.project[0] : m.project;
+    if (!(project as { active?: boolean } | null)?.active) continue;
+    const list = runs.get(m.user_id as string) ?? [];
+    list.push(m.project_id as string);
+    runs.set(m.user_id as string, list);
+  }
+  const projectIds = [...new Set([...runs.values()].flat())];
+  const { data: done } = projectIds.length
+    ? await admin.from('prestarts').select('project_id').eq('prestart_date', today).in('project_id', projectIds)
+    : { data: [] as Array<{ project_id: string }> };
+  const hasPrestart = new Set((done ?? []).map((r) => r.project_id as string));
+
+  let sent = 0, skipped = 0, removed = 0, failed = 0;
+  for (const sub of subs) {
+    const projects = runs.get(sub.user_id as string) ?? [];
+    const outstanding = projects.filter((id) => !hasPrestart.has(id));
+    const due = force || (outstanding.length > 0 && sub.last_prestart_notified_on !== today);
+    if (!due) { skipped += 1; continue; }
+    let outcome: 'sent' | 'gone' | 'failed';
+    try {
+      outcome = await sendPush(
+        { endpoint: sub.endpoint as string, p256dh: sub.p256dh as string, auth: sub.auth as string },
+        {
+          title: 'No prestart yet today',
+          body: 'What is on, what could hurt someone, who is here. Two minutes, then hand the phone around.',
+          url: outstanding.length === 1 ? `/prestart/new?project=${outstanding[0]}` : '/',
+          tag: 'prestart',
+        },
+      );
+    } catch (err) {
+      if (err instanceof PushConfigError) return { error: err.message };
+      outcome = 'failed';
+    }
+    if (outcome === 'sent') {
+      sent += 1;
+      await admin.from('push_subscriptions').update({ last_prestart_notified_on: today }).eq('id', sub.id);
+    } else if (outcome === 'gone') {
+      removed += 1;
+      await admin.from('push_subscriptions').delete().eq('id', sub.id);
+    } else failed += 1;
+  }
+  return { subscriptions: subs.length, sent, skipped, removed, failed };
+}
+
+/**
+ * Monday morning: every active job gets this week's toolbox talk set up,
+ * unless one already exists for the week. The topic is the one the job has
+ * gone longest without, from the library; the talk is open and editable,
+ * exactly as if typed. Whoever ran the last talk is named presenter.
+ */
+async function setupWeeklyTalks(dry = false): Promise<Record<string, unknown>> {
+  const [{ perthToday }, { sendPush }] = await Promise.all([
+    import('@/lib/push/decide'),
+    import('@/lib/push/send'),
+  ]);
+  const admin = createAdminClient();
+  const today = perthToday();
+  const monday = (() => {
+    const t = new Date(`${today}T00:00:00Z`);
+    t.setUTCDate(t.getUTCDate() - ((t.getUTCDay() + 6) % 7));
+    return t.toISOString().slice(0, 10);
+  })();
+  const sunday = (() => {
+    const t = new Date(`${monday}T00:00:00Z`);
+    t.setUTCDate(t.getUTCDate() + 6);
+    return t.toISOString().slice(0, 10);
+  })();
+
+  const { data: library } = await admin
+    .from('toolbox_library')
+    .select('topic, summary, sort_order')
+    .order('sort_order');
+  if (!library || library.length === 0) return { error: 'The toolbox library is empty.' };
+
+  const { data: projects } = await admin.from('projects').select('id, name').eq('active', true);
+  const created: Array<{ project: string; topic: string; id?: string }> = [];
+  const skipped: string[] = [];
+
+  for (const project of projects ?? []) {
+    const { data: thisWeek } = await admin
+      .from('toolbox_talks')
+      .select('id')
+      .eq('project_id', project.id)
+      .gte('talk_date', monday)
+      .lte('talk_date', sunday)
+      .limit(1);
+    if (thisWeek && thisWeek.length > 0) { skipped.push(project.name as string); continue; }
+
+    const { data: past } = await admin
+      .from('toolbox_talks')
+      .select('topic, talk_date, presenter_name, conducted_by')
+      .eq('project_id', project.id)
+      .order('talk_date', { ascending: false });
+    const lastUsed = new Map<string, string>();
+    for (const t of past ?? []) if (!lastUsed.has(t.topic as string)) lastUsed.set(t.topic as string, t.talk_date as string);
+    const pick = [...library].sort((a, b) => {
+      const la = lastUsed.get(a.topic as string) ?? '';
+      const lb = lastUsed.get(b.topic as string) ?? '';
+      return la === lb ? (a.sort_order as number) - (b.sort_order as number) : la < lb ? -1 : 1;
+    })[0];
+
+    // Who runs it: the last presenter, and a supervisor or admin to own the row.
+    const { data: member } = await admin
+      .from('project_members')
+      .select('user_id')
+      .eq('project_id', project.id)
+      .in('role', ['supervisor', 'admin'])
+      .order('role')
+      .limit(1)
+      .maybeSingle();
+    if (!member) { skipped.push(`${project.name} (no supervisor)`); continue; }
+    const presenter = (past?.[0]?.presenter_name as string | undefined) ?? 'Site supervisor';
+
+    if (dry) { created.push({ project: project.name as string, topic: pick.topic as string }); continue; }
+    const { data: talk, error } = await admin
+      .from('toolbox_talks')
+      .insert({
+        project_id: project.id,
+        talk_date: today,
+        topic: pick.topic,
+        summary: pick.summary,
+        presenter_name: presenter,
+        conducted_by: member.user_id,
+      })
+      .select('id')
+      .single();
+    if (error) { skipped.push(`${project.name} (${error.message})`); continue; }
+    created.push({ project: project.name as string, topic: pick.topic as string, id: talk.id as string });
+
+    // Tell the supervisors on that job.
+    const { data: supers } = await admin
+      .from('project_members')
+      .select('user_id')
+      .eq('project_id', project.id)
+      .in('role', ['supervisor', 'admin']);
+    const ids = (supers ?? []).map((m) => m.user_id as string);
+    if (ids.length) {
+      const { data: subs } = await admin
+        .from('push_subscriptions')
+        .select('endpoint, p256dh, auth')
+        .in('user_id', ids);
+      for (const sub of subs ?? []) {
+        await sendPush(
+          { endpoint: sub.endpoint as string, p256dh: sub.p256dh as string, auth: sub.auth as string },
+          {
+            title: `This week's toolbox talk: ${pick.topic}`,
+            body: 'Set up and ready to read out. Change it if you want something else this week.',
+            url: `/toolbox/${talk.id}`,
+            tag: 'toolbox',
+          },
+        ).catch(() => undefined);
+      }
+    }
+  }
+  return { week: `${monday}..${sunday}`, created, skipped, dry };
 }
 
 /**

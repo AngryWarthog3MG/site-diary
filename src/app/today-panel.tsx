@@ -67,6 +67,10 @@ export function TodayPanel({
   const [weatherNote, setWeatherNote] = useState<string | null>(null);
   const [attribution, setAttribution] = useState<string | null>(null);
   const [missingDays, setMissingDays] = useState<string[]>([]);
+  const [unfinished, setUnfinished] = useState<Array<{
+    id: string; date: string; mine: boolean; labour: number; words: boolean; correctionOf: string | null;
+  }>>([]);
+  const [binning, setBinning] = useState<string | null>(null);
   const [week, setWeek] = useState<Array<{ date: string; label: string; state: string }>>([]);
   const [loading, setLoading] = useState(true);
   const [offline, setOffline] = useState(false);
@@ -202,7 +206,12 @@ export function TodayPanel({
         }
 
         if (first) {
-          const have = new Set((recent ?? []).map((r) => r.entry_date as string));
+          // A day with only a draft has no record. It used to count as
+          // covered here, which is how five half-finished days on one job
+          // sat invisible for a week.
+          const have = new Set(
+            (recent ?? []).filter((r) => r.status === 'signed').map((r) => r.entry_date as string),
+          );
           const gaps: string[] = [];
           const cursor = new Date(`${today}T00:00:00`);
           cursor.setDate(cursor.getDate() - 1);
@@ -214,6 +223,32 @@ export function TodayPanel({
           }
           setMissingDays(gaps);
         }
+      }
+
+      // Days started and never signed. The data is already typed in for
+      // some of them; the record just does not know yet.
+      {
+        const { data: drafts } = await supabase
+          .from('entries')
+          .select('id, entry_date, author_id, transcript_raw, supersedes_entry_id, labour(id), prior:entries!entries_supersedes_entry_id_fkey(entry_no)')
+          .eq('project_id', projectId)
+          .eq('status', 'draft')
+          .lt('entry_date', today)
+          .order('entry_date', { ascending: true })
+          .limit(20);
+        setUnfinished(
+          (drafts ?? []).map((d) => {
+            const prior = Array.isArray(d.prior) ? d.prior[0] : d.prior;
+            return {
+              id: d.id as string,
+              date: d.entry_date as string,
+              mine: d.author_id === user.id,
+              labour: ((d.labour ?? []) as unknown[]).length,
+              words: Boolean(d.transcript_raw),
+              correctionOf: (prior as { entry_no?: string } | null)?.entry_no ?? null,
+            };
+          }),
+        );
       }
 
       // Pick up anything the sync queue started and could not finish.
@@ -269,6 +304,18 @@ export function TodayPanel({
     // A finished sync changes what today looks like.
     return sync.subscribe(() => void load());
   }, [load]);
+
+  /** Bin a draft that will never be finished. Signed days cannot be binned. */
+  async function binDraft(id: string) {
+    if (!window.confirm('Bin this unfinished day? Anything typed into it is thrown away. Signed days are never affected.')) return;
+    setBinning(id);
+    try {
+      const response = await fetch(`/api/entries/${id}/discard`, { method: 'POST' });
+      if (response.ok) void load();
+    } finally {
+      setBinning(null);
+    }
+  }
 
   /**
    * The written way in.
@@ -380,6 +427,37 @@ export function TodayPanel({
             <span className="weekstrip__day weekstrip__day--gap" aria-hidden>&nbsp;</span> nothing written down
           </p>
         </>
+      )}
+
+      {unfinished.length > 0 && (
+        <div className="unfinished">
+          <p className="label">Started, never signed · {unfinished.length}</p>
+          <p className="way-hint" style={{ margin: '0.15rem 0 0.5rem' }}>
+            These days have no record until they are signed, however much is typed into them.
+          </p>
+          {unfinished.map((d) => (
+            <div key={d.id} className="unfinished__row">
+              <div>
+                <p className="mono unfinished__date">{d.date}</p>
+                <p className="unfinished__what">
+                  {d.correctionOf ? `Correction to ${d.correctionOf} · ` : ''}
+                  {d.labour > 0 ? `${d.labour} on labour` : 'no labour yet'}
+                  {d.words ? ' · recording made' : ''}
+                  {!d.mine ? ' · started by someone else' : ''}
+                </p>
+              </div>
+              {d.mine ? (
+                <div className="unfinished__actions">
+                  <Link className="button button--quiet" href={`/entries/${d.id}/review`}>Finish</Link>
+                  <button type="button" className="quotebtn quotebtn--remove" disabled={binning === d.id}
+                    onClick={() => void binDraft(d.id)}>
+                    {binning === d.id ? 'Binning…' : 'Bin'}
+                  </button>
+                </div>
+              ) : null}
+            </div>
+          ))}
+        </div>
       )}
 
       {missingDays.length > 0 && (

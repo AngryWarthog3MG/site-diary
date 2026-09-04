@@ -27,6 +27,14 @@
     {
       "path": "/api/ops/check?weekly=1",
       "schedule": "0 9 * * 5"
+    },
+    {
+      "path": "/api/ops/check?prestart=1",
+      "schedule": "30 22 * * 0-4"
+    },
+    {
+      "path": "/api/ops/check?talk=1",
+      "schedule": "30 22 * * 0"
     }
   ]
 }
