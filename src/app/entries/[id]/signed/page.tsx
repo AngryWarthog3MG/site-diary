@@ -25,7 +25,8 @@ export default async function SignedPage({ params }: { params: Promise<{ id: str
     .from('entries')
     .select(
       `id, entry_no, entry_date, status, signed_at, content_hash, supersedes_entry_id, author_id, project_id,
-       project:projects!inner(name, code, org:organisations!inner(name, code))`,
+       project:projects!inner(name, code, org:organisations!inner(name, code)),
+       dayworks(id), variations(id)`,
     )
     .eq('id', id)
     .maybeSingle();
@@ -41,6 +42,9 @@ export default async function SignedPage({ params }: { params: Promise<{ id: str
     .eq('id', entry.author_id)
     .maybeSingle();
 
+  const dayworkCount = ((entry.dayworks ?? []) as unknown[]).length;
+  const variationCount = ((entry.variations ?? []) as unknown[]).length;
+  const clientItems = dayworkCount + variationCount;
   const project = first(entry.project) as { name: string; code: string; org: unknown } | null;
   const org = first(project?.org) as { name: string; code: string } | null;
 
@@ -115,6 +119,39 @@ export default async function SignedPage({ params }: { params: Promise<{ id: str
       <Link className="button button--quiet" href={`/entries/${id}/docket`}>
         View the docket on screen
       </Link>
+
+      <hr className="rule" />
+      <p className="label">For the client</p>
+      {clientItems > 0 ? (
+        <>
+          <p style={{ margin: '0.25rem 0 0.75rem', color: 'var(--ink-60)', fontSize: '0.9375rem' }}>
+            Just the {dayworkCount > 0 && variationCount > 0
+              ? `${dayworkCount} daywork${dayworkCount === 1 ? '' : 's'} and ${variationCount} variation${variationCount === 1 ? '' : 's'}`
+              : dayworkCount > 0
+                ? `${dayworkCount} daywork${dayworkCount === 1 ? '' : 's'}`
+                : `${variationCount} variation${variationCount === 1 ? '' : 's'}`} from this day, with
+            the photos and a sign-off block for their representative. The rest of the diary stays
+            with you.
+          </p>
+          <PdfButton
+            entryId={id}
+            entryNo={entry.entry_no as string | null}
+            endpoint="client-sheet"
+            label="Make the dayworks & variations sheet"
+            shareTitle={`Dayworks and variations — ${entry.entry_date}`}
+          />
+          <EmailPdfButton
+            entryId={id}
+            doc="dayworks"
+            heading="Email the sheet to the client"
+            placeholder="client@example.com — up to 5, comma-separated"
+          />
+        </>
+      ) : (
+        <p style={{ margin: '0.25rem 0 0', color: 'var(--ink-60)', fontSize: '0.9375rem' }}>
+          No dayworks or variations on this day, so there is nothing separate to send.
+        </p>
+      )}
 
       {memberships.some(
         (m) => m.project_id === (entry.project_id as string) && canAuthorEntries(m.role),

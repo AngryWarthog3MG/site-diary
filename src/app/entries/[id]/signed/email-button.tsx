@@ -7,7 +7,17 @@ import { useState } from 'react';
  * administrator, the client. The PDF attached is the stored export, so every
  * recipient of this entry ever receives the identical document.
  */
-export function EmailPdfButton({ entryId }: { entryId: string }) {
+export function EmailPdfButton({
+  entryId,
+  doc = 'daily',
+  heading = 'Email the PDF',
+  placeholder = 'pm@example.com — up to 5, comma-separated',
+}: {
+  entryId: string;
+  doc?: 'daily' | 'dayworks';
+  heading?: string;
+  placeholder?: string;
+}) {
   const [to, setTo] = useState('');
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
@@ -21,7 +31,7 @@ export function EmailPdfButton({ entryId }: { entryId: string }) {
       const response = await fetch(`/api/entries/${entryId}/email`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ to }),
+        body: JSON.stringify({ to, doc }),
       });
       const json = await response.json().catch(() => ({}));
       if (!response.ok) {
@@ -39,13 +49,13 @@ export function EmailPdfButton({ entryId }: { entryId: string }) {
 
   return (
     <div className="email-pdf">
-      <p className="label">Email the PDF</p>
+      <p className="label">{heading}</p>
       <div className="email-pdf__row">
         <input
           className="field field--sm"
           type="text"
           inputMode="email"
-          placeholder="pm@example.com — up to 5, comma-separated"
+          placeholder={placeholder}
           value={to}
           onChange={(event) => setTo(event.target.value)}
         />

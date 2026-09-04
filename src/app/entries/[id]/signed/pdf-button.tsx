@@ -9,7 +9,20 @@ import { useState } from 'react';
  * stored copy rather than launching Chromium again — which is why this can be
  * pressed as often as anyone likes.
  */
-export function PdfButton({ entryId, entryNo }: { entryId: string; entryNo?: string | null }) {
+export function PdfButton({
+  entryId,
+  entryNo,
+  endpoint = 'pdf',
+  label = 'Generate the daily PDF',
+  shareTitle,
+}: {
+  entryId: string;
+  entryNo?: string | null;
+  /** 'pdf' for the daily docket, 'client-sheet' for the client's dayworks and variations. */
+  endpoint?: 'pdf' | 'client-sheet';
+  label?: string;
+  shareTitle?: string;
+}) {
   const [state, setState] = useState<'idle' | 'working' | 'ready'>('idle');
   const [url, setUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -22,7 +35,7 @@ export function PdfButton({ entryId, entryNo }: { entryId: string; entryNo?: str
    */
   async function share() {
     if (!url) return;
-    const title = entryNo ? `Site diary ${entryNo}` : 'Site diary PDF';
+    const title = shareTitle ?? (entryNo ? `Site diary ${entryNo}` : 'Site diary PDF');
     try {
       if (navigator.share) {
         await navigator.share({ title, url });
@@ -40,7 +53,7 @@ export function PdfButton({ entryId, entryNo }: { entryId: string; entryNo?: str
     setState('working');
     setError(null);
     try {
-      const response = await fetch(`/api/entries/${entryId}/pdf`, { method: 'POST' });
+      const response = await fetch(`/api/entries/${entryId}/${endpoint}`, { method: 'POST' });
       const json = await response.json().catch(() => ({}));
       if (!response.ok) {
         setError(json?.error?.message ?? 'The PDF could not be generated.');
@@ -79,7 +92,7 @@ export function PdfButton({ entryId, entryNo }: { entryId: string; entryNo?: str
   return (
     <>
       <button className="button" type="button" onClick={generate} disabled={state === 'working'}>
-        {state === 'working' ? 'Generating…' : 'Generate the daily PDF'}
+        {state === 'working' ? 'Generating…' : label}
       </button>
       {error && <p className="alert">{error}</p>}
     </>

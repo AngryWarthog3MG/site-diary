@@ -1,6 +1,7 @@
 import { PDFDocument } from 'pdf-lib';
 import type { Browser } from 'playwright-core';
 import { DailyDocket, type PhotoImage } from './docket';
+import { ClientSheet, CLIENT_SHEET_CSS } from './client-sheet';
 import type { SignatureImage } from './photos';
 import { DOCKET_CSS } from './styles';
 import { EMBEDDED_FONT_CSS } from './fonts';
@@ -201,6 +202,38 @@ export async function renderDailyPdf(input: RenderInput): Promise<Uint8Array> {
  * record it is. Every page now carries the frog, the document reference and
  * its place in the document.
  */
+/**
+ * The client's sheet — dayworks and variations only — from the same entry
+ * and the same pipeline. A different /ID seed from the daily docket, because
+ * they are different documents of the same record.
+ */
+export async function renderClientSheetPdf(input: RenderInput): Promise<Uint8Array> {
+  const { entry, photos, signatures } = input;
+  const { renderToStaticMarkup } = await import('react-dom/server');
+  const markup = renderToStaticMarkup(ClientSheet({ entry, photos, signatures: signatures ?? [] }));
+  const html = [
+    '<!doctype html>',
+    '<html lang="en-AU"><head><meta charset="utf-8">',
+    `<title>Dayworks and variations — ${entry.entry_no ?? entry.entry_date}</title>`,
+    `<style>${EMBEDDED_FONT_CSS}</style>`,
+    `<style>${DOCKET_CSS}</style>`,
+    `<style>${CLIENT_SHEET_CSS}</style>`,
+    '</head><body>',
+    markup,
+    '</body></html>',
+  ].join('');
+  const seed = entry.content_hash ?? `${entry.id}:${entry.entry_date}`;
+  return renderPdfDocument(html, {
+    title: `Dayworks and variations — ${entry.entry_no ?? entry.entry_date}`,
+    author: entry.author_name,
+    subject: `${entry.project_name} — dayworks and variations, ${entry.entry_date}`,
+    keywords: [entry.org_code, entry.project_code, entry.entry_date, 'dayworks', 'variations'],
+    instant: metadataInstant(entry),
+    idSeed: `d5${seed.replace(/[^0-9a-f]/gi, '')}`,
+    footerLeft: `${entry.org_code}_${entry.project_code} · ${entry.entry_no ?? 'DRAFT'} · DAYWORKS & VARIATIONS`,
+  });
+}
+
 function footer(left: string): string {
   return (
     `<div style="width:100%;padding:0 14mm;font-family:sans-serif;font-size:7pt;` +
