@@ -40,7 +40,9 @@ export const viewport: Viewport = {
 };
 
 import { ErrorReporter } from '@/components/error-reporter';
+import { Suspense } from 'react';
 import { RefreshButton } from '@/components/refresh-button';
+import { AppMenu } from '@/components/app-menu';
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -50,7 +52,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     >
       <body>
         <ErrorReporter />
-        <RefreshButton />
+        <div className="topbar">
+          <Suspense fallback={null}>
+            <AppMenu />
+          </Suspense>
+          <RefreshButton />
+        </div>
         {children}
         <ServiceWorkerRegistration />
       </body>
