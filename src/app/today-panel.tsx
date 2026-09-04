@@ -437,12 +437,27 @@ export function TodayPanel({
         </>
       )}
 
-      {unfinished.length > 0 && (
+      {(unfinished.length > 0 || missingDays.length > 0) && (
         <div className="unfinished">
-          <p className="label">Started, never signed · {unfinished.length}</p>
-          <p className="way-hint" style={{ margin: '0.15rem 0 0.5rem' }}>
-            These days have no record until they are signed, however much is typed into them.
+          <p className="label">
+            Days without a record · {unfinished.length + missingDays.filter((d) => !unfinished.some((u) => u.date === d)).length}
           </p>
+          <p className="way-hint" style={{ margin: '0.15rem 0 0.5rem' }}>
+            A day counts once it is signed — not before, however much is typed into it.
+          </p>
+          {missingDays
+            .filter((d) => !unfinished.some((u) => u.date === d))
+            .map((d) => (
+              <div key={d} className="unfinished__row">
+                <div>
+                  <p className="mono unfinished__date">{d}</p>
+                  <p className="unfinished__what">nothing written down</p>
+                </div>
+                <div className="unfinished__actions">
+                  <Link className="button button--quiet" href={`/record?project=${projectId}&date=${d}`}>Record it</Link>
+                </div>
+              </div>
+            ))}
           {unfinished.map((d) => (
             <div key={d.id} className="unfinished__row">
               <div>
@@ -468,15 +483,7 @@ export function TodayPanel({
         </div>
       )}
 
-      {missingDays.length > 0 && (
-        <p className="notice gap">
-          No record for {missingDays.length === 1 ? missingDays[0] : `${missingDays.length} recent day${missingDays.length === 1 ? '' : 's'} (${missingDays.slice(0, 3).join(', ')}${missingDays.length > 3 ? '…' : ''})`}.{' '}
-          <Link href={`/record?project=${projectId}&date=${missingDays[0]}`} style={{ color: 'inherit', fontWeight: 600 }}>
-            Record {missingDays[0]} now
-          </Link>
-          {' '}or see the register.
-        </p>
-      )}
+      {/* holes in the record are rows in the box above */}
 
       <div className="home-card__head">
         <div>

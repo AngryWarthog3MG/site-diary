@@ -2859,3 +2859,50 @@ body {
   color: var(--ink-60); font: inherit; font-size: 0.8125rem; text-align: left;
 }
 .register-card--earlier { opacity: 0.7; }
+
+/* ==========================================================================
+   Visual pass, 2026-09-05: less shouting, less stacking.
+   Phones were getting every tile and card stacked full-width, every button
+   in tracked capitals. Short figures sit three across; a register row is a
+   row; primary buttons keep their voice, quiet ones lower theirs.
+   ========================================================================== */
+
+/* Quiet buttons: sentence case, normal tracking. Primary keeps the capitals
+   but eases the tracking. */
+.button { letter-spacing: 0.06em; }
+.button--quiet,
+.button--outline {
+  text-transform: none;
+  letter-spacing: 0;
+  font-family: var(--font-plex-sans), sans-serif;
+  font-weight: 600;
+  font-size: 0.9375rem;
+}
+.button + .button,
+.button + form .button { margin-top: 0.5rem; }
+
+/* Status pills and tabs: a touch smaller, so a row can hold them. */
+.status-pill { min-height: 1.7rem; padding: 0.25rem 0.55rem; font-size: 0.66rem; letter-spacing: 0.06em; }
+.review-tabs { flex-wrap: wrap; overflow: visible; gap: 0.35rem; }
+.review-tab { min-height: 36px; padding: 0.4rem 0.6rem; font-weight: 700; font-size: 0.875rem; }
+
+@media (max-width: 720px) {
+  /* Weather: three short figures belong side by side. */
+  .stats { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.5rem; }
+  .stat { padding: 0.6rem 0.65rem; }
+  .stat__value { font-size: 1.05rem; }
+  .stat__sub { font-size: 0.7rem; }
+}
+
+@media (max-width: 760px) {
+  /* The register: three small counts in a row, and each entry as one row. */
+  .entries-summary { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.5rem; padding: 0.75rem 1rem; }
+  .entries-summary > div { padding: 0.6rem 0.75rem; }
+  .entries-summary__value { font-size: 1.5rem; }
+  .entries-day { grid-template-columns: 3.25rem minmax(0, 1fr); gap: 0.6rem; align-items: start; }
+  .entries-date__full { display: none; }
+  .register-card { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; padding: 0.7rem 0.85rem; }
+  .register-card__title { font-size: 0.95rem; }
+  .register-card__meta { font-size: 0.78rem; }
+  .register-card__actions { justify-content: flex-end; margin-top: 0; }
+}
