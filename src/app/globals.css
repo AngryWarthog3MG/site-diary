@@ -2799,3 +2799,14 @@ body {
   box-shadow: none;
 }
 .home-hero .menu-button--open { background: #fff; border-color: #fff; color: var(--teal, #0e4f52); }
+
+/* The panel keeps its own colours wherever its button lives — inside the
+   green header, the hero's white text must not bleed into it. */
+.menu-panel,
+.menu-panel a,
+.menu-panel .navitem,
+.menu-panel .navitem__name { color: var(--ink, #16211f); }
+.menu-panel .label,
+.menu-panel .navitem__what,
+.menu-panel .menu-panel__who { color: var(--ink-60, #5a6469); }
+.menu-panel .navitem:hover { border-color: rgba(13, 90, 88, 0.28); background: var(--teal-tint); }
