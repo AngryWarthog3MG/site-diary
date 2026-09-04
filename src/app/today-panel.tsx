@@ -230,24 +230,32 @@ export function TodayPanel({
       {
         const { data: drafts } = await supabase
           .from('entries')
-          .select('id, entry_date, author_id, transcript_raw, supersedes_entry_id, labour(id), prior:entries!entries_supersedes_entry_id_fkey(entry_no)')
+          .select('id, entry_date, author_id, transcript_raw, supersedes_entry_id, labour(id)')
           .eq('project_id', projectId)
           .eq('status', 'draft')
           .lt('entry_date', today)
           .order('entry_date', { ascending: true })
           .limit(20);
+        // The serials of the signed days these corrections point at — a
+        // plain second lookup rather than a self-join the client has to
+        // know the constraint name for.
+        const priorIds = (drafts ?? [])
+          .map((d) => d.supersedes_entry_id as string | null)
+          .filter((v): v is string => Boolean(v));
+        const priorNo = new Map<string, string>();
+        if (priorIds.length > 0) {
+          const { data: priors } = await supabase.from('entries').select('id, entry_no').in('id', priorIds);
+          for (const p of priors ?? []) if (p.entry_no) priorNo.set(p.id as string, p.entry_no as string);
+        }
         setUnfinished(
-          (drafts ?? []).map((d) => {
-            const prior = Array.isArray(d.prior) ? d.prior[0] : d.prior;
-            return {
-              id: d.id as string,
-              date: d.entry_date as string,
-              mine: d.author_id === user.id,
-              labour: ((d.labour ?? []) as unknown[]).length,
-              words: Boolean(d.transcript_raw),
-              correctionOf: (prior as { entry_no?: string } | null)?.entry_no ?? null,
-            };
-          }),
+          (drafts ?? []).map((d) => ({
+            id: d.id as string,
+            date: d.entry_date as string,
+            mine: d.author_id === user.id,
+            labour: ((d.labour ?? []) as unknown[]).length,
+            words: Boolean(d.transcript_raw),
+            correctionOf: d.supersedes_entry_id ? (priorNo.get(d.supersedes_entry_id as string) ?? null) : null,
+          })),
         );
       }
 
