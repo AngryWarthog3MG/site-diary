@@ -184,10 +184,10 @@ export function RegisterList({ rows, projectId }: { rows: RegisterRow[]; project
                           {entry.authorName}
                           {isEarlier
                             ? ' · earlier version, replaced'
-                            : earlierCount > 0
-                              ? ` · current version (${earlierCount} earlier)`
-                              : entry.correction && !signed
-                                ? ' · unsigned correction'
+                            : !signed && entry.correction
+                              ? ' · unsigned correction — the signed day stands until this is signed'
+                              : signed && earlierCount > 0
+                                ? ` · current version (${earlierCount} earlier)`
                                 : ''}
                         </p>
                       </div>
