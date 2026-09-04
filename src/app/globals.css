@@ -2693,3 +2693,8 @@ body {
 .refresh-button__icon { font-size: 1rem; line-height: 1; display: inline-block; }
 .refresh-button--busy .refresh-button__icon { animation: refresh-spin 0.9s linear infinite; }
 @keyframes refresh-spin { to { transform: rotate(360deg); } }
+
+/* The seal sits under the Refresh pill, not behind it. */
+.seal {
+  top: 3.6rem;
+}
