@@ -40,6 +40,7 @@ export const viewport: Viewport = {
 };
 
 import { ErrorReporter } from '@/components/error-reporter';
+import { RefreshButton } from '@/components/refresh-button';
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -49,6 +50,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     >
       <body>
         <ErrorReporter />
+        <RefreshButton />
         {children}
         <ServiceWorkerRegistration />
       </body>

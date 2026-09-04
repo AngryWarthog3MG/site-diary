@@ -2664,3 +2664,32 @@ body {
 .prestart-row--done { border-color: rgba(13, 90, 88, 0.3); background: var(--teal-tint, rgba(13,90,88,0.06)); }
 .prestart-row--open { border-color: rgba(240, 164, 31, 0.5); background: rgba(240, 164, 31, 0.1); }
 .prestart-row a { font-weight: 600; white-space: nowrap; }
+
+/* Top of every screen: send what is waiting, load the latest. Fixed so it
+   is there whatever you are looking at; light so it never reads as the
+   thing you came to press. */
+.refresh-button {
+  position: fixed;
+  top: calc(0.6rem + env(safe-area-inset-top));
+  right: 0.75rem;
+  z-index: 40;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.45rem 0.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 999px;
+  background: rgba(22, 33, 31, 0.55);
+  color: #fff;
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  box-shadow: 0 4px 14px rgba(22, 33, 31, 0.25);
+}
+.refresh-button:disabled { opacity: 0.85; }
+.refresh-button__icon { font-size: 1rem; line-height: 1; display: inline-block; }
+.refresh-button--busy .refresh-button__icon { animation: refresh-spin 0.9s linear infinite; }
+@keyframes refresh-spin { to { transform: rotate(360deg); } }
