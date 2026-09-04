@@ -2949,3 +2949,10 @@ body {
   .home-card__aside .mono { display: inline; margin: 0; }
   .account-bar--quiet .button { width: auto; margin-top: 0; }
 }
+
+/* Wide screens: diary and weather share the first row; attention spans below.
+   Phones keep attention above the weather. */
+@media (min-width: 721px) {
+  .home-card--weather { order: 0; }
+  .home-card--attention { order: 1; }
+}
