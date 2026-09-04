@@ -2941,7 +2941,11 @@ body {
 .account-bar__line { margin: 0; color: var(--ink-60); font-size: 0.875rem; }
 .account-bar--quiet .button { width: auto; margin-top: 0; min-height: 38px; padding: 0 0.9rem; font-size: 0.875rem; }
 @media (max-width: 720px) {
-  .home-card__head { display: flex; }
-  .home-card__aside { text-align: right; }
+  /* On a phone the aside sits under the title, not beside it — beside it,
+     the title wrapped to two lines and the date to two. */
+  .home-card--capture .home-card__head { display: block; }
+  .home-card__aside { text-align: left; margin-top: 0.4rem; }
+  .home-card__aside .label { display: inline; margin-right: 0.4rem; }
+  .home-card__aside .mono { display: inline; margin: 0; }
   .account-bar--quiet .button { width: auto; margin-top: 0; }
 }
