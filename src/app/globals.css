@@ -2788,3 +2788,14 @@ body {
 .crewrow__hire { max-width: 6.5rem; }
 .crewadd--plant { grid-template-columns: 1.4fr 0.7fr 1fr auto; }
 @media (max-width: 640px) { .crewadd--plant { grid-template-columns: 1fr; } }
+
+/* Menu and Refresh in Today's header, under the serial. */
+.home-hero__tools { display: flex; align-items: center; gap: 0.5rem; margin-top: 0.9rem; }
+.home-hero .menu-button,
+.home-hero .refresh-button {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.4);
+  color: #fff;
+  box-shadow: none;
+}
+.home-hero .menu-button--open { background: #fff; border-color: #fff; color: var(--teal, #0e4f52); }

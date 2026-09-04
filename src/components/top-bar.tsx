@@ -15,7 +15,9 @@ import { RefreshButton } from '@/components/refresh-button';
  */
 export function TopBar() {
   const pathname = usePathname();
-  if (/^\/(signin|login|auth|verify|offline)/.test(pathname)) return null;
+  // Today carries Menu and Refresh in its own green header, under the
+  // serial; everywhere else they live in this bar.
+  if (pathname === '/' || /^\/(signin|login|auth|verify|offline)/.test(pathname)) return null;
 
   return (
     <header className="topbar">

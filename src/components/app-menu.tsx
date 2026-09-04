@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { SignOutButton } from '@/components/sign-out-button';
@@ -27,6 +27,8 @@ export function AppMenu() {
   const params = useSearchParams();
   const [open, setOpen] = useState(false);
   const [me, setMe] = useState<Me | null>(null);
+  const [anchorTop, setAnchorTop] = useState<number | null>(null);
+  const buttonRef = useRef<HTMLButtonElement | null>(null);
   const projectParam = params.get('project');
 
   const load = useCallback(async () => {
@@ -66,9 +68,16 @@ export function AppMenu() {
   return (
     <>
       <button
+        ref={buttonRef}
         type="button"
         className={`menu-button${open ? ' menu-button--open' : ''}`}
-        onClick={() => setOpen((v) => !v)}
+        onClick={() => {
+          // Open under the button, wherever the button is on this screen —
+          // unless that would push the panel below the fold.
+          const rect = buttonRef.current?.getBoundingClientRect();
+          setAnchorTop(rect && rect.bottom < window.innerHeight * 0.5 ? rect.bottom + 8 : null);
+          setOpen((v) => !v);
+        }}
         aria-expanded={open}
         aria-controls="app-menu"
         aria-label={open ? 'Close menu' : 'Menu'}
@@ -79,7 +88,13 @@ export function AppMenu() {
 
       {open && (
         <div className="menu-backdrop" onClick={() => setOpen(false)}>
-          <nav id="app-menu" className="menu-panel" aria-label="Everything else" onClick={(e) => e.stopPropagation()}>
+          <nav
+            id="app-menu"
+            className="menu-panel"
+            aria-label="Everything else"
+            style={anchorTop != null ? { top: anchorTop, maxHeight: `calc(100vh - ${Math.round(anchorTop)}px - 1rem)` } : undefined}
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="menu-panel__head">
               <p className="label">{me?.project ? me.project.name : 'KBS Daily Diary'}</p>
               {me?.name && <p className="menu-panel__who mono">{me.name}</p>}

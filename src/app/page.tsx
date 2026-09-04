@@ -1,4 +1,7 @@
 import Link from 'next/link';
+import { Suspense } from 'react';
+import { AppMenu } from '@/components/app-menu';
+import { RefreshButton } from '@/components/refresh-button';
 import { BrandMark } from '@/components/brand-mark';
 import { createClient } from '@/lib/supabase/server';
 import {
@@ -67,6 +70,12 @@ export default async function TodayPage({
             <h1 className="home-title">{current.project.name}</h1>
             <div className="home-serial">
               <NextEntryLine orgCode={current.project.org.code} />
+            </div>
+            <div className="home-hero__tools">
+              <Suspense fallback={null}>
+                <AppMenu />
+              </Suspense>
+              <RefreshButton />
             </div>
           </div>
           <div className="home-hero__switcher">
