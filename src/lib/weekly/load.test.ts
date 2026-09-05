@@ -104,3 +104,22 @@ test('variations flag missing VR references', () => {
   assert.equal(out.rows[0].referenced, true);
   assert.equal(out.rows[1].vr_ref, null);
 });
+
+test('plant is one line per machine, however the days labelled it', () => {
+  // The bug this pins: the same excavator appeared three times in a weekly
+  // — once as "1.8 kilometer excavator", once with hire "dry", once with
+  // hire blank — and read as three machines at 8, 16 and 16 hours.
+  const out = aggregatePlant([
+    { item: '1.8t excavator', supplier: 'KBS', hire_type: null, hours: 8, idle_hours: null },
+    { item: '1.8t Excavator', supplier: 'KBS', hire_type: 'dry', hours: 8, idle_hours: null },
+    { item: '1.8T EXCAVATOR', supplier: null, hire_type: null, hours: 8, idle_hours: null },
+    { item: 'Vac Trailer', supplier: 'MINIQUIP', hire_type: 'wet', hours: 8, idle_hours: null },
+  ]);
+  assert.equal(out.rows.length, 2);
+  const exc = out.rows.find((r) => r.item.toLowerCase().startsWith('1.8t'));
+  assert.equal(exc?.hours, 24);
+  // The most recent day's spelling, and the filled-in labels from whichever day had them.
+  assert.equal(exc?.item, '1.8T EXCAVATOR');
+  assert.equal(exc?.supplier, 'KBS');
+  assert.equal(exc?.hire_type, 'dry');
+});
