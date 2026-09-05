@@ -171,6 +171,7 @@ export const SECTIONS: SectionDef[] = [
       { key: 'cause', label: 'Cause', kind: 'text' },
       { key: 'start_time', label: 'From', kind: 'time', narrow: true },
       { key: 'end_time', label: 'To', kind: 'time', narrow: true },
+      { key: 'duration_mins', label: 'Minutes', kind: 'number', step: '1', narrow: true },
       {
         key: 'category',
         label: 'Category',
@@ -184,7 +185,6 @@ export const SECTIONS: SectionDef[] = [
         ],
       },
       { key: 'personnel_affected', label: 'People', kind: 'number', step: '1', narrow: true },
-      { key: 'duration_mins', label: 'Minutes', kind: 'number', step: '1', narrow: true },
     ],
     blank: () => ({
       start_time: null,
@@ -203,11 +203,11 @@ export const SECTIONS: SectionDef[] = [
     identity: 'location',
     fields: [
       { key: 'location', label: 'Location', kind: 'text' },
-      { key: 'volume_m3', label: 'Volume', kind: 'number', suffix: 'm³', step: '0.1', narrow: true },
-      { key: 'mix_spec', label: 'Mix', kind: 'text', narrow: true },
-      { key: 'supplier', label: 'Supplier', kind: 'text', narrow: true },
       { key: 'start_time', label: 'Start', kind: 'time', narrow: true },
       { key: 'finish_time', label: 'Finish', kind: 'time', narrow: true },
+      { key: 'volume_m3', label: 'Volume', kind: 'number', suffix: 'm³', step: '0.1', narrow: true },
+      { key: 'mix_spec', label: 'Mix', kind: 'text', narrow: true },
+      { key: 'supplier', label: 'Supplier', kind: 'text' },
       { key: 'docket_nos', label: 'Dockets', kind: 'list' },
       { key: 'docket_photo_urls', label: 'Docket photos', kind: 'list' },
     ],

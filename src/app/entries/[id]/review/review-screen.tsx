@@ -910,6 +910,21 @@ function DocketSection({
  * the finish reads earlier. Mirrors the computation apply_entry_review does
  * at save time, so what the supervisor sees is what the record stores.
  */
+/** Minutes between two clock times, over midnight if it must. */
+function minutesBetween(start: string | null | undefined, end: string | null | undefined): number | null {
+  if (!start || !end) return null;
+  const parse = (value: string) => {
+    const m = /^(\d{1,2}):(\d{2})/.exec(value);
+    return m ? Number(m[1]) * 60 + Number(m[2]) : null;
+  };
+  const from = parse(start);
+  const to = parse(end);
+  if (from == null || to == null) return null;
+  let span = to - from;
+  if (span <= 0) span += 24 * 60;
+  return span > 0 ? span : null;
+}
+
 function workedHours(
   start: string | null | undefined,
   finish: string | null | undefined,
@@ -1039,6 +1054,11 @@ function ItemCard({
                 };
                 const computed = workedHours(next.start_time, next.finish_time, next.break_mins);
                 if (computed != null) onPatch(section.group, index, { hours: computed });
+              }
+              if (section.group === 'delays' && (field.key === 'start_time' || field.key === 'end_time')) {
+                const next = { ...item, [field.key]: value } as { start_time?: string | null; end_time?: string | null };
+                const mins = minutesBetween(next.start_time, next.end_time);
+                if (mins != null) onPatch(section.group, index, { duration_mins: mins });
               }
               if (section.group === 'pours' && field.key === 'docket_photo_urls') {
                 const previous = (item[field.key] as string[] | null) ?? [];
