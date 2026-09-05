@@ -1,4 +1,5 @@
 import type { ReactElement } from 'react';
+import { buildProgressSeries, ProgressLines, PROGRESS_LINES_CSS } from './progress-lines';
 import { LOGO_DATA_URI } from '@/lib/pdf/logo';
 import type { WeeklyData } from './load';
 
@@ -176,6 +177,15 @@ export function WeeklyReport({ data, narrative, narrativeNote }: WeeklyReportPro
             </tbody>
           </table>
         )}
+        {(() => {
+          const series = buildProgressSeries(data.workItems.rows, data.days);
+          return series.length > 0 ? (
+            <>
+              <p className="lbl" style={{ marginTop: '3mm' }}>Percent complete by area</p>
+              <ProgressLines series={series} days={data.days} />
+            </>
+          ) : null;
+        })()}
       </section>
 
       <section className="sect">
@@ -477,6 +487,7 @@ export function WeeklyReport({ data, narrative, narrativeNote }: WeeklyReportPro
 
 /** Additions on top of DOCKET_CSS — the report reuses the docket's dress. */
 export const WEEKLY_CSS = `
+${PROGRESS_LINES_CSS}
 /* Days in the report that are not signed yet. Loud on purpose: a reader
    must never take a provisional figure for a settled one. */
 .provisional { margin: 3mm 0 0; padding: 2.5mm 3mm; border: 0.8pt solid #9A6A09;
