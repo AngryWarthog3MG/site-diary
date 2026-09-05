@@ -8,6 +8,7 @@ export interface CrewRow {
   name: string;
   role: string | null;
   active: boolean;
+  aliases: string[];
 }
 
 /**
@@ -32,7 +33,7 @@ export function CrewList({ projectId, initial, canEdit }: { projectId: string; i
       const { data, error: insertError } = await supabase
         .from('crew')
         .insert({ project_id: projectId, name: trimmed, role: role.trim() || null, sort_order: rows.length + 1 })
-        .select('id, name, role, active')
+        .select('id, name, role, active, aliases')
         .single();
       if (insertError) throw new Error(/duplicate/i.test(insertError.message) ? `${trimmed} is already on the list.` : insertError.message);
       setRows([...rows, data as CrewRow]);
@@ -103,6 +104,22 @@ export function CrewList({ projectId, initial, canEdit }: { projectId: string; i
               </button>
             </div>
           )}
+          {canEdit ? (
+            <label className="crewrow__aka">
+              <span className="label">Also known as</span>
+              <input
+                className="field field--sm"
+                defaultValue={(row.aliases ?? []).join(', ')}
+                placeholder="Matty, Matt — what the recording might call them"
+                onBlur={(e) => {
+                  const next = e.target.value.split(/[,;]+/).map((v) => v.trim()).filter(Boolean);
+                  if (next.join('|') !== (row.aliases ?? []).join('|')) void patch(row, { aliases: next });
+                }}
+              />
+            </label>
+          ) : (row.aliases ?? []).length > 0 ? (
+            <p className="crewrow__akastatic">also {row.aliases.join(', ')}</p>
+          ) : null}
         </div>
       ))}
 

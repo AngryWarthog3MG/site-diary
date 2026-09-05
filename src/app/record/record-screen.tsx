@@ -67,6 +67,35 @@ export function RecordScreen({
   const [finalText, setFinalText] = useState('');
   const [interim, setInterim] = useState('');
   const [typedText, setTypedText] = useState('');
+  const [fillingIn, setFillingIn] = useState(false);
+
+  /**
+   * The other way in: not a box to type prose into for the model to read,
+   * but the entry itself — labour off the crew list, plant off the plant
+   * list, every field a field. Opens the day's draft and goes there.
+   */
+  async function fillItIn() {
+    setFillingIn(true);
+    try {
+      const response = await fetch('/api/entries', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ projectId, entryDate: targetDate }),
+      });
+      const json = await response.json().catch(() => null);
+      if (response.ok && json?.entryId) {
+        router.push(`/entries/${json.entryId}/review`);
+        return;
+      }
+      if (json?.entryId) {
+        router.push(`/entries/${json.entryId}/signed`);
+        return;
+      }
+    } catch {
+      // No signal: talking still works offline; filling in needs the server.
+    }
+    setFillingIn(false);
+  }
   const [covered, setCovered] = useState<Set<EntrySection>>(new Set());
   const [error, setError] = useState<string | null>(null);
   const [liveOn, setLiveOn] = useState(false);
@@ -296,11 +325,12 @@ export function RecordScreen({
           Talk
         </button>
         <button
-          className={mode === 'text' ? 'capture-switch__option is-active' : 'capture-switch__option'}
+          className="capture-switch__option"
           type="button"
-          onClick={() => chooseMode('text')}
+          disabled={fillingIn}
+          onClick={() => void fillItIn()}
         >
-          Type
+          {fillingIn ? 'Opening…' : 'Fill it in'}
         </button>
       </div>
 

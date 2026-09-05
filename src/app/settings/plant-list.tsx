@@ -9,6 +9,7 @@ export interface PlantRow {
   hire_type: string | null;
   supplier: string | null;
   active: boolean;
+  aliases: string[];
 }
 
 /**
@@ -34,7 +35,7 @@ export function PlantList({ projectId, initial, canEdit }: { projectId: string; 
       const { data, error: insertError } = await supabase
         .from('plant_list')
         .insert({ project_id: projectId, item: trimmed, hire_type: hire || null, supplier: supplier.trim() || null, sort_order: rows.length + 1 })
-        .select('id, item, hire_type, supplier, active')
+        .select('id, item, hire_type, supplier, active, aliases')
         .single();
       if (insertError) throw new Error(/duplicate/i.test(insertError.message) ? `${trimmed} is already on the list.` : insertError.message);
       setRows([...rows, data as PlantRow]);
@@ -99,6 +100,22 @@ export function PlantList({ projectId, initial, canEdit }: { projectId: string; 
               <button type="button" className="quotebtn quotebtn--remove" onClick={() => void remove(row)}>Remove</button>
             </div>
           )}
+          {canEdit ? (
+            <label className="crewrow__aka">
+              <span className="label">Also known as</span>
+              <input
+                className="field field--sm"
+                defaultValue={(row.aliases ?? []).join(', ')}
+                placeholder="the digger, 1.8 ton excavator — what the recording might call it"
+                onBlur={(e) => {
+                  const next = e.target.value.split(/[,;]+/).map((v) => v.trim()).filter(Boolean);
+                  if (next.join('|') !== (row.aliases ?? []).join('|')) void patch(row, { aliases: next });
+                }}
+              />
+            </label>
+          ) : (row.aliases ?? []).length > 0 ? (
+            <p className="crewrow__akastatic">also {row.aliases.join(', ')}</p>
+          ) : null}
         </div>
       ))}
 

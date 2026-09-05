@@ -29,13 +29,13 @@ export default async function SettingsPage({
     supabase.rpc('project_settings_state', { p_project_id: current.project_id }),
     supabase
       .from('crew')
-      .select('id, name, role, active')
+      .select('id, name, role, active, aliases')
       .eq('project_id', current.project_id)
       .order('sort_order')
       .order('name'),
     supabase
       .from('plant_list')
-      .select('id, item, hire_type, supplier, active')
+      .select('id, item, hire_type, supplier, active, aliases')
       .eq('project_id', current.project_id)
       .order('sort_order')
       .order('item'),

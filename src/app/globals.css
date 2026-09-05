@@ -3043,3 +3043,10 @@ body {
 .weekstrip__num { font-size: 0.8125rem; font-weight: 600; }
 .weekstrip__dow { font-size: 0.6875rem; font-weight: 700; letter-spacing: 0.06em; opacity: 0.85; }
 .weekstrip__key .weekstrip__day { min-height: 1rem; }
+
+/* "Also known as": the other ways a name gets said, under each list row. */
+.crewrow { flex-wrap: wrap; }
+.crewrow__aka { flex: 1 0 100%; display: flex; align-items: center; gap: 0.6rem; margin-top: 0.45rem; }
+.crewrow__aka .label { flex: 0 0 auto; }
+.crewrow__aka .field { flex: 1; }
+.crewrow__akastatic { flex: 1 0 100%; margin: 0.3rem 0 0; color: var(--ink-60); font-size: 0.8125rem; }
