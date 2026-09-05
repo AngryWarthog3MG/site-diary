@@ -91,3 +91,16 @@ test('finishFrom wraps past midnight', () => {
   assert.equal(finishFrom('22:00', 8), '06:00');
   assert.equal(finishFrom('06:30', 8.5), '15:00');
 });
+
+test('a decorated "20t excavator" still lands on the one listed excavator; two listed stay as said', () => {
+  const one = applyKnownNames(
+    proposal({ plant: [{ item: '20t excavator', hire_type: null, hours: 6, idle_hours: null, supplier: null, ...base }] } as never),
+    crew, plant,
+  );
+  assert.equal(one.proposal.plant[0].item, '1.8t Excavator');
+  const two = applyKnownNames(
+    proposal({ plant: [{ item: '20t excavator', hire_type: null, hours: 6, idle_hours: null, supplier: null, ...base }] } as never),
+    crew, [...plant, { item: '5t Excavator', hire_type: 'dry', supplier: 'KBS', aliases: ['excavator'] }],
+  );
+  assert.equal(two.proposal.plant[0].item, '20t excavator');
+});

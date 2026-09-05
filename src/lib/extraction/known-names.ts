@@ -48,9 +48,19 @@ function matchPlant(said: string, plant: KnownPlant[]): KnownPlant | null {
   const exact = plant.filter((p) => norm(p.item) === s || p.aliases.some((a) => norm(a) === s));
   if (exact.length === 1) return exact[0];
   if (exact.length > 1) return null;
-  // "excavator" against "1.8t Excavator": a listed item that contains what
-  // was said, if exactly one does.
-  const within = plant.filter((p) => norm(p.item).includes(s) || p.aliases.some((a) => norm(a).includes(s)));
+  // "excavator" against "1.8t Excavator", or "20t excavator" against an
+  // alias of "excavator": a listed item that contains what was said, or an
+  // alias that what was said contains as whole words — if exactly one does.
+  // The model sometimes decorates a plain "the excavator" with a size it
+  // never heard; the list's name wins, so the invention does not print.
+  const saidWords = new Set(s.split(' '));
+  const hasWords = (phrase: string) => norm(phrase).split(' ').every((w) => saidWords.has(w));
+  const within = plant.filter(
+    (p) =>
+      norm(p.item).includes(s) ||
+      p.aliases.some((a) => norm(a).includes(s)) ||
+      p.aliases.some((a) => hasWords(a)),
+  );
   return within.length === 1 ? within[0] : null;
 }
 
