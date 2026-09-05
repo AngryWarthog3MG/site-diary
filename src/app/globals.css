@@ -3079,6 +3079,7 @@ body {
 .wxweek th { text-align: left; font-size: 0.625rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-40); padding: 0.3rem 0.4rem 0.3rem 0; border-bottom: 1px solid var(--ink-08); font-weight: 600; }
 .wxweek th.n, .wxweek td.n { text-align: right; }
 .wxweek td { padding: 0.4rem 0.4rem 0.4rem 0; border-bottom: 1px solid rgba(22, 33, 31, 0.05); }
+.wxweek th:last-child, .wxweek td:last-child { padding-left: 0.9rem; text-align: right; white-space: nowrap; }
 .wxweek__dow { color: var(--ink-40); font-size: 0.7rem; margin-left: 0.15rem; }
 .wxweek__today td { font-weight: 600; }
 .wxweek__wet td:nth-child(4) { color: #2f6fb0; font-weight: 600; }
