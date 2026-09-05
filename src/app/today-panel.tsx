@@ -535,11 +535,13 @@ export function TodayPanel({
                   title={title}
                   aria-label={title}
                 >
-                  {day.label}
+                  <span className="weekstrip__num mono">{Number(day.date.slice(8, 10))}</span>
+                  <span className="weekstrip__dow">{day.label}</span>
                 </Link>
               ) : (
                 <span key={day.date} className={`weekstrip__day weekstrip__day--${day.state}`} title={title}>
-                  {day.label}
+                  <span className="weekstrip__num mono">{Number(day.date.slice(8, 10))}</span>
+                  <span className="weekstrip__dow">{day.label}</span>
                 </span>
               );
             })}

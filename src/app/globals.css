@@ -3037,3 +3037,9 @@ body {
 .review-sheet > form > .button {
   width: calc(100% - 2 * clamp(1rem, 3vw, 1.5rem));
 }
+
+/* Each day in the strip: the date above the weekday letter. */
+.weekstrip__day { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.05rem; line-height: 1.1; min-height: 2.9rem; }
+.weekstrip__num { font-size: 0.8125rem; font-weight: 600; }
+.weekstrip__dow { font-size: 0.6875rem; font-weight: 700; letter-spacing: 0.06em; opacity: 0.85; }
+.weekstrip__key .weekstrip__day { min-height: 1rem; }
