@@ -3021,3 +3021,19 @@ body {
   min-width: 1.5rem; height: 1.5rem; padding: 0 0.45rem; border-radius: 999px;
   background: var(--teal, #0e4f52); color: #fff; font-size: 0.8rem; font-weight: 600;
 }
+
+/* Cards: the first field is the heading. No name above a box with the name
+   in it; Remove tucks into the top-right corner instead. */
+.review-sheet .item { position: relative; }
+.review-sheet .itemhead { position: absolute; top: 0.55rem; right: 0.7rem; margin: 0; }
+.review-sheet .itemhead > div { display: none; }
+.review-sheet .itemhead .quotebtn { font-size: 0.7rem; }
+.review-sheet .item--low .itemhead > div { display: block; }
+.review-sheet .item--low .itemhead { position: static; margin-bottom: 0.5rem; display: flex; justify-content: space-between; }
+
+/* The sign and save buttons respect the card's margins instead of hanging
+   off its right edge. */
+.review-sheet > .button,
+.review-sheet > form > .button {
+  width: calc(100% - 2 * clamp(1rem, 3vw, 1.5rem));
+}
