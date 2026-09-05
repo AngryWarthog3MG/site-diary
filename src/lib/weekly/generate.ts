@@ -1,6 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { loadWeeklyData, type WeeklyData } from './load';
+import { ensureProjectWeatherDays } from '@/lib/weather/days';
 import { generateNarrative } from './narrative';
 import { renderWeeklyPdf } from './render';
 
@@ -28,6 +29,9 @@ export async function generateWeeklyReport(
 ): Promise<WeeklyGeneration | { empty: true }> {
   // The PDF says the same thing the screen does, drafts included and marked.
   // A weekly that quietly omits five of seven days misleads whoever reads it.
+  // The site's weather rows first, so the report reads settled figures rather
+  // than whatever the last glance at the Today screen left behind.
+  await ensureProjectWeatherDays(supabase, project.id, start, end).catch(() => null);
   const data = await loadWeeklyData(supabase, project, start, end, { includeUnsigned: true });
   if (data.entries.length === 0) return { empty: true };
 

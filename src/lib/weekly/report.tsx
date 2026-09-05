@@ -426,6 +426,12 @@ export function WeeklyReport({ data, narrative, narrativeNote }: WeeklyReportPro
             </tfoot>
           </table>
         )}
+        {weather.station && (
+          <p className="src">
+            Bureau of Meteorology, {weather.station} gauge: rain is the 24 hours from 9am. A reading
+            entered by hand in that day&rsquo;s diary is shown in its place.
+          </p>
+        )}
       </section>
 
       <section className="sect">

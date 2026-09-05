@@ -220,8 +220,24 @@ export function TodayPanel({
                 // gap in it (today's rain before the table catches up) is
                 // filled from what the diary's own fetch saw that day.
                 const merged: Record<string, WeatherRow> = { ...fromEntry };
+                const pick = (a: number | null, b: number | null | undefined, f: (x: number, y: number) => number) =>
+                  a == null ? b ?? null : b == null ? a : f(a, b);
                 for (const d of days) {
                   const own = fromEntry[d.day];
+                  if (d.source !== 'bom_daily') {
+                    // Still the running day: two looks at the same gauge, so
+                    // the maximum and rain total only rise and the diary's
+                    // wind is the later look.
+                    merged[d.day] = {
+                      ...d,
+                      temp_max: pick(d.temp_max, own?.temp_max, Math.max),
+                      temp_min: pick(d.temp_min, own?.temp_min, Math.min),
+                      rainfall_mm: pick(d.rainfall_mm, own?.rainfall_mm, Math.max),
+                      wind_dir: own?.wind_kmh != null ? own.wind_dir : d.wind_dir,
+                      wind_kmh: own?.wind_kmh ?? d.wind_kmh,
+                    };
+                    continue;
+                  }
                   merged[d.day] = {
                     ...d,
                     temp_max: d.temp_max ?? own?.temp_max ?? null,

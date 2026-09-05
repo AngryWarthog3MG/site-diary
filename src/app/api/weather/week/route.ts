@@ -1,6 +1,6 @@
 import { fail, ok, requireApiUser, isUuid } from '@/lib/api';
 import { loadProjectSite } from '@/lib/weather/resolve';
-import { daysAreFresh, loadProjectWeatherDays, refreshProjectWeatherDays } from '@/lib/weather/days';
+import { ensureProjectWeatherDays } from '@/lib/weather/days';
 import { BOM_ATTRIBUTION } from '@/lib/weather/bom';
 
 export const maxDuration = 30;
@@ -35,13 +35,9 @@ export async function GET(request: Request) {
   const project = await loadProjectSite(supabase, projectId);
   if (!project) return fail('not_found', 'That project is not one of yours.', 404);
 
-  let rows = await loadProjectWeatherDays(supabase, projectId, from, to);
-  let reason: string | null = null;
-  if (searchParams.get('refresh') === '1' || !daysAreFresh(rows)) {
-    const outcome = await refreshProjectWeatherDays(project, from, to);
-    if (outcome.ok) rows = await loadProjectWeatherDays(supabase, projectId, from, to);
-    else reason = outcome.reason;
-  }
+  const { rows, reason } = await ensureProjectWeatherDays(
+    supabase, projectId, from, to, searchParams.get('refresh') === '1',
+  );
 
   return ok({
     days: rows.map((r) => ({

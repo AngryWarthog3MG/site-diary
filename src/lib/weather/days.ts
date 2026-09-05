@@ -12,7 +12,7 @@ import {
   type DailyClimateRow,
 } from './daily-parse';
 import { deriveWeather, hasObservations, mergeWeather } from './derive';
-import { resolveStation, type ProjectSite } from './resolve';
+import { loadProjectSite, resolveStation, type ProjectSite } from './resolve';
 import type { DerivedWeather } from './types';
 import type { ProjectWeatherDay } from '@/types/database';
 
@@ -166,6 +166,29 @@ function blank(project_id: string, day: string): ProjectWeatherDay {
     station_name: null,
     fetched_at: '',
   };
+}
+
+/**
+ * The stored rows for [from, to], brought up to date first when they are
+ * stale. What the Today screen and the weekly report both call.
+ */
+export async function ensureProjectWeatherDays(
+  supabase: SupabaseClient,
+  projectId: string,
+  from: string,
+  to: string,
+  force = false,
+): Promise<{ rows: ProjectWeatherDay[]; reason: string | null }> {
+  let rows = await loadProjectWeatherDays(supabase, projectId, from, to);
+  let reason: string | null = null;
+  if (force || !daysAreFresh(rows)) {
+    const project = await loadProjectSite(supabase, projectId);
+    if (!project) return { rows, reason: 'Project not found.' };
+    const outcome = await refreshProjectWeatherDays(project, from, to);
+    if (outcome.ok) rows = await loadProjectWeatherDays(supabase, projectId, from, to);
+    else reason = outcome.reason;
+  }
+  return { rows, reason };
 }
 
 /** The stored rows for [from, to], under the caller's own RLS. */

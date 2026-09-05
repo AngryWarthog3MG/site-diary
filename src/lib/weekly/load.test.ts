@@ -8,6 +8,8 @@ import {
   aggregateQuantities,
   aggregateDelays,
   aggregateVariations,
+  aggregateWeather,
+  mergeWeatherDays,
 } from './load.ts';
 
 test('datesInRange covers the week inclusive', () => {
@@ -122,4 +124,62 @@ test('plant is one line per machine, however the days labelled it', () => {
   assert.equal(exc?.item, '1.8T EXCAVATOR');
   assert.equal(exc?.supplier, 'KBS');
   assert.equal(exc?.hire_type, 'dry');
+});
+
+test('weather rows: typed reading first, then the site day with diary gaps filled, impact always the diary’s', () => {
+  const days = ['2026-09-01', '2026-09-02', '2026-09-03', '2026-09-04'];
+  const entryRows = [
+    // 01/09: fetched at knock-off, lost the minimum; a note about the day.
+    { entry_date: '2026-09-01', temp_min: null, temp_max: 19.0, rainfall_mm: 0.2, wind_dir: 'W', wind_kmh: 7, source: 'bom_auto', observed_impact: 'Damp start' },
+    // 03/09: typed by the supervisor — stands whatever the gauge says.
+    { entry_date: '2026-09-03', temp_min: 12, temp_max: 21, rainfall_mm: 5, wind_dir: null, wind_kmh: null, source: 'manual', observed_impact: 'Rained off after smoko' },
+  ];
+  const dayRows = [
+    { day: '2026-09-01', temp_min: 8.3, temp_max: 19.2, rainfall_mm: 2.6, wind_dir: null, wind_kmh: 7, source: 'bom_daily', station_name: 'PERTH METRO' },
+    // 02/09: no diary at all, but the site still had weather.
+    { day: '2026-09-02', temp_min: 8.5, temp_max: 19.2, rainfall_mm: 1.6, wind_dir: null, wind_kmh: 6, source: 'bom_daily', station_name: 'PERTH METRO' },
+    { day: '2026-09-03', temp_min: 13.1, temp_max: 19.2, rainfall_mm: 3.0, wind_dir: null, wind_kmh: 7, source: 'bom_daily', station_name: 'PERTH METRO' },
+  ];
+  const rows = mergeWeatherDays(entryRows, dayRows, days);
+  assert.deepEqual(rows.map((r) => r.entry_date), ['2026-09-01', '2026-09-02', '2026-09-03']);
+  // Settled figures override the running ones; the diary's note survives.
+  assert.deepEqual(rows[0], {
+    entry_date: '2026-09-01', temp_min: 8.3, temp_max: 19.2, rainfall_mm: 2.6,
+    wind_dir: null, wind_kmh: 7, source: 'bom_daily', observed_impact: 'Damp start',
+  });
+  assert.equal(rows[1].rainfall_mm, 1.6);
+  assert.equal(rows[1].observed_impact, null);
+  // The typed reading is untouched.
+  assert.equal(rows[2].source, 'manual');
+  assert.equal(rows[2].rainfall_mm, 5);
+  assert.equal(rows[2].observed_impact, 'Rained off after smoko');
+  const agg = aggregateWeather(rows, 'PERTH METRO');
+  assert.equal(agg.totalRainfallMm, 9.2);
+  assert.equal(agg.station, 'PERTH METRO');
+});
+
+test('weather rows: wind stays a pair — a diary direction is not paired with a site speed', () => {
+  const rows = mergeWeatherDays(
+    [{ entry_date: '2026-09-04', temp_min: 14.4, temp_max: 19.5, rainfall_mm: 0.2, wind_dir: 'CALM', wind_kmh: 0, source: 'bom_auto', observed_impact: null }],
+    [{ day: '2026-09-04', temp_min: 14.4, temp_max: 19.5, rainfall_mm: null, wind_dir: null, wind_kmh: 13, source: 'bom_daily', station_name: 'PERTH METRO' }],
+    ['2026-09-04'],
+  );
+  assert.equal(rows[0].wind_dir, null);
+  assert.equal(rows[0].wind_kmh, 13);
+  // A gap in the site row is filled from the diary's own fetch.
+  assert.equal(rows[0].rainfall_mm, 0.2);
+});
+
+test('weather rows: an unsettled site row merges as a running observation — the total only rises', () => {
+  const rows = mergeWeatherDays(
+    // The diary fetched at knock-off: more rain by then, a later wind.
+    [{ entry_date: '2026-09-05', temp_min: null, temp_max: 19.8, rainfall_mm: 6.2, wind_dir: 'W', wind_kmh: 6, source: 'bom_auto', observed_impact: null }],
+    // The site row from a mid-afternoon refresh.
+    [{ day: '2026-09-05', temp_min: 11.2, temp_max: 19.1, rainfall_mm: 1.6, wind_dir: 'N', wind_kmh: 9, source: 'bom_obs', station_name: 'PERTH METRO' }],
+    ['2026-09-05'],
+  );
+  assert.deepEqual(rows[0], {
+    entry_date: '2026-09-05', temp_min: 11.2, temp_max: 19.8, rainfall_mm: 6.2,
+    wind_dir: 'W', wind_kmh: 6, source: 'bom_obs', observed_impact: null,
+  });
 });

@@ -126,6 +126,8 @@ export interface WeeklyData {
       impact: string | null;
     }>;
     totalRainfallMm: number;
+    /** The gauge the site's day rows came from, when any were used. */
+    station: string | null;
   };
   variations: {
     rows: Array<{
@@ -341,7 +343,89 @@ export function aggregateDelays(rows: Array<Record<string, unknown>>): WeeklyDat
   return { rows: out, byCategory: categories, totalMinutes, totalHours: round2(totalMinutes / 60) };
 }
 
-export function aggregateWeather(rows: Array<Record<string, unknown>>): WeeklyData['weather'] {
+/**
+ * One weather row per day, from the best source for each field.
+ *
+ * A reading the supervisor typed into that day's diary comes first — they were
+ * on site, the gauge was not. Otherwise the site's day row (the Bureau's
+ * settled figure, kept whether or not a diary was written) with any gap filled
+ * from what the diary's own fetch saw. The observed impact is always the
+ * supervisor's. Wind stays a pair: a direction from one reading against a
+ * speed from another describes nothing.
+ */
+export function mergeWeatherDays(
+  entryRows: Array<Record<string, unknown>>,
+  dayRows: Array<Record<string, unknown>>,
+  days: readonly string[],
+): Array<Record<string, unknown>> {
+  const hasNumber = (r: Record<string, unknown>) =>
+    [r.temp_min, r.temp_max, r.rainfall_mm, r.wind_kmh].some((v) => v != null);
+  const byDate = new Map<string, Record<string, unknown>>();
+  for (const r of entryRows) {
+    const date = String(r.entry_date ?? '');
+    const have = byDate.get(date);
+    // A typed reading beats a fetched one for the same day; otherwise first wins.
+    if (!have || (r.source === 'manual' && have.source !== 'manual' && hasNumber(r))) byDate.set(date, r);
+  }
+  const dayByDate = new Map<string, Record<string, unknown>>();
+  for (const r of dayRows) dayByDate.set(String(r.day ?? ''), r);
+
+  const out: Array<Record<string, unknown>> = [];
+  for (const date of days) {
+    const own = byDate.get(date);
+    const site = dayByDate.get(date);
+    if (!own && !site) continue;
+    if (own && own.source === 'manual' && hasNumber(own)) {
+      out.push({ ...own, entry_date: date });
+      continue;
+    }
+    if (!site) {
+      out.push({ ...own, entry_date: date });
+      continue;
+    }
+    if (site.source !== 'bom_daily') {
+      // Both are running observations of the same gauge, fetched at different
+      // times: the maximum and the rain total only ever rise, the minimum is
+      // the same overnight window, and the diary's wind is the later look.
+      out.push({
+        entry_date: date,
+        temp_min: pickNum(site.temp_min, own?.temp_min, Math.min),
+        temp_max: pickNum(site.temp_max, own?.temp_max, Math.max),
+        rainfall_mm: pickNum(site.rainfall_mm, own?.rainfall_mm, Math.max),
+        wind_dir: own?.wind_kmh != null ? own.wind_dir ?? null : site.wind_dir ?? null,
+        wind_kmh: own?.wind_kmh != null ? own.wind_kmh : site.wind_kmh ?? null,
+        source: site.source,
+        observed_impact: own?.observed_impact ?? null,
+      });
+      continue;
+    }
+    const siteWind = site.wind_kmh != null;
+    out.push({
+      entry_date: date,
+      temp_min: site.temp_min ?? own?.temp_min ?? null,
+      temp_max: site.temp_max ?? own?.temp_max ?? null,
+      rainfall_mm: site.rainfall_mm ?? own?.rainfall_mm ?? null,
+      wind_dir: siteWind ? site.wind_dir ?? null : own?.wind_dir ?? null,
+      wind_kmh: siteWind ? site.wind_kmh : own?.wind_kmh ?? null,
+      source: site.source,
+      observed_impact: own?.observed_impact ?? null,
+    });
+  }
+  return out;
+}
+
+function pickNum(a: unknown, b: unknown, combine: (x: number, y: number) => number): number | null {
+  const x = a == null ? null : num(a);
+  const y = b == null ? null : num(b);
+  if (x == null) return y;
+  if (y == null) return x;
+  return combine(x, y);
+}
+
+export function aggregateWeather(
+  rows: Array<Record<string, unknown>>,
+  station: string | null = null,
+): WeeklyData['weather'] {
   const out = rows
     .slice()
     .sort((a, b) => String(a.entry_date).localeCompare(String(b.entry_date)))
@@ -357,6 +441,7 @@ export function aggregateWeather(rows: Array<Record<string, unknown>>): WeeklyDa
   return {
     rows: out,
     totalRainfallMm: round2(out.reduce((sum, r) => sum + (r.rainfall_mm ?? 0), 0)),
+    station,
   };
 }
 
@@ -504,7 +589,7 @@ export async function loadWeeklyData(
         supabase,
         scope(
           'weather',
-          'entry_date, temp_min, temp_max, rainfall_mm, wind_dir, wind_kmh, observed_impact',
+          'entry_date, temp_min, temp_max, rainfall_mm, wind_dir, wind_kmh, source, observed_impact',
         ),
       ),
       diaryQuery(
@@ -550,7 +635,7 @@ export async function loadWeeklyData(
          pours(location, volume_m3, mix_spec, supplier),
          quantities(item_type, area, quantity, unit),
          dayworks(description, labour, plant, materials, hours, docket_ref),
-         weather(temp_min, temp_max, rainfall_mm, wind_dir, wind_kmh, observed_impact)`,
+         weather(temp_min, temp_max, rainfall_mm, wind_dir, wind_kmh, source, observed_impact)`,
       )
       .eq('project_id', project.id)
       .eq('status', 'draft')
@@ -631,6 +716,19 @@ export async function loadWeeklyData(
     entryRows.sort((a, b) => a.entry_date.localeCompare(b.entry_date));
   }
 
+  // The site's own weather, one row per day whether or not a diary was
+  // written (see weather/days.ts). Read under the caller's RLS; a project
+  // without site coordinates simply has none, and the diary readings stand.
+  const { data: siteDays } = await supabase
+    .from('project_weather_days')
+    .select('day, temp_min, temp_max, rainfall_mm, wind_dir, wind_kmh, source, station_name')
+    .eq('project_id', project.id)
+    .gte('day', start)
+    .lte('day', end);
+  const dayRows = (siteDays ?? []) as Array<Record<string, unknown>>;
+  const weatherRows = mergeWeatherDays(weather, dayRows, days);
+  const station = dayRows.length > 0 ? ((dayRows[0].station_name as string | null) ?? null) : null;
+
   const labourAgg = aggregateLabour(labour, days);
   const poursAgg = aggregatePours(pours);
   const delaysAgg = aggregateDelays(delays);
@@ -651,7 +749,7 @@ export async function loadWeeklyData(
     dayworks: aggregateDayworks(dayworks),
     quantities: aggregateQuantities(quantities),
     delays: delaysAgg,
-    weather: aggregateWeather(weather),
+    weather: aggregateWeather(weatherRows, station),
     variations: variationsAgg,
     counts: {
       daysInRange: days.length,
