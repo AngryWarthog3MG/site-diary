@@ -7,6 +7,7 @@ import { createClient } from '@/lib/supabase/client';
 import { BrandMark } from '@/components/brand-mark';
 import { SignaturePad } from '@/components/signature-pad';
 import { parseTalkSummary } from '@/lib/toolbox/summary';
+import { fmtDate } from '@/lib/pdf/dates';
 
 /**
  * The talk itself. While open: the phone goes around the crew — name, sign,
@@ -161,7 +162,7 @@ export function TalkScreen({
       </p>
       <h1 className="page-title">{talk.topic}</h1>
       <p className="mono page-subtitle">
-        {talk.date} · presented by {talk.presenter}
+        {fmtDate(talk.date)} · presented by {talk.presenter}
       </p>
       <p className={talk.completed ? 'talkstate talkstate--done' : 'talkstate talkstate--open'}>
         {talk.completed

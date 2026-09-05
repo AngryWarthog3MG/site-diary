@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
 import { requireUser } from '@/lib/auth';
 import { BrandMark } from '@/components/brand-mark';
+import { fmtDate } from '@/lib/pdf/dates';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'All jobs · KBS Daily Diary' };
@@ -131,7 +132,7 @@ export default async function PortfolioPage() {
                   <span
                     key={day.date}
                     className={`weekstrip__day weekstrip__day--${day.state}`}
-                    title={day.date}
+                    title={fmtDate(day.date)}
                   >
                     {day.label}
                   </span>

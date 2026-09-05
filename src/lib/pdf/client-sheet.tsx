@@ -3,6 +3,7 @@ import type { DocketEntry, Row } from './load';
 import type { PhotoImage } from './docket';
 import type { SignatureImage } from './photos';
 import { formatInstant, num, text } from './load';
+import { fmtDate } from './dates';
 
 /**
  * The dayworks and variations sheet: the part of a signed day the client
@@ -55,7 +56,7 @@ export function ClientSheet({
         <div className="head__right">
           <p className="lbl">From site diary</p>
           <p className="mono serial">{entry.entry_no ?? 'DRAFT'}</p>
-          <p className="mono sub">{entry.entry_date}</p>
+          <p className="mono sub">{fmtDate(entry.entry_date)}</p>
         </div>
       </header>
 
@@ -190,7 +191,7 @@ export function ClientSheet({
       <section className="sig">
         <p className="lbl">Record</p>
         <p className="src">
-          Drawn from signed site diary entry {entry.entry_no}, {entry.entry_date}. The diary entry is
+          Drawn from signed site diary entry {entry.entry_no}, {fmtDate(entry.entry_date)}. The diary entry is
           immutable; its content hash is {entry.content_hash ?? '—'}. Verify this document at
           kbsdailydiary.me/verify.
         </p>

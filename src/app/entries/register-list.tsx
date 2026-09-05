@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { localDate } from '@/lib/capture/queue';
+import { fmtDate } from '@/lib/pdf/dates';
 
 export interface RegisterRow {
   id: string;
@@ -113,7 +114,7 @@ export function RegisterList({ rows, projectId }: { rows: RegisterRow[]; project
               <p className="mono entries-date__day">{day.date.slice(8, 10)}</p>
               <div>
                 <p className="label">{dateLabel(day.date, today)}</p>
-                <p className="mono entries-date__full">{day.date}</p>
+                <p className="mono entries-date__full">{fmtDate(day.date)}</p>
               </div>
             </div>
 

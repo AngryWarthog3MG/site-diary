@@ -1,6 +1,7 @@
 import type { ReactElement } from 'react';
 import { LOGO_DATA_URI } from '@/lib/pdf/logo';
 import { parseTalkSummary } from './summary';
+import { fmtDate } from '@/lib/pdf/dates';
 
 /**
  * The toolbox talk as a document: topic, what was covered, and every
@@ -64,7 +65,7 @@ export function ToolboxTalkDoc({ data }: { data: TalkPdfData }): ReactElement {
         </div>
         <div className="head__right">
           <p className="lbl">Toolbox talk</p>
-          <p className="mono serial">{data.date}</p>
+          <p className="mono serial">{fmtDate(data.date)}</p>
           <p className="mono sub">Presented by {data.presenter}</p>
         </div>
       </header>

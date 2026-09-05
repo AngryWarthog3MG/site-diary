@@ -2,6 +2,7 @@ import type { ReactElement } from 'react';
 import { LOGO_DATA_URI } from '@/lib/pdf/logo';
 import { parseTalkSummary } from '@/lib/toolbox/summary';
 import { PRESTART_CHECKS, type ChecklistState } from './checklist';
+import { fmtDate } from '@/lib/pdf/dates';
 
 /**
  * The prestart as a document: what was on, what could hurt someone, the
@@ -56,7 +57,7 @@ export function PrestartDoc({ data }: { data: PrestartPdfData }): ReactElement {
         </div>
         <div className="head__right">
           <p className="lbl">Daily prestart</p>
-          <p className="mono serial">{data.date}</p>
+          <p className="mono serial">{fmtDate(data.date)}</p>
           <p className="mono sub">Run by {data.supervisor}</p>
         </div>
       </header>

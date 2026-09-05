@@ -4,6 +4,7 @@ import { requireUser, resolveProject } from '@/lib/auth';
 import { loadProgressData, MAX_CHARTED, type ProgressData } from '@/lib/progress/load';
 import { BrandMark } from '@/components/brand-mark';
 import { ProgressChart } from './progress-chart';
+import { fmtDate } from '@/lib/pdf/dates';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Progress · KBS Daily Diary' };
@@ -82,7 +83,7 @@ export default async function ProgressPage({
                 <tr key={s.area}>
                   <td>{s.area}</td>
                   <td className="n mono">{s.latest}%</td>
-                  <td className="mono">{s.latestDate}</td>
+                  <td className="mono">{fmtDate(s.latestDate)}</td>
                   <td className="n mono">{s.points.length}</td>
                 </tr>
               ))}

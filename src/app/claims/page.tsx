@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server';
 import { requireUser, resolveProject } from '@/lib/auth';
 import { loadClaimsData, type ClaimsData } from '@/lib/claims/load';
 import { BrandMark } from '@/components/brand-mark';
+import { fmtDate } from '@/lib/pdf/dates';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Claims · KBS Daily Diary' };
@@ -119,7 +120,7 @@ export default async function ClaimsPage({
                     <tbody>
                       {data.delays.rows.map((row, index) => (
                         <tr key={index}>
-                          <td className="mono">{row.date}</td>
+                          <td className="mono">{fmtDate(row.date)}</td>
                           <td>
                             <Cite entryNo={row.entry_no} />
                           </td>
@@ -172,7 +173,7 @@ export default async function ClaimsPage({
                     <tbody>
                       {data.variations.rows.map((row, index) => (
                         <tr key={index}>
-                          <td className="mono">{row.date}</td>
+                          <td className="mono">{fmtDate(row.date)}</td>
                           <td>
                             <Cite entryNo={row.entry_no} />
                           </td>
@@ -222,7 +223,7 @@ export default async function ClaimsPage({
                     <tbody>
                       {data.dayworks.rows.map((row, index) => (
                         <tr key={index}>
-                          <td className="mono">{row.date}</td>
+                          <td className="mono">{fmtDate(row.date)}</td>
                           <td>
                             <Cite entryNo={row.entry_no} />
                           </td>

@@ -36,6 +36,7 @@ import {
 import { BrandMark } from '@/components/brand-mark';
 import { SignaturePad } from '@/components/signature-pad';
 import type { ReviewWeather } from './page';
+import { fmtDate } from '@/lib/pdf/dates';
 
 type Item = Record<string, unknown>;
 
@@ -388,10 +389,10 @@ export function ReviewScreen(props: {
               the date say which day.
             */}
             <h1 className="page-title">
-              {props.entryDate === localDate() ? 'Today’s diary' : `Diary for ${props.entryDate}`}
+              {props.entryDate === localDate() ? 'Today’s diary' : `Diary for ${fmtDate(props.entryDate)}`}
             </h1>
             <p className="mono page-subtitle">
-              {props.entryDate === localDate() ? `${props.projectCode} · ${props.entryDate}` : props.projectCode}
+              {props.entryDate === localDate() ? `${props.projectCode} · ${fmtDate(props.entryDate)}` : props.projectCode}
             </p>
           </div>
           <div
@@ -1648,7 +1649,7 @@ function CrewShortcuts({
     <div className="crew-shortcuts">
       {last && !copied && existingNames.filter(Boolean).length === 0 && (
         <button type="button" className="button button--quiet" onClick={copyLast}>
-          Same crew &amp; plant as {last.date} ({last.labour.length}{' '}
+          Same crew &amp; plant as {fmtDate(last.date)} ({last.labour.length}{' '}
           {last.labour.length === 1 ? 'person' : 'people'}
           {last.plant.length > 0 ? `, ${last.plant.length} plant` : ''})
         </button>

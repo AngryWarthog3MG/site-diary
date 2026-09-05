@@ -6,6 +6,7 @@ import { loadWeeklyData, type WeeklyData } from '@/lib/weekly/load';
 import { WeeklyReport, WEEKLY_CSS } from '@/lib/weekly/report';
 import { DOCKET_CSS } from '@/lib/pdf/styles';
 import { GenerateWeeklyPdf, MonthlyBundleButton } from './generate-button';
+import { fmtDate } from '@/lib/pdf/dates';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Weekly report · KBS Daily Diary' };
@@ -124,7 +125,7 @@ export default async function WeeklyReportPage({
             <p className="weekly-kicker"><BrandMark size={18} /> Weekly report</p>
             <h1>{current.project.name}</h1>
             <p className="weekly-range mono">
-              {start} to {end}
+              {fmtDate(start)} to {fmtDate(end)}
             </p>
           </div>
           <Link className="weekly-back" href={`/?project=${current.project_id}`}>

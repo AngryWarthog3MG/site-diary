@@ -3,6 +3,7 @@ import { LOGO_DATA_URI } from './logo';
 import type { DocketEntry, Row } from './load';
 import type { SignatureImage } from './photos';
 import { formatInstant, num, text, timeOnly } from './load';
+import { fmtDate } from './dates';
 
 /**
  * The daily docket (brief §6).
@@ -199,7 +200,7 @@ function Header({ entry }: { entry: DocketEntry }) {
       <div className="head__right">
         <p className="lbl">Daily diary</p>
         <p className="mono serial">{entry.entry_no ?? 'UNSIGNED DRAFT'}</p>
-        <p className="mono sub">{entry.entry_date}</p>
+        <p className="mono sub">{fmtDate(entry.entry_date)}</p>
       </div>
       {entry.supersedes_entry_no && (
         <p className="supersedes">

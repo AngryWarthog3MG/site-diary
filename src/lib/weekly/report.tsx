@@ -1,6 +1,7 @@
 import type { ReactElement } from 'react';
 import { LOGO_DATA_URI } from '@/lib/pdf/logo';
 import type { WeeklyData } from './load';
+import { fmtDate } from '@/lib/pdf/dates';
 
 /**
  * The weekly report template (brief §6) — one template for screen and print,
@@ -54,7 +55,7 @@ export function WeeklyReport({ data, narrative, narrativeNote }: WeeklyReportPro
           </p>
           <h1>{data.project.name}</h1>
           <p className="sub">
-            {data.project.orgCode}_{data.project.code} · {data.start} to {data.end}
+            {data.project.orgCode}_{data.project.code} · {fmtDate(data.start)} to {fmtDate(data.end)}
           </p>
         </div>
         <div className="head__right">
@@ -72,7 +73,7 @@ export function WeeklyReport({ data, narrative, narrativeNote }: WeeklyReportPro
           <p>
             {data.unsigned.entryCount} of the {data.counts.entryCount} days in this report{' '}
             {data.unsigned.entryCount === 1 ? 'is' : 'are'} not signed yet
-            {' '}({data.unsigned.days.join(', ')}). Those figures can still change, and they are
+            {' '}({data.unsigned.days.map(fmtDate).join(', ')}). Those figures can still change, and they are
             marked DRAFT wherever they appear. Where a draft is correcting a signed day, the
             draft is what this report shows; the signed day stands on the record until the
             correction is signed.
@@ -164,7 +165,7 @@ export function WeeklyReport({ data, narrative, narrativeNote }: WeeklyReportPro
             <tbody>
               {data.workItems.rows.map((row, i) => (
                 <tr key={i}>
-                  <td className="k mono">{row.date}</td>
+                  <td className="k mono">{fmtDate(row.date)}</td>
                   <td>{row.area ?? '—'}</td>
                   <td className="w">{row.description}</td>
                 </tr>
@@ -230,7 +231,7 @@ export function WeeklyReport({ data, narrative, narrativeNote }: WeeklyReportPro
             <tbody>
               {pours.rows.map((row, i) => (
                 <tr key={i}>
-                  <td className="k mono">{row.date}</td>
+                  <td className="k mono">{fmtDate(row.date)}</td>
                   <td className="w">{row.location ?? '—'}</td>
                   <td>{row.mix_spec ?? '—'}</td>
                   <td>{row.supplier ?? '—'}</td>
@@ -270,7 +271,7 @@ export function WeeklyReport({ data, narrative, narrativeNote }: WeeklyReportPro
               {quantities.rows.map((row, i) => (
                 <tr key={i}>
                   <td className="w">{row.item_type}</td>
-                  <td className="mono">{row.date}</td>
+                  <td className="mono">{fmtDate(row.date)}</td>
                   <td>{row.area ?? '—'}</td>
                   <td className="n mono">{fmt(row.quantity)}</td>
                   <td>{row.unit ?? '—'}</td>
@@ -301,7 +302,7 @@ export function WeeklyReport({ data, narrative, narrativeNote }: WeeklyReportPro
             <tbody>
               {data.dayworks.rows.map((row, i) => (
                 <tr key={i}>
-                  <td className="k mono">{row.date}</td>
+                  <td className="k mono">{fmtDate(row.date)}</td>
                   <td className="w">{row.description}</td>
                   <td>{row.labour ?? '—'}</td>
                   <td>{row.plant ?? '—'}</td>
@@ -344,7 +345,7 @@ export function WeeklyReport({ data, narrative, narrativeNote }: WeeklyReportPro
               <tbody>
                 {delays.rows.map((row, i) => (
                   <tr key={i}>
-                    <td className="k mono">{row.date}</td>
+                    <td className="k mono">{fmtDate(row.date)}</td>
                     <td className="w">{row.cause}</td>
                     <td>{row.category ?? '—'}</td>
                     <td className="mono">{row.start_time ?? '—'}</td>
@@ -403,7 +404,7 @@ export function WeeklyReport({ data, narrative, narrativeNote }: WeeklyReportPro
             <tbody>
               {weather.rows.map((row) => (
                 <tr key={row.date}>
-                  <td className="k mono">{row.date}</td>
+                  <td className="k mono">{fmtDate(row.date)}</td>
                   <td className="n mono">{fmt(row.temp_min)}</td>
                   <td className="n mono">{fmt(row.temp_max)}</td>
                   <td className="n mono">{fmt(row.rainfall_mm)}</td>
@@ -445,7 +446,7 @@ export function WeeklyReport({ data, narrative, narrativeNote }: WeeklyReportPro
             <tbody>
               {variations.rows.map((row, i) => (
                 <tr key={i}>
-                  <td className="k mono">{row.date}</td>
+                  <td className="k mono">{fmtDate(row.date)}</td>
                   <td className="w">{row.description}</td>
                   <td>{row.directed_by ?? '—'}</td>
                   <td className={row.referenced ? 'mono' : 'vr-missing'}>
@@ -463,7 +464,7 @@ export function WeeklyReport({ data, narrative, narrativeNote }: WeeklyReportPro
         <p className="lbl">Entries in this report</p>
         <p className="entries-line mono">
           {data.entries
-            .map((e) => (e.signed ? e.entry_no : `${e.entry_date} ${e.entry_no}`))
+            .map((e) => (e.signed ? e.entry_no : `${fmtDate(e.entry_date)} ${e.entry_no}`))
             .join(' · ') || '—'}
         </p>
       </section>

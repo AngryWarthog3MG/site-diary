@@ -1,6 +1,7 @@
 import type { ReactElement } from 'react';
 import { LOGO_DATA_URI } from '@/lib/pdf/logo';
 import type { MonthData } from './bundle';
+import { fmtDate } from '@/lib/pdf/dates';
 
 /**
  * The bundle's cover — the month's index. Serial, date, signatory and content
@@ -63,7 +64,7 @@ export function MonthlyCover({ data }: { data: MonthData }): ReactElement {
           <tbody>
             {data.entries.map((entry) => (
               <tr key={entry.id}>
-                <td className="k mono">{entry.entry_date}</td>
+                <td className="k mono">{fmtDate(entry.entry_date)}</td>
                 <td className="k mono">
                   {entry.entry_no}
                   {entry.superseded_by && (

@@ -8,6 +8,7 @@ import { BrandMark } from '@/components/brand-mark';
 import { SignaturePad } from '@/components/signature-pad';
 import { parseTalkSummary } from '@/lib/toolbox/summary';
 import { PRESTART_CHECKS, type ChecklistState } from '@/lib/prestart/checklist';
+import { fmtDate } from '@/lib/pdf/dates';
 
 interface Prestart {
   id: string;
@@ -204,7 +205,7 @@ export function PrestartScreen({
       <p className="label">
         <BrandMark size={18} /> {projectName}
       </p>
-      <h1 className="page-title">Prestart · {prestart.date}</h1>
+      <h1 className="page-title">Prestart · {fmtDate(prestart.date)}</h1>
       <p className="mono page-subtitle">Run by {prestart.supervisor}</p>
       <p className={prestart.completed ? 'talkstate talkstate--done' : 'talkstate talkstate--open'}>
         {prestart.completed

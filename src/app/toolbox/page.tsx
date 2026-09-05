@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
 import { requireUser, resolveProject, canAuthorEntries } from '@/lib/auth';
 import { BrandMark } from '@/components/brand-mark';
+import { fmtDate } from '@/lib/pdf/dates';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Toolbox talks · KBS Daily Diary' };
@@ -64,7 +65,7 @@ export default async function ToolboxPage({
           return (
             <Link key={talk.id} className="talkcard" href={`/toolbox/${talk.id}`}>
               <div>
-                <p className="mono talkcard__date">{talk.talk_date}</p>
+                <p className="mono talkcard__date">{fmtDate(talk.talk_date)}</p>
                 <p className="talkcard__topic">{talk.topic}</p>
                 <p className="talkcard__meta">
                   {talk.presenter_name} ·{' '}

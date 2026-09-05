@@ -11,6 +11,7 @@ import * as sync from '@/lib/capture/sync';
 import { SectionChips } from '@/components/section-chips';
 import { QueueStatus } from '@/components/queue-status';
 import { ReminderToggle } from '@/components/reminder-toggle';
+import { fmtDate } from '@/lib/pdf/dates';
 
 interface WeatherRow {
   temp_max: number | null;
@@ -421,13 +422,13 @@ export function TodayPanel({
         <div className="home-card home-card--capture">
       <div className="home-card__head">
         <div>
-          <p className="label">Today · {date}</p>
+          <p className="label">Today · {fmtDate(date)}</p>
           <h2 className="home-card__title">Today&rsquo;s diary</h2>
         </div>
         {lastSigned && (
           <div className="home-card__aside">
             <p className="label">Last signed</p>
-            <p className="mono">{lastSigned.entry_no} · {lastSigned.entry_date}</p>
+            <p className="mono">{lastSigned.entry_no} · {fmtDate(lastSigned.entry_date)}</p>
           </div>
         )}
       </div>
@@ -526,7 +527,7 @@ export function TodayPanel({
           <p className="label">The last seven days</p>
           <div className="weekstrip" aria-label="The last seven days">
             {week.map((day) => {
-              const title = `${day.date} — ${day.state === 'signed' ? 'signed · open the diary' : day.state === 'draft' ? 'started, not signed · open it' : day.state === 'today' ? 'today' : 'nothing written down · record it'}`;
+              const title = `${fmtDate(day.date)} — ${day.state === 'signed' ? 'signed · open the diary' : day.state === 'draft' ? 'started, not signed · open it' : day.state === 'today' ? 'today' : 'nothing written down · record it'}`;
               return day.href ? (
                 <Link
                   key={day.date}
@@ -573,7 +574,7 @@ export function TodayPanel({
             .map((d) => (
               <div key={d} className="unfinished__row">
                 <div>
-                  <p className="mono unfinished__date">{d}</p>
+                  <p className="mono unfinished__date">{fmtDate(d)}</p>
                   <p className="unfinished__what">nothing written down</p>
                 </div>
                 <div className="unfinished__actions">
@@ -584,7 +585,7 @@ export function TodayPanel({
           {unfinished.map((d) => (
             <div key={d.id} className="unfinished__row">
               <div>
-                <p className="mono unfinished__date">{d.date}</p>
+                <p className="mono unfinished__date">{fmtDate(d.date)}</p>
                 <p className="unfinished__what">
                   {d.correctionOf ? `Correction to ${d.correctionOf} · ` : ''}
                   {d.labour > 0 ? `${d.labour} on labour` : 'no labour yet'}

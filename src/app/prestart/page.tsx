@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
 import { requireUser, resolveProject, canAuthorEntries } from '@/lib/auth';
 import { BrandMark } from '@/components/brand-mark';
+import { fmtDate } from '@/lib/pdf/dates';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Prestarts · KBS Daily Diary' };
@@ -66,7 +67,7 @@ export default async function PrestartListPage({
           return (
             <Link key={row.id} className="talkcard" href={`/prestart/${row.id}`}>
               <div>
-                <p className="mono talkcard__date">{row.prestart_date}</p>
+                <p className="mono talkcard__date">{fmtDate(row.prestart_date)}</p>
                 <p className="talkcard__topic">Run by {row.supervisor_name}</p>
                 <p className="talkcard__meta">
                   {attendees.length === 0 ? 'nobody signed on yet' : `${attendees.length} signed on`}

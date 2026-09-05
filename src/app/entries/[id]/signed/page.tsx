@@ -5,6 +5,7 @@ import { requireUser, canAuthorEntries } from '@/lib/auth';
 import { PdfButton } from './pdf-button';
 import { CorrectButton } from './correct-button';
 import { EmailPdfButton } from './email-button';
+import { fmtDate } from '@/lib/pdf/dates';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Signed · Site Diary' };
@@ -74,7 +75,7 @@ export default async function SignedPage({ params }: { params: Promise<{ id: str
         <span className="stamp">{entry.entry_no}</span>
       </p>
       <p className="mono" style={{ margin: '0.25rem 0 0', color: 'var(--ink-60)' }}>
-        {project?.name} · {entry.entry_date}
+        {project?.name} · {fmtDate(entry.entry_date as string)}
       </p>
 
       <hr className="rule" />
@@ -138,7 +139,7 @@ export default async function SignedPage({ params }: { params: Promise<{ id: str
             entryNo={entry.entry_no as string | null}
             endpoint="client-sheet"
             label="Make the dayworks & variations sheet"
-            shareTitle={`Dayworks and variations — ${entry.entry_date}`}
+            shareTitle={`Dayworks and variations — ${fmtDate(entry.entry_date as string)}`}
           />
           <EmailPdfButton
             entryId={id}
