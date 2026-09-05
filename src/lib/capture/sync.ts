@@ -324,15 +324,10 @@ export async function drain(): Promise<SyncReport> {
 
   try {
     for (const item of await queue.all()) {
-      if (item.state === 'blocked') {
-        // Recordings stranded by "day already signed" before corrections
-        // existed get one automatic second life as a correction.
-        if (!item.asCorrection && /already been signed/i.test(item.lastError ?? '')) {
-          await queue.patch(item.id, { state: 'queued', asCorrection: true, nextAttemptAt: 0 });
-        } else {
-          continue;
-        }
-      }
+      // A blocked item waits for the supervisor. "Day already signed" in
+      // particular: whether that recording becomes a correction is their
+      // call, made on the queue card — never the drain loop's.
+      if (item.state === 'blocked') continue;
       if (item.nextAttemptAt > Date.now()) continue;
 
       await queue.patch(item.id, {

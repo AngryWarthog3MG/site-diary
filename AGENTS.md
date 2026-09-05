@@ -124,6 +124,11 @@ Change four of them and the app silently stops capturing what supervisors say. I
   for readable errors, *not* for safety. The file says so; believe it.
 - **`entry_date` comes from the device**, not the server. A Perth knock-off at 17:30 is
   already tomorrow in UTC.
+- **One document per day, in the database.** `entries_one_open_per_day` (one unsigned entry
+  per project-day) and the `entries_one_original_per_day` trigger (no fresh original once a
+  day is signed; a correction carries the day's date and supersedes the current version).
+  The API returns 409 `day_open` / `day_signed` first; the queue never turns a blocked
+  recording into a correction on its own — that is the supervisor's tap.
 - **Serials are issued at signing** and follow signing order, not entry date. Sort any
   register by `entry_date`.
 - **Bump `VERSION` in `public/sw.js`** when the service worker changes, or phones keep the

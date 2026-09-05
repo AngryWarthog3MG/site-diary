@@ -856,8 +856,25 @@ async function resumeStalled() {
         projectName: (project as { name: string } | null)?.name ?? null,
         vocabulary: (terms as string[] | null) ?? [],
       });
+      // The same pipeline as /api/entries/[id]/extract, or the same words
+      // would land differently depending on which path reached them first:
+      // reconcile → the project's crew and plant lists → the standard day.
       const { applyStandardDay } = await import('@/lib/extraction/completeness');
-      const { proposal } = applyStandardDay(reconcileSections(result.proposal).proposal);
+      const { applyKnownNames } = await import('@/lib/extraction/known-names');
+      const [{ data: crewRows }, { data: plantRows }] = await Promise.all([
+        admin.from('crew').select('name, role, aliases').eq('project_id', entry.project_id as string).eq('active', true),
+        admin.from('plant_list').select('item, hire_type, supplier, aliases').eq('project_id', entry.project_id as string).eq('active', true),
+      ]);
+      const { proposal: named } = applyKnownNames(
+        reconcileSections(result.proposal).proposal,
+        ((crewRows ?? []) as Array<{ name: string; role: string | null; aliases: string[] | null }>).map((c) => ({
+          name: c.name, role: c.role, aliases: c.aliases ?? [],
+        })),
+        ((plantRows ?? []) as Array<{ item: string; hire_type: string | null; supplier: string | null; aliases: string[] | null }>).map((m) => ({
+          item: m.item, hire_type: m.hire_type as 'wet' | 'dry' | null, supplier: m.supplier, aliases: m.aliases ?? [],
+        })),
+      );
+      const { proposal } = applyStandardDay(named);
 
       const { error } = await admin.from('entry_extractions').insert({
         entry_id: entry.id as string,

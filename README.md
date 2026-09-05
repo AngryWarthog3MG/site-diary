@@ -834,6 +834,21 @@ semantic query path in §5. One line now, no migration later.
 
 ---
 
+**R9. One document per day, and the database holds the line.** A supervisor
+sees one diary for a day. Before signing that is one editable entry for the project's
+day, whoever started it (`entries_one_open_per_day`); a second phone gets a 409 naming
+who has it open. After signing, anything further is a correction that supersedes the
+version currently standing — never a fresh original, whoever asks
+(`entries_one_original_per_day`, a trigger, because the sandbox already carries a
+per-author-era day with three originals and an index could not be built over it). The
+review that found the gap (Codex, 5 September 2026) put it plainly: the API checked
+"signed" per author, so a second supervisor could open and sign a parallel original
+and the day would have two signed records with no relationship between them. The queue
+never turns a blocked "day already signed" recording into a correction on its own
+either; that is the supervisor's tap on the queue card. The weekly marks every
+unsigned day's figures where they appear — its labour column, every dated line — and
+says under the plant totals that they include those days.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;

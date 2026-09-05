@@ -3,10 +3,12 @@ import { fail, ok, readJson, requireApiUser, isDate, isUuid } from '@/lib/api';
 /**
  * Find or create today's draft entry.
  *
- * Idempotent by construction: the partial unique index on
- * (project_id, entry_date, author_id) guarantees one original per supervisor
- * per day, so a phone draining a backlog of three recordings from the same
- * day converges on one entry.
+ * One document per day. Before signing there is exactly one editable entry
+ * for a project's day, whoever started it (entries_one_open_per_day); once a
+ * day is signed, anything further is a correction superseding the current
+ * signed version — never a second original, whoever asks
+ * (entries_one_original_per_day). Idempotent: a phone draining a backlog of
+ * three recordings from the same day converges on one entry.
  *
  * `entryDate` comes from the device, not the server — "today" on site is the
  * supervisor's local date, and a Perth knock-off at 17:30 is already tomorrow
@@ -69,12 +71,26 @@ export async function POST(request: Request) {
     );
   }
 
-  if (existing && !asCorrection) {
+  // The day's current signed version, whoever signed it. A correction is
+  // signed after the entry it supersedes, so the newest signature is the
+  // version that stands — that is what a further correction supersedes and
+  // what a refusal names.
+  const { data: signedCurrent } = await supabase
+    .from('entries')
+    .select('id, entry_no')
+    .eq('project_id', projectId)
+    .eq('entry_date', entryDate)
+    .eq('status', 'signed')
+    .order('signed_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (signedCurrent && !asCorrection) {
     return fail(
       'day_signed',
-      `${entryDate} has already been signed as ${existing.entry_no}. A correction has to be a new entry that supersedes it.`,
+      `${entryDate} has already been signed as ${signedCurrent.entry_no}. A correction has to be a new entry that supersedes it.`,
       409,
-      { entryId: existing.id, entryNo: existing.entry_no },
+      { entryId: signedCurrent.id, entryNo: signedCurrent.entry_no },
     );
   }
 
@@ -82,11 +98,11 @@ export async function POST(request: Request) {
   // that supersedes the signed one and takes its own serial. The signed entry
   // is untouched — that is the whole model. If the day's correction is itself
   // already open as a draft, reuse it rather than stacking corrections.
-  if (existing && asCorrection) {
+  if (signedCurrent && asCorrection) {
     const { data: openCorrection } = await supabase
       .from('entries')
       .select('id, status')
-      .eq('supersedes_entry_id', existing.id)
+      .eq('supersedes_entry_id', signedCurrent.id)
       .eq('status', 'draft')
       .maybeSingle();
     if (openCorrection) {
@@ -99,7 +115,7 @@ export async function POST(request: Request) {
         project_id: projectId,
         entry_date: entryDate,
         author_id: user.id,
-        supersedes_entry_id: existing.id,
+        supersedes_entry_id: signedCurrent.id,
       })
       .select('id, status')
       .single();

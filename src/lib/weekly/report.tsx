@@ -45,6 +45,17 @@ export interface WeeklyReportProps {
 
 export function WeeklyReport({ data, narrative, narrativeNote }: WeeklyReportProps): ReactElement {
   const { labour, plant, pours, quantities, delays, weather, variations } = data;
+  // Days whose figures come from an unsigned draft. Every figure from such a
+  // day is marked where it appears: the day's labour column, every dated line.
+  const draftDays = new Set(data.unsigned.days);
+  const Draft = ({ day }: { day: string }) =>
+    draftDays.has(day) ? <span className="draftmark">DRAFT</span> : null;
+  const D = ({ date }: { date: string }) => (
+    <>
+      {fmtDate(date)}
+      <Draft day={date} />
+    </>
+  );
 
   return (
     <div className="docket weekly">
@@ -73,8 +84,9 @@ export function WeeklyReport({ data, narrative, narrativeNote }: WeeklyReportPro
           <p>
             {data.unsigned.entryCount} of the {data.counts.entryCount} days in this report{' '}
             {data.unsigned.entryCount === 1 ? 'is' : 'are'} not signed yet
-            {' '}({data.unsigned.days.map(fmtDate).join(', ')}). Those figures can still change, and they are
-            marked DRAFT wherever they appear. Where a draft is correcting a signed day, the
+            {' '}({data.unsigned.days.map(fmtDate).join(', ')}). Those figures can still change. Each
+            such day is marked DRAFT on its labour column and on every dated line below, and the
+            plant and labour totals include them. Where a draft is correcting a signed day, the
             draft is what this report shows; the signed day stands on the record until the
             correction is signed.
           </p>
@@ -112,6 +124,7 @@ export function WeeklyReport({ data, narrative, narrativeNote }: WeeklyReportPro
                 {data.days.map((day) => (
                   <th key={day} className="n">
                     {dayLabel(day)}
+                    <Draft day={day} />
                   </th>
                 ))}
                 <th className="n">OT</th>
@@ -165,7 +178,7 @@ export function WeeklyReport({ data, narrative, narrativeNote }: WeeklyReportPro
             <tbody>
               {data.workItems.rows.map((row, i) => (
                 <tr key={i}>
-                  <td className="k mono">{fmtDate(row.date)}</td>
+                  <td className="k mono"><D date={row.date} /></td>
                   <td>{row.area ?? '—'}</td>
                   <td className="w">{row.description}</td>
                 </tr>
@@ -210,6 +223,12 @@ export function WeeklyReport({ data, narrative, narrativeNote }: WeeklyReportPro
             </tfoot>
           </table>
         )}
+        {plant.rows.length > 0 && draftDays.size > 0 && (
+          <p className="src">
+            Hours are summed across the week, so these totals include the unsigned day
+            {draftDays.size === 1 ? '' : 's'} above ({data.unsigned.days.map(fmtDate).join(', ')}).
+          </p>
+        )}
       </section>
 
       <section className="sect">
@@ -231,7 +250,7 @@ export function WeeklyReport({ data, narrative, narrativeNote }: WeeklyReportPro
             <tbody>
               {pours.rows.map((row, i) => (
                 <tr key={i}>
-                  <td className="k mono">{fmtDate(row.date)}</td>
+                  <td className="k mono"><D date={row.date} /></td>
                   <td className="w">{row.location ?? '—'}</td>
                   <td>{row.mix_spec ?? '—'}</td>
                   <td>{row.supplier ?? '—'}</td>
@@ -271,7 +290,7 @@ export function WeeklyReport({ data, narrative, narrativeNote }: WeeklyReportPro
               {quantities.rows.map((row, i) => (
                 <tr key={i}>
                   <td className="w">{row.item_type}</td>
-                  <td className="mono">{fmtDate(row.date)}</td>
+                  <td className="mono"><D date={row.date} /></td>
                   <td>{row.area ?? '—'}</td>
                   <td className="n mono">{fmt(row.quantity)}</td>
                   <td>{row.unit ?? '—'}</td>
@@ -302,7 +321,7 @@ export function WeeklyReport({ data, narrative, narrativeNote }: WeeklyReportPro
             <tbody>
               {data.dayworks.rows.map((row, i) => (
                 <tr key={i}>
-                  <td className="k mono">{fmtDate(row.date)}</td>
+                  <td className="k mono"><D date={row.date} /></td>
                   <td className="w">{row.description}</td>
                   <td>{row.labour ?? '—'}</td>
                   <td>{row.plant ?? '—'}</td>
@@ -345,7 +364,7 @@ export function WeeklyReport({ data, narrative, narrativeNote }: WeeklyReportPro
               <tbody>
                 {delays.rows.map((row, i) => (
                   <tr key={i}>
-                    <td className="k mono">{fmtDate(row.date)}</td>
+                    <td className="k mono"><D date={row.date} /></td>
                     <td className="w">{row.cause}</td>
                     <td>{row.category ?? '—'}</td>
                     <td className="mono">{row.start_time ?? '—'}</td>
@@ -404,7 +423,7 @@ export function WeeklyReport({ data, narrative, narrativeNote }: WeeklyReportPro
             <tbody>
               {weather.rows.map((row) => (
                 <tr key={row.date}>
-                  <td className="k mono">{fmtDate(row.date)}</td>
+                  <td className="k mono"><D date={row.date} /></td>
                   <td className="n mono">{fmt(row.temp_min)}</td>
                   <td className="n mono">{fmt(row.temp_max)}</td>
                   <td className="n mono">{fmt(row.rainfall_mm)}</td>
@@ -452,7 +471,7 @@ export function WeeklyReport({ data, narrative, narrativeNote }: WeeklyReportPro
             <tbody>
               {variations.rows.map((row, i) => (
                 <tr key={i}>
-                  <td className="k mono">{fmtDate(row.date)}</td>
+                  <td className="k mono"><D date={row.date} /></td>
                   <td className="w">{row.description}</td>
                   <td>{row.directed_by ?? '—'}</td>
                   <td className={row.referenced ? 'mono' : 'vr-missing'}>
@@ -486,6 +505,9 @@ export const WEEKLY_CSS = `
   border-left-width: 2.4pt; border-radius: 1.5mm; background: #FDF6E7; }
 .provisional .lbl { color: #6B4A06; }
 .provisional p { margin: 0.8mm 0 0; font-size: 8.5pt; line-height: 1.45; color: #4A3A12; }
+.draftmark { display: inline-block; margin-left: 1.2mm; padding: 0 0.9mm; border: 0.6pt solid #9A6A09;
+  border-radius: 0.6mm; color: #6B4A06; font-size: 6pt; font-weight: 700; letter-spacing: 0.08em;
+  vertical-align: middle; line-height: 1.6; }
 
 .commentary {
   margin-top: 5mm;

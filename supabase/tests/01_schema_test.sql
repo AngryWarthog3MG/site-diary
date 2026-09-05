@@ -552,12 +552,12 @@ do $$
 begin
   begin
     insert into public.entries (project_id, entry_date, author_id, transcript_raw)
-    values ('bbbbbbbb-0000-0000-0000-000000000001', date '2026-08-24',
+    values ('bbbbbbbb-0000-0000-0000-000000000001', date '2026-08-29',
             '11111111-1111-1111-1111-111111111111', 'A second open document for a day.');
     -- Whether or not a draft already exists for this day in the fixture, a
     -- further one must never be accepted beside it.
     insert into public.entries (project_id, entry_date, author_id, transcript_raw)
-    values ('bbbbbbbb-0000-0000-0000-000000000001', date '2026-08-24',
+    values ('bbbbbbbb-0000-0000-0000-000000000001', date '2026-08-29',
             '11111111-1111-1111-1111-111111111111', 'A third.');
     raise exception 'two open documents were accepted for the same day';
   exception when unique_violation then
@@ -566,6 +566,42 @@ begin
 end;
 $$;
 rollback to savepoint one_open_document;
+
+-- ---------------------------------------------------------------------------
+-- One document per day, after signing: 2026-08-24 on project 1 is signed as
+-- entry 1 and corrected by entry 5 (also signed). Nothing further for that day
+-- may be a fresh original, whoever asks; a correction must carry the day's
+-- date and supersede the version that currently stands (entry 5, not entry 1).
+-- ---------------------------------------------------------------------------
+savepoint one_original_per_day;
+reset role;
+select tests.expect_error($q$
+  insert into public.entries (project_id, entry_date, author_id)
+  values ('bbbbbbbb-0000-0000-0000-000000000001', date '2026-08-24',
+          '22222222-2222-2222-2222-222222222222')
+$q$, 'entries_one_original_per_day');
+
+select tests.expect_error($q$
+  insert into public.entries (project_id, entry_date, author_id, supersedes_entry_id)
+  values ('bbbbbbbb-0000-0000-0000-000000000001', date '2026-08-24',
+          '11111111-1111-1111-1111-111111111111',
+          'cccccccc-0000-0000-0000-000000000001')
+$q$, 'already been superseded');
+
+select tests.expect_error($q$
+  insert into public.entries (project_id, entry_date, author_id, supersedes_entry_id)
+  values ('bbbbbbbb-0000-0000-0000-000000000001', date '2026-08-23',
+          '11111111-1111-1111-1111-111111111111',
+          'cccccccc-0000-0000-0000-000000000005')
+$q$, 'same date');
+
+-- The right shape is accepted: a correction of the current version, dated the day.
+insert into public.entries (project_id, entry_date, author_id, supersedes_entry_id)
+values ('bbbbbbbb-0000-0000-0000-000000000001', date '2026-08-24',
+        '22222222-2222-2222-2222-222222222222',
+        'cccccccc-0000-0000-0000-000000000005');
+do $$ begin raise notice 'PASS  no second original once a day is signed; corrections target the current version'; end; $$;
+rollback to savepoint one_original_per_day;
 
 do $$ begin raise notice ''; raise notice 'ALL TESTS PASSED'; end; $$;
 

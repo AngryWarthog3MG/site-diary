@@ -299,7 +299,7 @@ export function aggregateQuantities(
       const itemType = String(row.item_type ?? '').trim();
       const unit = (row.unit as string | null) ?? null;
       const quantity = row.quantity == null ? null : num(row.quantity);
-      const key = `${itemType} ${unit ?? ''}`;
+      const key = `${itemType}\u0000${unit ?? ''}`;
       const total = round2((running.get(key) ?? 0) + (quantity ?? 0));
       running.set(key, total);
       return {
