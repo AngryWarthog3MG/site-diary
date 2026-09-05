@@ -141,7 +141,7 @@ export const SECTIONS: SectionDef[] = [
       { key: 'description', label: 'Description', kind: 'textarea' },
       { key: 'vr_ref', label: 'VR ref', kind: 'text', narrow: true },
       { key: 'directed_by', label: 'Directed by', kind: 'text', narrow: true },
-      { key: 'directed_at', label: 'Directed at', kind: 'datetime' },
+      { key: 'directed_at', label: 'Directed at', kind: 'datetime', narrow: true },
       {
         key: 'estimated_cost',
         label: 'Est. cost',
@@ -232,9 +232,9 @@ export const SECTIONS: SectionDef[] = [
       { key: 'description', label: 'Description', kind: 'textarea' },
       { key: 'docket_ref', label: 'Docket / ref', kind: 'text', narrow: true },
       { key: 'hours', label: 'Hours', kind: 'number', step: '0.25', narrow: true },
-      { key: 'labour', label: 'Labour', kind: 'textarea' },
-      { key: 'plant', label: 'Plant', kind: 'textarea' },
-      { key: 'materials', label: 'Materials', kind: 'textarea' },
+      { key: 'labour', label: 'Labour', kind: 'text', placeholder: 'Who, and how many' },
+      { key: 'plant', label: 'Plant', kind: 'text', narrow: true },
+      { key: 'materials', label: 'Materials', kind: 'text', narrow: true },
       { key: 'photo_urls', label: 'Dayworks photos', kind: 'list' },
     ],
     blank: () => ({
