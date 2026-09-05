@@ -319,7 +319,7 @@ export function RecordScreen({
             className="field typed-diary__input"
             value={typedText}
             onChange={(event) => setTypedText(event.target.value)}
-            placeholder="Type it the same way you would say it: labour, plant, works, delays, weather, pours, quantities..."
+            placeholder="Type it the same way you would say it: labour, plant, works, delays, weather, pours, deliveries..."
             rows={8}
             maxLength={20_000}
           />
