@@ -457,15 +457,15 @@ export const FIXTURES: Fixture[] = [
     transcript: `Danny worked till one and went home. Sam did his full day. Kel knocked off at three.`,
     expected: proposal({
       labour: [
-        // 07:00 to 13:00. The model does this arithmetic because the finish
+        // 06:30 to 13:00. The model does this arithmetic because the finish
         // was actually said.
-        L('Danny Rowe', { hours: 6 }),
-        // "His full day" states the standard day in words, so 8 here is the
+        L('Danny Rowe', { hours: 6.5 }),
+        // "His full day" states the standard day in words, so 10 here is the
         // model reading what was said, not inventing. (Silence about someone's
         // time stays null — fixture 16 pins that — and the policy fill covers it.)
-        L('Sam Whitely', { hours: 8 }),
-        // 07:00 to 15:00.
-        L('Kel Brady', { hours: 8 }),
+        L('Sam Whitely', { hours: 10 }),
+        // 06:30 to 15:00.
+        L('Kel Brady', { hours: 8.5 }),
       ],
       sections: { plant: S.gap, work_items: S.gap, variations: S.gap, delays: S.gap, weather: S.gap },
     }),

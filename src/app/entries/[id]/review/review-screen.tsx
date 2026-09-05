@@ -28,6 +28,11 @@ import {
 } from '@/lib/docket/reconcile';
 import { compressPhoto } from '@/lib/photos/compress';
 import { localDate } from '@/lib/capture/queue';
+import {
+  STANDARD_DAY_START,
+  STANDARD_DAY_FINISH,
+  STANDARD_DAY_HOURS,
+} from '@/lib/extraction/completeness';
 import { BrandMark } from '@/components/brand-mark';
 import { SignaturePad } from '@/components/signature-pad';
 import type { ReviewWeather } from './page';
@@ -1615,7 +1620,10 @@ function CrewShortcuts({
         area: null,
         // The site's standard day; the supervisor corrects the exceptions
         // rather than typing the rule every time.
-        hours: 8,
+        start_time: STANDARD_DAY_START,
+        finish_time: STANDARD_DAY_FINISH,
+        break_mins: null,
+        hours: STANDARD_DAY_HOURS,
         overtime_hours: null,
         ...byHand,
       },

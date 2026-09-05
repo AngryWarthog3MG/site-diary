@@ -137,21 +137,29 @@ export function lowConfidenceCount(proposal: ExtractionProposal): number {
 }
 
 /**
- * Site policy: a standard day is 8 hours, starting 07:00.
+ * Site policy: the standard day runs 06:30 to 16:30 — ten hours, no break
+ * assumed. The owner set 07:00 and eight hours on 2026-08-27 and changed it
+ * to these times on 2026-09-05; the crew work them, and a break is entered
+ * when one is taken rather than assumed away.
  *
- * The owner's call (2026-08-27): asking a supervisor to type "8" for every
- * person every day was friction with no information in it. So hours left
- * unstated are filled with the standard day here — deterministically, in
- * code, after extraction — and the supervisor still confirms every row at
- * signing, which is what keeps §2.4 honest: the number is a declared policy
- * the signer vouches for, not a model's guess.
+ * The owner's original reasoning still holds: asking a supervisor to type
+ * the same figure for every person every day was friction with no
+ * information in it. So a person whose time nobody stated is filled with
+ * the standard day here — deterministically, in code, after extraction —
+ * and the supervisor still confirms every row at signing, which is what
+ * keeps §2.4 honest: the number is a declared policy the signer vouches
+ * for, not a model's guess.
  *
  * The model itself still never invents hours. It computes them only when a
- * finish time was actually said ("worked till 1" = 07:00 to 13:00 = 6), and
- * leaves them null otherwise — this fills the nulls.
+ * finish time was actually said ("worked till 1" = 06:30 to 13:00 = 6.5),
+ * and leaves them null otherwise — this fills the nulls.
+ *
+ * This is the one place the standard day is written down. The extraction
+ * prompt and the entry screen's defaults both read from here.
  */
-export const STANDARD_DAY_HOURS = 8;
-export const STANDARD_DAY_START = '07:00';
+export const STANDARD_DAY_START = '06:30';
+export const STANDARD_DAY_FINISH = '16:30';
+export const STANDARD_DAY_HOURS = 10;
 
 export function applyStandardDay(proposal: ExtractionProposal): {
   proposal: ExtractionProposal;
@@ -161,7 +169,16 @@ export function applyStandardDay(proposal: ExtractionProposal): {
   const labour = proposal.labour.map((person) => {
     if (person.hours != null) return person;
     defaulted += 1;
-    return { ...person, hours: STANDARD_DAY_HOURS };
+    // Nobody said anything about this person's time, so the standard day
+    // stands for it — the times as well as the total, because a docket that
+    // shows ten hours and no times invites the question a year later.
+    // A stated time is never overwritten.
+    return {
+      ...person,
+      hours: STANDARD_DAY_HOURS,
+      start_time: person.start_time ?? STANDARD_DAY_START,
+      finish_time: person.finish_time ?? STANDARD_DAY_FINISH,
+    };
   });
   return { proposal: { ...proposal, labour }, defaulted };
 }

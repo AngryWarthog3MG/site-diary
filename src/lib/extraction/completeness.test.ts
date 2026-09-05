@@ -2,6 +2,9 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   applyStandardDay,
+  STANDARD_DAY_START,
+  STANDARD_DAY_FINISH,
+  STANDARD_DAY_HOURS,
   followUpQuestions,
   itemCount,
   lowConfidenceCount,
@@ -109,14 +112,33 @@ test('a photo is optional; the VR reference is what gates a variation', () => {
   assert.deepEqual(proposalBlockingGaps(p), []);
 });
 
-test('unstated hours become the standard 8-hour day; stated hours are kept', () => {
+test('an unstated day becomes the standard day; anything stated is kept', () => {
   const { proposal: filled, defaulted } = applyStandardDay(
     proposal({
-      labour: [L('Matty'), L('Markus', { hours: 6 }), L('Hamish')],
+      labour: [
+        L('Matty'),
+        L('Markus', { hours: 6 }),
+        L('Hamish'),
+        // Someone who started early but whose finish nobody gave: the
+        // stated time survives, only the missing half is filled.
+        L('Evan', { start_time: '05:00' }),
+      ],
     }),
   );
-  assert.equal(defaulted, 2);
-  assert.deepEqual(filled.labour.map((l) => l.hours), [8, 6, 8]);
+  assert.equal(defaulted, 3);
+  assert.deepEqual(filled.labour.map((l) => l.hours), [
+    STANDARD_DAY_HOURS, 6, STANDARD_DAY_HOURS, STANDARD_DAY_HOURS,
+  ]);
+  assert.deepEqual(filled.labour.map((l) => l.start_time), [
+    STANDARD_DAY_START, null, STANDARD_DAY_START, '05:00',
+  ]);
+  assert.deepEqual(filled.labour.map((l) => l.finish_time), [
+    STANDARD_DAY_FINISH, null, STANDARD_DAY_FINISH, STANDARD_DAY_FINISH,
+  ]);
+  // The policy itself, so a change to it is a deliberate edit here too.
+  assert.equal(STANDARD_DAY_START, '06:30');
+  assert.equal(STANDARD_DAY_FINISH, '16:30');
+  assert.equal(STANDARD_DAY_HOURS, 10);
 });
 
 test('a complete entry has no blocking gaps', () => {

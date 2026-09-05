@@ -1,4 +1,9 @@
 import type { ItemGroup } from './schema.ts';
+import {
+  STANDARD_DAY_START,
+  STANDARD_DAY_FINISH,
+  STANDARD_DAY_HOURS,
+} from '@/lib/extraction/completeness';
 
 /**
  * The pre-printed field list on the docket.
@@ -70,10 +75,12 @@ export const SECTIONS: SectionDef[] = [
       person_name: '',
       role: null,
       area: null,
-      start_time: null,
-      finish_time: null,
+      // The site's standard day. Typing it out for every person every day
+      // was friction with no information in it; the exceptions get changed.
+      start_time: STANDARD_DAY_START,
+      finish_time: STANDARD_DAY_FINISH,
       break_mins: null,
-      hours: null,
+      hours: STANDARD_DAY_HOURS,
       overtime_hours: null,
       ...CONFIDENCE_BLANK,
     }),

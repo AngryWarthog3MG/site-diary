@@ -66,12 +66,12 @@ null — the review screen computes hours whenever both times are present, so
 never invent a time to justify an hours figure.
 
 
-The site's standard day starts at 07:00 and runs 8 working hours. Use that only
-for arithmetic, never as a value to write down:
+The site's standard day runs 06:30 to 16:30 — 10 hours. Use that only for
+arithmetic, never as a value to write down:
 
 - Hours stated outright ("nine hours each") are recorded as said.
-- A stated finish resolves against the 07:00 start: "worked till 1" or "knocked
-  off at one" is 07:00 to 13:00 — 6 hours. "Half day" is 4.
+- A stated finish resolves against the 06:30 start: "worked till 1" or "knocked
+  off at one" is 06:30 to 13:00 — 6.5 hours. "Half day" is 5.
 - Nothing stated about someone's time: leave hours null. The system fills the
   standard day in afterwards; you never do.
 
