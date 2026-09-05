@@ -93,6 +93,26 @@ export interface Weather {
   created_at: string;
 }
 
+/**
+ * One Bureau reading per project per day, kept whether or not a diary was
+ * written (`project_weather_days`). A glance and a gap-filler, never the
+ * signed record. Written only by the server.
+ */
+export interface ProjectWeatherDay {
+  project_id: string;
+  day: string;
+  temp_max: number | null;
+  temp_min: number | null;
+  /** mm in the 24 h from 09:00 (bom_daily), or since 09:00 so far (bom_obs). */
+  rainfall_mm: number | null;
+  wind_dir: string | null;
+  wind_kmh: number | null;
+  source: 'bom_daily' | 'bom_obs';
+  station_id: string | null;
+  station_name: string | null;
+  fetched_at: string;
+}
+
 export interface Daywork {
   id: string;
   entry_id: string;

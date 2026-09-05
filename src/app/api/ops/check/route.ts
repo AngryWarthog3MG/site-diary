@@ -1,6 +1,8 @@
 import { createAdminClient } from '@/lib/supabase/admin';
 import { fetchProduct } from '@/lib/weather/bom';
 import { BOM_PRODUCT_IDS } from '@/lib/weather/derive';
+import { refreshProjectWeatherDays } from '@/lib/weather/days';
+import type { ProjectSite } from '@/lib/weather/resolve';
 
 export const maxDuration = 300;
 export const runtime = 'nodejs';
@@ -59,6 +61,9 @@ export async function GET(request: Request) {
   }
   if (url.searchParams.get('prestart') === '1') {
     report.prestart = await sendPrestartNudges(url.searchParams.get('force') === '1');
+  }
+  if (url.searchParams.get('weather') === '1') {
+    report.weather = await refreshWeatherDays();
   }
   if (url.searchParams.get('talk') === '1') {
     report.talk = await setupWeeklyTalks(url.searchParams.get('dry') === '1');
@@ -910,4 +915,33 @@ async function probeBrowser() {
       error: error instanceof Error ? error.message : String(error),
     };
   }
+}
+
+/**
+ * Mid-afternoon, every day: every active job's last nine days of site weather,
+ * from the Bureau's daily table and the live gauge. Runs after the Bureau
+ * re-issues the table (~06:30 GMT), so yesterday's max, min and rain are
+ * settled figures by the time anyone looks on Monday — whether or not a diary
+ * was written that day.
+ */
+async function refreshWeatherDays(): Promise<Record<string, unknown>> {
+  const { perthToday } = await import('@/lib/push/decide');
+  const admin = createAdminClient();
+  const { data: projects } = await admin
+    .from('projects')
+    .select('id, site_lat, site_lng, bom_station_id, bom_product_id')
+    .eq('active', true);
+  const to = perthToday();
+  const since = new Date(`${to}T00:00:00Z`);
+  since.setUTCDate(since.getUTCDate() - 8);
+  const from = since.toISOString().slice(0, 10);
+
+  const out: Record<string, unknown> = { from, to };
+  for (const project of (projects ?? []) as ProjectSite[]) {
+    const outcome = await refreshProjectWeatherDays(project, from, to);
+    out[project.id] = outcome.ok
+      ? `${outcome.days} days · ${outcome.station} · ${outcome.dailyMonths} table month(s)`
+      : outcome.reason;
+  }
+  return out;
 }

@@ -727,6 +727,30 @@ is gated by `CRON_SECRET` as a bearer token, and runs daily on Vercel Cron as a
 backstop. Between runs the resolver refreshes inline when the cache is over ten
 minutes old, so the schedule is politeness rather than load-bearing.
 
+**W11. The site has weather every day; the diary only has it on days someone
+wrote one.** Readings hung off `weather.entry_id`, so a Sunday, a rained-off
+day or a forgotten day had no reading at all, and the Today screen's week table
+showed a dash exactly where a delay claim would later want a number. The
+Bureau publishes a daily climate table per station on the same anonymous FTP
+(`/anon/gen/clim_data/IDCKWCDEA0/tables/<state>/<station>/<station>-YYYYMM.csv`):
+maximum, minimum, rain to 09:00 and average wind, one row per day, re-issued
+each morning. `project_weather_days` keeps one row per project per day from it,
+built by `src/lib/weather/days.ts`, refreshed by the Today screen when it is
+over half an hour old and by the daily cron at 07:00 UTC after the Bureau
+re-issues.
+
+Three things about it were decided rather than fallen into. The table's rain
+on row *D* is the 24 hours *to* 09:00 on *D*, so the rain that fell on site day
+*D* is on row *D+1* — `dailyForDay` does that shift, which means a day's rain
+settles two mornings later while its max and min settle one; until then the
+live gauge's running figures stand in, and the row says which (`source`). The
+table overrides an observation for the same gauge because it is the finalised
+figure; it never overrides a reading a supervisor typed into a diary, and the
+Today screen shows the typed reading first. And it is not the record: it is not
+in the content hash, an entry's own `weather` row is still what the docket
+prints, and the day store only fills that row's *gaps* (the overnight minimum a
+late fetch has lost) — never replaces what the observation saw.
+
 ---
 
 ## Decisions worth your review

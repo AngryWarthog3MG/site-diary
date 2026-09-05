@@ -77,6 +77,7 @@ export function TodayPanel({
   // The week's weather, one reading per day, from the same entries the strip
   // is built from. Wet days are what a delay claim leans on later.
   const [weekWeather, setWeekWeather] = useState<Record<string, WeatherRow>>({});
+  const [weekStation, setWeekStation] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [offline, setOffline] = useState(false);
   /**
@@ -169,7 +170,7 @@ export function TodayPanel({
         const sinceStr = localDate(since);
         const { data: recent } = await supabase
           .from('entries')
-          .select('id, entry_date, status, author_id, supersedes_entry_id, weather(temp_max, temp_min, rainfall_mm, wind_dir, wind_kmh)')
+          .select('id, entry_date, status, author_id, supersedes_entry_id, weather(temp_max, temp_min, rainfall_mm, wind_dir, wind_kmh, source)')
           .eq('project_id', projectId)
           .gte('entry_date', sinceStr);
         const { data: first } = await supabase
@@ -190,17 +191,54 @@ export function TodayPanel({
           type RecentRow = { id: string; entry_date: string; status: string; author_id: string; supersedes_entry_id: string | null; weather?: unknown };
           const rows = (recent ?? []) as RecentRow[];
           {
-            // A signed day's reading beats a draft's for the same date.
-            const wx: Record<string, WeatherRow> = {};
-            const from = new Set<string>();
+            // The week's readings, best source first: a reading the
+            // supervisor typed into that day's diary (they were there; the
+            // gauge was not), then the site's day row from the Bureau (kept
+            // for every day, diary or not), then whatever the diary's own
+            // BOM fetch caught. A signed day's reading beats a draft's.
+            const typed: Record<string, WeatherRow> = {};
+            const fromEntry: Record<string, WeatherRow> = {};
+            const signedAt = new Set<string>();
             for (const row of rows) {
               const reading = firstOrNull<WeatherRow>(row.weather);
               if (!reading) continue;
-              if (from.has(row.entry_date) && row.status !== 'signed') continue;
-              wx[row.entry_date] = reading;
-              if (row.status === 'signed') from.add(row.entry_date);
+              if (signedAt.has(row.entry_date) && row.status !== 'signed') continue;
+              const hasNumber = [reading.temp_max, reading.temp_min, reading.rainfall_mm, reading.wind_kmh].some((v) => v != null);
+              if (!hasNumber) continue;
+              if (reading.source === 'manual') typed[row.entry_date] = reading;
+              else fromEntry[row.entry_date] = reading;
+              if (row.status === 'signed') signedAt.add(row.entry_date);
             }
-            setWeekWeather(wx);
+            setWeekWeather({ ...fromEntry, ...typed });
+            void (async () => {
+              try {
+                const res = await fetch(`/api/weather/week?project=${projectId}&from=${sinceStr}&to=${today}`);
+                const json = await res.json().catch(() => null);
+                const days = (json?.days ?? []) as Array<WeatherRow & { day: string }>;
+                if (!res.ok || days.length === 0) return;
+                // Field by field: the site row is the settled figure, but a
+                // gap in it (today's rain before the table catches up) is
+                // filled from what the diary's own fetch saw that day.
+                const merged: Record<string, WeatherRow> = { ...fromEntry };
+                for (const d of days) {
+                  const own = fromEntry[d.day];
+                  merged[d.day] = {
+                    ...d,
+                    temp_max: d.temp_max ?? own?.temp_max ?? null,
+                    temp_min: d.temp_min ?? own?.temp_min ?? null,
+                    rainfall_mm: d.rainfall_mm ?? own?.rainfall_mm ?? null,
+                    // Wind comes as a pair: a direction from one reading
+                    // against a speed from another describes nothing.
+                    wind_dir: d.wind_kmh != null ? d.wind_dir : own?.wind_dir ?? null,
+                    wind_kmh: d.wind_kmh ?? own?.wind_kmh ?? null,
+                  };
+                }
+                setWeekWeather({ ...merged, ...typed });
+                setWeekStation((json?.station as string | null) ?? null);
+              } catch {
+                // Offline: the diary readings already on screen are what we have.
+              }
+            })();
           }
           const replaced = new Set(rows.filter((r) => r.status === 'signed' && r.supersedes_entry_id).map((r) => r.supersedes_entry_id as string));
           const byDate = new Map<string, { status: string; href: string }>();
@@ -492,13 +530,16 @@ export function TodayPanel({
                         <td className="n mono">{w ? n(w.temp_max, '°') : '—'}</td>
                         <td className="n mono">{w ? n(w.temp_min, '°') : '—'}</td>
                         <td className="n mono">{w ? n(w.rainfall_mm, '') : '—'}</td>
-                        <td className="mono">{w ? `${w.wind_dir ?? '—'} ${n(w.wind_kmh, '', 0)}` : '—'}</td>
+                        <td className="mono">{w ? `${w.wind_dir ? `${w.wind_dir} ` : ''}${n(w.wind_kmh, '', 0)}` : '—'}</td>
                       </tr>
                     );
                   })}
                 </tbody>
               </table>
-              <p className="caption">Rain in mm since 9am. A day with no reading had no diary entry.</p>
+              <p className="caption">
+                {weekStation ? `Bureau of Meteorology, ${weekStation} gauge. ` : 'Bureau of Meteorology. '}
+                Rain in mm over the 24 hours from 9am; today&rsquo;s is so far. A reading typed into that day&rsquo;s diary is shown instead.
+              </p>
             </>
           )}
         </div>

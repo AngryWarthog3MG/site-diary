@@ -65,7 +65,8 @@ improvising; the register once shipped dead because a live smoke test was skippe
   20 transcript fixtures
 - `src/lib/review/` — payload contract, gap rules, field definitions
 - `src/lib/pdf/` — the one docket template, rendered both to Chromium and to screen
-- `src/lib/weather/` — BOM fetch, parse, window handling, provenance
+- `src/lib/weather/` — BOM fetch, parse, window handling, provenance; `days.ts` keeps one
+  reading per project per day (`project_weather_days`) from the Bureau's daily table
 - `src/lib/query/` — `diary` view schema description, SQL validation, the three calls
 - `src/lib/weekly/`, `src/lib/monthly/` — reports
 - `supabase/migrations/` — append only; never edit an applied migration
@@ -116,7 +117,8 @@ Change four of them and the app silently stops capturing what supervisors say. I
 - **Weather windows must belong to the entry date.** BOM windows move through the day;
   recording tonight's minimum as today's is inventing a number. Observations merge across
   the day rather than replace, manual readings are never overwritten, and nothing is taken
-  from a gauge over 50 km away.
+  from a gauge over 50 km away. `project_weather_days` is a glance and a gap-filler for
+  unsigned entries — never the record, never in the hash, never over a manual reading.
 - **Generated SQL is safe because of `security_invoker` views, a read-only transaction, an
   empty `search_path`, and a timeout** — in that order. `src/lib/query/validate.ts` exists
   for readable errors, *not* for safety. The file says so; believe it.

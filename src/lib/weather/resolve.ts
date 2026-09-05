@@ -3,7 +3,7 @@ import 'server-only';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { fetchProduct } from './bom';
-import { deriveWeather, hasObservations, inferProductId, pickStation } from './derive';
+import { deriveWeather, hasObservations, inferProductId, pickStation, type StationChoice } from './derive';
 import type { BomSnapshot, DerivedWeather, StationObservation } from './types';
 
 /**
@@ -82,11 +82,16 @@ async function loadSnapshot(productId: string): Promise<{ snapshot: BomSnapshot;
   }
 }
 
-export async function resolveWeather(
-  project: ProjectSite,
-  entryDate: string,
-  now = new Date(),
-): Promise<WeatherResolution> {
+export type StationResolution =
+  | { ok: true; choice: StationChoice; productId: string; stale: boolean }
+  | { ok: false; reason: string };
+
+/**
+ * Which gauge speaks for this site: the pinned station if there is one, else
+ * the nearest one reporting weather — and a refusal, not a guess, when the
+ * nearest is too far away to be describing the site at all.
+ */
+export async function resolveStation(project: ProjectSite): Promise<StationResolution> {
   const { site_lat: lat, site_lng: lon } = project;
   if (lat == null || lon == null) {
     return { ok: false, reason: 'This project has no site coordinates, so weather cannot be fetched.' };
@@ -118,6 +123,18 @@ export async function resolveWeather(
         'too far to record as this site’s weather. Pin a station on the project, or enter it by hand.',
     };
   }
+
+  return { ok: true, choice, productId, stale };
+}
+
+export async function resolveWeather(
+  project: ProjectSite,
+  entryDate: string,
+  now = new Date(),
+): Promise<WeatherResolution> {
+  const station = await resolveStation(project);
+  if (!station.ok) return station;
+  const { choice, productId, stale } = station;
 
   const weather = deriveWeather(choice, entryDate, now);
   if (!hasObservations(weather)) {

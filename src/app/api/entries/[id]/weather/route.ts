@@ -71,6 +71,23 @@ export async function POST(_request: Request, context: { params: Promise<{ id: s
     result.weather,
   );
 
+  // The site's day row (the Bureau's daily table, finalised the morning
+  // after) fills anything the live observation could not — the overnight
+  // minimum a late-afternoon fetch has already lost, say. Same gauge only,
+  // and only into gaps: what the observation saw stands.
+  const { data: dayRow } = await supabase
+    .from('project_weather_days')
+    .select('temp_max, temp_min, rainfall_mm, wind_kmh, station_id')
+    .eq('project_id', entry.project_id)
+    .eq('day', entry.entry_date)
+    .maybeSingle();
+  if (dayRow && (merged.station_id == null || dayRow.station_id == null || dayRow.station_id === merged.station_id)) {
+    merged.temp_max ??= dayRow.temp_max;
+    merged.temp_min ??= dayRow.temp_min;
+    merged.rainfall_mm ??= dayRow.rainfall_mm;
+    merged.wind_kmh ??= dayRow.wind_kmh;
+  }
+
   const { data: saved, error: saveError } = await supabase
     .from('weather')
     .upsert(
