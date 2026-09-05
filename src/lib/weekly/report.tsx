@@ -73,7 +73,9 @@ export function WeeklyReport({ data, narrative, narrativeNote }: WeeklyReportPro
             {data.unsigned.entryCount} of the {data.counts.entryCount} days in this report{' '}
             {data.unsigned.entryCount === 1 ? 'is' : 'are'} not signed yet
             {' '}({data.unsigned.days.join(', ')}). Those figures can still change, and they are
-            marked DRAFT wherever they appear. Only a signed day is on the record.
+            marked DRAFT wherever they appear. Where a draft is correcting a signed day, the
+            draft is what this report shows; the signed day stands on the record until the
+            correction is signed.
           </p>
         </section>
       )}
@@ -465,7 +467,7 @@ export function WeeklyReport({ data, narrative, narrativeNote }: WeeklyReportPro
         <p className="lbl">Entries in this report</p>
         <p className="entries-line mono">
           {data.entries
-            .map((e) => (e.signed ? e.entry_no : `${e.entry_date} DRAFT`))
+            .map((e) => (e.signed ? e.entry_no : `${e.entry_date} ${e.entry_no}`))
             .join(' · ') || '—'}
         </p>
       </section>
