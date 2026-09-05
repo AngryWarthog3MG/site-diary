@@ -257,8 +257,8 @@ export const SECTIONS: SectionDef[] = [
   },
   {
     group: 'quantities',
-    title: 'Quantities',
-    noun: 'quantity',
+    title: 'Deliveries',
+    noun: 'delivery',
     identity: 'item_type',
     fields: [
       { key: 'item_type', label: 'Item', kind: 'text' },

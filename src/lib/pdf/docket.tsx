@@ -151,7 +151,7 @@ export function DailyDocket({
       {entry.quantities.length > 0 && (
         <Table
           section={null}
-          title="Quantities"
+          title="Deliveries"
           entry={entry}
           rows={entry.quantities}
           columns={[

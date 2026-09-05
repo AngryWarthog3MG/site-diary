@@ -251,9 +251,9 @@ export function WeeklyReport({ data, narrative, narrativeNote }: WeeklyReportPro
       </section>
 
       <section className="sect">
-        <p className="lbl">Quantities</p>
+        <p className="lbl">Deliveries</p>
         {quantities.rows.length === 0 ? (
-          <Nil>No quantities recorded in this period</Nil>
+          <Nil>No deliveries recorded in this period</Nil>
         ) : (
           <table>
             <thead>
