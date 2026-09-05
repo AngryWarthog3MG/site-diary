@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import type { EntrySection } from '@/types/database';
@@ -89,6 +90,10 @@ export function TodayPanel({
    * reopening the screen tries again.
    */
   const attempted = useRef<Set<string>>(new Set());
+  // The header's right-hand side, filled from the state this panel already
+  // holds rather than a second set of queries.
+  const [glanceSlot, setGlanceSlot] = useState<HTMLElement | null>(null);
+  useEffect(() => { setGlanceSlot(document.getElementById('hero-glance')); }, []);
 
   const load = useCallback(async () => {
     const today = localDate();
@@ -375,8 +380,38 @@ export function TodayPanel({
 
   const covered: Set<EntrySection> = detectSections(entry?.transcript_raw ?? '');
 
+  const signedThisWeek = week.filter((d) => d.state === 'signed').length;
+  const holes = missingDays.filter((d) => !unfinished.some((u) => u.date === d)).length;
+  const weekday = date ? ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][new Date(`${date}T12:00:00`).getDay()] : '';
+  const glance = !loading && date ? (
+    <div className="glance">
+      <p className="glance__day">{weekday}</p>
+      <p className="glance__date mono">{fmtDate(date)}</p>
+      <dl className="glance__facts">
+        <div>
+          <dt>Signed this week</dt>
+          <dd className="mono">{signedThisWeek}</dd>
+        </div>
+        <div className={unfinished.length + holes > 0 ? 'glance__fact--amber' : ''}>
+          <dt>Not yet signed</dt>
+          <dd className="mono">{unfinished.length + holes}</dd>
+        </div>
+        <div className={prestart?.done ? '' : 'glance__fact--amber'}>
+          <dt>Prestart</dt>
+          <dd>{prestart?.done ? 'Done' : prestart ? 'Open' : 'Not yet'}</dd>
+        </div>
+      </dl>
+      {weather && (
+        <p className="glance__weather mono">
+          {n(weather.temp_max, '°')} · {n(weather.rainfall_mm, '')} mm · {weather.wind_dir ?? '—'} {n(weather.wind_kmh, '', 0)} km/h
+        </p>
+      )}
+    </div>
+  ) : null;
+
   return (
     <>
+      {glanceSlot && glance && createPortal(glance, glanceSlot)}
       <section className="home-grid" aria-label="Today">
         <div className="home-card home-card--weather">
           <div className="home-card__head">

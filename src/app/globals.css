@@ -3050,3 +3050,26 @@ body {
 .crewrow__aka .label { flex: 0 0 auto; }
 .crewrow__aka .field { flex: 1; }
 .crewrow__akastatic { flex: 1 0 100%; margin: 0.3rem 0 0; color: var(--ink-60); font-size: 0.8125rem; }
+
+/* The header's right-hand side: the day, and where the week stands. */
+.home-hero__side { display: flex; flex-direction: column; align-items: flex-end; gap: 0.9rem; flex: 0 0 auto; }
+.home-hero__glance:empty { display: none; }
+.glance { text-align: right; color: rgba(255, 255, 255, 0.92); }
+.glance__day { margin: 0; font-size: 0.75rem; letter-spacing: 0.14em; text-transform: uppercase; color: rgba(255, 255, 255, 0.7); }
+.glance__date { margin: 0.1rem 0 0; font-size: 1.6rem; font-weight: 600; letter-spacing: 0.02em; }
+.glance__facts { display: flex; gap: 0.5rem; margin: 0.75rem 0 0; justify-content: flex-end; }
+.glance__facts > div {
+  min-width: 5.4rem; padding: 0.45rem 0.6rem; border-radius: 10px;
+  background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.18); text-align: left;
+}
+.glance__facts dt { margin: 0; font-size: 0.6rem; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(255, 255, 255, 0.65); }
+.glance__facts dd { margin: 0.15rem 0 0; font-size: 1rem; font-weight: 600; }
+.glance__fact--amber { background: rgba(240, 164, 31, 0.22) !important; border-color: rgba(240, 164, 31, 0.5) !important; }
+.glance__weather { margin: 0.6rem 0 0; font-size: 0.8125rem; color: rgba(255, 255, 255, 0.75); }
+@media (max-width: 720px) {
+  .home-hero__side { align-items: flex-start; margin-top: 1rem; }
+  .glance { text-align: left; }
+  .glance__facts { justify-content: flex-start; flex-wrap: wrap; }
+  .glance__date { font-size: 1.25rem; }
+  .glance__weather { display: none; } /* the weather card has it */
+}

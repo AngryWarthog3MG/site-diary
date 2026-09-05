@@ -79,8 +79,12 @@ export default async function TodayPage({
             </div>
             <div id="menu-slot-hero" className="menu-slot" />
           </div>
-          <div className="home-hero__switcher">
-            <ProjectSwitcher memberships={memberships} currentId={current.project_id} />
+          <div className="home-hero__side">
+            {/* Filled by TodayPanel: the day, and where the week stands. */}
+            <div id="hero-glance" className="home-hero__glance" />
+            <div className="home-hero__switcher">
+              <ProjectSwitcher memberships={memberships} currentId={current.project_id} />
+            </div>
           </div>
         </header>
 
