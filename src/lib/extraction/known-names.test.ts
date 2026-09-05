@@ -10,7 +10,7 @@ const crew = [
   { name: 'Evan Burke', role: 'Machine Op', aliases: [] },
 ];
 const plant = [
-  { item: '1.8t Excavator', hire_type: 'dry', supplier: 'KBS', aliases: ['1.8 ton excavator'] },
+  { item: '1.8t Excavator', hire_type: 'dry', supplier: 'KBS', aliases: ['1.8 ton excavator', 'excavator'] },
   { item: 'Vac Trailer', hire_type: 'wet', supplier: 'MINIQUIP', aliases: ['trailer'] },
   { item: 'Vac Truck', hire_type: 'wet', supplier: 'MINIQUIP', aliases: [] },
 ];
