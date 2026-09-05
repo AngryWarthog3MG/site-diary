@@ -104,6 +104,9 @@ export default async function WeeklyReportPage({
       },
       start,
       end,
+      // A report that leaves out the days you have not signed yet tells the
+      // reader something false about the job. They are in, and marked.
+      { includeUnsigned: true },
     );
   } catch (error) {
     loadError = error instanceof Error ? error.message : 'Could not load the week.';
@@ -151,12 +154,11 @@ export default async function WeeklyReportPage({
 
       {data && data.entries.length === 0 && (
         <section className="weekly-state">
-          <p className="weekly-kicker">Nothing signed this week</p>
+          <p className="weekly-kicker">Nothing recorded this week</p>
           <h2>Nothing to report yet</h2>
           <p>
-            This report only ever shows days you have signed. Anything still sitting as a
-            draft is left out on purpose — it is not on the record until you sign it. Sign
-            the week&apos;s days and they will appear here.
+            No days recorded in this period at all — signed or otherwise. Record a day and
+            it will appear here, marked as a draft until you sign it.
           </p>
         </section>
       )}

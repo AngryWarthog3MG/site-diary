@@ -66,6 +66,18 @@ export function WeeklyReport({ data, narrative, narrativeNote }: WeeklyReportPro
         </div>
       </header>
 
+      {data.unsigned.entryCount > 0 && (
+        <section className="provisional">
+          <p className="lbl">Not final</p>
+          <p>
+            {data.unsigned.entryCount} of the {data.counts.entryCount} days in this report{' '}
+            {data.unsigned.entryCount === 1 ? 'is' : 'are'} not signed yet
+            {' '}({data.unsigned.days.join(', ')}). Those figures can still change, and they are
+            marked DRAFT wherever they appear. Only a signed day is on the record.
+          </p>
+        </section>
+      )}
+
       <section className="commentary">
         <p className="commentary__label">
           Commentary — AI-drafted summary. Not part of the signed record; the tables below
@@ -452,7 +464,9 @@ export function WeeklyReport({ data, narrative, narrativeNote }: WeeklyReportPro
       <section className="sect">
         <p className="lbl">Entries in this report</p>
         <p className="entries-line mono">
-          {data.entries.map((e) => e.entry_no).join(' · ') || '—'}
+          {data.entries
+            .map((e) => (e.signed ? e.entry_no : `${e.entry_date} DRAFT`))
+            .join(' · ') || '—'}
         </p>
       </section>
     </div>
@@ -461,6 +475,13 @@ export function WeeklyReport({ data, narrative, narrativeNote }: WeeklyReportPro
 
 /** Additions on top of DOCKET_CSS — the report reuses the docket's dress. */
 export const WEEKLY_CSS = `
+/* Days in the report that are not signed yet. Loud on purpose: a reader
+   must never take a provisional figure for a settled one. */
+.provisional { margin: 3mm 0 0; padding: 2.5mm 3mm; border: 0.8pt solid #9A6A09;
+  border-left-width: 2.4pt; border-radius: 1.5mm; background: #FDF6E7; }
+.provisional .lbl { color: #6B4A06; }
+.provisional p { margin: 0.8mm 0 0; font-size: 8.5pt; line-height: 1.45; color: #4A3A12; }
+
 .commentary {
   margin-top: 5mm;
   padding: 3mm 3.5mm;

@@ -34,6 +34,9 @@ export async function GET(request: Request) {
   if (!project) return fail('not_found', 'That project is not on your account.', 404);
   const orgCode = (Array.isArray(project.org) ? project.org[0] : project.org)?.code as string;
 
+  // Deliberately NOT includeUnsigned: this is what payroll pays against, and
+  // an unsigned day's hours can still change. The weekly report shows drafts
+  // (marked); the timesheet waits for the signature.
   let data;
   try {
     data = await loadWeeklyData(
@@ -48,7 +51,12 @@ export async function GET(request: Request) {
   }
 
   if (data.entries.length === 0) {
-    return fail('not_found', 'No signed entries in that range — nothing to put on a timesheet.', 404);
+    return fail(
+      'not_found',
+      'No signed days in that range. A timesheet is what payroll pays against, so it waits ' +
+        'for the signature even though the weekly report will show the drafts.',
+      404,
+    );
   }
 
   return new Response(buildTimesheetCsv(data), {

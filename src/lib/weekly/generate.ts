@@ -26,7 +26,9 @@ export async function generateWeeklyReport(
   start: string,
   end: string,
 ): Promise<WeeklyGeneration | { empty: true }> {
-  const data = await loadWeeklyData(supabase, project, start, end);
+  // The PDF says the same thing the screen does, drafts included and marked.
+  // A weekly that quietly omits five of seven days misleads whoever reads it.
+  const data = await loadWeeklyData(supabase, project, start, end, { includeUnsigned: true });
   if (data.entries.length === 0) return { empty: true };
 
   const { result: narrative, rejected, failure } = await generateNarrative(data);
