@@ -74,6 +74,9 @@ export function TodayPanel({
   }>>([]);
   const [binning, setBinning] = useState<string | null>(null);
   const [week, setWeek] = useState<Array<{ date: string; label: string; state: string; href: string | null }>>([]);
+  // The week's weather, one reading per day, from the same entries the strip
+  // is built from. Wet days are what a delay claim leans on later.
+  const [weekWeather, setWeekWeather] = useState<Record<string, WeatherRow>>({});
   const [loading, setLoading] = useState(true);
   const [offline, setOffline] = useState(false);
   /**
@@ -166,7 +169,7 @@ export function TodayPanel({
         const sinceStr = localDate(since);
         const { data: recent } = await supabase
           .from('entries')
-          .select('id, entry_date, status, author_id, supersedes_entry_id')
+          .select('id, entry_date, status, author_id, supersedes_entry_id, weather(temp_max, temp_min, rainfall_mm, wind_dir, wind_kmh)')
           .eq('project_id', projectId)
           .gte('entry_date', sinceStr);
         const { data: first } = await supabase
@@ -184,8 +187,21 @@ export function TodayPanel({
           // Each day's best row, and where a tap on it should go: the current
           // signed version if there is one, otherwise the open draft (yours
           // to finish, someone else's to look at), otherwise record that day.
-          type RecentRow = { id: string; entry_date: string; status: string; author_id: string; supersedes_entry_id: string | null };
+          type RecentRow = { id: string; entry_date: string; status: string; author_id: string; supersedes_entry_id: string | null; weather?: unknown };
           const rows = (recent ?? []) as RecentRow[];
+          {
+            // A signed day's reading beats a draft's for the same date.
+            const wx: Record<string, WeatherRow> = {};
+            const from = new Set<string>();
+            for (const row of rows) {
+              const reading = firstOrNull<WeatherRow>(row.weather);
+              if (!reading) continue;
+              if (from.has(row.entry_date) && row.status !== 'signed') continue;
+              wx[row.entry_date] = reading;
+              if (row.status === 'signed') from.add(row.entry_date);
+            }
+            setWeekWeather(wx);
+          }
           const replaced = new Set(rows.filter((r) => r.status === 'signed' && r.supersedes_entry_id).map((r) => r.supersedes_entry_id as string));
           const byDate = new Map<string, { status: string; href: string }>();
           for (const row of rows) {
@@ -452,6 +468,39 @@ export function TodayPanel({
             </p>
           )}
           {weatherNote && <p className="notice gap">{weatherNote}</p>}
+
+          {week.length > 0 && (
+            <>
+              <p className="label" style={{ marginTop: '1rem' }}>This week</p>
+              <table className="wxweek">
+                <thead>
+                  <tr>
+                    <th>Day</th>
+                    <th className="n">Max</th>
+                    <th className="n">Min</th>
+                    <th className="n">Rain</th>
+                    <th>Wind</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {week.map((day) => {
+                    const w = weekWeather[day.date];
+                    const wet = w?.rainfall_mm != null && w.rainfall_mm >= 1;
+                    return (
+                      <tr key={day.date} className={`${day.date === date ? 'wxweek__today' : ''}${wet ? ' wxweek__wet' : ''}`}>
+                        <td className="mono">{fmtDate(day.date).slice(0, 5)} <span className="wxweek__dow">{day.label}</span></td>
+                        <td className="n mono">{w ? n(w.temp_max, '°') : '—'}</td>
+                        <td className="n mono">{w ? n(w.temp_min, '°') : '—'}</td>
+                        <td className="n mono">{w ? n(w.rainfall_mm, '') : '—'}</td>
+                        <td className="mono">{w ? `${w.wind_dir ?? '—'} ${n(w.wind_kmh, '', 0)}` : '—'}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+              <p className="caption">Rain in mm since 9am. A day with no reading had no diary entry.</p>
+            </>
+          )}
         </div>
 
         <div className="home-card home-card--capture">
