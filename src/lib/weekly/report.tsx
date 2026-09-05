@@ -50,6 +50,9 @@ export function WeeklyReport({ data, narrative, narrativeNote }: WeeklyReportPro
   const draftDays = new Set(data.unsigned.days);
   const Draft = ({ day }: { day: string }) =>
     draftDays.has(day) ? <span className="draftmark">DRAFT</span> : null;
+  // A total that sums figures from an unsigned day is itself provisional.
+  const TotalMark = ({ dates }: { dates: readonly string[] }) =>
+    dates.some((d) => draftDays.has(d)) ? <span className="draftmark">DRAFT</span> : null;
   const D = ({ date }: { date: string }) => (
     <>
       {fmtDate(date)}
@@ -148,7 +151,7 @@ export function WeeklyReport({ data, narrative, narrativeNote }: WeeklyReportPro
             </tbody>
             <tfoot>
               <tr>
-                <td colSpan={2}>Daily totals</td>
+                <td colSpan={2}>Daily totals<TotalMark dates={data.days.filter((d) => labour.dayTotals[d] != null)} /></td>
                 {data.days.map((day) => (
                   <td key={day} className="n mono">
                     {labour.dayTotals[day] != null ? fmt(labour.dayTotals[day]) : '·'}
@@ -216,7 +219,7 @@ export function WeeklyReport({ data, narrative, narrativeNote }: WeeklyReportPro
             </tbody>
             <tfoot>
               <tr>
-                <td colSpan={3}>Totals</td>
+                <td colSpan={3}>Totals<TotalMark dates={[...draftDays]} /></td>
                 <td className="n mono">{fmt(plant.totalHours)}</td>
                 <td className="n mono">{plant.totalIdle > 0 ? fmt(plant.totalIdle) : '·'}</td>
               </tr>
@@ -244,7 +247,7 @@ export function WeeklyReport({ data, narrative, narrativeNote }: WeeklyReportPro
                 <th>Mix</th>
                 <th>Supplier</th>
                 <th className="n">m³</th>
-                <th className="n">Cumulative m³</th>
+                <th className="n">Cumulative m³<TotalMark dates={pours.rows.map((r) => r.date)} /></th>
               </tr>
             </thead>
             <tbody>
@@ -261,7 +264,7 @@ export function WeeklyReport({ data, narrative, narrativeNote }: WeeklyReportPro
             </tbody>
             <tfoot>
               <tr>
-                <td colSpan={4}>Total volume</td>
+                <td colSpan={4}>Total volume<TotalMark dates={pours.rows.map((r) => r.date)} /></td>
                 <td className="n mono">{fmt(pours.totalVolume)}</td>
                 <td />
               </tr>
@@ -283,7 +286,7 @@ export function WeeklyReport({ data, narrative, narrativeNote }: WeeklyReportPro
                 <th>Area</th>
                 <th className="n">Qty</th>
                 <th>Unit</th>
-                <th className="n">Running</th>
+                <th className="n">Running<TotalMark dates={quantities.rows.map((r) => r.date)} /></th>
               </tr>
             </thead>
             <tbody>
@@ -334,7 +337,7 @@ export function WeeklyReport({ data, narrative, narrativeNote }: WeeklyReportPro
             </tbody>
             <tfoot>
               <tr>
-                <td colSpan={4}>Total dayworks hours</td>
+                <td colSpan={4}>Total dayworks hours<TotalMark dates={data.dayworks.rows.map((r) => r.date)} /></td>
                 <td className="n mono">{fmt(data.dayworks.totalHours)}</td>
                 <td />
               </tr>
@@ -394,7 +397,7 @@ export function WeeklyReport({ data, narrative, narrativeNote }: WeeklyReportPro
               </tbody>
               <tfoot>
                 <tr>
-                  <td>Total standdown</td>
+                  <td>Total standdown<TotalMark dates={delays.rows.map((r) => r.date)} /></td>
                   <td className="n mono">{fmt(delays.totalMinutes)}</td>
                   <td className="n mono">{fmt(delays.totalHours)}</td>
                 </tr>
@@ -438,7 +441,7 @@ export function WeeklyReport({ data, narrative, narrativeNote }: WeeklyReportPro
             </tbody>
             <tfoot>
               <tr>
-                <td colSpan={3}>Total rainfall</td>
+                <td colSpan={3}>Total rainfall<TotalMark dates={weather.rows.map((r) => r.date)} /></td>
                 <td className="n mono">{fmt(weather.totalRainfallMm)}</td>
                 <td colSpan={2} />
               </tr>

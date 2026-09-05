@@ -601,6 +601,25 @@ values ('bbbbbbbb-0000-0000-0000-000000000001', date '2026-08-24',
         '22222222-2222-2222-2222-222222222222',
         'cccccccc-0000-0000-0000-000000000005');
 do $$ begin raise notice 'PASS  no second original once a day is signed; corrections target the current version'; end; $$;
+
+-- And at signing. A draft original that predates the day's signature (rows
+-- like this exist from the per-author era) must not be able to sign as a
+-- second original. Stage the legacy state with the guard off, then sign.
+-- (The accepted correction above is still open; one open document per day
+-- means it has to go before a legacy draft can be staged beside the signed rows.)
+delete from public.entries
+ where project_id = 'bbbbbbbb-0000-0000-0000-000000000001'
+   and entry_date = date '2026-08-24' and status <> 'signed';
+alter table public.entries disable trigger entries_one_original_per_day;
+insert into public.entries (id, project_id, entry_date, author_id)
+values ('cccccccc-0000-0000-0000-000000000077', 'bbbbbbbb-0000-0000-0000-000000000001',
+        date '2026-08-24', '22222222-2222-2222-2222-222222222222');
+alter table public.entries enable trigger entries_one_original_per_day;
+select tests.expect_error($q$
+  update public.entries set status = 'signed'
+   where id = 'cccccccc-0000-0000-0000-000000000077'
+$q$, 'cannot be signed as a second original');
+do $$ begin raise notice 'PASS  a stale draft original cannot sign once the day has a signed original'; end; $$;
 rollback to savepoint one_original_per_day;
 
 do $$ begin raise notice ''; raise notice 'ALL TESTS PASSED'; end; $$;
