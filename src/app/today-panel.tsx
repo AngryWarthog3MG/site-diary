@@ -157,7 +157,7 @@ export function TodayPanel({
       {
         const since = new Date(`${today}T00:00:00`);
         since.setDate(since.getDate() - 7);
-        const sinceStr = since.toISOString().slice(0, 10);
+        const sinceStr = localDate(since);
         const { data: recent } = await supabase
           .from('entries')
           .select('id, entry_date, status, author_id, supersedes_entry_id')
@@ -200,7 +200,7 @@ export function TodayPanel({
           const cursor = new Date(`${today}T00:00:00`);
           cursor.setDate(cursor.getDate() - 6);
           for (let i = 0; i < 7; i += 1) {
-            const date = cursor.toISOString().slice(0, 10);
+            const date = localDate(cursor);
             const best = byDate.get(date);
             strip.push({
               date,
@@ -224,7 +224,7 @@ export function TodayPanel({
           const cursor = new Date(`${today}T00:00:00`);
           cursor.setDate(cursor.getDate() - 1);
           for (let i = 0; i < 7; i += 1) {
-            const day = cursor.toISOString().slice(0, 10);
+            const day = localDate(cursor);
             if (day < (first.entry_date as string)) break;
             if (!have.has(day)) gaps.push(day);
             cursor.setDate(cursor.getDate() - 1);
