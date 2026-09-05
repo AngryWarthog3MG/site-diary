@@ -460,10 +460,13 @@ export const FIXTURES: Fixture[] = [
         // 06:30 to 13:00. The model does this arithmetic because the finish
         // was actually said.
         L('Danny Rowe', { hours: 6.5 }),
-        // "His full day" states the standard day in words, so 10 here is the
-        // model reading what was said, not inventing. (Silence about someone's
-        // time stays null — fixture 16 pins that — and the policy fill covers it.)
-        L('Sam Whitely', { hours: 10 }),
+        // "His full day" names the standard day without giving a figure, and
+        // since 2026-09-05 the model declines to turn it into one — it leaves
+        // hours null and applyStandardDay writes the ten hours a moment later.
+        // The record ends up identical; the model simply stopped doing the
+        // one piece of arithmetic it was not asked for, which is the way
+        // round this project wants to be wrong.
+        L('Sam Whitely', { hours: null }),
         // 06:30 to 15:00.
         L('Kel Brady', { hours: 8.5 }),
       ],
