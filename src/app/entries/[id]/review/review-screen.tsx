@@ -55,7 +55,7 @@ const REQUIRED_GROUP: Partial<Record<SectionKey, ItemGroup>> = {
 const PHOTO_BUCKET = 'entry-photos';
 type ReviewTab = ItemGroup | 'photos' | 'weather' | 'notes' | 'signoff';
 const REVIEW_TABS: Array<{ key: ReviewTab; label: string }> = [
-  ...SECTIONS.map((section) => ({ key: section.group, label: section.title })),
+  ...SECTIONS.map((section) => ({ key: section.group, label: section.group === 'work_items' ? 'Works' : section.title })),
   { key: 'photos', label: 'Photos' },
   { key: 'weather', label: 'Weather' },
   { key: 'notes', label: 'Notes' },
@@ -386,7 +386,7 @@ export function ReviewScreen(props: {
               {props.entryDate === localDate() ? 'Today’s diary' : `Diary for ${props.entryDate}`}
             </h1>
             <p className="mono page-subtitle">
-              {props.projectCode} · {props.entryDate}
+              {props.entryDate === localDate() ? `${props.projectCode} · ${props.entryDate}` : props.projectCode}
             </p>
           </div>
           <div
@@ -849,11 +849,9 @@ function DocketSection({
   return (
     <section>
       <div className="review-section-head">
-        <div>
-          <p className="label">
-            {section.title} {items.length > 0 && <span className="mono">· {items.length}</span>}
-          </p>
+        <div className="review-section-title">
           <h2>{section.title}</h2>
+          {items.length > 0 && <span className="review-count mono">{items.length}</span>}
         </div>
         <button type="button" className="button button--quiet review-add" onClick={() => onAdd(section)}>
           Add {section.noun}
@@ -1002,7 +1000,6 @@ function ItemCard({
     <article className={`item${low ? ' item--low' : ''}`}>
       <header className="itemhead">
         <div>
-          <p className="label">{section.noun} {index + 1}</p>
           <h3>{heading}</h3>
         </div>
         <button

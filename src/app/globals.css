@@ -3000,3 +3000,24 @@ body {
   .review-sheet .review-section-head { display: flex; align-items: center; justify-content: space-between; }
   .review-sheet .review-add { width: auto; min-width: 0; margin-top: 0; padding: 0.45rem 0.85rem; font-size: 0.875rem; }
 }
+
+/* Entry screen, second pass: less chrome before the content. */
+.review-tab { min-height: 32px; padding: 0.3rem 0.55rem; font-size: 0.8125rem; font-weight: 600; gap: 0.35rem; }
+.review-tab__count { font-size: 0.7rem; min-width: 1.25rem; height: 1.25rem; }
+.review-tabs { gap: 0.3rem; margin-top: 0.75rem; padding-bottom: 0.5rem; }
+.review-intro { margin-top: 0.75rem; font-size: 0.9rem; }
+.review-sheet .itemhead h3 { font-size: 1.05rem; }
+.review-sheet .item + .item { margin-top: 0.6rem; }
+@media (max-width: 720px) {
+  .review-hero { padding: 1rem 1.1rem 1.05rem; }
+  .review-hero .page-title { font-size: 1.45rem; }
+  .review-hero .page-subtitle { font-size: 0.85rem; }
+  .review-state { margin-top: 0.7rem; }
+}
+.review-section-title { display: flex; align-items: center; gap: 0.5rem; }
+.review-section-title h2 { margin: 0; }
+.review-count {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 1.5rem; height: 1.5rem; padding: 0 0.45rem; border-radius: 999px;
+  background: var(--teal, #0e4f52); color: #fff; font-size: 0.8rem; font-weight: 600;
+}
