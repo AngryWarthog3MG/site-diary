@@ -83,6 +83,7 @@ export function AppMenu({ slotId }: { slotId: string }) {
           {item(`/entries${q}`, 'Past days', 'Signed days and their PDFs')}
           {item(`/reports/weekly${q}`, 'Weekly report', 'The week, rolled up')}
           {item(`/claims${q}`, 'Claims', 'Delays, variations, dayworks')}
+          {item(`/variations${q}`, 'Variations', 'Raised to paid, each one tracked')}
           {item(`/progress${q}`, 'Progress', 'How far along each area is')}
         </div>
       </section>
