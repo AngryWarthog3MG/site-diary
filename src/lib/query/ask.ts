@@ -430,7 +430,8 @@ You are given the question and the passages a search returned, each labelled wit
 - Cite where each point comes from, in square brackets, like [Landscape Specification rev C, p. 14]. Every figure or requirement you state gets a citation.
 - If the passages do not answer what was asked, say what they do cover and what is missing. Do not fill the gap.
 - Quote the exact wording for numbers, tolerances and hold points — the supervisor will act on them.
-- Be brief. Plain Australian construction English, no throat-clearing.`;
+- Be brief. Plain Australian construction English, no throat-clearing.
+- Plain text only: no markdown, no asterisks, no headings, no bullet symbols. Quote with ordinary double quotes.`;
 
 async function phraseFromDocuments(question: string, sources: DocumentSource[]): Promise<string> {
   const passages = (sources as Array<DocumentSource & { chunk?: string }>).map((s, i) => ({

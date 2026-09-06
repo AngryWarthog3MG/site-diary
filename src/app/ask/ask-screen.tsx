@@ -156,7 +156,7 @@ export function AskScreen({
             {result.path === 'structured' ? 'from the record' : result.path === 'documents' ? 'from the job documents' : 'from what was said'}
           </p>
           <div className="answer">
-            {result.answer.split(/\n{2,}/).map((para, index) => (
+            {plain(result.answer).split(/\n{2,}/).map((para, index) => (
               <p key={index}>{para}</p>
             ))}
           </div>
@@ -292,4 +292,13 @@ function Snippet({ text }: { text: string }) {
       )}
     </p>
   );
+}
+
+/** The model is told plain text; this is the belt to that brace. */
+function plain(text: string): string {
+  return text
+    .replace(/\*\*(.+?)\*\*/g, '$1')
+    .replace(/(^|\s)\*(?!\s)(.+?)\*(?=\s|[.,;:]|$)/g, '$1$2')
+    .replace(/^#{1,6}\s+/gm, '')
+    .replace(/^>\s?/gm, '');
 }
