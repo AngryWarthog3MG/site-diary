@@ -71,6 +71,7 @@ function firstHeading(pageText: string): string | null {
     if (!/[A-Za-z]{3,}/.test(line)) continue;
     if (/^(page|rev|revision|issued|date|ref|doc no|confidential|copyright|match line|manufacturer|building)\b/i.test(line)) continue;
     if (/\b(pty|ltd|abn|acn|www\.|@|street|terrace|level \d|po box|telephone|phone)\b/i.test(line)) continue;
+    if (/\b(WA|NSW|VIC|QLD|SA|TAS|NT|ACT)\s+\d{4}\b/.test(line) || /\b\d{4}$/.test(line)) continue;
     if (/^\d/.test(line) || /\d{1,2}\/\d{1,2}\/\d{2,4}/.test(line)) continue;
     candidates.push(line.replace(/\s*[–-]\s*$/, ''));
     if (candidates.length >= 12) break;

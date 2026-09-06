@@ -123,6 +123,20 @@ export function DocumentsManager({ projectId, userId, initial }: { projectId: st
     }
   }
 
+  async function rename(doc: DocumentRow) {
+    const next = window.prompt('Title for this document', doc.title);
+    if (next == null || !next.trim() || next.trim() === doc.title) return;
+    setBusy(doc.id);
+    setError(null);
+    try {
+      const { error: upErr } = await createClient().from('project_documents').update({ title: next.trim() }).eq('id', doc.id);
+      if (upErr) setError(upErr.message);
+      router.refresh();
+    } finally {
+      setBusy(null);
+    }
+  }
+
   async function remove(doc: DocumentRow) {
     if (!window.confirm(`Remove "${doc.title}"? Ask will no longer see it.`)) return;
     setBusy(doc.id);
@@ -205,6 +219,7 @@ export function DocumentsManager({ projectId, userId, initial }: { projectId: st
               </p>
               {doc.status === 'failed' && doc.error && <p className="alert">{doc.error}</p>}
               <div className="docs-card__actions">
+                <button className="linklike" type="button" disabled={busy !== null} onClick={() => rename(doc)}>Rename</button>
                 {(doc.status === 'failed' || doc.status === 'uploaded') && (
                   <button className="linklike" type="button" disabled={busy !== null} onClick={() => reindex(doc.id)}>
                     {busy === doc.id ? 'Reading…' : 'Read again'}
