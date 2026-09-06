@@ -511,7 +511,7 @@ export function WeeklyReport({ data, narrative, narrativeNote, audience = 'recor
         <p className="lbl">Entries in this report</p>
         <p className="entries-line mono">
           {data.entries
-            .map((e) => (e.signed ? e.entry_no : `${fmtDate(e.entry_date)} ${e.entry_no}`))
+            .map((e) => (e.signed ? e.entry_no : internal ? `${fmtDate(e.entry_date)} (not yet signed)` : `${fmtDate(e.entry_date)} ${e.entry_no}`))
             .join(' · ') || '—'}
         </p>
       </section>
