@@ -135,6 +135,9 @@ Change four of them and the app silently stops capturing what supervisors say. I
   day is signed; a correction carries the day's date and supersedes the current version).
   The API returns 409 `day_open` / `day_signed` first; the queue never turns a blocked
   recording into a correction on its own — that is the supervisor's tap.
+- **Roles live in one table.** `src/lib/roles.ts` (`canAuthorEntries`, `canRunTalks`, `canSee`) is
+  what the menu, the page guards and the APIs read; `app.can_run_talks()` mirrors it in SQL.
+  A new role goes in both. Pages refuse a screen with a redirect; hiding the tile is not enough.
 - **Serials are issued at signing** and follow signing order, not entry date. Sort any
   register by `entry_date`.
 - **Bump `VERSION` in `public/sw.js`** when the service worker changes, or phones keep the

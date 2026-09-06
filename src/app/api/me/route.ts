@@ -1,5 +1,5 @@
 import { fail, ok, requireApiUser } from '@/lib/api';
-import { resolveProject, canAuthorEntries, type Membership } from '@/lib/auth';
+import { resolveProject, canAuthorEntries, canRunTalks, type Membership } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
 
@@ -38,6 +38,7 @@ export async function GET(request: Request) {
         : null,
       role: current?.role ?? null,
       canRecord: current ? canAuthorEntries(current.role) : false,
+      canRunTalks: current ? canRunTalks(current.role) : false,
       projects: rows
         .filter((m) => m.project.active)
         .map((m) => ({ id: m.project_id, name: m.project.name, code: m.project.code })),

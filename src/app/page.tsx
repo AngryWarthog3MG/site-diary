@@ -9,6 +9,7 @@ import {
   resolveProject,
   canAuthorEntries,
 } from '@/lib/auth';
+import { canRunTalks, ROLE_LABEL } from '@/lib/roles';
 import { SignOutButton } from '@/components/sign-out-button';
 import { NextEntryLine } from './next-entry-line';
 import { TodayPanel } from './today-panel';
@@ -92,6 +93,8 @@ export default async function TodayPage({
           <TodayPanel
             projectId={current.project_id}
             canRecord={canAuthorEntries(current.role)}
+            canPrestart={canRunTalks(current.role)}
+            roleLabel={ROLE_LABEL[current.role].toLowerCase() === 'project manager' ? 'the project manager' : `the ${ROLE_LABEL[current.role].toLowerCase()}`}
             lastSigned={lastSigned ?? null}
           />
         </div>

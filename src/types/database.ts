@@ -5,7 +5,7 @@
 // Hand-written here so step 1 compiles before a local stack is running; the
 // enums and the tables auth touches are complete and match the migrations.
 
-export type MemberRole    = 'supervisor' | 'pm' | 'admin';
+export type MemberRole    = 'supervisor' | 'pm' | 'admin' | 'leading_hand';
 export type EntryStatus   = 'draft' | 'signed';
 export type HireType      = 'wet' | 'dry';
 export type DelayCategory = 'weather' | 'access' | 'design' | 'other';

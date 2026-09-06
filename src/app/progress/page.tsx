@@ -1,6 +1,8 @@
+import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
 import { requireUser, resolveProject } from '@/lib/auth';
+import { canSee } from '@/lib/roles';
 import { loadProgressData, MAX_CHARTED, type ProgressData } from '@/lib/progress/load';
 import { BrandMark } from '@/components/brand-mark';
 import { ProgressChart } from './progress-chart';
@@ -25,6 +27,7 @@ export default async function ProgressPage({
       </main>
     );
   }
+  if (!canSee(current.role, 'progress')) redirect(`/?project=${current.project_id}`);
 
   let data: ProgressData | null = null;
   let loadError: string | null = null;

@@ -74,10 +74,7 @@ export function provisionalEntryNo(membership: Membership, localDate: string): s
   return `${membership.project.org.code}-${localDate}`;
 }
 
-/** Supervisors and admins write the record; PMs read it. */
-export function canAuthorEntries(role: MemberRole): boolean {
-  return role === 'supervisor' || role === 'admin';
-}
+export { canAuthorEntries, canRunTalks, canSee } from '@/lib/roles';
 
 /**
  * Resolves the project the caller is acting in, enforcing membership.

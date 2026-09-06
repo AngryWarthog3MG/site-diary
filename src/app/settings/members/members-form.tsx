@@ -12,12 +12,7 @@ export interface MemberRow {
   isCurrentUser: boolean;
 }
 
-const ROLES: MemberRole[] = ['supervisor', 'pm', 'admin'];
-const ROLE_TEXT: Record<MemberRole, string> = {
-  supervisor: 'Can record and sign their own entries',
-  pm: 'Read-only project access',
-  admin: 'Can record, sign, and manage this project',
-};
+import { ROLES, ROLE_HINT as ROLE_TEXT, ROLE_LABEL } from '@/lib/roles';
 
 export function MembersForm({
   projectId,
@@ -123,7 +118,7 @@ export function MembersForm({
                     >
                       {ROLES.map((option) => (
                         <option key={option} value={option}>
-                          {option}
+                          {ROLE_LABEL[option]}
                         </option>
                       ))}
                     </select>
@@ -173,7 +168,7 @@ export function MembersForm({
             >
               {ROLES.map((option) => (
                 <option key={option} value={option}>
-                  {option}
+                  {ROLE_LABEL[option]}
                 </option>
               ))}
             </select>

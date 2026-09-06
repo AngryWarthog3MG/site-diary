@@ -1,3 +1,4 @@
+import { canRunTalks } from '@/lib/roles';
 import { notFound } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { requireUser } from '@/lib/auth';
@@ -25,7 +26,7 @@ export default async function PrestartPage({ params }: { params: Promise<{ id: s
   if (!row) notFound();
 
   const membership = memberships.find((m) => m.project_id === row.project_id);
-  const canRun = membership ? membership.role === 'supervisor' || membership.role === 'admin' : false;
+  const canRun = membership ? canRunTalks(membership.role) : false;
 
   // The people this job already knows, most recent first, so sign-on is a
   // tap on a name rather than typing it with a glove on.

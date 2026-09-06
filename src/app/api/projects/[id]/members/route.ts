@@ -2,7 +2,7 @@ import { fail, ok, readJson, requireApiUser, isUuid } from '@/lib/api';
 import { createAdminClient } from '@/lib/supabase/admin';
 import type { MemberRole } from '@/types/database';
 
-const ROLES = new Set<MemberRole>(['supervisor', 'pm', 'admin']);
+const ROLES = new Set<MemberRole>(['supervisor', 'leading_hand', 'pm', 'admin']);
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 async function requireProjectAdmin(projectId: string) {

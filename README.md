@@ -910,6 +910,17 @@ shows "Tomorrow's prestart is ready" that evening, and the 06:30 push says "Your
 prestart is ready" and opens it rather than "no prestart yet". Nothing else changes —
 it is the same open record, editable until the crew sign on and it is finished.
 
+**R12. A fourth role: the leading hand.** Supervisors write the record, PMs read it,
+admins manage the job. The leading hand runs the morning prestart and the toolbox talk
+and reads what they need — Today, past days, the weekly — and records nothing. One
+table in `src/lib/roles.ts` says what each role may do and see; the menu on the phone
+and the page guards on the server read the same table, and the pages *refuse* a screen
+rather than merely hiding its tile (`/claims` for a leading hand lands on Today; the Ask
+API answers 403). The database side is `app.can_run_talks()`, which now includes the
+role — compared as text, because a fresh enum value cannot be named as an enum in the
+transaction that adds it. Until the menu knows the role it draws only the tiles every
+role has, so nobody sees a door that closes a moment later.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;

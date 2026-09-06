@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
-import { requireUser, resolveProject, canAuthorEntries } from '@/lib/auth';
+import { requireUser, resolveProject, canRunTalks } from '@/lib/auth';
 import { BrandMark } from '@/components/brand-mark';
 import { fmtDate } from '@/lib/pdf/dates';
 
@@ -32,7 +32,7 @@ export default async function ToolboxPage({
     .order('talk_date', { ascending: false })
     .limit(50);
 
-  const canRun = canAuthorEntries(current.role);
+  const canRun = canRunTalks(current.role);
 
   return (
     <main className="sheet">

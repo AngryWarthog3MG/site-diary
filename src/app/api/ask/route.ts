@@ -1,5 +1,7 @@
 import { fail, ok, readJson, requireApiUser, isUuid } from '@/lib/api';
 import { ask, AskError } from '@/lib/query/ask';
+import { canSee } from '@/lib/roles';
+import type { MemberRole } from '@/types/database';
 
 export const maxDuration = 120;
 
@@ -12,7 +14,7 @@ export const maxDuration = 120;
  * error that tells them it exists.
  */
 export async function POST(request: Request) {
-  const { supabase, response } = await requireApiUser();
+  const { supabase, user, response } = await requireApiUser();
   if (response) return response;
 
   const body = await readJson(request);
@@ -36,6 +38,15 @@ export async function POST(request: Request) {
       .maybeSingle();
     if (!data) return fail('forbidden', 'You are not on that project.', 403);
     projectName = data.name as string;
+    const { data: membership } = await supabase
+      .from('project_members')
+      .select('role')
+      .eq('project_id', projectId)
+      .eq('user_id', user.id)
+      .maybeSingle();
+    if (!membership || !canSee(membership.role as MemberRole, 'ask')) {
+      return fail('forbidden', 'Your role on this job does not include Ask.', 403);
+    }
   }
 
   try {

@@ -54,10 +54,14 @@ function firstOrNull<T>(value: unknown): T | null {
 export function TodayPanel({
   projectId,
   canRecord,
+  canPrestart,
+  roleLabel,
   lastSigned,
 }: {
   projectId: string;
   canRecord: boolean;
+  canPrestart: boolean;
+  roleLabel: string;
   lastSigned: { entry_no: string | null; entry_date: string } | null;
 }) {
   const router = useRouter();
@@ -603,7 +607,7 @@ export function TodayPanel({
         </p>
       )}
 
-      {!loading && canRecord && (
+      {!loading && canPrestart && (
         <div className={`prestart-row ${prestart?.done ? 'prestart-row--done' : prestart ? 'prestart-row--open' : ''}`}>
           <span>
             {prestart?.done
@@ -621,7 +625,7 @@ export function TodayPanel({
           )}
         </div>
       )}
-      {!loading && canRecord && tomorrowPrestart && (
+      {!loading && canPrestart && tomorrowPrestart && (
         <div className="prestart-row prestart-row--done">
           <span>Tomorrow&rsquo;s prestart is ready · {fmtDate(tomorrowPrestart.date)}</span>
           <Link href={`/prestart/${tomorrowPrestart.id}`}>Look it over</Link>
@@ -672,7 +676,8 @@ export function TodayPanel({
         </>
       ) : (
         <p className="notice">
-          You are on this project as a PM. Recording is done by the site supervisor.
+          You are on this job as {roleLabel}. Recording the diary is the site supervisor&rsquo;s;
+          {canPrestart ? ' your prestarts and toolbox talks are in the menu.' : ' the record and reports are in the menu.'}
         </p>
       )}
       </div>

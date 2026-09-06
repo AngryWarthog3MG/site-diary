@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
-import { requireUser, resolveProject, canAuthorEntries } from '@/lib/auth';
+import { requireUser, resolveProject, canRunTalks } from '@/lib/auth';
 import { BrandMark } from '@/components/brand-mark';
 import { fmtDate } from '@/lib/pdf/dates';
 import { perthToday } from '@/lib/push/decide';
@@ -34,7 +34,7 @@ export default async function PrestartListPage({
     .order('created_at', { ascending: false })
     .limit(60);
 
-  const canRun = canAuthorEntries(current.role);
+  const canRun = canRunTalks(current.role);
   const today = perthToday();
 
   return (

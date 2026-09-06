@@ -1,7 +1,9 @@
+import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { DraftClaimButton } from './draft-button';
 import { createClient } from '@/lib/supabase/server';
 import { requireUser, resolveProject } from '@/lib/auth';
+import { canSee } from '@/lib/roles';
 import { loadClaimsData, type ClaimsData } from '@/lib/claims/load';
 import { BrandMark } from '@/components/brand-mark';
 import { fmtDate } from '@/lib/pdf/dates';
@@ -30,6 +32,7 @@ export default async function ClaimsPage({
       </main>
     );
   }
+  if (!canSee(current.role, 'claims')) redirect(`/?project=${current.project_id}`);
 
   let data: ClaimsData | null = null;
   let loadError: string | null = null;

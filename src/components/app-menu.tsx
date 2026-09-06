@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import Link from 'next/link';
+import { canSee, type Screen } from '@/lib/roles';
+import type { MemberRole } from '@/types/database';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { SignOutButton } from '@/components/sign-out-button';
 
@@ -61,6 +63,11 @@ export function AppMenu({ slotId }: { slotId: string }) {
   if (/^\/(signin|login|auth|verify|offline)/.test(pathname)) return null;
 
   const q = me?.project ? `?project=${me.project.id}` : projectParam ? `?project=${projectParam}` : '';
+  // What this role gets to see. Until the role is known only the tiles every
+  // role has are drawn, so nobody sees a door that closes a moment later; the
+  // pages refuse anything a role should not reach anyway.
+  const EVERYONE: Screen[] = ['today', 'entries', 'weekly', 'prestart', 'toolbox'];
+  const see = (screen: Screen) => (me?.role ? canSee(me.role as MemberRole, screen) : EVERYONE.includes(screen));
   const item = (href: string, name: string, what: string, variant?: 'wide') => (
     <Link
       key={href}
@@ -80,21 +87,21 @@ export function AppMenu({ slotId }: { slotId: string }) {
       <section className="navgroup">
         <p className="label">The record</p>
         <div className="navgrid">
-          {item(`/entries${q}`, 'Past days', 'Signed days and their PDFs')}
-          {item(`/reports/weekly${q}`, 'Weekly report', 'The week, rolled up')}
-          {item(`/claims${q}`, 'Claims', 'Delays, variations, dayworks')}
-          {item(`/variations${q}`, 'Variations', 'Raised to paid, each one tracked')}
-          {item(`/progress${q}`, 'Progress', 'How far along each area is')}
+          {see('entries') && item(`/entries${q}`, 'Past days', 'Signed days and their PDFs')}
+          {see('weekly') && item(`/reports/weekly${q}`, 'Weekly report', 'The week, rolled up')}
+          {see('claims') && item(`/claims${q}`, 'Claims', 'Delays, variations, dayworks')}
+          {see('variations') && item(`/variations${q}`, 'Variations', 'Raised to paid, each one tracked')}
+          {see('progress') && item(`/progress${q}`, 'Progress', 'How far along each area is')}
         </div>
       </section>
 
       <section className="navgroup">
         <p className="label">On site</p>
         <div className="navgrid">
-          {item(`/prestart${q}`, 'Prestarts', 'Morning briefing and sign-on')}
-          {item(`/toolbox${q}`, 'Toolbox talks', 'Weekly talk and sign-on')}
-          {item(`/ask${q}`, 'Ask a question', 'From your diary and the job documents')}
-          {item(`/documents${q}`, 'Job documents', 'Spec, scope, contract, drawings')}
+          {see('prestart') && item(`/prestart${q}`, 'Prestarts', 'Morning briefing and sign-on')}
+          {see('toolbox') && item(`/toolbox${q}`, 'Toolbox talks', 'Weekly talk and sign-on')}
+          {see('ask') && item(`/ask${q}`, 'Ask a question', 'From your diary and the job documents')}
+          {see('documents') && item(`/documents${q}`, 'Job documents', 'Spec, scope, contract, drawings')}
           {(me?.projects.length ?? 0) > 1 && item('/portfolio', 'All jobs', 'Every active site at once')}
         </div>
       </section>
@@ -102,7 +109,7 @@ export function AppMenu({ slotId }: { slotId: string }) {
       <section className="navgroup">
         <p className="label">Setup</p>
         <div className="navgrid">
-          {item(`/settings${q}`, 'Settings', 'Hours, emails, crew and plant lists')}
+          {see('settings') && item(`/settings${q}`, 'Settings', 'Hours, emails, crew and plant lists')}
           {me?.canRecord && item(`/settings/members${q}`, 'Who is on this job', 'Crew and PM access')}
           {me?.canRecord && item(`/settings/vocabulary${q}`, 'Words and names', 'Names and site terms')}
         </div>

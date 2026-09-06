@@ -1,3 +1,4 @@
+import { canRunTalks } from '@/lib/roles';
 import { notFound } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { requireUser } from '@/lib/auth';
@@ -19,7 +20,7 @@ export default async function TalkPage({ params }: { params: Promise<{ id: strin
   if (!talk) notFound();
 
   const membership = memberships.find((m) => m.project_id === talk.project_id);
-  const canRun = membership ? membership.role === 'supervisor' || membership.role === 'admin' : false;
+  const canRun = membership ? canRunTalks(membership.role) : false;
 
   return (
     <TalkScreen

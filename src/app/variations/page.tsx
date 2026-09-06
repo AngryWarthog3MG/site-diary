@@ -1,5 +1,7 @@
+import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { requireUser, resolveProject } from '@/lib/auth';
+import { canSee } from '@/lib/roles';
 import { loadClaimsData, type ClaimsData } from '@/lib/claims/load';
 import { BrandMark } from '@/components/brand-mark';
 import { RegisterSection } from '@/app/claims/register-section';
@@ -27,6 +29,7 @@ export default async function VariationsPage({
       </main>
     );
   }
+  if (!canSee(current.role, 'variations')) redirect(`/?project=${current.project_id}`);
 
   let data: ClaimsData | null = null;
   let loadError: string | null = null;

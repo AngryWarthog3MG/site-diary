@@ -1,5 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
+import { redirect } from 'next/navigation';
 import { requireUser, resolveProject } from '@/lib/auth';
+import { canSee } from '@/lib/roles';
 import { BrandMark } from '@/components/brand-mark';
 import { DocumentsManager, type DocumentRow } from './documents-manager';
 
@@ -25,6 +27,7 @@ export default async function DocumentsPage({
       </main>
     );
   }
+  if (!canSee(current.role, 'documents')) redirect(`/?project=${current.project_id}`);
   const supabase = await createClient();
   const { data } = await supabase
     .from('project_documents')
