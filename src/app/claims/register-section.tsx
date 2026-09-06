@@ -2,14 +2,14 @@ import Link from 'next/link';
 import type { ClaimsData } from '@/lib/claims/load';
 import { fmtDate } from '@/lib/pdf/dates';
 import { STATUS_LABEL, itemValue, registerNumber } from '@/lib/claims/register';
-import { RemoveVariationButton, VariationStatusControl } from './variation-status';
+import { RecordOnDay, RemoveVariationButton, VariationStatusControl } from './variation-status';
 
 /**
  * The variation register as a section: one card per item, its status control,
  * and the money not yet asked for up top. Drawn on the Claims screen and on
  * its own Variations screen from the same data.
  */
-export function RegisterSection({ data }: { data: ClaimsData }) {
+export function RegisterSection({ data, userId }: { data: ClaimsData; userId: string }) {
   const entryLink = (entryNo: string) => {
     const id = data.entryIds[entryNo];
     return id ? `/entries/${id}/signed` : null;
@@ -111,6 +111,13 @@ export function RegisterSection({ data }: { data: ClaimsData }) {
                   agreedCost={item.agreed_cost}
                   notes={item.notes}
                 />
+                {(() => {
+                  const mentioned = new Set(item.mentions.map((m) => m.entry_id));
+                  const days = data.variations.openDays.filter((d) => d.author_id === userId && !mentioned.has(d.entry_id));
+                  return days.length > 0 ? (
+                    <RecordOnDay registerId={item.id} number={registerNumber(item.seq)} days={days} />
+                  ) : null;
+                })()}
                 {!item.signed && item.mentions.length === 0 && (
                   <RemoveVariationButton registerId={item.id} number={registerNumber(item.seq)} />
                 )}

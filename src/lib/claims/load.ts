@@ -41,6 +41,8 @@ export interface ClaimsData {
     /** The register: one item per variation, with the diary days that mention it. */
     register: RegisterItem[];
     summary: RegisterSummary;
+    /** Unsigned days on the project, for recording an item on another day. */
+    openDays: Array<{ entry_id: string; date: string; author_id: string }>;
   };
   dayworks: {
     rows: Array<{
@@ -143,6 +145,15 @@ export async function loadClaimsData(
   // The register beside the diary: which item each mention belongs to, and
   // where each item stands. Read under RLS like everything else here.
   const register = await loadRegister(supabase, project.id);
+  const { data: open } = await supabase
+    .from('entries')
+    .select('id, entry_date, author_id')
+    .eq('project_id', project.id)
+    .neq('status', 'signed')
+    .order('entry_date');
+  const openDays = ((open ?? []) as Array<{ id: string; entry_date: string; author_id: string }>).map((e) => ({
+    entry_id: e.id, date: e.entry_date, author_id: e.author_id,
+  }));
 
   const dayworkRows = dayworks.map((row) => ({
     date: String(row.entry_date ?? ''),
@@ -172,6 +183,7 @@ export async function loadClaimsData(
       unreferenced: variationRows.filter((r) => !r.vr_ref).length,
       register,
       summary: summariseRegister(register),
+      openDays,
     },
     dayworks: {
       rows: dayworkRows,

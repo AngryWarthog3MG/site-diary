@@ -713,6 +713,59 @@ begin
   raise notice 'PASS  variation register: numbered, registered from drafts, survives a re-save';
 end;
 $$;
+
+-- Recording an item on another day, from the register: the author's own
+-- open draft only, once, and it lands as a normal diary row to be confirmed.
+-- (A second supervisor's open day, staged as the owner, for the refusal.)
+reset role;
+insert into public.entries (id, project_id, entry_date, author_id)
+values ('cccccccc-0000-0000-0000-000000000089', 'bbbbbbbb-0000-0000-0000-000000000001',
+        date '2026-09-02', '22222222-2222-2222-2222-222222222222');
+select set_config('request.jwt.claims',
+  '{"sub":"11111111-1111-1111-1111-111111111111","role":"authenticated"}', true);
+set local role authenticated;
+do $$
+declare
+  v_signed public.variation_register;
+  v_new    uuid;
+  v_state  text;
+begin
+  select * into v_signed from public.variation_register
+   where project_id = 'bbbbbbbb-0000-0000-0000-000000000001' and vr_ref = 'vr-014';
+
+  -- entry ...0088 (2026-09-01, supervisor 1, draft) is still open from above.
+  v_new := public.record_variation_on_day(v_signed.id, 'cccccccc-0000-0000-0000-000000000088');
+  assert exists (select 1 from public.variation_register_links where variation_id = v_new and register_id = v_signed.id),
+         'the new row is a mention of the same item';
+  select state into v_state from public.entry_sections
+   where entry_id = 'cccccccc-0000-0000-0000-000000000088' and section = 'variations';
+  assert v_state = 'captured', 'the day now has variations captured';
+  assert (select vr_ref from public.variations where id = v_new) = 'vr-014', 'reference carried across';
+
+  begin
+    perform public.record_variation_on_day(v_signed.id, 'cccccccc-0000-0000-0000-000000000088');
+    raise exception 'TESTFAIL: recorded twice on one day';
+  exception when others then
+    if sqlerrm like 'TESTFAIL%' then raise; end if;
+    assert sqlerrm like '%already records%', sqlerrm;
+  end;
+  begin
+    perform public.record_variation_on_day(v_signed.id, 'cccccccc-0000-0000-0000-000000000001');
+    raise exception 'TESTFAIL: recorded on a signed day';
+  exception when others then
+    if sqlerrm like 'TESTFAIL%' then raise; end if;
+    assert sqlerrm like '%signed%', sqlerrm;
+  end;
+  begin
+    perform public.record_variation_on_day(v_signed.id, 'cccccccc-0000-0000-0000-000000000089');
+    raise exception 'TESTFAIL: recorded on another supervisor''s day';
+  exception when others then
+    if sqlerrm like 'TESTFAIL%' then raise; end if;
+    assert sqlerrm like '%another supervisor%', sqlerrm;
+  end;
+  raise notice 'PASS  a variation is recorded on another day only as the author, once, unsigned';
+end;
+$$;
 reset role;
 select set_config('request.jwt.claims', '', true);
 rollback to savepoint variation_register;

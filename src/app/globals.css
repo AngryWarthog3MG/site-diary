@@ -3111,3 +3111,7 @@ body {
 .vr-tag--unsigned { background: #FBF1DE; color: #6B4A06; border: 1px solid #E5C98A; }
 .claims-cite--draft { color: #6B4A06; }
 .linklike--danger { color: #8a2a1a; }
+.vr-record { flex-basis: 100%; }
+.vr-record__days { display: grid; gap: 0.45rem; padding: 0.5rem 0 0.2rem; }
+.vr-record__day { display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; }
+.vr-record__day input { width: 1.1rem; height: 1.1rem; }

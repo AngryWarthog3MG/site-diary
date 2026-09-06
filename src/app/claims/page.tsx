@@ -20,7 +20,7 @@ export default async function ClaimsPage({
 }: {
   searchParams: Promise<{ project?: string }>;
 }) {
-  const { memberships } = await requireUser();
+  const { userId, memberships } = await requireUser();
   const { project } = await searchParams;
   const current = resolveProject(memberships, project);
   if (!current) {
@@ -140,7 +140,7 @@ export default async function ClaimsPage({
 
           <hr className="rule" />
 
-          <RegisterSection data={data} />
+          <RegisterSection data={data} userId={userId} />
 
           <hr className="rule" />
 

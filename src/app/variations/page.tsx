@@ -17,7 +17,7 @@ export default async function VariationsPage({
 }: {
   searchParams: Promise<{ project?: string }>;
 }) {
-  const { memberships } = await requireUser();
+  const { userId, memberships } = await requireUser();
   const { project } = await searchParams;
   const current = resolveProject(memberships, project);
   if (!current) {
@@ -54,7 +54,7 @@ export default async function VariationsPage({
       </p>
       <hr className="rule" />
       {loadError && <p className="notice gap">{loadError}</p>}
-      {data && <RegisterSection data={data} />}
+      {data && <RegisterSection data={data} userId={userId} />}
     </main>
   );
 }
