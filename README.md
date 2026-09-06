@@ -864,6 +864,15 @@ event — the screen has no update policy to misuse. The claims screen leads wit
 number and value not yet submitted, because that is where the money goes missing.
 Nothing here touches the content hash or a signed row.
 
+Two refinements the owner asked for the same day: a variation registers the moment it
+is written into a diary, signed or not (the card says "not yet signed" until a signed
+day stands behind it), and each item gets a running number per project — `V-007` —
+issued at creation and never reused, separate from the client's own reference. The
+review screen rewrites a draft's rows on every save, so registration matches by
+reference or identical wording and relinks the same item; an item the supervisor took
+out of a draft stays on the register marked "no longer in any diary" until someone
+removes it, and `remove_variation_item()` refuses if any signed diary records it.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;

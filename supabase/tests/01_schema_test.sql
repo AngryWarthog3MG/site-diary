@@ -659,6 +659,60 @@ begin
   raise notice 'PASS  variation register: signing registers, status is an audited RPC';
 end;
 $$;
+
+-- Numbers, and registration from a draft. The item survives the review
+-- screen's delete-and-reinsert and keeps its number; an item nobody signed
+-- can be removed, one a signed diary stands behind cannot.
+do $$
+declare
+  v_signed public.variation_register;
+  v_item   public.variation_register;
+  v_again  public.variation_register;
+  v_links  int;
+begin
+  select * into v_signed from public.variation_register
+   where project_id = 'bbbbbbbb-0000-0000-0000-000000000001' and vr_ref = 'vr-014';
+  assert v_signed.seq is not null, 'the signed item has a number';
+
+  insert into public.entries (id, project_id, entry_date, author_id)
+  values ('cccccccc-0000-0000-0000-000000000088', 'bbbbbbbb-0000-0000-0000-000000000001',
+          date '2026-09-01', '11111111-1111-1111-1111-111111111111');
+  insert into public.variations (id, entry_id, description)
+  values ('dddddddd-0000-0000-0000-000000000088', 'cccccccc-0000-0000-0000-000000000088', 'Extra kerb at the bus bay');
+
+  select r.* into v_item from public.variation_register r
+    join public.variation_register_links l on l.register_id = r.id
+   where l.variation_id = 'dddddddd-0000-0000-0000-000000000088';
+  assert found, 'a draft variation is registered as it is written';
+  assert v_item.seq = v_signed.seq + 1, format('numbers run on: %s after %s', v_item.seq, v_signed.seq);
+  assert v_item.status = 'raised' and v_item.raised_on = date '2026-09-01', 'raised on the draft day';
+
+  -- The review screen re-saves: rows are deleted and written again.
+  delete from public.variations where entry_id = 'cccccccc-0000-0000-0000-000000000088';
+  select count(*) into v_links from public.variation_register_links where register_id = v_item.id;
+  assert v_links = 0, 'the mention went with the row';
+  assert exists (select 1 from public.variation_register where id = v_item.id), 'the item itself stays';
+  insert into public.variations (entry_id, description, vr_ref)
+  values ('cccccccc-0000-0000-0000-000000000088', 'Extra kerb at the bus bay', 'VR-020');
+  select r.* into v_again from public.variation_register r
+    join public.variation_register_links l on l.register_id = r.id
+    join public.variations v on v.id = l.variation_id
+   where v.entry_id = 'cccccccc-0000-0000-0000-000000000088';
+  assert v_again.id = v_item.id and v_again.seq = v_item.seq, 'same item, same number, after a re-save';
+  assert v_again.vr_ref = 'VR-020', 'a reference stated later fills the blank';
+
+  perform public.remove_variation_item(v_item.id);
+  assert not exists (select 1 from public.variation_register where id = v_item.id), 'an unsigned item can be removed';
+  begin
+    perform public.remove_variation_item(v_signed.id);
+    raise exception 'TESTFAIL: a signed item was removed from the register';
+  exception when others then
+    if sqlerrm like 'TESTFAIL%' then raise; end if;
+    assert sqlerrm like '%signed diary records this variation%', sqlerrm;
+  end;
+  raise notice 'PASS  variation register: numbered, registered from drafts, survives a re-save';
+end;
+$$;
 reset role;
 select set_config('request.jwt.claims', '', true);
 rollback to savepoint variation_register;

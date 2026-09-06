@@ -1,8 +1,8 @@
 import Link from 'next/link';
 import type { ClaimsData } from '@/lib/claims/load';
 import { fmtDate } from '@/lib/pdf/dates';
-import { STATUS_LABEL, itemValue } from '@/lib/claims/register';
-import { VariationStatusControl } from './variation-status';
+import { STATUS_LABEL, itemValue, registerNumber } from '@/lib/claims/register';
+import { RemoveVariationButton, VariationStatusControl } from './variation-status';
 
 /**
  * The variation register as a section: one card per item, its status control,
@@ -25,6 +25,15 @@ export function RegisterSection({ data }: { data: ClaimsData }) {
     );
   };
   const money = (n: number | null) => (n == null ? '—' : `$${n.toLocaleString('en-AU')}`);
+  // A signed mention cites its serial; a draft cites the day and opens the review.
+  const Mention = ({ m }: { m: { date: string; entry_no: string | null; entry_id: string; signed: boolean } }) =>
+    m.signed && m.entry_no ? (
+      <Cite entryNo={m.entry_no} />
+    ) : (
+      <Link className="mono claims-cite claims-cite--draft" href={`/entries/${m.entry_id}/review`}>
+        {fmtDate(m.date)} draft
+      </Link>
+    );
 
   return (
     <section>
@@ -39,8 +48,8 @@ export function RegisterSection({ data }: { data: ClaimsData }) {
       </p>
       {data.variations.register.length === 0 ? (
         <p className="claims-nil">
-          Nothing yet. Variations turn up here once you sign a day that has one, and then
-          you track each one from raised to paid.
+          Nothing yet. A variation joins this list the moment it is written into a diary,
+          signed or not, and gets a number; from there you track it from raised to paid.
         </p>
       ) : (
         <>
@@ -67,7 +76,11 @@ export function RegisterSection({ data }: { data: ClaimsData }) {
             {data.variations.register.map((item) => (
               <li key={item.id} className={`vr-card vr-card--${item.status}`}>
                 <div className="vr-card__head">
-                  <span className={item.vr_ref ? 'mono vr-card__ref' : 'claims-flag'}>{item.vr_ref ?? 'NO VR REF'}</span>
+                  <span className="mono vr-card__ref">
+                    {registerNumber(item.seq)}
+                    <span className="vr-card__client">{item.vr_ref ? ` · client ref ${item.vr_ref}` : ' · no client ref yet'}</span>
+                    {!item.signed && <span className="vr-tag vr-tag--unsigned">Not yet signed</span>}
+                  </span>
                   <span className="mono vr-card__value">
                     {money(itemValue(item))}
                     {item.agreed_cost == null && item.estimated_cost != null && <span className="vr-note"> est.</span>}
@@ -76,12 +89,16 @@ export function RegisterSection({ data }: { data: ClaimsData }) {
                 <p className="vr-card__title">{item.title}</p>
                 <p className="vr-card__meta">
                   Raised {fmtDate(item.raised_on)} ·{' '}
-                  {item.mentions.map((m, i) => (
-                    <span key={m.entry_no + i}>
-                      {i > 0 && ', '}
-                      <Cite entryNo={m.entry_no} />
-                    </span>
-                  ))}
+                  {item.mentions.length === 0 ? (
+                    <span className="claims-flag">no longer in any diary</span>
+                  ) : (
+                    item.mentions.map((m, i) => (
+                      <span key={m.entry_id + i}>
+                        {i > 0 && ', '}
+                        <Mention m={m} />
+                      </span>
+                    ))
+                  )}
                   {item.status === 'submitted' && item.submitted_on && ` · submitted ${fmtDate(item.submitted_on)}`}
                   {(item.status === 'approved' || item.status === 'rejected') && item.decided_on && ` · decided ${fmtDate(item.decided_on)}`}
                   {item.status === 'paid' && item.paid_on && ` · paid ${fmtDate(item.paid_on)}`}
@@ -94,6 +111,9 @@ export function RegisterSection({ data }: { data: ClaimsData }) {
                   agreedCost={item.agreed_cost}
                   notes={item.notes}
                 />
+                {!item.signed && item.mentions.length === 0 && (
+                  <RemoveVariationButton registerId={item.id} number={registerNumber(item.seq)} />
+                )}
               </li>
             ))}
           </ul>

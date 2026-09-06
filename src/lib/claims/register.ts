@@ -29,6 +29,8 @@ export const NOT_SUBMITTED: readonly VariationStatus[] = ['raised', 'priced'];
 
 export interface RegisterItem {
   id: string;
+  /** The project's running number, issued when the item was created. */
+  seq: number;
   title: string;
   vr_ref: string | null;
   raised_on: string;
@@ -39,8 +41,15 @@ export interface RegisterItem {
   decided_on: string | null;
   paid_on: string | null;
   notes: string | null;
-  /** The diary days that mention it, earliest first. */
-  mentions: Array<{ date: string; entry_no: string }>;
+  /** The diary days that mention it, earliest first. A draft has no serial yet. */
+  mentions: Array<{ date: string; entry_no: string | null; entry_id: string; signed: boolean }>;
+  /** Whether any signed diary records it. Until then it is provisional. */
+  signed: boolean;
+}
+
+/** V-007: how a register number reads on screen and in a conversation. */
+export function registerNumber(seq: number): string {
+  return `V-${String(seq).padStart(3, '0')}`;
 }
 
 /** The value a variation is worth as far as anyone has said: agreed, else estimated. */

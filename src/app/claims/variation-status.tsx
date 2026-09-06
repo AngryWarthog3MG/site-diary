@@ -114,3 +114,36 @@ export function VariationStatusControl({
     </div>
   );
 }
+
+/**
+ * Only offered for an item no diary mentions any more and no signed day
+ * stands behind — the supervisor took the variation out of the draft. The
+ * database refuses it for anything else.
+ */
+export function RemoveVariationButton({ registerId, number }: { registerId: string; number: string }) {
+  const router = useRouter();
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  async function remove() {
+    if (!window.confirm(`Remove ${number} from the register? It is not in any diary.`)) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const { error: rpcError } = await createClient().rpc('remove_variation_item', { p_register_id: registerId });
+      if (rpcError) throw new Error(rpcError.message);
+      router.refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not remove it.');
+    } finally {
+      setBusy(false);
+    }
+  }
+  return (
+    <>
+      <button className="linklike linklike--danger" type="button" disabled={busy} onClick={remove}>
+        {busy ? 'Removing…' : 'Remove from register'}
+      </button>
+      {error && <p className="alert">{error}</p>}
+    </>
+  );
+}

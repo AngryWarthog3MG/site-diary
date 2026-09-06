@@ -142,7 +142,7 @@ export async function loadClaimsData(
 
   // The register beside the diary: which item each mention belongs to, and
   // where each item stands. Read under RLS like everything else here.
-  const register = await loadRegister(supabase, variationRows);
+  const register = await loadRegister(supabase, project.id);
 
   const dayworkRows = dayworks.map((row) => ({
     date: String(row.entry_date ?? ''),
@@ -181,33 +181,40 @@ export async function loadClaimsData(
   };
 }
 
-async function loadRegister(
-  supabase: SupabaseClient,
-  mentions: Array<{ date: string; entry_no: string; variation_id: string | null }>,
-): Promise<RegisterItem[]> {
-  const ids = mentions.map((m) => m.variation_id).filter((v): v is string => !!v);
-  if (ids.length === 0) return [];
-  const { data } = await supabase
-    .from('variation_register_links')
-    .select(
-      'variation_id, register:variation_register(id, title, vr_ref, raised_on, status, estimated_cost, agreed_cost, submitted_on, decided_on, paid_on, notes)',
-    )
-    .in('variation_id', ids);
-  const items = new Map<string, RegisterItem>();
-  for (const link of (data ?? []) as Array<{ variation_id: string; register: unknown }>) {
-    const reg = (Array.isArray(link.register) ? link.register[0] : link.register) as Omit<RegisterItem, 'mentions'> | null;
-    if (!reg) continue;
-    const item = items.get(reg.id) ?? {
-      ...reg,
-      estimated_cost: reg.estimated_cost == null ? null : num(reg.estimated_cost),
-      agreed_cost: reg.agreed_cost == null ? null : num(reg.agreed_cost),
+async function loadRegister(supabase: SupabaseClient, projectId: string): Promise<RegisterItem[]> {
+  // Every item on the project, then every diary row that mentions one — draft
+  // or signed — so a variation dictated this afternoon is already here.
+  const [{ data: items }, { data: links }] = await Promise.all([
+    supabase
+      .from('variation_register')
+      .select('id, seq, title, vr_ref, raised_on, status, estimated_cost, agreed_cost, submitted_on, decided_on, paid_on, notes')
+      .eq('project_id', projectId),
+    supabase
+      .from('variation_register_links')
+      .select('register_id, variation:variations(id, entry:entries!inner(id, entry_no, entry_date, status, project_id))')
+      .eq('variation.entry.project_id', projectId),
+  ]);
+  const out = new Map<string, RegisterItem>();
+  for (const row of (items ?? []) as Array<Omit<RegisterItem, 'mentions' | 'signed'>>) {
+    out.set(row.id, {
+      ...row,
+      estimated_cost: row.estimated_cost == null ? null : num(row.estimated_cost),
+      agreed_cost: row.agreed_cost == null ? null : num(row.agreed_cost),
       mentions: [],
-    };
-    const mention = mentions.find((m) => m.variation_id === link.variation_id);
-    if (mention) item.mentions.push({ date: mention.date, entry_no: mention.entry_no });
-    items.set(reg.id, item);
+      signed: false,
+    });
   }
-  return [...items.values()]
+  type LinkRow = { register_id: string; variation: { id: string; entry: { id: string; entry_no: string | null; entry_date: string; status: string } | Array<{ id: string; entry_no: string | null; entry_date: string; status: string }> } | null };
+  for (const link of (links ?? []) as unknown as LinkRow[]) {
+    const item = out.get(link.register_id);
+    const variation = Array.isArray(link.variation) ? link.variation[0] : link.variation;
+    const entry = variation ? (Array.isArray(variation.entry) ? variation.entry[0] : variation.entry) : null;
+    if (!item || !entry) continue;
+    const signed = entry.status === 'signed';
+    item.mentions.push({ date: entry.entry_date, entry_no: signed ? entry.entry_no : null, entry_id: entry.id, signed });
+    if (signed) item.signed = true;
+  }
+  return [...out.values()]
     .map((item) => ({ ...item, mentions: item.mentions.sort((a, b) => a.date.localeCompare(b.date)) }))
-    .sort((a, b) => a.raised_on.localeCompare(b.raised_on) || a.title.localeCompare(b.title));
+    .sort((a, b) => a.seq - b.seq);
 }

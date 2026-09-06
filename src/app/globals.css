@@ -3106,3 +3106,8 @@ body {
 .vr-details { flex-basis: 100%; display: grid; gap: 0.5rem; padding: 0.4rem 0 0.2rem; }
 .vr-note { display: block; font-size: 0.72rem; color: var(--ink-40); margin-top: 0.15rem; }
 .linklike { background: none; border: 0; padding: 0; font: inherit; font-size: 0.8rem; color: #2E6B4F; text-decoration: underline; cursor: pointer; }
+.vr-card__client { font-weight: 400; color: var(--ink-40); }
+.vr-tag { display: inline-block; margin-left: 0.5rem; padding: 0.05rem 0.45rem; border-radius: 0.6rem; font-size: 0.66rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; vertical-align: middle; }
+.vr-tag--unsigned { background: #FBF1DE; color: #6B4A06; border: 1px solid #E5C98A; }
+.claims-cite--draft { color: #6B4A06; }
+.linklike--danger { color: #8a2a1a; }
