@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { requireUser } from '@/lib/auth';
 import { readChecklist } from '@/lib/prestart/checklist';
+import { readSpecNotes } from '@/lib/prestart/spec-notes';
 import { PrestartScreen } from './prestart-screen';
 
 export const dynamic = 'force-dynamic';
@@ -15,7 +16,7 @@ export default async function PrestartPage({ params }: { params: Promise<{ id: s
   const { data: row } = await supabase
     .from('prestarts')
     .select(
-      `id, project_id, prestart_date, supervisor_name, work_planned, hazards, plant, permits, notes,
+      `id, project_id, prestart_date, supervisor_name, work_planned, hazards, plant, permits, notes, spec_notes,
        checklist, completed_at,
        prestart_attendees(id, attendee_name, fit_for_work, signature_path, created_at)`,
     )
@@ -68,6 +69,7 @@ export default async function PrestartPage({ params }: { params: Promise<{ id: s
         permits: row.permits ?? '',
         notes: row.notes ?? '',
         checklist: readChecklist(row.checklist),
+        specNotes: readSpecNotes(row.spec_notes),
         completed: Boolean(row.completed_at),
       }}
       attendees={attendees}

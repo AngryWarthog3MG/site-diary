@@ -4,6 +4,7 @@ import { renderPdfDocument, BrowserUnavailableError } from '@/lib/pdf/render';
 import { DOCKET_CSS } from '@/lib/pdf/styles';
 import { EMBEDDED_FONT_CSS } from '@/lib/pdf/fonts';
 import { PrestartDoc, PRESTART_CSS, type PrestartPdfData } from '@/lib/prestart/pdf';
+import { readSpecNotes } from '@/lib/prestart/spec-notes';
 import { readChecklist } from '@/lib/prestart/checklist';
 
 export const maxDuration = 300;
@@ -23,7 +24,7 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
   const { data: row } = await supabase
     .from('prestarts')
     .select(
-      `id, project_id, prestart_date, supervisor_name, work_planned, hazards, plant, permits, notes,
+      `id, project_id, prestart_date, supervisor_name, work_planned, hazards, plant, permits, notes, spec_notes,
        checklist, completed_at,
        project:projects!inner(name, code, org:organisations!inner(name, code)),
        prestart_attendees(attendee_name, fit_for_work, signature_path, created_at)`,
@@ -83,6 +84,7 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
     permits: row.permits ?? null,
     notes: row.notes ?? null,
     checklist: readChecklist(row.checklist),
+    specNotes: readSpecNotes(row.spec_notes),
     completedAtAwst,
     attendees,
   };

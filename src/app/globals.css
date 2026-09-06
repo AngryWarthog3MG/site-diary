@@ -3140,3 +3140,14 @@ body {
 .spec-line__spec { margin: 0 0 0.3rem; font-size: 0.95rem; line-height: 1.45; }
 .spec-line__cite { margin: 0 0 0.4rem; font-size: 0.75rem; color: var(--ink-40); }
 .spec-line__passage { margin: 0.4rem 0 0; padding: 0.5rem 0.7rem; border-left: 3px solid var(--ink-08); background: rgba(22,33,31,0.03); font-size: 0.85rem; }
+
+/* Prestart: from the specification */
+.specpick { margin-top: 0.75rem; }
+.specnotes { list-style: none; margin: 0.5rem 0 0; padding: 0; display: grid; gap: 0.6rem; }
+.specnote { border: 1px solid var(--ink-08); border-left: 4px solid #2E6B4F; border-radius: 0.5rem; padding: 0.7rem 0.85rem; background: #fff; }
+.specnote--none { border-left-color: var(--ink-08); }
+.specnote__pick { display: flex; align-items: flex-start; gap: 0.5rem; }
+.specnote__pick input { width: 1.1rem; height: 1.1rem; margin-top: 0.15rem; flex: none; }
+.specnote__task { margin: 0; font-weight: 600; font-size: 0.95rem; }
+.specnote__req { margin: 0.35rem 0 0.25rem; font-size: 0.95rem; line-height: 1.5; }
+.specnote__cite { margin: 0; font-size: 0.72rem; color: var(--ink-40); }

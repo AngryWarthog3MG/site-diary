@@ -9,6 +9,8 @@ import { SignaturePad } from '@/components/signature-pad';
 import { parseTalkSummary } from '@/lib/toolbox/summary';
 import { PRESTART_CHECKS, type ChecklistState } from '@/lib/prestart/checklist';
 import { fmtDate } from '@/lib/pdf/dates';
+import { PrestartSpecPicker } from '../spec-picker';
+import type { SpecNote } from '@/lib/prestart/spec-notes';
 
 interface Prestart {
   id: string;
@@ -21,6 +23,7 @@ interface Prestart {
   permits: string;
   notes: string;
   checklist: ChecklistState;
+  specNotes: SpecNote[];
   completed: boolean;
 }
 
@@ -76,6 +79,7 @@ export function PrestartScreen({
   const [error, setError] = useState<string | null>(null);
   const [urls, setUrls] = useState<Record<string, string>>({});
   const [editing, setEditing] = useState(false);
+  const [tab, setTab] = useState<'briefing' | 'spec' | 'signon'>('briefing');
   const [draft, setDraft] = useState({
     date: prestart.date,
     supervisor: prestart.supervisor,
@@ -212,9 +216,16 @@ export function PrestartScreen({
           ? 'Finished and signed. This prestart is locked and cannot be changed.'
           : 'Not finished. Read it out, get everyone to sign on, then finish it.'}
       </p>
-      <hr className="rule" />
+      <nav className="review-tabs" aria-label="Prestart sections">
+        {([['briefing', 'Briefing', null], ['spec', 'Spec', prestart.specNotes.length], ['signon', 'Sign-on', attendees.length]] as const).map(([key, label, count]) => (
+          <button key={key} type="button" className={`review-tab${tab === key ? ' is-active' : ''}`} onClick={() => setTab(key)}>
+            {label}
+            {count != null && <span className="review-tab__count mono">{count}</span>}
+          </button>
+        ))}
+      </nav>
 
-      {editing ? (
+      {tab === 'briefing' && (editing ? (
         <>
           <div className="photo-add-pair">
             <label className="fieldcell" style={{ flex: 1 }}>
@@ -325,8 +336,24 @@ export function PrestartScreen({
             </>
           )}
         </>
+      ))}
+
+      {tab === 'spec' && (
+        <PrestartSpecPicker
+          projectId={prestart.projectId}
+          work={prestart.work}
+          notes={prestart.specNotes}
+          readOnly={prestart.completed || !canRun}
+          onKeep={async (notes) => {
+            const supabase = createClient();
+            const { error: updateError } = await supabase.from('prestarts').update({ spec_notes: notes }).eq('id', prestart.id);
+            if (updateError) throw new Error(updateError.message);
+            router.refresh();
+          }}
+        />
       )}
 
+      {tab === 'signon' && (<>
       <hr className="rule" />
 
       {!editing && (
@@ -420,6 +447,7 @@ export function PrestartScreen({
           </p>
         </>
       )}
+      </>)}
       <Link className="button button--quiet" href={`/prestart?project=${prestart.projectId}`}>
         All prestarts
       </Link>

@@ -895,6 +895,15 @@ cited, in a sentence, or nothing. It is told not to judge: "spec says 300 mm" si
 beside "we placed 250" and the supervisor decides what to confirm. Nothing on the tab
 is stored; it re-runs on request against the lines as they are now.
 
+The prestart is the one place the specification *is* stored, deliberately. "We are
+mulching Old Brand Drive and trenching for the mainline" is split into tasks, each task
+fetches its passages, and the model states what the crew need to do it to spec — depth,
+cover, material, hold points — in the document's figures, cited. The supervisor keeps
+the tasks that apply (`prestarts.spec_notes`), the Spec tab shows them, and the
+prestart PDF prints them under "From the specification". That is a briefing record:
+what the crew were told the spec required, with the page it came from. It is not the
+diary — nothing from it reaches an entry — and it freezes with the prestart.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;

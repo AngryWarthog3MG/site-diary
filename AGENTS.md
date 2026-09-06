@@ -70,7 +70,8 @@ improvising; the register once shipped dead because a live smoke test was skippe
 - `src/lib/query/` — `diary` view schema description, SQL validation, the three calls
 - `src/lib/documents/` — job documents for Ask: text extraction (typed PDF, Word, scans via
   the model), chunking, indexing into `project_document_chunks`. Reference only, never a diary field; `spec-check.ts`
-  backs the review screen's Spec tab (read-only, never stored)
+  backs the review screen's Spec tab (read-only, never stored); `prestart-spec.ts` backs the prestart's Spec tab
+  (kept on `prestarts.spec_notes`, printed on the prestart PDF)
 - `src/lib/claims/` — the claims register loader and the variation register (`register.ts`:
   statuses, summary arithmetic). Status changes only via the `set_variation_status` RPC
 - `src/lib/weekly/`, `src/lib/monthly/` — reports

@@ -1,6 +1,8 @@
 'use client';
 
 import { useState } from 'react';
+import { PrestartSpecPicker } from '../spec-picker';
+import type { SpecNote } from '@/lib/prestart/spec-notes';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
@@ -31,6 +33,7 @@ export function NewPrestartForm({
   const [permits, setPermits] = useState('');
   const [notes, setNotes] = useState('');
   const [checks, setChecks] = useState<ChecklistState>({});
+  const [specNotes, setSpecNotes] = useState<SpecNote[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -54,6 +57,7 @@ export function NewPrestartForm({
           permits: permits.trim() || null,
           notes: notes.trim() || null,
           checklist: checks,
+          spec_notes: specNotes,
           conducted_by: auth.user?.id,
         })
         .select('id')
@@ -95,6 +99,8 @@ export function NewPrestartForm({
           placeholder="Busport: topsoil and planting. Old Brand Drive: vac truck potholing near the comms pit."
           onChange={(e) => setWork(e.target.value)} />
       </label>
+
+      <PrestartSpecPicker projectId={projectId} work={work} notes={specNotes} readOnly={false} onKeep={setSpecNotes} />
 
       <label className="fieldcell">
         <span className="label">Hazards and controls</span>

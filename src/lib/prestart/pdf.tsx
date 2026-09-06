@@ -23,6 +23,7 @@ export interface PrestartPdfData {
   permits: string | null;
   notes: string | null;
   checklist: ChecklistState;
+  specNotes: Array<{ task: string; area: string | null; requirements: string; citations: Array<{ document: string; revision: string | null; page: number | null }> }>;
   completedAtAwst: string;
   attendees: Array<{ name: string; fit: boolean; src: string }>;
 }
@@ -66,6 +67,23 @@ export function PrestartDoc({ data }: { data: PrestartPdfData }): ReactElement {
         <p className="lbl">What is on today</p>
         <div className="talkbody">{blocks(data.workPlanned)}</div>
       </section>
+
+      {data.specNotes.length > 0 && (
+        <section className="sect">
+          <p className="lbl">From the specification</p>
+          {data.specNotes.map((n, i) => (
+            <div key={i} className="specnote-print">
+              <p className="talkhead">{n.task}{n.area ? ` · ${n.area}` : ''}</p>
+              <p className="talkpara">{n.requirements}</p>
+              {n.citations.length > 0 && (
+                <p className="src">
+                  {n.citations.map((c) => `${c.document}${c.revision ? ` rev ${c.revision}` : ''}${c.page != null ? ` p. ${c.page}` : ''}`).join(' · ')}
+                </p>
+              )}
+            </div>
+          ))}
+        </section>
+      )}
 
       <section className="sect">
         <p className="lbl">Hazards and controls</p>
@@ -138,6 +156,8 @@ export function PrestartDoc({ data }: { data: PrestartPdfData }): ReactElement {
 }
 
 export const PRESTART_CSS = `
+.specnote-print { margin: 0 0 2.5mm; break-inside: avoid; }
+.specnote-print .talkhead { margin-top: 2mm; }
 .talkbody { margin-top: 2mm; }
 .talkhead { margin: 4mm 0 1mm; font-size: 8pt; font-weight: 700; letter-spacing: 0.08em;
   text-transform: uppercase; color: #2E6B4F; break-after: avoid; }
