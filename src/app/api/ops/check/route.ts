@@ -111,27 +111,41 @@ async function sendPrestartNudges(force = false): Promise<Record<string, number 
     runs.set(m.user_id as string, list);
   }
   const projectIds = [...new Set([...runs.values()].flat())];
-  const { data: done } = projectIds.length
-    ? await admin.from('prestarts').select('project_id').eq('prestart_date', today).in('project_id', projectIds)
-    : { data: [] as Array<{ project_id: string }> };
-  const hasPrestart = new Set((done ?? []).map((r) => r.project_id as string));
+  const { data: todays } = projectIds.length
+    ? await admin.from('prestarts').select('id, project_id, completed_at, prestart_attendees(id)').eq('prestart_date', today).in('project_id', projectIds)
+    : { data: [] as Array<{ id: string; project_id: string; completed_at: string | null; prestart_attendees: unknown[] }> };
+  const hasPrestart = new Set((todays ?? []).map((r) => r.project_id as string));
+  // Prepared the night before and nobody signed on yet: the nudge opens it.
+  const readyByProject = new Map<string, string>();
+  for (const r of todays ?? []) {
+    if (!r.completed_at && ((r.prestart_attendees ?? []) as unknown[]).length === 0) readyByProject.set(r.project_id as string, r.id as string);
+  }
 
   let sent = 0, skipped = 0, removed = 0, failed = 0;
   for (const sub of subs) {
     const projects = runs.get(sub.user_id as string) ?? [];
     const outstanding = projects.filter((id) => !hasPrestart.has(id));
-    const due = force || (outstanding.length > 0 && sub.last_prestart_notified_on !== today);
+    const ready = projects.filter((id) => readyByProject.has(id));
+    const due = force || ((outstanding.length > 0 || ready.length > 0) && sub.last_prestart_notified_on !== today);
     if (!due) { skipped += 1; continue; }
-    let outcome: 'sent' | 'gone' | 'failed';
-    try {
-      outcome = await sendPush(
-        { endpoint: sub.endpoint as string, p256dh: sub.p256dh as string, auth: sub.auth as string },
-        {
+    const message = outstanding.length === 0 && ready.length > 0
+      ? {
+          title: 'Your prestart is ready',
+          body: 'Saved last night. Open it, read it out, and hand the phone around for sign-on.',
+          url: ready.length === 1 ? `/prestart/${readyByProject.get(ready[0])}` : '/',
+          tag: 'prestart',
+        }
+      : {
           title: 'No prestart yet today',
           body: 'What is on, what could hurt someone, who is here. Two minutes, then hand the phone around.',
           url: outstanding.length === 1 ? `/prestart/new?project=${outstanding[0]}` : '/',
           tag: 'prestart',
-        },
+        };
+    let outcome: 'sent' | 'gone' | 'failed';
+    try {
+      outcome = await sendPush(
+        { endpoint: sub.endpoint as string, p256dh: sub.p256dh as string, auth: sub.auth as string },
+        message,
       );
     } catch (err) {
       if (err instanceof PushConfigError) return { error: err.message };

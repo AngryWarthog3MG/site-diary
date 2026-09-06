@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 import { requireUser, resolveProject, canAuthorEntries } from '@/lib/auth';
 import { BrandMark } from '@/components/brand-mark';
 import { fmtDate } from '@/lib/pdf/dates';
+import { perthToday } from '@/lib/push/decide';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Prestarts · KBS Daily Diary' };
@@ -11,10 +12,10 @@ export const metadata = { title: 'Prestarts · KBS Daily Diary' };
 export default async function PrestartListPage({
   searchParams,
 }: {
-  searchParams: Promise<{ project?: string }>;
+  searchParams: Promise<{ project?: string; ready?: string }>;
 }) {
   const { memberships } = await requireUser();
-  const { project } = await searchParams;
+  const { project, ready } = await searchParams;
   const current = resolveProject(memberships, project);
   if (!current) {
     return (
@@ -34,6 +35,7 @@ export default async function PrestartListPage({
     .limit(60);
 
   const canRun = canAuthorEntries(current.role);
+  const today = perthToday();
 
   return (
     <main className="sheet">
@@ -53,6 +55,12 @@ export default async function PrestartListPage({
       )}
       <hr className="rule" />
 
+      {ready && /^\d{4}-\d{2}-\d{2}$/.test(ready) && (
+        <p className="notice" style={{ marginBottom: '0.75rem' }}>
+          Saved and ready for {fmtDate(ready)}. It will be waiting on Today that morning; open it, read it out, and hand the phone around.
+        </p>
+      )}
+
       {(rows ?? []).length === 0 && (
         <p className="claims-nil">
           No prestarts yet. The first one takes a couple of minutes — what is on today, the
@@ -64,19 +72,24 @@ export default async function PrestartListPage({
         {(rows ?? []).map((row) => {
           const attendees = (row.prestart_attendees ?? []) as Array<{ fit_for_work: boolean }>;
           const notFit = attendees.filter((a) => !a.fit_for_work).length;
+          const isToday = row.prestart_date === today;
+          const isFuture = row.prestart_date > today;
+          const state = row.completed_at
+            ? { label: 'Done', cls: 'status-pill--signed' }
+            : attendees.length === 0 && (isFuture || isToday)
+              ? { label: isFuture ? `Ready for ${fmtDate(row.prestart_date).slice(0, 5)}` : 'Ready', cls: 'status-pill--ready' }
+              : { label: 'Not finished', cls: 'status-pill--resume' };
           return (
             <Link key={row.id} className="talkcard" href={`/prestart/${row.id}`}>
               <div>
                 <p className="mono talkcard__date">{fmtDate(row.prestart_date)}</p>
                 <p className="talkcard__topic">Run by {row.supervisor_name}</p>
                 <p className="talkcard__meta">
-                  {attendees.length === 0 ? 'nobody signed on yet' : `${attendees.length} signed on`}
+                  {attendees.length === 0 ? (isFuture ? 'prepared the night before' : 'nobody signed on yet') : `${attendees.length} signed on`}
                   {notFit > 0 ? ` · ${notFit} not fit for work` : ''}
                 </p>
               </div>
-              <span className={`status-pill ${row.completed_at ? 'status-pill--signed' : 'status-pill--resume'}`}>
-                {row.completed_at ? 'Done' : 'Not finished'}
-              </span>
+              <span className={`status-pill ${state.cls}`}>{state.label}</span>
             </Link>
           );
         })}

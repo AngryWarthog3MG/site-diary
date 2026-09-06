@@ -65,6 +65,7 @@ export function TodayPanel({
   const [writingOut, setWritingOut] = useState(false);
   const [entry, setEntry] = useState<TodayEntry | null>(null);
   const [prestart, setPrestart] = useState<{ id: string; done: boolean; signed: number } | null>(null);
+  const [tomorrowPrestart, setTomorrowPrestart] = useState<{ id: string; date: string } | null>(null);
   const [weather, setWeather] = useState<WeatherRow | null>(null);
   const [weatherNote, setWeatherNote] = useState<string | null>(null);
   const [attribution, setAttribution] = useState<string | null>(null);
@@ -139,6 +140,18 @@ export function TodayPanel({
                 signed: ((ps.prestart_attendees ?? []) as unknown[]).length }
             : null,
         );
+        // One saved the night before shows here so the evening's work is visible.
+        const next = new Date(`${today}T12:00:00`);
+        next.setDate(next.getDate() + 1);
+        const { data: tm } = await supabase
+          .from('prestarts')
+          .select('id, prestart_date')
+          .eq('project_id', projectId)
+          .eq('prestart_date', localDate(next))
+          .is('completed_at', null)
+          .limit(1)
+          .maybeSingle();
+        setTomorrowPrestart(tm ? { id: tm.id as string, date: tm.prestart_date as string } : null);
       }
 
       if (data) {
@@ -596,14 +609,22 @@ export function TodayPanel({
             {prestart?.done
               ? `Prestart done · ${prestart.signed} signed on`
               : prestart
-                ? `Prestart open · ${prestart.signed} signed on so far`
+                ? prestart.signed === 0
+                  ? 'Prestart ready · read it out and sign the crew on'
+                  : `Prestart open · ${prestart.signed} signed on so far`
                 : 'No prestart yet today'}
           </span>
           {prestart ? (
-            <Link href={`/prestart/${prestart.id}`}>{prestart.done ? 'View' : 'Finish it'}</Link>
+            <Link href={`/prestart/${prestart.id}`}>{prestart.done ? 'View' : prestart.signed === 0 ? 'Open it' : 'Finish it'}</Link>
           ) : (
             <Link href={`/prestart/new?project=${projectId}`}>Start it</Link>
           )}
+        </div>
+      )}
+      {!loading && canRecord && tomorrowPrestart && (
+        <div className="prestart-row prestart-row--done">
+          <span>Tomorrow&rsquo;s prestart is ready · {fmtDate(tomorrowPrestart.date)}</span>
+          <Link href={`/prestart/${tomorrowPrestart.id}`}>Look it over</Link>
         </div>
       )}
 

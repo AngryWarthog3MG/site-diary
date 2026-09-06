@@ -904,6 +904,12 @@ prestart PDF prints them under "From the specification". That is a briefing reco
 what the crew were told the spec required, with the page it came from. It is not the
 diary — nothing from it reaches an entry — and it freezes with the prestart.
 
+A prestart can be written the night before. "Save for the morning" dates it tomorrow
+(or the date chosen) and files it as ready: the list shows "Ready for 07/09", Today
+shows "Tomorrow's prestart is ready" that evening, and the 06:30 push says "Your
+prestart is ready" and opens it rather than "no prestart yet". Nothing else changes —
+it is the same open record, editable until the crew sign on and it is finished.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { fmtDate } from '@/lib/pdf/dates';
 import { PrestartSpecPicker } from '../spec-picker';
 import type { SpecNote } from '@/lib/prestart/spec-notes';
 import Link from 'next/link';
@@ -39,7 +40,16 @@ export function NewPrestartForm({
 
   const ready = supervisor.trim() && work.trim() && hazards.trim();
 
-  async function create() {
+  /** Tomorrow's date on this device — the morning the prestart is for. */
+  function tomorrow(): string {
+    const d = new Date(`${localDate()}T12:00:00`);
+    d.setDate(d.getDate() + 1);
+    return localDate(d);
+  }
+  const preparing = date > localDate();
+
+  async function create(mode: 'now' | 'morning' = 'now') {
+    const forDate = mode === 'morning' && date <= localDate() ? tomorrow() : date;
     setBusy(true);
     setError(null);
     try {
@@ -49,7 +59,7 @@ export function NewPrestartForm({
         .from('prestarts')
         .insert({
           project_id: projectId,
-          prestart_date: date,
+          prestart_date: forDate,
           supervisor_name: supervisor.trim(),
           work_planned: work.trim(),
           hazards: hazards.trim(),
@@ -63,7 +73,8 @@ export function NewPrestartForm({
         .select('id')
         .single();
       if (insertError) throw new Error(insertError.message);
-      router.push(`/prestart/${data.id}`);
+      if (mode === 'morning') router.push(`/prestart?project=${projectId}&ready=${forDate}`);
+      else router.push(`/prestart/${data.id}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'The prestart was not created.');
       setBusy(false);
@@ -75,7 +86,7 @@ export function NewPrestartForm({
       <p className="label">
         <BrandMark size={18} /> {projectName}
       </p>
-      <h1 className="page-title">Today&rsquo;s prestart</h1>
+      <h1 className="page-title">{preparing ? `Prestart for ${fmtDate(date)}` : 'Today\u2019s prestart'}</h1>
       <p className="page-subtitle">
         Fill this in, read it out to the crew, then hand the phone around for sign-on.
       </p>
@@ -139,10 +150,17 @@ export function NewPrestartForm({
       </label>
 
       {error && <p className="alert">{error}</p>}
-      <button className="button" type="button" disabled={busy || !ready} onClick={create}>
-        {busy ? 'Starting…' : 'Start sign-on'}
+      <button className="button" type="button" disabled={busy || !ready} onClick={() => create('now')}>
+        {busy ? 'Starting…' : preparing ? `Open it for ${fmtDate(date)}` : 'Start sign-on'}
       </button>
-      <p className="way-hint">You can still change any of this until the crew have signed and you finish it.</p>
+      <button className="button button--outline" type="button" disabled={busy || !ready} onClick={() => create('morning')}>
+        {busy ? 'Saving…' : preparing ? `Save for ${fmtDate(date)}` : 'Save for the morning'}
+      </button>
+      <p className="way-hint">
+        Start sign-on opens it now for the crew. Save for the morning keeps it ready for
+        {preparing ? ` ${fmtDate(date)}` : ' tomorrow'}: it waits on Today, the 06:30 reminder points at it, and you can
+        still change anything until the crew have signed and you finish it.
+      </p>
       <Link className="button button--quiet" href={`/prestart?project=${projectId}`}>All prestarts</Link>
     </main>
   );
