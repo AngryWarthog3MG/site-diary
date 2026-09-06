@@ -3152,3 +3152,10 @@ body {
 .specnote__req { margin: 0.35rem 0 0.25rem; font-size: 0.95rem; line-height: 1.5; }
 .specnote__cite { margin: 0; font-size: 0.72rem; color: var(--ink-40); }
 .status-pill--ready { background: #E8F3EC; color: #2E6B4F; border: 1px solid #B9DCC6; }
+
+/* On a phone the software keyboard covers the bottom third of the screen and
+   (on iOS) the page does not shrink to match, so the last button on a form
+   could sit under it with nothing left to scroll. Leave room beneath. */
+@media (max-width: 640px) {
+  .sheet { padding-bottom: calc(max(3rem, 28vh) + env(safe-area-inset-bottom)); }
+}

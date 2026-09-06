@@ -37,6 +37,9 @@ export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   viewportFit: 'cover',
+  // The keyboard shrinks the page rather than covering it, so the bottom
+  // button stays reachable while typing (Android; iOS ignores it).
+  interactiveWidget: 'resizes-content',
 };
 
 import { ErrorReporter } from '@/components/error-reporter';

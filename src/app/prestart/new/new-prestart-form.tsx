@@ -150,6 +150,12 @@ export function NewPrestartForm({
       </label>
 
       {error && <p className="alert">{error}</p>}
+      {!ready && (
+        <p className="notice gap">
+          Still needed before it can be saved:{' '}
+          {[!supervisor.trim() && 'who is running it', !work.trim() && 'what is on today', !hazards.trim() && 'hazards and controls'].filter(Boolean).join(', ')}.
+        </p>
+      )}
       <button className="button" type="button" disabled={busy || !ready} onClick={() => create('now')}>
         {busy ? 'Starting…' : preparing ? `Open it for ${fmtDate(date)}` : 'Start sign-on'}
       </button>
