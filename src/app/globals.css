@@ -3085,3 +3085,24 @@ body {
 .wxweek__wet td:nth-child(4) { color: #2f6fb0; font-weight: 600; }
 /* Cards take the height of their content; nothing stretches to match a taller neighbour. */
 .home-grid { align-items: start; }
+
+/* The variation register: one card per item, its status changed in place. */
+.vr-summary { margin: 0.2rem 0 0.8rem; font-size: 0.75rem; color: var(--ink-40); letter-spacing: 0.02em; }
+.vr-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.6rem; }
+@media (min-width: 760px) { .vr-list { grid-template-columns: 1fr 1fr; } }
+.vr-card { border: 1px solid var(--ink-08); border-left: 4px solid #9A6A09; border-radius: 0.5rem; padding: 0.7rem 0.85rem 0.75rem; background: #fff; }
+.vr-card--submitted { border-left-color: #2f6fb0; }
+.vr-card--approved, .vr-card--paid { border-left-color: #2E6B4F; }
+.vr-card--rejected { border-left-color: var(--ink-40); opacity: 0.8; }
+.vr-card__head { display: flex; justify-content: space-between; align-items: baseline; gap: 0.6rem; font-size: 0.8rem; }
+.vr-card__ref { font-weight: 600; }
+.vr-card__value { font-weight: 600; }
+.vr-card__value .vr-note { display: inline; margin-left: 0.2rem; }
+.vr-card__title { margin: 0.25rem 0 0.15rem; font-size: 0.95rem; line-height: 1.35; }
+.vr-card__meta { margin: 0 0 0.5rem; font-size: 0.75rem; color: var(--ink-40); }
+.vr-card__notes { margin: -0.2rem 0 0.5rem; font-size: 0.8rem; }
+.vr-control { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 0.7rem; }
+.vr-select { width: auto; min-width: 8rem; padding-top: 0.3rem; padding-bottom: 0.3rem; }
+.vr-details { flex-basis: 100%; display: grid; gap: 0.5rem; padding: 0.4rem 0 0.2rem; }
+.vr-note { display: block; font-size: 0.72rem; color: var(--ink-40); margin-top: 0.15rem; }
+.linklike { background: none; border: 0; padding: 0; font: inherit; font-size: 0.8rem; color: #2E6B4F; text-decoration: underline; cursor: pointer; }

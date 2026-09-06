@@ -1,4 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { summariseRegister, type RegisterItem, type RegisterSummary } from './register';
 
 /**
  * The claims register: everything across the project's whole life that a
@@ -33,9 +34,13 @@ export interface ClaimsData {
       description: string;
       directed_by: string | null;
       estimated_cost: number | null;
+      variation_id: string | null;
     }>;
     totalCost: number;
     unreferenced: number;
+    /** The register: one item per variation, with the diary days that mention it. */
+    register: RegisterItem[];
+    summary: RegisterSummary;
   };
   dayworks: {
     rows: Array<{
@@ -90,7 +95,7 @@ export async function loadClaimsData(
     ),
     diaryQuery(
       supabase,
-      `select entry_no, entry_date, vr_ref, description, directed_by, estimated_cost from diary.variations ${where} order by entry_date`,
+      `select entry_no, entry_date, vr_ref, description, directed_by, estimated_cost, variation_id from diary.variations ${where} order by entry_date`,
     ),
     diaryQuery(
       supabase,
@@ -132,7 +137,12 @@ export async function loadClaimsData(
     description: String(row.description ?? ''),
     directed_by: (row.directed_by as string | null) ?? null,
     estimated_cost: row.estimated_cost == null ? null : num(row.estimated_cost),
+    variation_id: (row.variation_id as string | null) ?? null,
   }));
+
+  // The register beside the diary: which item each mention belongs to, and
+  // where each item stands. Read under RLS like everything else here.
+  const register = await loadRegister(supabase, variationRows);
 
   const dayworkRows = dayworks.map((row) => ({
     date: String(row.entry_date ?? ''),
@@ -160,6 +170,8 @@ export async function loadClaimsData(
       rows: variationRows,
       totalCost: round2(variationRows.reduce((sum, r) => sum + (r.estimated_cost ?? 0), 0)),
       unreferenced: variationRows.filter((r) => !r.vr_ref).length,
+      register,
+      summary: summariseRegister(register),
     },
     dayworks: {
       rows: dayworkRows,
@@ -167,4 +179,35 @@ export async function loadClaimsData(
       missingDockets: dayworkRows.filter((r) => !r.docket_ref).length,
     },
   };
+}
+
+async function loadRegister(
+  supabase: SupabaseClient,
+  mentions: Array<{ date: string; entry_no: string; variation_id: string | null }>,
+): Promise<RegisterItem[]> {
+  const ids = mentions.map((m) => m.variation_id).filter((v): v is string => !!v);
+  if (ids.length === 0) return [];
+  const { data } = await supabase
+    .from('variation_register_links')
+    .select(
+      'variation_id, register:variation_register(id, title, vr_ref, raised_on, status, estimated_cost, agreed_cost, submitted_on, decided_on, paid_on, notes)',
+    )
+    .in('variation_id', ids);
+  const items = new Map<string, RegisterItem>();
+  for (const link of (data ?? []) as Array<{ variation_id: string; register: unknown }>) {
+    const reg = (Array.isArray(link.register) ? link.register[0] : link.register) as Omit<RegisterItem, 'mentions'> | null;
+    if (!reg) continue;
+    const item = items.get(reg.id) ?? {
+      ...reg,
+      estimated_cost: reg.estimated_cost == null ? null : num(reg.estimated_cost),
+      agreed_cost: reg.agreed_cost == null ? null : num(reg.agreed_cost),
+      mentions: [],
+    };
+    const mention = mentions.find((m) => m.variation_id === link.variation_id);
+    if (mention) item.mentions.push({ date: mention.date, entry_no: mention.entry_no });
+    items.set(reg.id, item);
+  }
+  return [...items.values()]
+    .map((item) => ({ ...item, mentions: item.mentions.sort((a, b) => a.date.localeCompare(b.date)) }))
+    .sort((a, b) => a.raised_on.localeCompare(b.raised_on) || a.title.localeCompare(b.title));
 }

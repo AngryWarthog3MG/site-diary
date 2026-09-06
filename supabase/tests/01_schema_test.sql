@@ -622,6 +622,47 @@ $q$, 'cannot be signed as a second original');
 do $$ begin raise notice 'PASS  a stale draft original cannot sign once the day has a signed original'; end; $$;
 rollback to savepoint one_original_per_day;
 
+-- ---------------------------------------------------------------------------
+-- The variation register. Entry 1 was signed with VR-014 above, so signing
+-- registered it; a status change goes through the RPC and leaves an event.
+-- ---------------------------------------------------------------------------
+savepoint variation_register;
+reset role;
+-- The RPCs check membership through auth.uid(), so act as supervisor 1.
+select set_config('request.jwt.claims',
+  '{"sub":"11111111-1111-1111-1111-111111111111","role":"authenticated"}', true);
+set local role authenticated;
+do $$
+declare
+  v_reg  public.variation_register;
+  v_link int;
+  v_ev   int;
+begin
+  select * into v_reg from public.variation_register
+   where project_id = 'bbbbbbbb-0000-0000-0000-000000000001' and vr_ref = 'VR-014';
+  assert found, 'signing did not register the variation';
+  assert v_reg.status = 'raised', 'a fresh item is raised';
+  assert v_reg.raised_on = date '2026-08-24', 'raised on the diary day';
+  assert v_reg.title = 'Extra rock breaking at Pier 3', 'title is the diary wording';
+  select count(*) into v_link from public.variation_register_links where register_id = v_reg.id;
+  assert v_link = 1, 'one diary mention linked';
+
+  perform public.set_variation_status(v_reg.id, 'submitted', 'Sent to the QS');
+  select * into v_reg from public.variation_register where id = v_reg.id;
+  assert v_reg.status = 'submitted' and v_reg.submitted_on = current_date, 'submitted stamps the date';
+  select count(*) into v_ev from public.variation_status_events where register_id = v_reg.id;
+  assert v_ev = 2, format('expected raised + submitted events, got %s', v_ev);
+
+  perform public.set_variation_details(v_reg.id, ' vr-014 ', 1250.00, 'Agreed at 1,250');
+  select * into v_reg from public.variation_register where id = v_reg.id;
+  assert v_reg.vr_ref = 'vr-014' and v_reg.agreed_cost = 1250.00, 'details stored';
+  raise notice 'PASS  variation register: signing registers, status is an audited RPC';
+end;
+$$;
+reset role;
+select set_config('request.jwt.claims', '', true);
+rollback to savepoint variation_register;
+
 do $$ begin raise notice ''; raise notice 'ALL TESTS PASSED'; end; $$;
 
 rollback;

@@ -849,6 +849,21 @@ either; that is the supervisor's tap on the queue card. The weekly marks every
 unsigned day's figures where they appear — its labour column, every dated line — and
 says under the plant totals that they include those days.
 
+**R10. The variation register is a ledger beside the diary, not a field in it.**
+The signed row proves a variation was directed; it never changes. What the office
+needs is what happened next — priced, submitted, approved, rejected, paid — and that
+belongs to the variation as a commercial item, not to any one day. So
+`variation_register` holds one row per item, `variation_register_links` says which
+diary rows (across days and corrections) are mentions of it, and
+`variation_status_events` keeps every change with who, when and a note. Signing a day
+registers its variations automatically: matched by VR reference, else by identical
+wording, else a new item raised on that day; a later mention fills a blank reference
+or estimate and never overwrites one. Status moves only through
+`set_variation_status()`, which stamps submitted/decided/paid dates and writes the
+event — the screen has no update policy to misuse. The claims screen leads with the
+number and value not yet submitted, because that is where the money goes missing.
+Nothing here touches the content hash or a signed row.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;
