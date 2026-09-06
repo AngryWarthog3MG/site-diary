@@ -37,9 +37,14 @@ export async function indexDocument(documentId: string): Promise<{ ok: true; pag
       if (error) throw new Error(error.message);
     }
     const chars = chunks.reduce((n, c) => n + c.text.length, 0);
+    // A title that is only a file code ("01B3161") is no use on a citation;
+    // take the first real heading off page one instead, once.
+    const { data: current } = await admin.from('project_documents').select('title').eq('id', documentId).single();
+    const looksLikeCode = current && /^[0-9A-Z_-]{4,}$/i.test(current.title) && !/\s/.test(current.title);
+    const heading = looksLikeCode ? firstHeading(extraction.pages[0]?.text ?? '') : null;
     await admin
       .from('project_documents')
-      .update({ status: 'ready', pages: extraction.pageCount, chars, method: extraction.method, indexed_at: new Date().toISOString(), error: extraction.note ?? null })
+      .update({ status: 'ready', pages: extraction.pageCount, chars, method: extraction.method, indexed_at: new Date().toISOString(), error: extraction.note ?? null, ...(heading ? { title: heading } : {}) })
       .eq('id', documentId);
     return { ok: true, pages: extraction.pageCount, chunks: chunks.length, method: extraction.method };
   } catch (error) {
@@ -47,4 +52,17 @@ export async function indexDocument(documentId: string): Promise<{ ok: true; pag
     await admin.from('project_documents').update({ status: 'failed', error: reason.slice(0, 500) }).eq('id', documentId);
     return { ok: false, reason };
   }
+}
+
+/** The first line on page one that reads like a title: a few words, not a number, not a date. */
+function firstHeading(pageText: string): string | null {
+  for (const raw of pageText.split('\n')) {
+    const line = raw.replace(/\s+/g, ' ').trim();
+    if (line.length < 8 || line.length > 90) continue;
+    if (!/[A-Za-z]{3,}/.test(line)) continue;
+    if (/^(page|rev|revision|issued|date|ref|doc no|confidential)\b/i.test(line)) continue;
+    if (/^\d/.test(line) || /\d{1,2}\/\d{1,2}\/\d{2,4}/.test(line)) continue;
+    return line.replace(/\s*[–-]\s*$/, '');
+  }
+  return null;
 }

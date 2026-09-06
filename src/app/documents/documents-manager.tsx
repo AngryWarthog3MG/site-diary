@@ -69,6 +69,11 @@ export function DocumentsManager({ projectId, userId, initial }: { projectId: st
     const supabase = createClient();
     for (const file of files) {
       const key = file.name;
+      // The same file twice is the same document twice; a double tap on the phone should not.
+      if (initial.some((d) => d.filename === file.name && d.bytes === file.size)) {
+        setProgress((p) => ({ ...p, [key]: 'Already on this job — skipped' }));
+        continue;
+      }
       try {
         setProgress((p) => ({ ...p, [key]: 'Uploading…' }));
         const id = crypto.randomUUID();

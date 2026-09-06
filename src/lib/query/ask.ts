@@ -48,6 +48,7 @@ export interface AskResult {
   citations: Citation[];
   /** On the documents path: the passages the answer was written from. */
   sources: DocumentSource[];
+  searchNote?: DocumentSearchNote;
   rowCount: number;
   schemaVersion: string;
 }
@@ -59,6 +60,15 @@ export interface DocumentSource {
   revision: string | null;
   page: number | null;
   snippet: string;
+}
+
+/** What the documents path looked through, so a blank answer is explainable. */
+export interface DocumentSearchNote {
+  documentsSearched: number;
+  /** Words from the question that appear in no document at all. */
+  missingTerms: string[];
+  /** True when the passages are nearest matches on some words, not the whole question. */
+  nearest: boolean;
 }
 
 export class AskError extends Error {
@@ -280,12 +290,29 @@ export async function ask(
     if (!options.projectId) {
       return { ...base, path, answer: 'Pick a project first — documents belong to a job.', citations: [], rowCount: 0 };
     }
-    const sources = await searchDocuments(supabase, options.projectId, searchTerms ?? trimmed, trimmed);
+    const { count: documentsSearched } = await supabase
+      .from('project_documents')
+      .select('*', { count: 'exact', head: true })
+      .eq('project_id', options.projectId)
+      .eq('status', 'ready');
+    let sources = await searchDocuments(supabase, options.projectId, searchTerms ?? trimmed, trimmed);
+    let note: DocumentSearchNote = { documentsSearched: documentsSearched ?? 0, missingTerms: [], nearest: false };
     if (sources.length === 0) {
-      return { ...base, path, answer: NOTHING_IN_DOCUMENTS, citations: [], rowCount: 0 };
+      // Nothing carries the whole question. Take it a word at a time: which
+      // words are in no document, and what the documents say about the rest.
+      const nearest = await nearestPassages(supabase, options.projectId, searchTerms ?? trimmed);
+      sources = nearest.sources;
+      note = { ...note, missingTerms: nearest.missingTerms, nearest: true };
+      if (sources.length === 0) {
+        const missing = nearest.missingTerms.length ? ` Not found in any of them: ${nearest.missingTerms.join(', ')}.` : '';
+        return {
+          ...base, path, searchNote: note, citations: [], rowCount: 0,
+          answer: `${NOTHING_IN_DOCUMENTS.replace('The job documents do not say.', `The ${note.documentsSearched} job documents do not say.`)}${missing}`,
+        };
+      }
     }
-    const answer = await phraseFromDocuments(trimmed, sources);
-    return { ...base, path, sources, answer, citations: [], rowCount: sources.length };
+    const answer = await phraseFromDocuments(trimmed, sources, note);
+    return { ...base, path, sources, searchNote: note, answer, citations: [], rowCount: sources.length };
   }
 
   if (path === 'semantic') {
@@ -433,7 +460,38 @@ You are given the question and the passages a search returned, each labelled wit
 - Be brief. Plain Australian construction English, no throat-clearing.
 - Plain text only: no markdown, no asterisks, no headings, no bullet symbols. Quote with ordinary double quotes.`;
 
-async function phraseFromDocuments(question: string, sources: DocumentSource[]): Promise<string> {
+/** Question words worth searching for on their own: no stop words, no scaffolding. */
+const STOP = new Set(['what', 'which', 'where', 'when', 'how', 'much', 'many', 'do', 'does', 'did', 'is', 'are', 'the', 'a', 'an', 'of', 'in', 'on', 'at', 'to', 'for', 'and', 'or', 'i', 'we', 'need', 'needs', 'required', 'require', 'there', 'any', 'about', 'say', 'says', 'spec', 'specification', 'it', 'this', 'that', 'be', 'with', 'from', 'by', 'area', 'areas']);
+function questionTerms(text: string): string[] {
+  const seen = new Set<string>();
+  for (const raw of text.split(/[^A-Za-z0-9.-]+/)) {
+    const t = raw.replace(/^[.-]+|[.-]+$/g, '');
+    if (t.length < 2 || STOP.has(t.toLowerCase())) continue;
+    seen.add(t);
+  }
+  return [...seen].slice(0, 8);
+}
+
+async function nearestPassages(
+  supabase: SupabaseClient,
+  projectId: string,
+  text: string,
+): Promise<{ sources: DocumentSource[]; missingTerms: string[] }> {
+  const terms = questionTerms(text);
+  if (terms.length === 0) return { sources: [], missingTerms: [] };
+  const { data, error } = await supabase.rpc('document_search_terms', { p_project_id: projectId, p_terms: terms, p_limit: 10 });
+  if (error) throw new AskError(`Document search failed: ${error.message}`);
+  const rows = (data ?? []) as Array<{ document_id: string; title: string; kind: string; revision: string | null; page: number | null; chunk: string; matched: number; hit_terms: string[] }>;
+  const found = new Set(rows.flatMap((r) => r.hit_terms.map((t) => t.toLowerCase())));
+  const missingTerms = terms.filter((t) => !found.has(t.toLowerCase()));
+  const sources = rows.map((r) => ({
+    document_id: r.document_id, title: r.title, kind: r.kind, revision: r.revision, page: r.page,
+    snippet: r.chunk.slice(0, 240), chunk: r.chunk,
+  })) as Array<DocumentSource & { chunk: string }>;
+  return { sources, missingTerms };
+}
+
+async function phraseFromDocuments(question: string, sources: DocumentSource[], note?: DocumentSearchNote): Promise<string> {
   const passages = (sources as Array<DocumentSource & { chunk?: string }>).map((s, i) => ({
     n: i + 1,
     document: s.title,
@@ -452,6 +510,12 @@ async function phraseFromDocuments(question: string, sources: DocumentSource[]):
         content: [
           `Question: ${question}`,
           '',
+          ...(note?.nearest
+            ? [
+                `No passage answers the whole question. ${note.missingTerms.length ? `These words from the question appear in NONE of the ${note.documentsSearched} uploaded documents: ${note.missingTerms.join(', ')}. Say so in your first sentence, plainly.` : ''} The passages below are the nearest matches on the remaining words — report what they do say, cited, and do not stretch them to answer what was asked.`,
+                '',
+              ]
+            : []),
           'Passages from the job documents:',
           '```json',
           JSON.stringify(passages, null, 1).slice(0, 60_000),

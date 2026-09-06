@@ -19,6 +19,7 @@ interface AskResponse {
   }>;
   citations: Array<{ entry_no: string; entry_id: string }>;
   sources?: Array<{ document_id: string; title: string; kind: string; revision: string | null; page: number | null; snippet: string }>;
+  searchNote?: { documentsSearched: number; missingTerms: string[]; nearest: boolean };
   rowCount: number;
 }
 
@@ -181,6 +182,13 @@ export function AskScreen({
             </>
           )}
 
+          {result.searchNote && (
+            <p className="way-hint">
+              Searched {result.searchNote.documentsSearched} document{result.searchNote.documentsSearched === 1 ? '' : 's'}.
+              {result.searchNote.missingTerms.length > 0 && ` Not in any of them: ${result.searchNote.missingTerms.join(', ')}.`}
+              {result.searchNote.nearest && (result.sources?.length ?? 0) > 0 && ' The passages below are the nearest matches, not an answer to the whole question.'}
+            </p>
+          )}
           {(result.sources?.length ?? 0) > 0 && (
             <>
               <p className="label" style={{ marginTop: '1rem' }}>
