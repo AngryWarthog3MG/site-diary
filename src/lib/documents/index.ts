@@ -40,8 +40,11 @@ export async function indexDocument(documentId: string): Promise<{ ok: true; pag
     // A title that is only a file code ("01B3161") is no use on a citation;
     // take the first real heading off page one instead, once.
     const { data: current } = await admin.from('project_documents').select('title').eq('id', documentId).single();
+    // Drawings are one page and their sheet number *is* their name; only a
+    // multi-page spec or report gets a heading read off its cover.
     const looksLikeCode = current && /^[0-9A-Z_-]{4,}$/i.test(current.title) && !/\s/.test(current.title);
-    const heading = looksLikeCode ? firstHeading(extraction.pages[0]?.text ?? '') : null;
+    const multiPage = (extraction.pageCount ?? extraction.pages.length) > 1;
+    const heading = looksLikeCode && multiPage ? firstHeading(extraction.pages[0]?.text ?? '') : null;
     await admin
       .from('project_documents')
       .update({ status: 'ready', pages: extraction.pageCount, chars, method: extraction.method, indexed_at: new Date().toISOString(), error: extraction.note ?? null, ...(heading ? { title: heading } : {}) })
@@ -54,15 +57,26 @@ export async function indexDocument(documentId: string): Promise<{ ok: true; pag
   }
 }
 
-/** The first line on page one that reads like a title: a few words, not a number, not a date. */
+/**
+ * The line on the cover that reads like the document's title: the longest
+ * all-capitals line among the first dozen candidates ("TECHNICAL
+ * SPECIFICATION", "GEOTECHNICAL INVESTIGATION REPORT"), else the first plain
+ * line. Company names, addresses, URLs and boilerplate are skipped.
+ */
 function firstHeading(pageText: string): string | null {
+  const candidates: string[] = [];
   for (const raw of pageText.split('\n')) {
     const line = raw.replace(/\s+/g, ' ').trim();
     if (line.length < 8 || line.length > 90) continue;
     if (!/[A-Za-z]{3,}/.test(line)) continue;
-    if (/^(page|rev|revision|issued|date|ref|doc no|confidential)\b/i.test(line)) continue;
+    if (/^(page|rev|revision|issued|date|ref|doc no|confidential|copyright|match line|manufacturer|building)\b/i.test(line)) continue;
+    if (/\b(pty|ltd|abn|acn|www\.|@|street|terrace|level \d|po box|telephone|phone)\b/i.test(line)) continue;
     if (/^\d/.test(line) || /\d{1,2}\/\d{1,2}\/\d{2,4}/.test(line)) continue;
-    return line.replace(/\s*[–-]\s*$/, '');
+    candidates.push(line.replace(/\s*[–-]\s*$/, ''));
+    if (candidates.length >= 12) break;
   }
-  return null;
+  if (candidates.length === 0) return null;
+  const caps = candidates.filter((c) => c === c.toUpperCase() && /[A-Z]/.test(c) && c.split(' ').length >= 2);
+  if (caps.length > 0) return caps.reduce((a, b) => (b.length > a.length ? b : a));
+  return candidates[0];
 }
