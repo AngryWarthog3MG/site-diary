@@ -3131,3 +3131,12 @@ body {
 .docs-status--ready { color: #2E6B4F; }
 .docs-status--indexing { color: #2f6fb0; }
 .docs-status--failed { color: #8a2a1a; }
+
+/* The Spec tab on review */
+.spec-line { border-left: 4px solid var(--ink-08); }
+.spec-line--found { border-left-color: #2E6B4F; }
+.spec-line__diary { margin: 0 0 0.5rem; font-size: 0.95rem; }
+.spec-line__diary .label, .spec-line__spec .label { display: block; margin-bottom: 0.15rem; }
+.spec-line__spec { margin: 0 0 0.3rem; font-size: 0.95rem; line-height: 1.45; }
+.spec-line__cite { margin: 0 0 0.4rem; font-size: 0.75rem; color: var(--ink-40); }
+.spec-line__passage { margin: 0.4rem 0 0; padding: 0.5rem 0.7rem; border-left: 3px solid var(--ink-08); background: rgba(22,33,31,0.03); font-size: 0.85rem; }

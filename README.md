@@ -888,6 +888,13 @@ same rule as the diary paths. Documents are reference material: nothing from the
 reaches an entry, a signed row or the hash, and a supervisor who wants a spec
 figure in the diary says it and confirms it like any other number.
 
+The Spec tab on the review screen is the same machinery pointed at the day. For each
+work item, pour and variation as typed, it finds the passages that bear on it and has
+the model state what the documents *require* — a depth, cover, mix, hold point —
+cited, in a sentence, or nothing. It is told not to judge: "spec says 300 mm" sits
+beside "we placed 250" and the supervisor decides what to confirm. Nothing on the tab
+is stored; it re-runs on request against the lines as they are now.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;

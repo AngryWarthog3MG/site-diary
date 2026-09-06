@@ -35,6 +35,7 @@ import {
 } from '@/lib/extraction/completeness';
 import { BrandMark } from '@/components/brand-mark';
 import { SignaturePad } from '@/components/signature-pad';
+import { SpecBlock, type SpecLine } from './spec-block';
 import type { ReviewWeather } from './page';
 import { fmtDate } from '@/lib/pdf/dates';
 
@@ -59,9 +60,10 @@ const REQUIRED_GROUP: Partial<Record<SectionKey, ItemGroup>> = {
 };
 
 const PHOTO_BUCKET = 'entry-photos';
-type ReviewTab = ItemGroup | 'photos' | 'weather' | 'notes' | 'signoff';
+type ReviewTab = ItemGroup | 'photos' | 'weather' | 'notes' | 'signoff' | 'spec';
 const REVIEW_TABS: Array<{ key: ReviewTab; label: string }> = [
   ...SECTIONS.map((section) => ({ key: section.group, label: section.group === 'work_items' ? 'Works' : section.title })),
+  { key: 'spec', label: 'Spec' },
   { key: 'photos', label: 'Photos' },
   { key: 'weather', label: 'Weather' },
   { key: 'notes', label: 'Notes' },
@@ -322,6 +324,12 @@ export function ReviewScreen(props: {
   });
   const unansweredSet = new Set(unanswered);
   const activeSection = SECTIONS.find((section) => section.group === activeTab);
+  // The lines the Spec tab looks up: what was done and where, as typed now.
+  const specLines: SpecLine[] = [
+    ...payload.work_items.map((item, i) => ({ key: `work_items:${i}`, group: 'work_items' as const, text: String(item.description ?? ''), area: (item.area as string | null) ?? null })),
+    ...payload.pours.map((item, i) => ({ key: `pours:${i}`, group: 'pours' as const, text: [item.location, item.mix_spec].filter(Boolean).join(' — '), area: null })),
+    ...payload.variations.map((item, i) => ({ key: `variations:${i}`, group: 'variations' as const, text: String(item.description ?? ''), area: null })),
+  ].filter((l) => l.text.trim());
   const activeReasons =
     activeSection == null
       ? []
@@ -330,6 +338,9 @@ export function ReviewScreen(props: {
           .map((gap) => `${GAP_PROMPTS[gap].short}. ${GAP_PROMPTS[gap].why}`);
 
   function tabMeta(tab: ReviewTab) {
+    if (tab === 'spec') {
+      return { count: specLines.length, needsAnswer: false, hasGap: false, low: false };
+    }
     if (tab === 'weather') {
       return {
         count: payload.weather_impact?.trim() ? 1 : 0,
@@ -503,6 +514,10 @@ export function ReviewScreen(props: {
             onBulkAdd={bulkAdd}
             onRemove={removeItem}
           />
+        )}
+
+        {activeTab === 'spec' && (
+          <SpecBlock entryId={props.entryId} projectId={props.projectId} lines={specLines} />
         )}
 
         {activeTab === 'signoff' && (

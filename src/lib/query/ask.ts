@@ -1,5 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { zodOutputFormat } from '@anthropic-ai/sdk/helpers/zod';
+import { searchTerms } from '@/lib/documents/terms';
 import * as z from 'zod/v4';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { DIARY_SCHEMA_DOC, SQL_RULES, QUERY_SCHEMA_VERSION } from './schema-doc.ts';
@@ -460,24 +461,12 @@ You are given the question and the passages a search returned, each labelled wit
 - Be brief. Plain Australian construction English, no throat-clearing.
 - Plain text only: no markdown, no asterisks, no headings, no bullet symbols. Quote with ordinary double quotes.`;
 
-/** Question words worth searching for on their own: no stop words, no scaffolding. */
-const STOP = new Set(['what', 'which', 'where', 'when', 'how', 'much', 'many', 'do', 'does', 'did', 'is', 'are', 'the', 'a', 'an', 'of', 'in', 'on', 'at', 'to', 'for', 'and', 'or', 'i', 'we', 'need', 'needs', 'required', 'require', 'there', 'any', 'about', 'say', 'says', 'spec', 'specification', 'it', 'this', 'that', 'be', 'with', 'from', 'by', 'area', 'areas']);
-function questionTerms(text: string): string[] {
-  const seen = new Set<string>();
-  for (const raw of text.split(/[^A-Za-z0-9.-]+/)) {
-    const t = raw.replace(/^[.-]+|[.-]+$/g, '');
-    if (t.length < 2 || STOP.has(t.toLowerCase())) continue;
-    seen.add(t);
-  }
-  return [...seen].slice(0, 8);
-}
-
 async function nearestPassages(
   supabase: SupabaseClient,
   projectId: string,
   text: string,
 ): Promise<{ sources: DocumentSource[]; missingTerms: string[] }> {
-  const terms = questionTerms(text);
+  const terms = searchTerms(text);
   if (terms.length === 0) return { sources: [], missingTerms: [] };
   const { data, error } = await supabase.rpc('document_search_terms', { p_project_id: projectId, p_terms: terms, p_limit: 10 });
   if (error) throw new AskError(`Document search failed: ${error.message}`);
