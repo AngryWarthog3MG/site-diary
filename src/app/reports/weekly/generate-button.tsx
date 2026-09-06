@@ -73,8 +73,8 @@ export function GenerateWeeklyPdf({
 
   return (
     <>
-      <button className="button" type="button" onClick={generate} disabled={busy}>
-        {busy ? 'Generating — about a minute…' : 'Generate weekly PDF'}
+      <button className="button button--outline" type="button" onClick={generate} disabled={busy}>
+        {busy ? 'Generating — about a minute…' : 'Client report (PDF with commentary)'}
       </button>
       {error && <p className="weekly-error">{error}</p>}
     </>

@@ -167,7 +167,13 @@ export default async function WeeklyReportPage({
       {data && data.entries.length > 0 && (
         <>
           <div className="weekly-actions">
-            <GenerateWeeklyPdf projectId={current.project_id} start={start} end={end} />
+            <a
+              className="button"
+              href={`/api/reports/weekly/internal?project=${current.project_id}&start=${start}&end=${end}`}
+              download
+            >
+              Download PDF
+            </a>
             <a
               className="button button--outline"
               href={`/api/reports/timesheet?project=${current.project_id}&start=${start}&end=${end}`}
@@ -175,18 +181,16 @@ export default async function WeeklyReportPage({
             >
               Hours as a spreadsheet
             </a>
+            <GenerateWeeklyPdf projectId={current.project_id} start={start} end={end} />
             <MonthlyBundleButton projectId={current.project_id} start={start} />
             <p className="weekly-actions__hint">
-              The PDF adds AI commentary above these tables and stores a shareable copy. The
-              CSV is the labour matrix for payroll. The month bundle binds every signed
-              docket of the month into one document.
+              Download PDF is this page as a document, for wages and progress. The spreadsheet is
+              the labour matrix for payroll. The client report adds AI commentary, marks every
+              figure from a day not yet signed, and stores a shareable copy. The month bundle
+              binds every signed docket of the month into one document.
             </p>
           </div>
-          <WeeklyReport
-            data={data}
-            narrative={null}
-            narrativeNote="Commentary is drafted when the PDF is generated."
-          />
+          <WeeklyReport data={data} narrative={null} audience="internal" />
         </>
       )}
       </main>

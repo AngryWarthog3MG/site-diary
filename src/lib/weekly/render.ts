@@ -40,10 +40,11 @@ export function weeklyInstant(data: WeeklyData): Date {
 export async function renderWeeklyPdf(props: WeeklyReportProps): Promise<Uint8Array> {
   const html = await buildWeeklyHtml(props);
   const { data } = props;
+  const internal = props.audience === 'internal';
   return renderPdfDocument(html, {
-    title: `Weekly report ${data.project.code} ${data.start} to ${data.end}`,
+    title: `${internal ? 'Weekly summary (internal)' : 'Weekly report'} ${data.project.code} ${data.start} to ${data.end}`,
     author: data.project.name,
-    subject: `${data.project.name} — weekly site report ${data.start} to ${data.end}`,
+    subject: `${data.project.name} — ${internal ? 'weekly summary, internal' : 'weekly site report'} ${data.start} to ${data.end}`,
     keywords: [data.project.orgCode, data.project.code, data.start, data.end],
     instant: weeklyInstant(data),
     // The weekly artifact has no single content hash; hash what it renders so

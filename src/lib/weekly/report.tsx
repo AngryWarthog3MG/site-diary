@@ -41,13 +41,22 @@ export interface WeeklyReportProps {
   narrative: string | null;
   /** Shown in place of the narrative when it is absent. */
   narrativeNote?: string;
+  /**
+   * Who this is for. 'record' (default) is the client report: commentary,
+   * and every figure from an unsigned day marked DRAFT. 'internal' is the
+   * office's own view for wages and progress — the same tables, no
+   * commentary, no marks, one quiet line naming any days not yet signed.
+   */
+  audience?: 'record' | 'internal';
 }
 
-export function WeeklyReport({ data, narrative, narrativeNote }: WeeklyReportProps): ReactElement {
+export function WeeklyReport({ data, narrative, narrativeNote, audience = 'record' }: WeeklyReportProps): ReactElement {
   const { labour, plant, pours, quantities, delays, weather, variations } = data;
-  // Days whose figures come from an unsigned draft. Every figure from such a
-  // day is marked where it appears: the day's labour column, every dated line.
-  const draftDays = new Set(data.unsigned.days);
+  const internal = audience === 'internal';
+  // Days whose figures come from an unsigned draft. On the record every figure
+  // from such a day is marked where it appears: the day's labour column, every
+  // dated line, every total that sums it. The internal view carries no marks.
+  const draftDays = new Set(internal ? [] : data.unsigned.days);
   const Draft = ({ day }: { day: string }) =>
     draftDays.has(day) ? <span className="draftmark">DRAFT</span> : null;
   // A total that sums figures from an unsigned day is itself provisional.
@@ -65,7 +74,8 @@ export function WeeklyReport({ data, narrative, narrativeNote }: WeeklyReportPro
       <header className="head">
         <div>
           <p className="lbl">
-            <img className="brandmark" src={LOGO_DATA_URI} alt="" /> Weekly site report
+            <img className="brandmark" src={LOGO_DATA_URI} alt="" />{' '}
+            {internal ? 'Weekly summary · internal' : 'Weekly site report'}
           </p>
           <h1>{data.project.name}</h1>
           <p className="sub">
@@ -81,7 +91,14 @@ export function WeeklyReport({ data, narrative, narrativeNote }: WeeklyReportPro
         </div>
       </header>
 
-      {data.unsigned.entryCount > 0 && (
+      {internal && data.unsigned.entryCount > 0 && (
+        <p className="src">
+          Not yet signed: {data.unsigned.days.map(fmtDate).join(', ')}. Those days can still change
+          until they are signed. For the office; not the client report.
+        </p>
+      )}
+
+      {!internal && data.unsigned.entryCount > 0 && (
         <section className="provisional">
           <p className="lbl">Not final</p>
           <p>
@@ -96,6 +113,7 @@ export function WeeklyReport({ data, narrative, narrativeNote }: WeeklyReportPro
         </section>
       )}
 
+      {!internal && (
       <section className="commentary">
         <p className="commentary__label">
           Commentary — AI-drafted summary. Not part of the signed record; the tables below
@@ -113,6 +131,7 @@ export function WeeklyReport({ data, narrative, narrativeNote }: WeeklyReportPro
           </p>
         )}
       </section>
+      )}
 
       <section className="sect">
         <p className="lbl">Labour hours</p>
