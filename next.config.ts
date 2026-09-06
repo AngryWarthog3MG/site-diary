@@ -10,7 +10,9 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   // Playwright ships browser binaries and native bindings — bundling it breaks
   // the launcher's path resolution.
-  serverExternalPackages: ['playwright', 'playwright-core', '@sparticuz/chromium'],
+  // pdf.js likewise: bundled, its fake worker cannot find pdf.worker.mjs
+  // beside itself. Left external, it loads from node_modules as shipped.
+  serverExternalPackages: ['playwright', 'playwright-core', '@sparticuz/chromium', 'pdfjs-dist'],
   // Being external means Next does not follow the imports, so it never learns
   // that playwright-core reads browsers.json at runtime and the file is left
   // out of the deployment. The failure is a module-not-found for a JSON file,
@@ -23,6 +25,7 @@ const nextConfig: NextConfig = {
     '/api/**': [
       './node_modules/playwright-core/**',
       './node_modules/@sparticuz/chromium/**',
+      './node_modules/pdfjs-dist/legacy/build/**',
     ],
   },
 };

@@ -68,6 +68,8 @@ improvising; the register once shipped dead because a live smoke test was skippe
 - `src/lib/weather/` — BOM fetch, parse, window handling, provenance; `days.ts` keeps one
   reading per project per day (`project_weather_days`) from the Bureau's daily table
 - `src/lib/query/` — `diary` view schema description, SQL validation, the three calls
+- `src/lib/documents/` — job documents for Ask: text extraction (typed PDF, Word, scans via
+  the model), chunking, indexing into `project_document_chunks`. Reference only, never a diary field
 - `src/lib/claims/` — the claims register loader and the variation register (`register.ts`:
   statuses, summary arithmetic). Status changes only via the `set_variation_status` RPC
 - `src/lib/weekly/`, `src/lib/monthly/` — reports

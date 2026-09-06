@@ -93,7 +93,8 @@ export function AppMenu({ slotId }: { slotId: string }) {
         <div className="navgrid">
           {item(`/prestart${q}`, 'Prestarts', 'Morning briefing and sign-on')}
           {item(`/toolbox${q}`, 'Toolbox talks', 'Weekly talk and sign-on')}
-          {item(`/ask${q}`, 'Ask a question', 'Answered from your own diary')}
+          {item(`/ask${q}`, 'Ask a question', 'From your diary and the job documents')}
+          {item(`/documents${q}`, 'Job documents', 'Spec, scope, contract, drawings')}
           {(me?.projects.length ?? 0) > 1 && item('/portfolio', 'All jobs', 'Every active site at once')}
         </div>
       </section>

@@ -3115,3 +3115,19 @@ body {
 .vr-record__days { display: grid; gap: 0.45rem; padding: 0.5rem 0 0.2rem; }
 .vr-record__day { display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; }
 .vr-record__day input { width: 1.1rem; height: 1.1rem; }
+
+/* Job documents */
+.docs-add { margin-top: 0.75rem; }
+.docs-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.6rem; }
+.docs-card { border: 1px solid var(--ink-08); border-left: 4px solid var(--ink-40); border-radius: 0.5rem; padding: 0.7rem 0.85rem; background: #fff; }
+.docs-card--ready { border-left-color: #2E6B4F; }
+.docs-card--indexing { border-left-color: #2f6fb0; }
+.docs-card--failed { border-left-color: #8a2a1a; }
+.docs-card__head { display: flex; justify-content: space-between; align-items: baseline; gap: 0.6rem; }
+.docs-card__title { font-size: 0.95rem; font-weight: 600; line-height: 1.3; }
+.docs-card__meta { margin: 0.25rem 0 0.4rem; font-size: 0.75rem; color: var(--ink-40); }
+.docs-card__actions { display: flex; gap: 1rem; }
+.docs-status { font-size: 0.66rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; white-space: nowrap; }
+.docs-status--ready { color: #2E6B4F; }
+.docs-status--indexing { color: #2f6fb0; }
+.docs-status--failed { color: #8a2a1a; }

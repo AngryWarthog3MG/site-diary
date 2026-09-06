@@ -6,7 +6,7 @@ import Link from 'next/link';
 
 interface AskResponse {
   question: string;
-  path: 'structured' | 'semantic';
+  path: 'structured' | 'semantic' | 'documents';
   answer: string;
   sql: string | null;
   rows: Record<string, unknown>[];
@@ -18,6 +18,7 @@ interface AskResponse {
     snippet: string;
   }>;
   citations: Array<{ entry_no: string; entry_id: string }>;
+  sources?: Array<{ document_id: string; title: string; kind: string; revision: string | null; page: number | null; snippet: string }>;
   rowCount: number;
 }
 
@@ -88,8 +89,9 @@ export function AskScreen({
       <p className="label"><BrandMark size={18} /> {projectName}</p>
       <h1 style={{ margin: '0.25rem 0 0', fontSize: '1.375rem', fontWeight: 600 }}>Ask</h1>
       <p style={{ margin: '0.25rem 0 0', color: 'var(--ink-60)', fontSize: '0.9375rem' }}>
-        Questions are answered from signed entries only, and every answer shows the rows it came
-        from.
+        Questions about what happened are answered from signed entries only, and every answer
+        shows the rows it came from. Questions about what the spec, scope or contract says are
+        answered from the job documents, with the clause and page cited.
       </p>
 
       <form
@@ -150,7 +152,8 @@ export function AskScreen({
         <section style={{ marginTop: '1.5rem' }}>
           <hr className="rule" />
           <p className="label">
-            Answer · {result.path === 'structured' ? 'from the record' : 'from what was said'}
+            Answer ·{' '}
+            {result.path === 'structured' ? 'from the record' : result.path === 'documents' ? 'from the job documents' : 'from what was said'}
           </p>
           <div className="answer">
             {result.answer.split(/\n{2,}/).map((para, index) => (
@@ -175,6 +178,25 @@ export function AskScreen({
                   </li>
                 ))}
               </ul>
+            </>
+          )}
+
+          {(result.sources?.length ?? 0) > 0 && (
+            <>
+              <p className="label" style={{ marginTop: '1rem' }}>
+                Passages it was written from · {result.sources!.length}
+              </p>
+              {result.sources!.map((src, index) => (
+                <article key={index} className="item">
+                  <p className="mono" style={{ margin: 0, fontSize: '0.875rem' }}>
+                    {src.title}
+                    {src.revision ? ` rev ${src.revision}` : ''}
+                    {src.page != null ? ` · p. ${src.page}` : ''}
+                    <span className="vr-note" style={{ display: 'inline', marginLeft: '0.4rem' }}>{src.kind}</span>
+                  </p>
+                  <Snippet text={src.snippet} />
+                </article>
+              ))}
             </>
           )}
 

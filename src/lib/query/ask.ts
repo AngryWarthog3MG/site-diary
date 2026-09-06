@@ -21,7 +21,7 @@ import { validateGeneratedSql } from './validate.ts';
 export const QUERY_MODEL = process.env.ANTHROPIC_QUERY_MODEL ?? 'claude-sonnet-4-6';
 export const CLASSIFIER_MODEL = process.env.ANTHROPIC_CLASSIFIER_MODEL ?? 'claude-haiku-4-5';
 
-export type QueryPath = 'structured' | 'semantic';
+export type QueryPath = 'structured' | 'semantic' | 'documents';
 
 export interface SearchHit {
   entry_no: string;
@@ -46,8 +46,19 @@ export interface AskResult {
   hits: SearchHit[];
   /** §5: every answer cites entry numbers, and each one links back to its entry. */
   citations: Citation[];
+  /** On the documents path: the passages the answer was written from. */
+  sources: DocumentSource[];
   rowCount: number;
   schemaVersion: string;
+}
+
+export interface DocumentSource {
+  document_id: string;
+  title: string;
+  kind: string;
+  revision: string | null;
+  page: number | null;
+  snippet: string;
 }
 
 export class AskError extends Error {
@@ -67,7 +78,7 @@ function client(): Anthropic {
 }
 
 const Classification = z.object({
-  path: z.enum(['structured', 'semantic']),
+  path: z.enum(['structured', 'semantic', 'documents']),
   reason: z.string(),
   /**
    * The content words worth searching for, question scaffolding stripped.
@@ -90,7 +101,9 @@ const CLASSIFIER_PROMPT = `You are routing a question about a construction site 
 
 **semantic** — the question is about what someone said or described, and needs the supervisor's own words. "What did Lendlease say about the sub-meters", "any issues with access to Area B", "what happened with the retaining wall".
 
-If a question could be either, prefer **structured**: a table of rows with entry numbers is more use to a project manager than a quotation, and the structured path shows its working.
+**documents** — the question is about what the job's documents require or say: the specification, scope of works, contract, drawings register, safety plan, programme. "What depth is the topsoil at the bus port", "what does the contract say about wet weather", "which drawing covers Old Brand Drive", "what mix is specified for the islands", "what are the hold points for planting". Anything asking what *should* be done or what a clause says, rather than what *was* done — including a required depth, thickness, cover, mix, grade, standard, tolerance, spacing, material or hold point. "What depth is the mulch" is **documents**; "what depth did we place the mulch on Tuesday" is **structured**.
+
+If a question could be structured or semantic, prefer **structured**: a table of rows with entry numbers is more use to a project manager than a quotation, and the structured path shows its working.
 
 Also return search_terms: just the content words someone would grep the diary for, with the question scaffolding stripped. "What happened with the Telstra crossing?" -> "Telstra crossing". "Any issues with access to Area B?" -> "access Area B".`;
 
@@ -258,9 +271,22 @@ export async function ask(
     sql: null as string | null,
     rows: [] as Record<string, unknown>[],
     hits: [] as SearchHit[],
+    sources: [] as DocumentSource[],
   };
 
   const { path, searchTerms } = await classify(trimmed);
+
+  if (path === 'documents') {
+    if (!options.projectId) {
+      return { ...base, path, answer: 'Pick a project first — documents belong to a job.', citations: [], rowCount: 0 };
+    }
+    const sources = await searchDocuments(supabase, options.projectId, searchTerms ?? trimmed, trimmed);
+    if (sources.length === 0) {
+      return { ...base, path, answer: NOTHING_IN_DOCUMENTS, citations: [], rowCount: 0 };
+    }
+    const answer = await phraseFromDocuments(trimmed, sources);
+    return { ...base, path, sources, answer, citations: [], rowCount: sources.length };
+  }
 
   if (path === 'semantic') {
     const { data, error } = await supabase.rpc('diary_search', {
@@ -348,4 +374,94 @@ export async function ask(
   ]);
 
   return { ...base, path, sql: outcome.sql, rows, answer, citations, rowCount: rows.length };
+}
+
+const NOTHING_IN_DOCUMENTS =
+  'The job documents do not say. Nothing in the uploaded specification, scope, contract or drawings matches that — check the Documents screen has the right file, or ask it differently.';
+
+/**
+ * Passages from the job's documents that bear on the question: full text on
+ * the classifier's search terms first, then a plain phrase match (codes and
+ * numbers the stemmer mangles), then the question itself. Never the model's
+ * memory: what comes back is what the answer is written from.
+ */
+async function searchDocuments(
+  supabase: SupabaseClient,
+  projectId: string,
+  terms: string,
+  question: string,
+): Promise<DocumentSource[]> {
+  const attempts: Array<{ q: string; plain: boolean }> = [
+    { q: terms, plain: false },
+    { q: terms, plain: true },
+    { q: question, plain: false },
+  ];
+  for (const attempt of attempts) {
+    if (!attempt.q.trim()) continue;
+    const { data, error } = await supabase.rpc('document_search', {
+      p_project_id: projectId,
+      p_query: attempt.q,
+      p_limit: 12,
+      p_plain: attempt.plain,
+    });
+    if (error) throw new AskError(`Document search failed: ${error.message}`);
+    const rows = (data ?? []) as Array<{
+      document_id: string; title: string; kind: string; revision: string | null; page: number | null; chunk: string; snippet: string;
+    }>;
+    if (rows.length > 0) {
+      return rows.map((r) => ({
+        document_id: r.document_id,
+        title: r.title,
+        kind: r.kind,
+        revision: r.revision,
+        page: r.page,
+        // The full passage goes to the model; the highlighted snippet is what the screen shows.
+        snippet: r.snippet,
+        chunk: r.chunk,
+      })) as Array<DocumentSource & { chunk: string }>;
+    }
+  }
+  return [];
+}
+
+const DOCUMENT_ANSWER_PROMPT = `You are answering a site supervisor's question from a construction job's own documents — its specification, scope, contract, drawings register, safety plan.
+You are given the question and the passages a search returned, each labelled with the document, revision and page. Those passages are the only thing you know.
+- Answer **only** from the passages. Never add a requirement, figure, standard or clause that is not in them, however standard it seems.
+- Cite where each point comes from, in square brackets, like [Landscape Specification rev C, p. 14]. Every figure or requirement you state gets a citation.
+- If the passages do not answer what was asked, say what they do cover and what is missing. Do not fill the gap.
+- Quote the exact wording for numbers, tolerances and hold points — the supervisor will act on them.
+- Be brief. Plain Australian construction English, no throat-clearing.`;
+
+async function phraseFromDocuments(question: string, sources: DocumentSource[]): Promise<string> {
+  const passages = (sources as Array<DocumentSource & { chunk?: string }>).map((s, i) => ({
+    n: i + 1,
+    document: s.title,
+    kind: s.kind,
+    revision: s.revision,
+    page: s.page,
+    text: s.chunk ?? s.snippet,
+  }));
+  const response = await client().messages.create({
+    model: QUERY_MODEL,
+    max_tokens: 2000,
+    system: [{ type: 'text', text: DOCUMENT_ANSWER_PROMPT, cache_control: { type: 'ephemeral' } }],
+    messages: [
+      {
+        role: 'user',
+        content: [
+          `Question: ${question}`,
+          '',
+          'Passages from the job documents:',
+          '```json',
+          JSON.stringify(passages, null, 1).slice(0, 60_000),
+          '```',
+        ].join('\n'),
+      },
+    ],
+  });
+  return response.content
+    .filter((block): block is Anthropic.TextBlock => block.type === 'text')
+    .map((block) => block.text)
+    .join('')
+    .trim();
 }

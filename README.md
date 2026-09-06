@@ -873,6 +873,21 @@ reference or identical wording and relinks the same item; an item the supervisor
 out of a draft stays on the register marked "no longer in any diary" until someone
 removes it, and `remove_variation_item()` refuses if any signed diary records it.
 
+**R11. The job's documents answer questions; they never fill a diary.** A project
+carries its specification, scope, contract, drawings register and safety plan
+(`project_documents`, files in the `project-documents` bucket, revisions kept as
+separate rows). On upload the server reads the file into per-page chunks
+(`project_document_chunks`, full-text indexed): typed PDFs and Word files straight
+through, scans and photographed pages transcribed by the model eight pages at a
+time with an instruction to transcribe, not summarise. Ask gained a third path —
+the classifier sends "what does the spec say" questions to `document_search()`
+(full text, then a plain phrase match for codes like "AS 4419", then the question
+itself), and the answer is written only from the passages returned, each cited
+by document, revision and page; no passages, fixed sentence, no model call. The
+same rule as the diary paths. Documents are reference material: nothing from them
+reaches an entry, a signed row or the hash, and a supervisor who wants a spec
+figure in the diary says it and confirms it like any other number.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;
