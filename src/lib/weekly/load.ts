@@ -85,6 +85,8 @@ export interface WeeklyData {
       materials: string | null;
       hours: number | null;
       docket_ref: string | null;
+      /** A docket number recorded beside the record after signing. */
+      docket_added: { ref: string; on: string } | null;
     }>;
     totalHours: number;
     unreferenced: number;
@@ -490,6 +492,7 @@ export function aggregateWorkItems(
  */
 export function aggregateDayworks(
   rows: Array<Record<string, unknown>>,
+  added: ReadonlyMap<string, { ref: string; on: string }> = new Map(),
 ): WeeklyData['dayworks'] {
   const out = rows
     .slice()
@@ -505,12 +508,13 @@ export function aggregateDayworks(
         materials: (row.materials as string | null) ?? null,
         hours: row.hours == null ? null : num(row.hours),
         docket_ref: ref,
+        docket_added: ref ? null : (added.get(String(row.daywork_id ?? '')) ?? null),
       };
     });
   return {
     rows: out,
     totalHours: round2(out.reduce((sum, r) => sum + (r.hours ?? 0), 0)),
-    unreferenced: out.filter((r) => !r.docket_ref).length,
+    unreferenced: out.filter((r) => !r.docket_ref && !r.docket_added).length,
   };
 }
 
@@ -605,7 +609,7 @@ export async function loadWeeklyData(
       ),
       diaryQuery(
         supabase,
-        scope('dayworks', 'entry_no, entry_date, description, labour, plant, materials, hours, docket_ref'),
+        scope('dayworks', 'entry_no, entry_date, description, labour, plant, materials, hours, docket_ref, daywork_id'),
       ),
     ]);
 
@@ -634,7 +638,7 @@ export async function loadWeeklyData(
          delays(cause, category, start_time, end_time, duration_mins, personnel_affected),
          pours(location, volume_m3, mix_spec, supplier),
          quantities(item_type, area, quantity, unit),
-         dayworks(description, labour, plant, materials, hours, docket_ref),
+         dayworks(id, description, labour, plant, materials, hours, docket_ref),
          weather(temp_min, temp_max, rainfall_mm, wind_dir, wind_kmh, source, observed_impact)`,
       )
       .eq('project_id', project.id)
@@ -710,7 +714,7 @@ export async function loadWeeklyData(
       delays.push(...stamp(draft.delays));
       pours.push(...stamp(draft.pours));
       quantities.push(...stamp(draft.quantities));
-      dayworks.push(...stamp(draft.dayworks));
+      dayworks.push(...stamp((draft.dayworks as Array<Record<string, unknown>>).map((d) => ({ ...d, daywork_id: d.id }))));
       weather.push(...stamp(draft.weather));
     }
     entryRows.sort((a, b) => a.entry_date.localeCompare(b.entry_date));
@@ -746,7 +750,7 @@ export async function loadWeeklyData(
     plant: aggregatePlant(plant),
     pours: poursAgg,
     workItems: aggregateWorkItems(workItems),
-    dayworks: aggregateDayworks(dayworks),
+    dayworks: aggregateDayworks(dayworks, await loadDocketsAdded(supabase, dayworks)),
     quantities: aggregateQuantities(quantities),
     delays: delaysAgg,
     weather: aggregateWeather(weatherRows, station),
@@ -763,4 +767,19 @@ export async function loadWeeklyData(
       variationCount: variationsAgg.rows.length,
     },
   };
+}
+
+/** Docket numbers recorded beside the record after signing, by daywork row id. */
+export async function loadDocketsAdded(
+  supabase: SupabaseClient,
+  rows: Array<Record<string, unknown>>,
+): Promise<Map<string, { ref: string; on: string }>> {
+  const ids = rows.map((r) => r.daywork_id).filter((v): v is string => typeof v === 'string' && v.length > 0);
+  const out = new Map<string, { ref: string; on: string }>();
+  if (ids.length === 0) return out;
+  const { data } = await supabase.from('daywork_dockets').select('daywork_id, docket_ref, received_on').in('daywork_id', ids);
+  for (const d of (data ?? []) as Array<{ daywork_id: string; docket_ref: string; received_on: string }>) {
+    out.set(d.daywork_id, { ref: d.docket_ref, on: d.received_on });
+  }
+  return out;
 }

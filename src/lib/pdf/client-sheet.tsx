@@ -80,7 +80,7 @@ export function ClientSheet({
               {dayworks.map((r: Row, i) => (
                 <tr key={i}>
                   <td className="w">{text(r.description)}</td>
-                  <td className="k">{text(r.docket_ref)}</td>
+                  <td className="k">{docketCell(r)}</td>
                   <td className="n mono">{num(r.hours)}</td>
                   <td>{text(r.labour)}</td>
                   <td>{text(r.plant)}</td>
@@ -213,3 +213,23 @@ export const CLIENT_SHEET_CSS = `
 .csheet__line { flex: 1; display: block; height: 6mm; border-bottom: 0.6pt solid #131A1E; }
 .csheet__line--tall { height: 12mm; }
 `;
+
+/**
+ * The docket column: the number on the signed record; else a number recorded
+ * beside the record after signing, said so; else the honest state — to chase.
+ */
+function docketCell(r: Row) {
+  const onRecord = typeof r.docket_ref === 'string' && r.docket_ref.trim() ? r.docket_ref.trim() : null;
+  if (onRecord) return onRecord;
+  const raw = r.docket_added as { docket_ref?: string; received_on?: string } | Array<{ docket_ref?: string; received_on?: string }> | null | undefined;
+  const added = Array.isArray(raw) ? raw[0] : raw;
+  if (added?.docket_ref) {
+    return (
+      <>
+        {added.docket_ref}
+        <span className="src"> added after signing{added.received_on ? `, ${fmtDate(added.received_on)}` : ''}</span>
+      </>
+    );
+  }
+  return <span className="chase">Docket to chase</span>;
+}

@@ -235,6 +235,8 @@ export type ReviewQualityWarning =
   | 'quantity_missing_unit'
   | 'weather_impact_without_weather_delay'
   | 'weather_delay_without_impact'
+  | 'variation_without_value'
+  | 'daywork_without_docket'
   | 'low_confidence_items';
 
 export function reviewQualityWarnings(payload: ReviewPayload): ReviewQualityWarning[] {
@@ -264,6 +266,14 @@ export function reviewQualityWarnings(payload: ReviewPayload): ReviewQualityWarn
   }
   if (payload.quantities.some((item) => item.quantity != null && !item.unit?.trim())) {
     warnings.add('quantity_missing_unit');
+  }
+  // Money leaks here: a variation with no figure prints as "worth $0" on the
+  // register, and a daywork with no docket is the one that never gets paid.
+  if (payload.variations.some((item) => item.estimated_cost == null)) {
+    warnings.add('variation_without_value');
+  }
+  if (payload.dayworks.some((item) => !item.docket_ref?.trim() && item.photo_urls.length === 0)) {
+    warnings.add('daywork_without_docket');
   }
 
   const hasWeatherImpact = Boolean(payload.weather_impact?.trim());
@@ -342,6 +352,10 @@ export const WARNING_PROMPTS: Record<string, string> = {
     'Weather impact is described, but there is no weather delay item. Check whether a delay should be added.',
   weather_delay_without_impact:
     'A weather delay is listed, but the Weather tab has no impact note. Add what the weather did to the work.',
+  variation_without_value:
+    'A variation has no value. Say or type an estimate if you have one — the register shows what each variation is worth, and this one reads as $0 until then.',
+  daywork_without_docket:
+    'A daywork has no docket number or photo. Add it if you have it; otherwise it prints as “docket to chase” on the client sheet until one is recorded.',
   low_confidence_items:
     'One or more extracted items were low confidence. Open the highlighted section and check them before signing.',
 };
@@ -355,4 +369,6 @@ export const WARNING_GROUPS: Partial<Record<ReviewQualityWarning, ItemGroup | 'w
   quantity_missing_unit: 'quantities',
   weather_impact_without_weather_delay: 'weather',
   weather_delay_without_impact: 'weather',
+  variation_without_value: 'variations',
+  daywork_without_docket: 'dayworks',
 };

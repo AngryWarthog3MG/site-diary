@@ -115,6 +115,7 @@ body {
   background: #FFFFFF;
 }
 .src { margin: 1mm 0 0; font-size: 7.5pt; color: #5A6469; }
+.chase { color: #9A6A09; font-weight: 700; letter-spacing: 0.04em; font-size: 8pt; }
 .impact { margin: 1.5mm 0 0; font-size: 9pt; }
 
 /* Sections. break-inside stays AUTO on purpose: rows break one at a time

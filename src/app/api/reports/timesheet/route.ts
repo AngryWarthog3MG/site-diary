@@ -1,3 +1,5 @@
+import { roleOn } from '@/lib/api-role';
+import { canExportReports } from '@/lib/roles';
 import { fail, requireApiUser, isUuid, isDate } from '@/lib/api';
 import { loadWeeklyData, WeeklyLoadError } from '@/lib/weekly/load';
 import { buildTimesheetCsv, timesheetFilename } from '@/lib/weekly/timesheet';
@@ -13,7 +15,7 @@ export const runtime = 'nodejs';
  * already see.
  */
 export async function GET(request: Request) {
-  const { supabase, response } = await requireApiUser();
+  const { supabase, user, response } = await requireApiUser();
   if (response) return response;
 
   const url = new URL(request.url);
@@ -32,6 +34,8 @@ export async function GET(request: Request) {
     .eq('id', projectId)
     .maybeSingle();
   if (!project) return fail('not_found', 'That project is not on your account.', 404);
+  const role = await roleOn(supabase, projectId, user.id);
+  if (!role || !canExportReports(role)) return fail('forbidden', 'Your role on this job does not include exports.', 403);
   const orgCode = (Array.isArray(project.org) ? project.org[0] : project.org)?.code as string;
 
   // Deliberately NOT includeUnsigned: this is what payroll pays against, and

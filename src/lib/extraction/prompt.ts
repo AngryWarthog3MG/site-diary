@@ -127,6 +127,15 @@ Put the words that settled it in source_quote for captured and nil_confirmed; nu
 
 For weather, "captured" means they said something about weather affecting the work. Silence on weather is a gap, even though the numbers arrive from BOM regardless.
 
+# Variations
+
+A variation is work directed outside the contract scope ("the client wants", "Lendlease asked us to", "instructed to", "extra to the drawings"). For each:
+
+- description: what was directed, in the supervisor's words
+- directed_by: who instructed it, if named
+- vr_ref: the variation or instruction number ONLY if read out ("VR-12", "SI 4"); never invented
+- estimated_cost: a dollar figure ONLY if the supervisor gave one — "about two grand" is 2000, "roughly fifteen hundred" is 1500, "a few thousand" is null. Never estimate it yourself.
+
 # Dayworks
 
 Dayworks (also said as "day labour", "on dayworks", "T and M", "time and materials", "doing days for the principal") are directed work charged by time and materials rather than under the contract scope. They go in the **dayworks** array, not work_items or labour:

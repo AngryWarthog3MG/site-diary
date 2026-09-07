@@ -3,11 +3,12 @@ import Link from 'next/link';
 import { DraftClaimButton } from './draft-button';
 import { createClient } from '@/lib/supabase/server';
 import { requireUser, resolveProject } from '@/lib/auth';
-import { canSee } from '@/lib/roles';
+import { canSee, canManageRegisters } from '@/lib/roles';
 import { loadClaimsData, type ClaimsData } from '@/lib/claims/load';
 import { BrandMark } from '@/components/brand-mark';
 import { fmtDate } from '@/lib/pdf/dates';
 import { RegisterSection } from './register-section';
+import { AddDocketButton } from './daywork-docket';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Claims · KBS Daily Diary' };
@@ -160,7 +161,7 @@ export default async function ClaimsPage({
 
           <hr className="rule" />
 
-          <RegisterSection data={data} userId={userId} />
+          <RegisterSection data={data} userId={userId} canManage={canManageRegisters(current.role)} />
 
           <hr className="rule" />
 
@@ -202,8 +203,15 @@ export default async function ClaimsPage({
                             <Cite entryNo={row.entry_no} />
                           </td>
                           <td>{row.description}</td>
-                          <td className={row.docket_ref ? 'mono' : 'claims-flag'}>
-                            {row.docket_ref ?? 'NO DOCKET'}
+                          <td className={row.docket_ref || row.docket_added ? 'mono' : 'claims-flag'}>
+                            {row.docket_ref
+                              ? row.docket_ref
+                              : row.docket_added
+                                ? <>{row.docket_added.ref}<span className="vr-note">added {fmtDate(row.docket_added.on)}</span></>
+                                : 'To chase'}
+                            {!row.docket_ref && row.daywork_id && canManageRegisters(current.role) && (
+                              <span className="vr-note"><AddDocketButton dayworkId={row.daywork_id} current={row.docket_added?.ref ?? null} /></span>
+                            )}
                           </td>
                           <td className="n mono">{row.hours ?? '—'}</td>
                           <td>{row.labour ?? '—'}</td>

@@ -151,7 +151,7 @@ export const SECTIONS: SectionDef[] = [
       { key: 'directed_at', label: 'Directed at', kind: 'datetime', narrow: true },
       {
         key: 'estimated_cost',
-        label: 'Est. cost',
+        label: 'Value $ (estimate)',
         kind: 'number',
         suffix: '$',
         step: '1',

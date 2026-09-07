@@ -1,5 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { summariseRegister, type RegisterItem, type RegisterSummary } from './register';
+import { loadDocketsAdded } from '@/lib/weekly/load';
 
 /**
  * The claims register: everything across the project's whole life that a
@@ -53,6 +54,8 @@ export interface ClaimsData {
       hours: number | null;
       labour: string | null;
       plant: string | null;
+      daywork_id: string | null;
+      docket_added: { ref: string; on: string } | null;
     }>;
     totalHours: number;
     missingDockets: number;
@@ -101,7 +104,7 @@ export async function loadClaimsData(
     ),
     diaryQuery(
       supabase,
-      `select entry_no, entry_date, description, docket_ref, hours, labour, plant from diary.dayworks ${where} order by entry_date`,
+      `select entry_no, entry_date, description, docket_ref, hours, labour, plant, daywork_id from diary.dayworks ${where} order by entry_date`,
     ),
   ]);
 
@@ -155,15 +158,22 @@ export async function loadClaimsData(
     entry_id: e.id, date: e.entry_date, author_id: e.author_id,
   }));
 
-  const dayworkRows = dayworks.map((row) => ({
-    date: String(row.entry_date ?? ''),
-    entry_no: String(row.entry_no ?? ''),
-    description: String(row.description ?? ''),
-    docket_ref: ((row.docket_ref as string | null) ?? '').trim() || null,
-    hours: row.hours == null ? null : num(row.hours),
-    labour: (row.labour as string | null) ?? null,
-    plant: (row.plant as string | null) ?? null,
-  }));
+  const added = await loadDocketsAdded(supabase, dayworks);
+  const dayworkRows = dayworks.map((row) => {
+    const ref = ((row.docket_ref as string | null) ?? '').trim() || null;
+    const id = (row.daywork_id as string | null) ?? null;
+    return {
+      date: String(row.entry_date ?? ''),
+      entry_no: String(row.entry_no ?? ''),
+      description: String(row.description ?? ''),
+      docket_ref: ref,
+      hours: row.hours == null ? null : num(row.hours),
+      labour: (row.labour as string | null) ?? null,
+      plant: (row.plant as string | null) ?? null,
+      daywork_id: id,
+      docket_added: ref || !id ? null : (added.get(id) ?? null),
+    };
+  });
 
   return {
     project,
@@ -188,7 +198,7 @@ export async function loadClaimsData(
     dayworks: {
       rows: dayworkRows,
       totalHours: round2(dayworkRows.reduce((sum, r) => sum + (r.hours ?? 0), 0)),
-      missingDockets: dayworkRows.filter((r) => !r.docket_ref).length,
+      missingDockets: dayworkRows.filter((r) => !r.docket_ref && !r.docket_added).length,
     },
   };
 }

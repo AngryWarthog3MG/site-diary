@@ -348,8 +348,12 @@ export function WeeklyReport({ data, narrative, narrativeNote, audience = 'recor
                   <td>{row.labour ?? '—'}</td>
                   <td>{row.plant ?? '—'}</td>
                   <td className="n mono">{fmt(row.hours)}</td>
-                  <td className={row.docket_ref ? 'mono' : 'vr-missing'}>
-                    {row.docket_ref ?? 'NO DOCKET'}
+                  <td className={row.docket_ref || row.docket_added ? 'mono' : 'vr-missing'}>
+                    {row.docket_ref
+                      ? row.docket_ref
+                      : row.docket_added
+                        ? <>{row.docket_added.ref}<span className="src"> added {fmtDate(row.docket_added.on)}</span></>
+                        : 'Docket to chase'}
                   </td>
                 </tr>
               ))}

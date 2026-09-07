@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { requireUser, resolveProject } from '@/lib/auth';
-import { canSee } from '@/lib/roles';
+import { canSee, canManageRegisters } from '@/lib/roles';
 import { loadClaimsData, type ClaimsData } from '@/lib/claims/load';
 import { BrandMark } from '@/components/brand-mark';
 import { RegisterSection } from '@/app/claims/register-section';
@@ -57,7 +57,7 @@ export default async function VariationsPage({
       </p>
       <hr className="rule" />
       {loadError && <p className="notice gap">{loadError}</p>}
-      {data && <RegisterSection data={data} userId={userId} />}
+      {data && <RegisterSection data={data} userId={userId} canManage={canManageRegisters(current.role)} />}
     </main>
   );
 }

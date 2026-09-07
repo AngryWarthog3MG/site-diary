@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { BrandMark } from '@/components/brand-mark';
 import { createClient } from '@/lib/supabase/server';
 import { requireUser, resolveProject } from '@/lib/auth';
+import { canExportReports } from '@/lib/roles';
 import { loadWeeklyData, type WeeklyData } from '@/lib/weekly/load';
 import { WeeklyReport, WEEKLY_CSS } from '@/lib/weekly/report';
 import { DOCKET_CSS } from '@/lib/pdf/styles';
@@ -166,6 +167,7 @@ export default async function WeeklyReportPage({
 
       {data && data.entries.length > 0 && (
         <>
+          {canExportReports(current.role) ? (
           <div className="weekly-actions">
             <a
               className="button"
@@ -190,6 +192,9 @@ export default async function WeeklyReportPage({
               binds every signed docket of the month into one document.
             </p>
           </div>
+          ) : (
+            <p className="way-hint">The exports — PDFs, the payroll spreadsheet, the month bundle — are for the office; you can read the week here.</p>
+          )}
           <WeeklyReport data={data} narrative={null} audience="internal" />
         </>
       )}

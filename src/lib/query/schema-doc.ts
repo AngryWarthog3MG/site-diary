@@ -39,7 +39,7 @@ diary.quantities     entry_no, entry_date, project_id, project_name,
                      item_type text, area text, quantity numeric, unit text
 diary.dayworks       entry_no, entry_date, project_id, project_name,
                      description text, labour text, plant text, materials text,
-                     hours numeric, docket_ref text
+                     hours numeric, docket_ref text, daywork_id uuid
 diary.weather        entry_no, entry_date, project_id, project_name,
                      temp_max numeric, temp_min numeric, rainfall_mm numeric, wind_dir text,
                      wind_kmh numeric, source text ('bom_auto'|'manual'), observed_impact text,

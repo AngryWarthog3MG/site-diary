@@ -1,3 +1,5 @@
+import { roleOn } from '@/lib/api-role';
+import { canExportReports } from '@/lib/roles';
 import { fail, ok, requireApiUser, isUuid } from '@/lib/api';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { loadMonthEntries, MonthlyLoadError, type MonthData } from '@/lib/monthly/bundle';
@@ -23,7 +25,7 @@ const MONTH_RE = /^\d{4}-(0[1-9]|1[0-2])$/;
  * generated and stored where it does not.
  */
 export async function POST(request: Request) {
-  const { supabase, response } = await requireApiUser();
+  const { supabase, user, response } = await requireApiUser();
   if (response) return response;
 
   const url = new URL(request.url);
@@ -40,6 +42,8 @@ export async function POST(request: Request) {
     .eq('id', projectId)
     .maybeSingle();
   if (!project) return fail('not_found', 'That project is not on your account.', 404);
+  const role = await roleOn(supabase, projectId, user.id);
+  if (!role || !canExportReports(role)) return fail('forbidden', 'Your role on this job does not include exports.', 403);
   const orgCode = (Array.isArray(project.org) ? project.org[0] : project.org)?.code as string;
 
   let entries;

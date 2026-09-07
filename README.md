@@ -921,6 +921,24 @@ role — compared as text, because a fresh enum value cannot be named as an enum
 transaction that adds it. Until the menu knows the role it draws only the tiles every
 role has, so nobody sees a door that closes a moment later.
 
+Codex's review of the role (7 September) found the gap a page guard cannot close: the
+variation RPCs, the document table and bucket, Ask without a project, and the payroll,
+client and monthly exports all took "project member" as enough, and a leading hand with
+a session could reach them from a Supabase client. Two more verbs in the same table —
+`canManageRegisters` (variation status and details, dockets recorded after signing,
+document uploads) and `canExportReports` — mirrored in SQL by
+`app.can_manage_registers()`, enforced inside every RPC and in the storage and table
+policies, and checked by every report API. Reading and searching documents stays with
+membership on purpose: a leading hand pulls what the spec requires when running the
+prestart. The schema suite impersonates a leading hand and shows the RPC refusing.
+
+Two prompts landed the same day, both warnings and never blocks: a variation with no
+value ("worth $0" on the register until it has one) and a daywork with no docket. A
+docket number that arrives after the day is signed goes beside the record
+(`daywork_dockets`, via `set_daywork_docket()`), never onto the signed row; the client
+sheet, weekly and claims print it as "added after signing", and until then the honest
+state, "Docket to chase". The signed docket PDF is untouched.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;

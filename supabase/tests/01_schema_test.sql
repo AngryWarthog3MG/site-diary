@@ -766,6 +766,37 @@ begin
   raise notice 'PASS  a variation is recorded on another day only as the author, once, unsigned';
 end;
 $$;
+
+-- A leading hand reads the register and may not change it: the RPC refuses,
+-- whatever the phone shows.
+reset role;
+insert into public.project_members (project_id, user_id, role)
+values ('bbbbbbbb-0000-0000-0000-000000000001', '44444444-4444-4444-4444-444444444444', 'leading_hand')
+on conflict (project_id, user_id) do update set role = 'leading_hand';
+select set_config('request.jwt.claims',
+  '{"sub":"44444444-4444-4444-4444-444444444444","role":"authenticated"}', true);
+set local role authenticated;
+do $$
+declare v_signed public.variation_register;
+begin
+  select * into v_signed from public.variation_register
+   where project_id = 'bbbbbbbb-0000-0000-0000-000000000001' and vr_ref = 'vr-014';
+  assert found, 'the leading hand can still read the register';
+  begin
+    perform public.set_variation_status(v_signed.id, 'paid', 'trying it on');
+    raise exception 'TESTFAIL: a leading hand changed a variation status';
+  exception when others then
+    if sqlerrm like 'TESTFAIL%' then raise; end if;
+    assert sqlerrm like '%does not include the variation register%', sqlerrm;
+  end;
+  raise notice 'PASS  a leading hand reads the register and cannot change it';
+end;
+$$;
+reset role;
+select set_config('request.jwt.claims', '', true);
+select set_config('request.jwt.claims',
+  '{"sub":"11111111-1111-1111-1111-111111111111","role":"authenticated"}', true);
+set local role authenticated;
 reset role;
 select set_config('request.jwt.claims', '', true);
 rollback to savepoint variation_register;

@@ -3194,3 +3194,4 @@ body {
 .claims-total { margin: 0.2rem 0 0.7rem; }
 .vr-card__value--none { font-weight: 400; color: var(--ink-40); font-size: 0.78rem; }
 main.sheet--wide .vr-list { grid-template-columns: repeat(auto-fill, minmax(22rem, 1fr)); }
+.linklike--amber { color: #6B4A06; font-weight: 700; }

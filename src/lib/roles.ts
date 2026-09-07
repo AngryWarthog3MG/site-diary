@@ -36,6 +36,20 @@ export function canRunTalks(role: MemberRole): boolean {
   return role === 'supervisor' || role === 'admin' || role === 'leading_hand';
 }
 
+/**
+ * Who changes the registers beside the record — variation status and details,
+ * docket numbers recorded after signing, job documents. Mirrors
+ * app.can_manage_registers(). The leading hand reads them.
+ */
+export function canManageRegisters(role: MemberRole): boolean {
+  return role === 'supervisor' || role === 'admin' || role === 'pm';
+}
+
+/** Who takes the payroll, client and monthly exports out of the building. */
+export function canExportReports(role: MemberRole): boolean {
+  return role === 'supervisor' || role === 'admin' || role === 'pm';
+}
+
 export type Screen =
   | 'today' | 'entries' | 'weekly' | 'prestart' | 'toolbox'
   | 'claims' | 'variations' | 'progress' | 'ask' | 'documents' | 'settings';

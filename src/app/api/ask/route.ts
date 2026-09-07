@@ -25,8 +25,9 @@ export async function POST(request: Request) {
   if (question.length > 1000) {
     return fail('bad_request', 'That question is too long. Try a shorter one.', 400);
   }
-  if (projectId && !isUuid(projectId)) {
-    return fail('bad_request', 'Bad project id.', 400);
+  // Documents belong to a job, and so does the caller's role: no project, no answer.
+  if (!isUuid(projectId)) {
+    return fail('bad_request', 'Pick a project first.', 400);
   }
 
   let projectName: string | null = null;

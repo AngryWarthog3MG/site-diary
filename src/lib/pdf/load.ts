@@ -83,7 +83,7 @@ export async function loadDocketEntry(
        project:projects!inner(name, code, principal_contractor,
                               org:organisations!inner(name, code)),
        labour(*), plant(*), work_items(*), variations(*), delays(*), pours(*),
-       quantities(*), dayworks(*), photos(*), entry_signatures(*), weather(*), entry_sections(*)`,
+       quantities(*), dayworks(*, docket_added:daywork_dockets(docket_ref, received_on)), photos(*), entry_signatures(*), weather(*), entry_sections(*)`,
     )
     .eq('id', entryId)
     .maybeSingle();

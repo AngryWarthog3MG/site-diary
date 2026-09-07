@@ -17,12 +17,15 @@ export function VariationStatusControl({
   vrRef,
   agreedCost,
   notes,
+  needsValue = false,
 }: {
   registerId: string;
   status: VariationStatus;
   vrRef: string | null;
   agreedCost: number | null;
   notes: string | null;
+  /** No figure anywhere yet: the Details link says so and opens ready to take one. */
+  needsValue?: boolean;
 }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
@@ -86,8 +89,8 @@ export function VariationStatusControl({
           <option key={s} value={s}>{STATUS_LABEL[s]}</option>
         ))}
       </select>
-      <button className="linklike" type="button" disabled={busy} onClick={() => setEditing((v) => !v)}>
-        {editing ? 'Close' : 'Details'}
+      <button className={`linklike${needsValue && !editing ? ' linklike--amber' : ''}`} type="button" disabled={busy} onClick={() => setEditing((v) => !v)}>
+        {editing ? 'Close' : needsValue ? 'Add a value' : 'Details'}
       </button>
       {editing && (
         <div className="vr-details">
@@ -98,7 +101,7 @@ export function VariationStatusControl({
           </label>
           <label className="fieldcell">
             <span className="label">Agreed value ($)</span>
-            <input className="field field--sm" inputMode="decimal" value={draft.agreedCost} placeholder="unknown"
+            <input className="field field--sm" inputMode="decimal" value={draft.agreedCost} placeholder="e.g. 2000" autoFocus={needsValue}
               onChange={(e) => setDraft({ ...draft, agreedCost: e.target.value })} />
           </label>
           <label className="fieldcell">
