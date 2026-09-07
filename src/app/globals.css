@@ -3195,3 +3195,114 @@ body {
 .vr-card__value--none { font-weight: 400; color: var(--ink-40); font-size: 0.78rem; }
 main.sheet--wide .vr-list { grid-template-columns: repeat(auto-fill, minmax(22rem, 1fr)); }
 .linklike--amber { color: #6B4A06; font-weight: 700; }
+
+/* ==========================================================================
+   The desktop rail, and a calmer page head.
+
+   On a laptop this stopped looking like a tool and started looking like a
+   brochure: a 60px project name in a gradient band on every screen, the
+   navigation hidden behind a hamburger, and the content in a phone-width
+   column on a textured desk. The rail puts the job's screens one click away,
+   the heads shrink to a line, and the width gets used. The phone is left
+   exactly as it was — it is the one that goes on site.
+   ========================================================================== */
+
+.rail { display: none; }
+
+@media (min-width: 1100px) {
+  .rail {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 15.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    padding: 1.1rem 0.9rem calc(1rem + env(safe-area-inset-bottom));
+    background: var(--paper, #fdfdfc);
+    border-right: 1px solid var(--ink-08);
+    overflow-y: auto;
+    z-index: 45;
+  }
+  .rail__brand {
+    display: inline-flex; align-items: center; gap: 0.5rem;
+    padding: 0 0.5rem 0.25rem;
+    color: var(--teal, #0e4f52); text-decoration: none;
+    font-weight: 700; font-size: 0.95rem; letter-spacing: 0.02em;
+  }
+  .rail__job {
+    display: grid; gap: 0.1rem;
+    margin: 0.6rem 0.5rem 0.9rem;
+    padding-bottom: 0.9rem;
+    border-bottom: 1px solid var(--ink-08);
+  }
+  .rail__jobname { font-size: 0.95rem; font-weight: 600; line-height: 1.25; }
+  .rail__jobcode { font-size: 0.75rem; color: var(--ink-40); }
+  .rail__list { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.1rem; }
+  .rail__item {
+    display: block; padding: 0.5rem 0.6rem; border-radius: 0.45rem;
+    color: var(--ink); text-decoration: none; font-size: 0.9rem; line-height: 1.3;
+  }
+  .rail__item:hover { background: rgba(22, 33, 31, 0.04); }
+  .rail__item--here { background: var(--teal, #0e4f52); color: #fff; font-weight: 600; }
+  .rail__item--here:hover { background: var(--teal, #0e4f52); }
+  .rail__foot { margin-top: auto; padding-top: 0.9rem; display: grid; gap: 0.5rem; }
+  .rail__foot .refresh-button { justify-content: center; }
+  .rail__item--quiet { color: var(--ink-60); }
+  .rail__who { margin: 0; padding: 0 0.6rem; font-size: 0.72rem; color: var(--ink-40); }
+
+  /* The rail carries the navigation, so the bar and the in-hero tools go. */
+  body { padding-left: 15.5rem; }
+  .topbar { display: none; }
+  .home-hero__tools, #menu-slot-hero { display: none; }
+
+  /* Heads become a line, not a billboard. */
+  .home-hero, .entries-hero, .weekly-hero, .review-hero {
+    background: var(--paper, #fdfdfc) !important;
+    color: var(--ink) !important;
+    border-bottom: 1px solid var(--ink-08);
+    border-radius: 0;
+    padding: 1.4rem 0 1.1rem;
+    margin-bottom: 1.2rem;
+  }
+  .home-hero .home-title, .entries-hero h1, .weekly-hero h1, .review-hero h1 {
+    font-size: 1.6rem;
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+    color: var(--ink);
+  }
+  /* Everything in these heads was drawn white for a dark band. On paper the
+     text takes ink, the quiet lines take grey, and anything that was a
+     translucent white chip takes a light grey one. */
+  .home-hero *, .entries-hero *, .weekly-hero *, .review-hero * { color: var(--ink); }
+  .home-hero .home-eyebrow, .home-hero .home-eyebrow span,
+  .entries-hero .label, .entries-kicker, .entries-hero .page-subtitle,
+  .weekly-hero .label, .weekly-hero .page-subtitle,
+  .review-hero .label, .review-hero .page-subtitle { color: var(--ink-40); }
+  .entries-hero p, .weekly-hero p, .review-hero p { color: var(--ink-60); }
+  .entries-hero .status-pill, .weekly-hero .status-pill,
+  .entries-hero .chip, .weekly-hero .chip, .home-hero .chip {
+    background: rgba(22, 33, 31, 0.05);
+    border-color: var(--ink-08);
+    color: var(--ink-60);
+  }
+  .entries-hero .chip--on, .weekly-hero .chip--on, .home-hero .chip--on {
+    background: var(--teal, #0e4f52); border-color: var(--teal, #0e4f52); color: #fff;
+  }
+  .home-hero .home-role { color: var(--ink-60); background: rgba(22, 33, 31, 0.05); border-color: var(--ink-08); }
+  /* The serial pill was drawn for a dark band; on paper it needs ink. */
+  .home-hero .home-serial p {
+    margin-top: 0.55rem !important;
+    background: rgba(22, 33, 31, 0.04);
+    border-color: var(--ink-08);
+    color: var(--ink-60) !important;
+  }
+  .home-hero__glance dt { color: var(--ink-40); }
+  .home-hero__glance dd, .home-hero__glance div { color: var(--ink); }
+
+  /* Use the width the rail leaves. */
+  .home-board, .app-shell { max-width: 74rem; }
+  main.sheet { max-width: 52rem; }
+  main.sheet--wide { max-width: 74rem; }
+}

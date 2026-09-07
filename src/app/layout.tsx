@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import type { Metadata, Viewport } from 'next';
 import { IBM_Plex_Sans, IBM_Plex_Sans_Condensed, IBM_Plex_Mono } from 'next/font/google';
 import { ServiceWorkerRegistration } from '@/components/sw-register';
@@ -43,6 +44,7 @@ export const viewport: Viewport = {
 };
 
 import { ErrorReporter } from '@/components/error-reporter';
+import { SideNav } from '@/components/side-nav';
 import { TopBar } from '@/components/top-bar';
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -53,6 +55,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     >
       <body>
         <ErrorReporter />
+        <Suspense fallback={null}>
+          <SideNav />
+        </Suspense>
         <TopBar />
         {children}
         <ServiceWorkerRegistration />
