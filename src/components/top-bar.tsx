@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 import { BrandMark } from '@/components/brand-mark';
 import { AppMenu } from '@/components/app-menu';
 import { RefreshButton } from '@/components/refresh-button';
+import { HomeButton } from '@/components/home-button';
 
 /**
  * The bar across the top of every screen: the mark on the left, Menu and
@@ -28,6 +29,7 @@ export function TopBar() {
         </Link>
         <div className="topbar__actions">
           <Suspense fallback={null}>
+            <HomeButton />
             <AppMenu slotId="menu-slot-bar" />
           </Suspense>
           <RefreshButton />

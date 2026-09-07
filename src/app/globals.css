@@ -3159,3 +3159,17 @@ body {
 @media (max-width: 640px) {
   .sheet { padding-bottom: calc(max(3rem, 28vh) + env(safe-area-inset-bottom)); }
 }
+
+/* Home: the one solid pill in the bar, so it reads as the way back. */
+.home-button {
+  display: inline-flex; align-items: center; gap: 0.35rem;
+  padding: 0.45rem 0.8rem; border-radius: 999px;
+  border: 1px solid var(--teal, #0e4f52); background: var(--teal, #0e4f52); color: #fff;
+  font: inherit; font-size: 0.8125rem; font-weight: 700; letter-spacing: 0.02em;
+  text-decoration: none; box-shadow: var(--shadow-ui);
+}
+.home-button__icon { display: inline-flex; }
+@media (max-width: 420px) {
+  .topbar__brand span { display: none; }
+  .home-button, .menu-button, .refresh-button { padding-left: 0.65rem; padding-right: 0.65rem; }
+}
