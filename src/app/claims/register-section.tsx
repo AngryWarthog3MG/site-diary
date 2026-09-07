@@ -37,15 +37,18 @@ export function RegisterSection({ data, userId }: { data: ClaimsData; userId: st
 
   return (
     <section>
-      <p className="label">
-        Variations · {data.variations.register.length}
-        {data.variations.unreferenced > 0 && (
-          <span className="claims-flag">
-            {' '}
-            {data.variations.unreferenced} diary mention{data.variations.unreferenced === 1 ? '' : 's'} without a VR reference
-          </span>
-        )}
-      </p>
+      <div className="claims-head">
+        <div>
+          <p className="label">Raised to paid</p>
+          <h2>Variations</h2>
+        </div>
+        <span className="claims-count mono">
+          {data.variations.register.length}
+          {data.variations.unreferenced > 0 && (
+            <span className="claims-flag"> · {data.variations.unreferenced} without a client ref</span>
+          )}
+        </span>
+      </div>
       {data.variations.register.length === 0 ? (
         <p className="claims-nil">
           Nothing yet. A variation joins this list the moment it is written into a diary,
@@ -81,8 +84,8 @@ export function RegisterSection({ data, userId }: { data: ClaimsData; userId: st
                     <span className="vr-card__client">{item.vr_ref ? ` · client ref ${item.vr_ref}` : ' · no client ref yet'}</span>
                     {!item.signed && <span className="vr-tag vr-tag--unsigned">Not yet signed</span>}
                   </span>
-                  <span className="mono vr-card__value">
-                    {money(itemValue(item))}
+                  <span className={`mono vr-card__value${itemValue(item) == null ? ' vr-card__value--none' : ''}`}>
+                    {itemValue(item) == null ? 'no value yet' : money(itemValue(item))}
                     {item.agreed_cost == null && item.estimated_cost != null && <span className="vr-note"> est.</span>}
                   </span>
                 </div>

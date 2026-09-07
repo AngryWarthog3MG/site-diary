@@ -46,7 +46,7 @@ export function DraftClaimButton({ projectId }: { projectId: string }) {
 
   return (
     <>
-      <button className="button button--quiet" type="button" onClick={generate} disabled={busy}>
+      <button className="button" type="button" onClick={generate} disabled={busy}>
         {busy ? 'Writing…' : 'Write a first draft'}
       </button>
       {error && <p className="alert">{error}</p>}

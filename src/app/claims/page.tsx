@@ -70,20 +70,34 @@ export default async function ClaimsPage({
       </p>
       <h1 className="page-title">What you can claim for</h1>
       <p className="page-subtitle">
-        Every delay, variation and daywork you have signed off, across the whole job. Each
-        line names the day it came from, so anything here can be traced back and stands up
-        months later.
+        Every delay, variation and daywork across the whole job, each line traced to the day it came from.
       </p>
-      <div style={{ margin: '0.75rem 0' }}>
-        <a
-          className="button button--quiet"
-          style={{ width: 'auto', display: 'inline-block' }}
-          href={`/api/reports/claims?project=${current.project_id}`}
-          download
-        >
-          Download as a spreadsheet
-        </a>{' '}
+
+      {data && (
+        <div className="claims-summary" aria-label="At a glance">
+          <div className="claims-tile">
+            <span className="label">Time lost</span>
+            <strong>{data.delays.totalHours}h</strong>
+            <span>{data.delays.rows.length} event{data.delays.rows.length === 1 ? '' : 's'}{data.delays.manHoursLost ? ` · ${data.delays.manHoursLost} man-hours` : ''}</span>
+          </div>
+          <div className={`claims-tile${data.variations.summary.notSubmitted.count > 0 ? ' claims-tile--amber' : ''}`}>
+            <span className="label">Variations</span>
+            <strong>{data.variations.register.length}</strong>
+            <span>{data.variations.summary.notSubmitted.count === 0 ? 'all submitted' : `${data.variations.summary.notSubmitted.count} not yet submitted · ${money(data.variations.summary.notSubmitted.value)}`}</span>
+          </div>
+          <div className={`claims-tile${data.dayworks.missingDockets > 0 ? ' claims-tile--amber' : ''}`}>
+            <span className="label">Dayworks</span>
+            <strong>{data.dayworks.totalHours}h</strong>
+            <span>{data.dayworks.rows.length} item{data.dayworks.rows.length === 1 ? '' : 's'}{data.dayworks.missingDockets > 0 ? ` · ${data.dayworks.missingDockets} without a docket` : ' · all docketed'}</span>
+          </div>
+        </div>
+      )}
+
+      <div className="claims-actions">
         <DraftClaimButton projectId={current.project_id} />
+        <a className="button button--outline" href={`/api/reports/claims?project=${current.project_id}`} download>
+          Download as a spreadsheet
+        </a>
       </div>
       <hr className="rule" />
 
@@ -91,11 +105,14 @@ export default async function ClaimsPage({
 
       {data && (
         <>
-          <section style={{ marginTop: '1rem' }}>
-            <p className="label">
-              Time lost · {data.delays.rows.length} event
-              {data.delays.rows.length === 1 ? '' : 's'}
-            </p>
+          <section>
+            <div className="claims-head">
+              <div>
+                <p className="label">Standdown and disruption</p>
+                <h2>Time lost</h2>
+              </div>
+              <span className="claims-count mono">{data.delays.rows.length} event{data.delays.rows.length === 1 ? '' : 's'}</span>
+            </div>
             {data.delays.rows.length === 0 ? (
               <p className="claims-nil">
                 Nothing yet. Delays turn up here once you sign a day that has one.
@@ -148,12 +165,16 @@ export default async function ClaimsPage({
           <hr className="rule" />
 
           <section>
-            <p className="label">
-              Dayworks · {data.dayworks.rows.length}
-              {data.dayworks.missingDockets > 0 && (
-                <span className="claims-flag"> {data.dayworks.missingDockets} without a docket</span>
-              )}
-            </p>
+            <div className="claims-head">
+              <div>
+                <p className="label">Time and materials</p>
+                <h2>Dayworks</h2>
+              </div>
+              <span className="claims-count mono">
+                {data.dayworks.rows.length}
+                {data.dayworks.missingDockets > 0 && <span className="claims-flag"> · {data.dayworks.missingDockets} without a docket</span>}
+              </span>
+            </div>
             {data.dayworks.rows.length === 0 ? (
               <p className="claims-nil">
                 Nothing yet. Dayworks turn up here once you sign a day that has one.
