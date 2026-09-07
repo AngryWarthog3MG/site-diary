@@ -3306,3 +3306,50 @@ main.sheet--wide .vr-list { grid-template-columns: repeat(auto-fill, minmax(22re
   main.sheet { max-width: 52rem; }
   main.sheet--wide { max-width: 74rem; }
 }
+
+/* --------------------------------------------------------------------------
+   Pages that show a document preview inject the PDF's own stylesheet into the
+   live page, so the preview matches the printed thing exactly. That sheet is
+   written for a sheet of paper: it sets `html, body { margin: 0; padding: 0 }`
+   and paints its own heads white-on-green. Injected after globals, it wins on
+   order — which knocked the rail's offset off these pages and left their page
+   head white on white.
+
+   Beaten on specificity rather than order, and never by editing the PDF's own
+   stylesheet: that file is the printed record and must not move.
+   -------------------------------------------------------------------------- */
+@media (min-width: 1100px) {
+  html body { padding-left: 15.5rem; }
+
+  /* The preview is a 210 mm document. The page around it hugs that width so
+     the head, the week nav and any notice line up with the paper. */
+  body main.weekly-shell {
+    max-width: 210mm;
+    margin: 0 auto;
+    background: none;
+    padding: 1.25rem 0 3rem;
+  }
+  body .weekly-hero, body .weekly-nav, body .weekly-fallback,
+  body .weekly-actions, body .weekly-state { width: auto; }
+
+  /* The page head — not the report preview below it, which stays a document. */
+  body .weekly-hero {
+    padding: 1.4rem 0 1.1rem;
+    border-radius: 0;
+    border-bottom: 1px solid var(--ink-08);
+  }
+  body .weekly-hero h1 {
+    max-width: none;
+    color: var(--ink);
+    font-size: 1.6rem;
+    line-height: 1.15;
+  }
+  body .weekly-hero .weekly-kicker,
+  body .weekly-hero .weekly-range { color: var(--ink-40); }
+  body .weekly-hero .weekly-back {
+    background: rgba(22, 33, 31, 0.05);
+    border: 1px solid var(--ink-08);
+    color: var(--teal, #0e4f52);
+  }
+  body .weekly-nav, body .weekly-fallback { max-width: none; }
+}

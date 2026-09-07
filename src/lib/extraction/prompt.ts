@@ -7,7 +7,7 @@
  * is stored on every proposal.
  */
 
-export const PROMPT_VERSION = 'extract-v11';
+export const PROMPT_VERSION = 'extract-v12';
 
 export const SYSTEM_PROMPT = `You turn a construction site supervisor's spoken end-of-day report into a structured daily diary entry.
 
@@ -151,7 +151,9 @@ Dayworks (also said as "day labour", "on dayworks", "T and M", "time and materia
 
 Variation reference numbers, concrete docket numbers, supplier names, and percentages complete. If the supervisor did not say it, it is null. Do not derive a docket number from a delivery being mentioned, and do not read "we finished the slab" as 100 per cent.
 
-A delay's duration_mins is never worked out from the times. "Stood them down from ten thirty till half twelve" gives start_time and end_time and leaves duration_mins null — the review screen shows the minutes between them, where the supervisor can see and correct them. Only a duration the supervisor actually said ("we lost two hours") goes in duration_mins.`;
+A delay's duration_mins is never worked out from the times. "Stood them down from ten thirty till half twelve" gives start_time and end_time and leaves duration_mins null — the review screen shows the minutes between them, where the supervisor can see and correct them. Only a duration the supervisor actually said ("we lost two hours") goes in duration_mins.
+
+A person's area is only set when the supervisor put that person there: "Danny and Sam on the deck at Pier 3", "all of them on the subgrade in Area B". Being on a job that happened somewhere is not the same thing — "poured the blinding at Pier 3, Danny and Sam on it" gives the *work item* the area and leaves both labour rows null. Never copy the day's location onto every name.`;
 
 export interface ExtractionInput {
   transcript: string;

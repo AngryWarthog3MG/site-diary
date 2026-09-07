@@ -440,8 +440,11 @@ export const FIXTURES: Fixture[] = [
     transcript: `Poured the blinding at Pier 3 this morning, eight cube off Hanson, Danny and Sam on it eight hours each. This arvo we'll be setting up formwork for the headstock, and tomorrow we're back on the kerb in Area B North.`,
     expected: proposal({
       labour: [
-        L('Danny Rowe', { hours: 8, area: 'Pier 3' }),
-        L('Sam Whitely', { hours: 8, area: 'Pier 3' }),
+        // "Danny and Sam on it" ties them to the pour, not to a place: the
+        // area stays null and the review screen asks. The work item and the
+        // pour both carry Pier 3, so the location is on the record either way.
+        L('Danny Rowe', { hours: 8 }),
+        L('Sam Whitely', { hours: 8 }),
       ],
       work_items: [W('Poured the blinding', { area: 'Pier 3' })],
       pours: [C({ location: 'Pier 3', volume_m3: 8, supplier: 'Hanson' })],
