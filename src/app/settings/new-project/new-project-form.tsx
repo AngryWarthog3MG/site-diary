@@ -94,7 +94,7 @@ export function NewProjectForm({
         {busy ? 'Creating…' : 'Create the project'}
       </button>
       <Link className="button button--quiet" href="/">
-        Back to today
+        Home
       </Link>
     </main>
   );

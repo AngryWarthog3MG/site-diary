@@ -652,7 +652,7 @@ export function ReviewScreen(props: {
       </p>
 
       <Link className="button button--quiet" href="/">
-        Back to today
+        Home
       </Link>
       </section>
     </main>

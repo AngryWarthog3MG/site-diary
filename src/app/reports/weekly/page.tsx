@@ -129,7 +129,7 @@ export default async function WeeklyReportPage({
             </p>
           </div>
           <Link className="weekly-back" href={`/?project=${current.project_id}`}>
-            Back to today
+            Home
           </Link>
         </section>
 

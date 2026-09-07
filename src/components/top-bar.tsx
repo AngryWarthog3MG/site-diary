@@ -23,7 +23,7 @@ export function TopBar() {
   return (
     <header className="topbar">
       <div className="topbar__row">
-        <Link className="topbar__brand" href="/" aria-label="Today">
+        <Link className="topbar__brand" href="/" aria-label="Home">
           <BrandMark size={22} />
           <span>Daily Diary</span>
         </Link>

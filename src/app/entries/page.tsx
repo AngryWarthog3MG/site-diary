@@ -93,7 +93,7 @@ export default async function EntriesPage({
         />
 
         <Link className="button button--quiet entries-footer-action" href="/">
-          Back to today
+          Home
         </Link>
       </section>
     </main>

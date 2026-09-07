@@ -82,7 +82,7 @@ export function AppMenu({ slotId }: { slotId: string }) {
 
   const drawer = (
     <nav id="app-menu" className="menu-drawer" aria-label="Everything else">
-      {item(`/${q}`, 'Today', 'Record the day, or type it in', 'wide')}
+      {item(`/${q}`, 'Home', 'Today’s diary — record it, or type it in', 'wide')}
 
       <section className="navgroup">
         <p className="label">The record</p>

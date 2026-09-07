@@ -82,7 +82,7 @@ export default async function ToolboxPage({
 
       <hr className="rule" />
       <Link className="button button--quiet" href={`/?project=${current.project_id}`}>
-        Back to today
+        Home
       </Link>
     </main>
   );

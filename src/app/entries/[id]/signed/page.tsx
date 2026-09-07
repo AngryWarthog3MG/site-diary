@@ -165,7 +165,7 @@ export default async function SignedPage({ params }: { params: Promise<{ id: str
       )}
 
       <Link className="button button--quiet" href="/">
-        Back to today
+        Home
       </Link>
     </main>
   );

@@ -239,7 +239,7 @@ export function AskScreen({
 
       <hr className="rule" />
       <Link className="button button--quiet" href="/">
-        Back to today
+        Home
       </Link>
     </main>
   );
