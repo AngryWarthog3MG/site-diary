@@ -1,4 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk';
+import { explainModelError } from '@/lib/model-error';
 import * as z from 'zod/v4';
 import { ExtractionProposal } from './schema.ts';
 import { PROMPT_VERSION, SYSTEM_PROMPT, buildUserMessage, type ExtractionInput } from './prompt.ts';
@@ -179,7 +180,10 @@ export async function extractEntry(input: ExtractionInput): Promise<ExtractionRe
       throw new ExtractionError('The API key was rejected.', false);
     }
     if (error instanceof Anthropic.APIError) {
-      throw new ExtractionError(`Extraction failed (${error.status}): ${error.message}`, error.status >= 500);
+      // Said the way the supervisor needs it: is the recording safe (always),
+      // and is the fix theirs, the office's, or nobody's.
+      const plain = explainModelError(error);
+      throw new ExtractionError(plain.message, plain.retryable);
     }
 
     throw new ExtractionError(

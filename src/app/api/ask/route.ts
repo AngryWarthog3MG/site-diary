@@ -1,6 +1,7 @@
 import { fail, ok, readJson, requireApiUser, isUuid } from '@/lib/api';
 import { ask, AskError } from '@/lib/query/ask';
 import { canSee } from '@/lib/roles';
+import { explainModelError } from '@/lib/model-error';
 import type { MemberRole } from '@/types/database';
 
 export const maxDuration = 120;
@@ -56,6 +57,7 @@ export async function POST(request: Request) {
     if (error instanceof AskError) {
       return fail('server_error', error.message, 422, { sql: error.sql });
     }
-    return fail('server_error', 'That question could not be answered.', 500);
+    const plain = explainModelError(error);
+    return fail('server_error', plain.code === 'other' ? 'That question could not be answered.' : plain.message, plain.retryable ? 503 : 422);
   }
 }

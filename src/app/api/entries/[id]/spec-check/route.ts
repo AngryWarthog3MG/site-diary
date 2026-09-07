@@ -1,4 +1,5 @@
 import { fail, ok, readJson, requireApiUser, isUuid } from '@/lib/api';
+import { explainModelError } from '@/lib/model-error';
 import { specCheck, type SpecCheckItem } from '@/lib/documents/spec-check';
 
 export const maxDuration = 90;
@@ -30,6 +31,7 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
   try {
     return ok(await specCheck(supabase, entry.project_id, items));
   } catch (error) {
-    return fail('server_error', error instanceof Error ? error.message : 'The spec check failed.', 500);
+    const plain = explainModelError(error);
+    return fail('server_error', plain.message, plain.retryable ? 503 : 422);
   }
 }

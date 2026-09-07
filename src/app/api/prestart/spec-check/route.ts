@@ -1,4 +1,5 @@
 import { fail, ok, readJson, requireApiUser, isUuid } from '@/lib/api';
+import { explainModelError } from '@/lib/model-error';
 import { prestartSpec } from '@/lib/documents/prestart-spec';
 
 export const maxDuration = 90;
@@ -20,6 +21,7 @@ export async function POST(request: Request) {
   try {
     return ok(await prestartSpec(supabase, projectId, work));
   } catch (error) {
-    return fail('server_error', error instanceof Error ? error.message : 'The spec lookup failed.', 500);
+    const plain = explainModelError(error);
+    return fail('server_error', plain.message, plain.retryable ? 503 : 422);
   }
 }

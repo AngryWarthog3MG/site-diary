@@ -3,6 +3,7 @@ import 'server-only';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { chunkPages } from './chunk';
 import { extractText } from './extract';
+import { explainModelError } from '@/lib/model-error';
 
 export const DOCUMENTS_BUCKET = 'project-documents';
 
@@ -51,7 +52,8 @@ export async function indexDocument(documentId: string): Promise<{ ok: true; pag
       .eq('id', documentId);
     return { ok: true, pages: extraction.pageCount, chunks: chunks.length, method: extraction.method };
   } catch (error) {
-    const reason = error instanceof Error ? error.message : 'Could not read the document.';
+    const plain = explainModelError(error);
+    const reason = plain.code === 'other' ? (error instanceof Error ? error.message : 'Could not read the document.') : plain.message;
     await admin.from('project_documents').update({ status: 'failed', error: reason.slice(0, 500) }).eq('id', documentId);
     return { ok: false, reason };
   }
