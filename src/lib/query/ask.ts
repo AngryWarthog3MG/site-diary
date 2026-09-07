@@ -1,6 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { zodOutputFormat } from '@anthropic-ai/sdk/helpers/zod';
 import { searchTerms } from '@/lib/documents/terms';
+import { perthToday } from '@/lib/push/decide';
 import * as z from 'zod/v4';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { DIARY_SCHEMA_DOC, SQL_RULES, QUERY_SCHEMA_VERSION } from './schema-doc.ts';
@@ -145,11 +146,17 @@ async function generateSql(
   scope: { projectId: string | null; projectName: string | null },
   repair?: { sql: string; error: string },
 ): Promise<string> {
-  const scopeLine = scope.projectId
+  // The model has no clock. "4 September" means the most recent 4 September
+  // not after today — without this it guesses a year and finds nothing.
+  const today = perthToday();
+  const dateLine =
+    `Today is ${today} (Australia/Perth). A day named without a year means the most recent such day on or before today; ` +
+    `"this week" and "last week" are Monday-to-Sunday weeks relative to today. Never assume a year from your training data.\n`;
+  const scopeLine = (scope.projectId
     ? `Project in scope: ${scope.projectName ?? 'unnamed'} (project_id '${scope.projectId}').\n` +
       `Every diary view you read MUST be filtered with project_id = '${scope.projectId}' — ` +
-      `the person is asking about this project only.\n\n`
-    : '';
+      `the person is asking about this project only.\n`
+    : '') + dateLine + '\n';
   const messages: Anthropic.MessageParam[] = [
     {
       role: 'user',
@@ -194,7 +201,8 @@ You are given the question and the rows that answering it returned. Those rows a
 - If the rows do not actually answer what was asked, say what they do show and what is missing. Do not fill the gap.
 - Be brief. The table is shown underneath your answer, so do not read it out row by row — say what it means.
 - Do not speculate about why. The diary records what happened, not why, unless a supervisor said so.
-- Australian construction English. Plain, direct, no throat-clearing.`;
+- Australian construction English. Plain, direct, no throat-clearing.
+- Plain text only: no markdown, no asterisks, no headings, and no tables of your own — the rows are already shown beneath the answer.`;
 
 async function phrase(
   question: string,
