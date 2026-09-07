@@ -95,7 +95,7 @@ export default async function ClaimsPage({
 
       <div className="claims-actions">
         <DraftClaimButton projectId={current.project_id} />
-        <a className="button button--outline" href={`/api/reports/claims?project=${current.project_id}`} download>
+        <a className="button button--quiet" href={`/api/reports/claims?project=${current.project_id}`} download>
           Download as a spreadsheet
         </a>
       </div>
