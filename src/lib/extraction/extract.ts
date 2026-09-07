@@ -1,5 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk';
-import { explainModelError } from '@/lib/model-error';
+import { explainModelError } from '../model-error.ts';
 import * as z from 'zod/v4';
 import { ExtractionProposal } from './schema.ts';
 import { PROMPT_VERSION, SYSTEM_PROMPT, buildUserMessage, type ExtractionInput } from './prompt.ts';

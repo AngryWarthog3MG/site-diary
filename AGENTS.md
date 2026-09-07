@@ -114,6 +114,10 @@ Change four of them and the app silently stops capturing what supervisors say. I
 - **PDF determinism**: fonts embedded as base64, timestamps and `/ID` rewritten from the
   entry, rows ordered by content never by id, UTC formatted by hand — never
   `toLocaleString`. Each of those was a real bug; see README §P1–P6.
+- **`src/lib/extraction/**` runs under plain Node too.** `npm run extraction:eval` loads those
+  modules directly with `node`, which has no `@/` alias — so extraction imports must be
+  relative, exactly as in the PDF template. A `@/` import there passes typecheck, passes the
+  unit tests, ships fine, and breaks only the eval.
 - **The docket template compiles standalone.** `tsconfig.pdf.json` builds only
   `src/lib/pdf/**` (plus anything explicitly added to its `include`) to CommonJS for the
   determinism check, and it does not resolve the `@/` alias. So `src/lib/pdf/docket.tsx`
