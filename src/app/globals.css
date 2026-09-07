@@ -3170,6 +3170,7 @@ body {
 }
 .home-button__icon { display: inline-flex; }
 @media (max-width: 420px) {
-  .topbar__brand span { display: none; }
+  .topbar__brand > span:last-child { display: none; }
+  .topbar__brand { flex: none; }
   .home-button, .menu-button, .refresh-button { padding-left: 0.65rem; padding-right: 0.65rem; }
 }
