@@ -11,6 +11,8 @@ import { PRESTART_CHECKS, type ChecklistState } from '@/lib/prestart/checklist';
 import { fmtDate } from '@/lib/pdf/dates';
 import { PrestartSpecPicker } from '../spec-picker';
 import type { SpecNote } from '@/lib/prestart/spec-notes';
+import { DictateButton } from '../dictate-button';
+import { mergeField, appendDictation, type DictatedFields } from '@/lib/prestart/dictation-merge';
 
 interface Prestart {
   id: string;
@@ -22,6 +24,8 @@ interface Prestart {
   plant: string;
   permits: string;
   notes: string;
+  /** What was said, if the briefing was talked through. Provenance only. */
+  dictation: string | null;
   checklist: ChecklistState;
   specNotes: SpecNote[];
   completed: boolean;
@@ -89,6 +93,7 @@ export function PrestartScreen({
     permits: prestart.permits,
     notes: prestart.notes,
     checklist: prestart.checklist,
+    dictation: prestart.dictation,
   });
 
   useEffect(() => {
@@ -156,6 +161,7 @@ export function PrestartScreen({
           permits: draft.permits.trim() || null,
           notes: draft.notes.trim() || null,
           checklist: draft.checklist,
+          dictation: draft.dictation,
         })
         .eq('id', prestart.id);
       if (updateError) throw new Error(updateError.message);
@@ -239,6 +245,16 @@ export function PrestartScreen({
                 onChange={(e) => setDraft({ ...draft, supervisor: e.target.value })} />
             </label>
           </div>
+          <DictateButton projectId={prestart.projectId} disabled={saving} onResult={(fields: DictatedFields, transcript) =>
+            setDraft((d) => ({
+              ...d,
+              work: mergeField(d.work, fields.work_planned),
+              hazards: mergeField(d.hazards, fields.hazards),
+              plant: mergeField(d.plant, fields.plant),
+              permits: mergeField(d.permits, fields.permits),
+              notes: mergeField(d.notes, fields.notes),
+              dictation: appendDictation(d.dictation, transcript),
+            }))} />
           <label className="fieldcell">
             <span className="label">What is on today</span>
             <textarea className="field" rows={4} value={draft.work}

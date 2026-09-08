@@ -10,6 +10,8 @@ import { createClient } from '@/lib/supabase/client';
 import { localDate } from '@/lib/capture/queue';
 import { BrandMark } from '@/components/brand-mark';
 import { PRESTART_CHECKS, type ChecklistState } from '@/lib/prestart/checklist';
+import { DictateButton } from '../dictate-button';
+import { mergeField, appendDictation, type DictatedFields } from '@/lib/prestart/dictation-merge';
 
 /**
  * What is on, what could hurt someone, the checks — then hand the phone
@@ -35,6 +37,7 @@ export function NewPrestartForm({
   const [notes, setNotes] = useState('');
   const [checks, setChecks] = useState<ChecklistState>({});
   const [specNotes, setSpecNotes] = useState<SpecNote[]>([]);
+  const [dictation, setDictation] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -68,6 +71,7 @@ export function NewPrestartForm({
           notes: notes.trim() || null,
           checklist: checks,
           spec_notes: specNotes,
+          dictation,
           conducted_by: auth.user?.id,
         })
         .select('id')
@@ -91,6 +95,15 @@ export function NewPrestartForm({
         Fill this in, read it out to the crew, then hand the phone around for sign-on.
       </p>
       <hr className="rule" />
+
+      <DictateButton projectId={projectId} disabled={busy} onResult={(fields: DictatedFields, transcript) => {
+        setWork((v) => mergeField(v, fields.work_planned));
+        setHazards((v) => mergeField(v, fields.hazards));
+        setPlant((v) => mergeField(v, fields.plant));
+        setPermits((v) => mergeField(v, fields.permits));
+        setNotes((v) => mergeField(v, fields.notes));
+        setDictation((v) => appendDictation(v, transcript));
+      }} />
 
       <div className="photo-add-pair">
         <label className="fieldcell" style={{ flex: 1 }}>

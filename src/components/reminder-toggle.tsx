@@ -99,13 +99,9 @@ export function ReminderToggle() {
     );
   }
 
-  if (state === 'denied') {
-    return (
-      <p className="reminder-line reminder-line--muted">
-        Notifications are blocked for this app in your phone’s settings.
-      </p>
-    );
-  }
+  // Blocked in the phone's settings: nothing this screen can do about it, so
+  // it says nothing rather than the same line every morning.
+  if (state === 'denied') return null;
 
   return (
     <div className="reminder-line">

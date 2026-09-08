@@ -1,7 +1,6 @@
 import Link from 'next/link';
 import { Suspense } from 'react';
 import { AppMenu } from '@/components/app-menu';
-import { RefreshButton } from '@/components/refresh-button';
 import { BrandMark } from '@/components/brand-mark';
 import { createClient } from '@/lib/supabase/server';
 import {
@@ -11,7 +10,6 @@ import {
 } from '@/lib/auth';
 import { canRunTalks, ROLE_LABEL } from '@/lib/roles';
 import { SignOutButton } from '@/components/sign-out-button';
-import { NextEntryLine } from './next-entry-line';
 import { TodayPanel } from './today-panel';
 
 export const dynamic = 'force-dynamic';
@@ -49,14 +47,6 @@ export default async function TodayPage({
   }
 
   const supabase = await createClient();
-  const { data: lastSigned } = await supabase
-    .from('entries')
-    .select('entry_no, entry_date, signed_at')
-    .eq('project_id', current.project_id)
-    .eq('status', 'signed')
-    .order('entry_seq', { ascending: false })
-    .limit(1)
-    .maybeSingle();
 
   return (
     <main className="app-shell home-shell">
@@ -69,14 +59,10 @@ export default async function TodayPage({
               <span className="home-role">{current.role}</span>
             </div>
             <h1 className="home-title">{current.project.name}</h1>
-            <div className="home-serial">
-              <NextEntryLine orgCode={current.project.org.code} />
-            </div>
             <div className="home-hero__tools">
               <Suspense fallback={null}>
                 <AppMenu slotId="menu-slot-hero" />
               </Suspense>
-              <RefreshButton />
             </div>
             <div id="menu-slot-hero" className="menu-slot" />
           </div>
@@ -95,7 +81,6 @@ export default async function TodayPage({
             canRecord={canAuthorEntries(current.role)}
             canPrestart={canRunTalks(current.role)}
             roleLabel={ROLE_LABEL[current.role].toLowerCase() === 'project manager' ? 'the project manager' : `the ${ROLE_LABEL[current.role].toLowerCase()}`}
-            lastSigned={lastSigned ?? null}
           />
         </div>
 

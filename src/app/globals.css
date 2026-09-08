@@ -3372,3 +3372,15 @@ main.sheet--wide .vr-list { grid-template-columns: repeat(auto-fill, minmax(22re
   border-color: rgba(22, 33, 31, 0.18);
   color: var(--ink-40, #7a8482);
 }
+
+/* Talk a prestart through. */
+.dictate { margin: 0 0 1rem; }
+.dictate__button { display: flex; align-items: center; justify-content: center; gap: 0.5rem; }
+.dictate__dot { width: 0.6rem; height: 0.6rem; border-radius: 50%; background: #ff5d4d; animation: dictate-pulse 1.1s ease-in-out infinite; }
+@keyframes dictate-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+.dictate__heard { margin-top: 0.5rem; font-size: 0.875rem; color: var(--ink-60); }
+.dictate__heard summary { cursor: pointer; }
+.dictate__heard .quote { margin: 0.5rem 0 0; }
+
+/* Home: today's readings, then the week lives on the weekly. */
+.home-weather-week { display: inline-block; margin-top: 0.75rem; font-size: 0.875rem; }

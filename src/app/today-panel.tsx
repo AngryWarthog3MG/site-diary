@@ -57,13 +57,11 @@ export function TodayPanel({
   canRecord,
   canPrestart,
   roleLabel,
-  lastSigned,
 }: {
   projectId: string;
   canRecord: boolean;
   canPrestart: boolean;
   roleLabel: string;
-  lastSigned: { entry_no: string | null; entry_date: string } | null;
 }) {
   const router = useRouter();
   const [date, setDate] = useState('');
@@ -82,8 +80,6 @@ export function TodayPanel({
   const [week, setWeek] = useState<Array<{ date: string; label: string; state: string; href: string | null }>>([]);
   // The week's weather, one reading per day, from the same entries the strip
   // is built from. Wet days are what a delay claim leans on later.
-  const [weekWeather, setWeekWeather] = useState<Record<string, WeatherRow>>({});
-  const [weekStation, setWeekStation] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [offline, setOffline] = useState(false);
   /**
@@ -208,72 +204,6 @@ export function TodayPanel({
           // to finish, someone else's to look at), otherwise record that day.
           type RecentRow = { id: string; entry_date: string; status: string; author_id: string; supersedes_entry_id: string | null; weather?: unknown };
           const rows = (recent ?? []) as RecentRow[];
-          {
-            // The week's readings, best source first: a reading the
-            // supervisor typed into that day's diary (they were there; the
-            // gauge was not), then the site's day row from the Bureau (kept
-            // for every day, diary or not), then whatever the diary's own
-            // BOM fetch caught. A signed day's reading beats a draft's.
-            const typed: Record<string, WeatherRow> = {};
-            const fromEntry: Record<string, WeatherRow> = {};
-            const signedAt = new Set<string>();
-            for (const row of rows) {
-              const reading = firstOrNull<WeatherRow>(row.weather);
-              if (!reading) continue;
-              if (signedAt.has(row.entry_date) && row.status !== 'signed') continue;
-              const hasNumber = [reading.temp_max, reading.temp_min, reading.rainfall_mm, reading.wind_kmh].some((v) => v != null);
-              if (!hasNumber) continue;
-              if (reading.source === 'manual') typed[row.entry_date] = reading;
-              else fromEntry[row.entry_date] = reading;
-              if (row.status === 'signed') signedAt.add(row.entry_date);
-            }
-            setWeekWeather({ ...fromEntry, ...typed });
-            void (async () => {
-              try {
-                const res = await fetch(`/api/weather/week?project=${projectId}&from=${sinceStr}&to=${today}`);
-                const json = await res.json().catch(() => null);
-                const days = (json?.days ?? []) as Array<WeatherRow & { day: string }>;
-                if (!res.ok || days.length === 0) return;
-                // Field by field: the site row is the settled figure, but a
-                // gap in it (today's rain before the table catches up) is
-                // filled from what the diary's own fetch saw that day.
-                const merged: Record<string, WeatherRow> = { ...fromEntry };
-                const pick = (a: number | null, b: number | null | undefined, f: (x: number, y: number) => number) =>
-                  a == null ? b ?? null : b == null ? a : f(a, b);
-                for (const d of days) {
-                  const own = fromEntry[d.day];
-                  if (d.source !== 'bom_daily') {
-                    // Still the running day: two looks at the same gauge, so
-                    // the maximum and rain total only rise and the diary's
-                    // wind is the later look.
-                    merged[d.day] = {
-                      ...d,
-                      temp_max: pick(d.temp_max, own?.temp_max, Math.max),
-                      temp_min: pick(d.temp_min, own?.temp_min, Math.min),
-                      rainfall_mm: pick(d.rainfall_mm, own?.rainfall_mm, Math.max),
-                      wind_dir: own?.wind_kmh != null ? own.wind_dir : d.wind_dir,
-                      wind_kmh: own?.wind_kmh ?? d.wind_kmh,
-                    };
-                    continue;
-                  }
-                  merged[d.day] = {
-                    ...d,
-                    temp_max: d.temp_max ?? own?.temp_max ?? null,
-                    temp_min: d.temp_min ?? own?.temp_min ?? null,
-                    rainfall_mm: d.rainfall_mm ?? own?.rainfall_mm ?? null,
-                    // Wind comes as a pair: a direction from one reading
-                    // against a speed from another describes nothing.
-                    wind_dir: d.wind_kmh != null ? d.wind_dir : own?.wind_dir ?? null,
-                    wind_kmh: d.wind_kmh ?? own?.wind_kmh ?? null,
-                  };
-                }
-                setWeekWeather({ ...merged, ...typed });
-                setWeekStation((json?.station as string | null) ?? null);
-              } catch {
-                // Offline: the diary readings already on screen are what we have.
-              }
-            })();
-          }
           const replaced = new Set(rows.filter((r) => r.status === 'signed' && r.supersedes_entry_id).map((r) => r.supersedes_entry_id as string));
           const byDate = new Map<string, { status: string; href: string }>();
           for (const row of rows) {
@@ -469,27 +399,11 @@ export function TodayPanel({
 
   const covered: Set<EntrySection> = detectSections(entry?.transcript_raw ?? '');
 
-  const signedThisWeek = week.filter((d) => d.state === 'signed').length;
-  const holes = missingDays.filter((d) => !unfinished.some((u) => u.date === d)).length;
   const weekday = date ? ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][new Date(`${date}T12:00:00`).getDay()] : '';
   const glance = !loading && date ? (
     <div className="glance">
       <p className="glance__day">{weekday}</p>
       <p className="glance__date mono">{fmtDate(date)}</p>
-      <dl className="glance__facts">
-        <div>
-          <dt>Signed this week</dt>
-          <dd className="mono">{signedThisWeek}</dd>
-        </div>
-        <div className={unfinished.length + holes > 0 ? 'glance__fact--amber' : ''}>
-          <dt>Not yet signed</dt>
-          <dd className="mono">{unfinished.length + holes}</dd>
-        </div>
-        <div className={prestart?.done ? '' : 'glance__fact--amber'}>
-          <dt>Prestart</dt>
-          <dd>{prestart?.done ? 'Done' : prestart ? 'Open' : 'Not yet'}</dd>
-        </div>
-      </dl>
       {weather && (
         <p className="glance__weather mono">
           {n(weather.temp_max, '°')} · {n(weather.rainfall_mm, '')} mm · {weather.wind_dir ?? '—'} {n(weather.wind_kmh, '', 0)} km/h
@@ -542,41 +456,9 @@ export function TodayPanel({
           )}
           {weatherNote && <p className="notice gap">{weatherNote}</p>}
 
-          {week.length > 0 && (
-            <>
-              <p className="label" style={{ marginTop: '1rem' }}>This week</p>
-              <table className="wxweek">
-                <thead>
-                  <tr>
-                    <th>Day</th>
-                    <th className="n">Max</th>
-                    <th className="n">Min</th>
-                    <th className="n">Rain</th>
-                    <th>Wind</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {week.map((day) => {
-                    const w = weekWeather[day.date];
-                    const wet = w?.rainfall_mm != null && w.rainfall_mm >= 1;
-                    return (
-                      <tr key={day.date} className={`${day.date === date ? 'wxweek__today' : ''}${wet ? ' wxweek__wet' : ''}`}>
-                        <td className="mono">{fmtDate(day.date).slice(0, 5)} <span className="wxweek__dow">{day.label}</span></td>
-                        <td className="n mono">{w ? n(w.temp_max, '°') : '—'}</td>
-                        <td className="n mono">{w ? n(w.temp_min, '°') : '—'}</td>
-                        <td className="n mono">{w ? n(w.rainfall_mm, '') : '—'}</td>
-                        <td className="mono">{w ? `${w.wind_dir ? `${w.wind_dir} ` : ''}${n(w.wind_kmh, '', 0)}` : '—'}</td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-              <p className="caption">
-                {weekStation ? `Bureau of Meteorology, ${weekStation} gauge. ` : 'Bureau of Meteorology. '}
-                Rain in mm over the 24 hours from 9am; today&rsquo;s is so far. A reading typed into that day&rsquo;s diary is shown instead.
-              </p>
-            </>
-          )}
+          <Link className="linklike home-weather-week" href={`/reports/weekly?project=${projectId}`}>
+            This week&rsquo;s weather, day by day
+          </Link>
         </div>
 
         <div className="home-card home-card--capture">
@@ -585,12 +467,6 @@ export function TodayPanel({
           <p className="label">Today · {fmtDate(date)}</p>
           <h2 className="home-card__title">Today&rsquo;s diary</h2>
         </div>
-        {lastSigned && (
-          <div className="home-card__aside">
-            <p className="label">Last signed</p>
-            <p className="mono">{lastSigned.entry_no} · {fmtDate(lastSigned.entry_date)}</p>
-          </div>
-        )}
       </div>
 
       {!loading && (
@@ -609,6 +485,39 @@ export function TodayPanel({
         </p>
       )}
 
+      <div className="home-actions">
+      {entry?.status === 'signed' ? (
+        <>
+          <Link className="button" href={`/entries/${entry.id}/signed`}>
+            View the signed entry
+          </Link>
+          {canRecord && (
+            <Link className="button button--quiet" href={`/record?project=${projectId}`}>
+              Record a correction
+            </Link>
+          )}
+          <p style={{ marginTop: '0.625rem', color: 'var(--ink-60)', fontSize: '0.8125rem' }}>
+            A signed entry is never edited. Anything recorded after signing becomes a
+            correction — a new entry, with its own serial, that supersedes this one.
+          </p>
+        </>
+      ) : canRecord ? (
+        <>
+          <Link className="button button--record" href={`/record?project=${projectId}`}>
+            {entry?.segments ? 'Talk some more' : 'Talk it through'}
+          </Link>
+          <button className="button button--quiet" type="button" disabled={writingOut}
+            onClick={writeItOut}>
+            {writingOut ? 'Opening…' : 'Type it in instead'}
+          </button>
+        </>
+      ) : (
+        <p className="notice">
+          You are on this job as {roleLabel}. Recording the diary is the site supervisor&rsquo;s;
+          {canPrestart ? ' your prestarts and toolbox talks are in the menu.' : ' the record and reports are in the menu.'}
+        </p>
+      )}
+      </div>
       {!loading && canPrestart && (
         <div className={`prestart-row ${prestart?.done ? 'prestart-row--done' : prestart ? 'prestart-row--open' : ''}`}>
           <span>
@@ -643,46 +552,6 @@ export function TodayPanel({
 
       <QueueStatus />
 
-      <div className="home-actions">
-      {entry?.status === 'signed' ? (
-        <>
-          <Link className="button" href={`/entries/${entry.id}/signed`}>
-            View the signed entry
-          </Link>
-          {canRecord && (
-            <Link className="button button--quiet" href={`/record?project=${projectId}`}>
-              Record a correction
-            </Link>
-          )}
-          <p style={{ marginTop: '0.625rem', color: 'var(--ink-60)', fontSize: '0.8125rem' }}>
-            A signed entry is never edited. Anything recorded after signing becomes a
-            correction — a new entry, with its own serial, that supersedes this one.
-          </p>
-        </>
-      ) : canRecord ? (
-        <>
-          <Link className="button button--record" href={`/record?project=${projectId}`}>
-            {entry?.segments ? 'Talk some more' : 'Talk it through'}
-          </Link>
-          <p className="way-hint">
-            Say what happened in your own words. It gets written up for you to check.
-          </p>
-
-          <button className="button button--quiet" type="button" disabled={writingOut}
-            onClick={writeItOut}>
-            {writingOut ? 'Opening…' : 'Type it in instead'}
-          </button>
-          <p className="way-hint">
-            Fill in labour, plant and works yourself, without recording anything.
-          </p>
-        </>
-      ) : (
-        <p className="notice">
-          You are on this job as {roleLabel}. Recording the diary is the site supervisor&rsquo;s;
-          {canPrestart ? ' your prestarts and toolbox talks are in the menu.' : ' the record and reports are in the menu.'}
-        </p>
-      )}
-      </div>
 
       {canRecord && entry && entry.status !== 'signed' && (entry.hasProposal || entry.hasRecord) && (
         <Link className="button" href={`/entries/${entry.id}/review`}>
@@ -734,9 +603,6 @@ export function TodayPanel({
         <div className="unfinished">
           <p className="label">
             Days without a record · {unfinished.length + missingDays.filter((d) => !unfinished.some((u) => u.date === d)).length}
-          </p>
-          <p className="way-hint" style={{ margin: '0.15rem 0 0.5rem' }}>
-            A day counts once it is signed — not before, however much is typed into it.
           </p>
           {missingDays
             .filter((d) => !unfinished.some((u) => u.date === d))

@@ -17,7 +17,7 @@ export default async function PrestartPage({ params }: { params: Promise<{ id: s
   const { data: row } = await supabase
     .from('prestarts')
     .select(
-      `id, project_id, prestart_date, supervisor_name, work_planned, hazards, plant, permits, notes, spec_notes,
+      `id, project_id, prestart_date, supervisor_name, work_planned, hazards, plant, permits, notes, dictation, spec_notes,
        checklist, completed_at,
        prestart_attendees(id, attendee_name, fit_for_work, signature_path, created_at)`,
     )
@@ -69,6 +69,7 @@ export default async function PrestartPage({ params }: { params: Promise<{ id: s
         plant: row.plant ?? '',
         permits: row.permits ?? '',
         notes: row.notes ?? '',
+        dictation: (row.dictation as string | null) ?? null,
         checklist: readChecklist(row.checklist),
         specNotes: readSpecNotes(row.spec_notes),
         completed: Boolean(row.completed_at),
