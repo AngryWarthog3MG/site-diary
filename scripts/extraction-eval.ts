@@ -16,16 +16,14 @@ import { reconcileSections } from '../src/lib/extraction/completeness.ts';
 import { scoreProposal, summarise, type Score } from '../src/lib/extraction/score.ts';
 import { FIXTURES, type Fixture } from '../src/lib/extraction/fixtures/transcripts.ts';
 import type { ExtractionProposal } from '../src/lib/extraction/schema.ts';
+import { useDevKey } from './dev-key.ts';
 
 const filters = process.argv.slice(2);
 const selected = filters.length
   ? FIXTURES.filter((f) => filters.some((needle) => f.id.includes(needle)))
   : FIXTURES;
 
-if (!process.env.ANTHROPIC_API_KEY) {
-  console.error('ANTHROPIC_API_KEY is not set — nothing to run against.');
-  process.exit(1);
-}
+useDevKey('The extraction eval');
 if (selected.length === 0) {
   console.error(`No fixtures matched ${filters.join(', ')}.`);
   process.exit(1);

@@ -11,6 +11,9 @@
  */
 import { chromium } from 'playwright';
 import { readDocketImage } from '../src/lib/docket/ocr.ts';
+import { useDevKey } from './dev-key.ts';
+
+useDevKey('The docket eval');
 
 const CLEAN = `<!doctype html><html><body style="margin:0;background:#888;padding:40px;font-family:Arial">
 <div style="width:640px;background:#fdfdf8;padding:28px;border:1px solid #999;transform:rotate(-1.2deg);box-shadow:2px 4px 12px rgba(0,0,0,.4)">

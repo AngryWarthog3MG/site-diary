@@ -939,6 +939,17 @@ docket number that arrives after the day is signed goes beside the record
 sheet, weekly and claims print it as "added after signing", and until then the honest
 state, "Docket to chase". The signed docket PDF is untouched.
 
+**R13. Development spends on its own key, capped.** The extraction eval sends 25 transcripts
+through the model and asks each for a full structured diary with reasoning: about 250,000
+output tokens, roughly US$4 a run, more in one run than a month of real site use (a day's
+diary is about nine cents). Run against the production key four times in an evening, it
+drained the balance twice and took writing-up, Ask and both Spec tabs down on site — the
+recordings were never at risk, but the app could not write them up until someone topped up.
+So `scripts/dev-key.ts` makes both evals read `ANTHROPIC_DEV_API_KEY` and **stop** if it is
+missing or identical to the production key, rather than falling back. A silent fallback is
+the exact failure it exists to prevent. The cap lives on the key in the Console, because a
+limit the code enforces is a limit the next script can forget.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;

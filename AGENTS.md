@@ -156,8 +156,13 @@ Change four of them and the app silently stops capturing what supervisors say. I
   Keep the leading slash.
 - Migrations against the hosted DB must be scoped to their own fixtures — it holds real
   signed entries.
-- `npm run extraction:eval` costs real tokens. Run it when the prompt or schema changed,
-  and treat invention (a value nobody said) as a harder failure than a miss.
+- **The evals spend real money and refuse the production key.** `extraction:eval` and
+  `docket:eval` read `ANTHROPIC_DEV_API_KEY` (a separate key with a spend cap, in
+  `.env.local`, never in Vercel) and stop if it is missing or equals the production key —
+  `scripts/dev-key.ts`. One evening of running the eval on the production key drained the
+  balance twice and took writing-up and Ask down on site. Run the eval when the prompt or
+  schema changed, once, not after every idea; treat invention (a value nobody said) as a
+  harder failure than a miss. A full run is ~250k output tokens, about US$4.
 - Prefer deleting a feature over weakening a guarantee to make it work. See README §R5.
 
 ## More than one agent works on this repo
