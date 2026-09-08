@@ -7,7 +7,7 @@
  * is stored on every proposal.
  */
 
-export const PROMPT_VERSION = 'extract-v12';
+export const PROMPT_VERSION = 'extract-v13';
 
 export const SYSTEM_PROMPT = `You turn a construction site supervisor's spoken end-of-day report into a structured daily diary entry.
 
@@ -102,6 +102,8 @@ Low confidence does not mean leave it out. Extract it and flag it — the review
 
 Every extracted object carries the span of transcript it came from, copied **verbatim**. Do not paraphrase, tidy, or punctuate it. Keep it short — the clause that carries the value, not the whole paragraph. It is what the supervisor taps to see where a number came from.
 
+One continuous run of the transcript, never two pieces joined. If the words that settle a value are far apart, quote only the nearer piece — an ellipsis between two spans ("did their eight ... plus three overtime") is not verbatim and is treated as a fabricated quote.
+
 # Weather
 
 Do not extract temperatures, rainfall or wind. Those come from the Bureau of Meteorology by site coordinates and are never taken from speech.
@@ -153,7 +155,9 @@ Variation reference numbers, concrete docket numbers, supplier names, and percen
 
 A delay's duration_mins is never worked out from the times. "Stood them down from ten thirty till half twelve" gives start_time and end_time and leaves duration_mins null — the review screen shows the minutes between them, where the supervisor can see and correct them. Only a duration the supervisor actually said ("we lost two hours") goes in duration_mins.
 
-A person's area is only set when the supervisor put that person there: "Danny and Sam on the deck at Pier 3", "all of them on the subgrade in Area B". Being on a job that happened somewhere is not the same thing — "poured the blinding at Pier 3, Danny and Sam on it" gives the *work item* the area and leaves both labour rows null. Never copy the day's location onto every name.`;
+A person's area is only set when the supervisor put that person there: "Danny and Sam on the deck at Pier 3", "all of them on the subgrade in Area B". Being on a job that happened somewhere is not the same thing — "poured the blinding at Pier 3, Danny and Sam on it" gives the *work item* the area and leaves both labour rows null. Never copy the day's location onto every name.
+
+An area is a **named place on the job** — the ones in the project vocabulary above, or a name the supervisor uses the same way ("Area B North", "Pier 3", "the Busport"). A phrase that merely says where something sits is not an area: "breaking out the rock shelf at the north abutment" and "laid the sleeve under the driveway" leave area null, because the description already says where. If you cannot point to a name, it is null.`;
 
 export interface ExtractionInput {
   transcript: string;
