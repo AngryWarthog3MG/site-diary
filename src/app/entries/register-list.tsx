@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { localDate } from '@/lib/capture/queue';
 import { fmtDate } from '@/lib/pdf/dates';
+import { isRestDay } from '@/lib/calendar';
 
 export interface RegisterRow {
   id: string;
@@ -119,7 +120,21 @@ export function RegisterList({ rows, projectId }: { rows: RegisterRow[]; project
             </div>
 
             <div className="entries-day__body">
-              {day.kind === 'gap' ? (
+              {day.kind === 'gap' && day.date !== today && isRestDay(day.date) ? (
+                // A weekend with nothing written down is a rest day, not a
+                // hole. Still a link: a Saturday that was worked is recorded
+                // like any other day.
+                <Link
+                  href={`/record?project=${projectId}&date=${day.date}`}
+                  className="register-card register-card--rest"
+                >
+                  <div>
+                    <p className="register-card__title">Rest day</p>
+                    <p className="register-card__meta">Weekend. Record it only if the crew worked.</p>
+                  </div>
+                  <span className="status-pill status-pill--rest">Record</span>
+                </Link>
+              ) : day.kind === 'gap' ? (
                 <Link
                   href={`/record?project=${projectId}&date=${day.date}`}
                   className="register-card register-card--gap"

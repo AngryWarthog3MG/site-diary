@@ -1,4 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { isRestDay } from '../calendar.ts';
 
 /**
  * The weekly report's data (brief §6).
@@ -149,8 +150,16 @@ export interface WeeklyData {
    */
   unsigned: { days: string[]; entryCount: number };
   counts: {
+    /** Calendar days in the range. */
     daysInRange: number;
+    /** Days with at least one entry, weekends included. */
     daysWithEntries: number;
+    /** Working days (Mon–Fri) in the range, and how many of them are recorded. */
+    workingDaysInRange: number;
+    workingDaysWithEntries: number;
+    /** Weekend days that were worked and recorded. */
+    restDaysWithEntries: number;
+    /** Working days with nothing recorded. A quiet weekend is not one. */
     daysWithoutEntries: number;
     entryCount: number;
     peopleCount: number;
@@ -738,6 +747,7 @@ export async function loadWeeklyData(
   const delaysAgg = aggregateDelays(delays);
   const variationsAgg = aggregateVariations(variations);
   const covered = new Set(entryRows.map((e) => e.entry_date));
+  const workingDays = days.filter((d) => !isRestDay(d));
 
   return {
     project,
@@ -758,7 +768,10 @@ export async function loadWeeklyData(
     counts: {
       daysInRange: days.length,
       daysWithEntries: covered.size,
-      daysWithoutEntries: days.length - covered.size,
+      workingDaysInRange: workingDays.length,
+      workingDaysWithEntries: workingDays.filter((d) => covered.has(d)).length,
+      restDaysWithEntries: days.filter((d) => isRestDay(d) && covered.has(d)).length,
+      daysWithoutEntries: workingDays.filter((d) => !covered.has(d)).length,
       entryCount: entryRows.length,
       peopleCount: labourAgg.people.length,
       pourCount: poursAgg.rows.length,

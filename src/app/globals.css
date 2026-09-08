@@ -2448,6 +2448,7 @@ body {
 .weekstrip__day--draft { border-color: var(--teal, #0e4f52); color: var(--teal, #0e4f52); background: transparent; }
 .weekstrip__day--gap { border-color: var(--amber, #9a6a09); color: var(--amber, #9a6a09); background: transparent; border-style: dashed; }
 .weekstrip__day--today { border-color: var(--ink, #16211f); color: var(--ink, #16211f); background: transparent; }
+.weekstrip__day--rest { border-color: rgba(22, 33, 31, 0.18); color: var(--ink-40, #7a8482); background: transparent; border-style: dotted; }
 
 /* Register filter. */
 .register-search { margin-bottom: 0.75rem; }
@@ -3354,4 +3355,20 @@ main.sheet--wide .vr-list { grid-template-columns: repeat(auto-fill, minmax(22re
     color: var(--teal, #0e4f52);
   }
   body .weekly-nav, body .weekly-fallback { max-width: none; }
+}
+
+/* A weekend with nothing recorded: a rest day, shown quietly. Still a link, for the Saturday that was worked. */
+.register-card--rest {
+  background: transparent;
+  border-color: rgba(22, 33, 31, 0.12);
+  border-style: dashed;
+  color: var(--ink-60, #5b6664);
+  box-shadow: none;
+}
+.register-card--rest .register-card__title { color: var(--ink-60, #5b6664); }
+.register-card--rest .register-card__meta { color: var(--ink-40, #7a8482); }
+.status-pill--rest {
+  background: transparent;
+  border-color: rgba(22, 33, 31, 0.18);
+  color: var(--ink-40, #7a8482);
 }

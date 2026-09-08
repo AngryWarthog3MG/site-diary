@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 import { requireUser } from '@/lib/auth';
 import { BrandMark } from '@/components/brand-mark';
 import { fmtDate } from '@/lib/pdf/dates';
+import { isRestDay } from '@/lib/calendar';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'All jobs · KBS Daily Diary' };
@@ -92,7 +93,7 @@ export default async function PortfolioPage() {
       days.push({
         date,
         label: DOW[cursor.getUTCDay()],
-        state: status === 'signed' ? 'signed' : status ? 'draft' : date === today ? 'today' : !first || date < first ? 'idle' : 'gap',
+        state: status === 'signed' ? 'signed' : status ? 'draft' : date === today ? 'today' : !first || date < first ? 'idle' : isRestDay(date) ? 'rest' : 'gap',
       });
       cursor.setUTCDate(cursor.getUTCDate() + 1);
     }

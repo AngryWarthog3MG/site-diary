@@ -7,6 +7,8 @@
  * schedules or retries fire.
  */
 
+import { isRestDay } from '../calendar.ts';
+
 /** ISO date → 0..6 (Sunday..Saturday), computed in UTC. */
 export function dayOfWeek(date: string): number {
   return new Date(`${date}T00:00:00Z`).getUTCDay();
@@ -17,8 +19,7 @@ export function shouldRemind(input: {
   hasEntryToday: boolean;
   lastNotifiedOn: string | null;
 }): boolean {
-  const dow = dayOfWeek(input.perthToday);
-  if (dow === 0 || dow === 6) return false;
+  if (isRestDay(input.perthToday)) return false;
   if (input.hasEntryToday) return false;
   if (input.lastNotifiedOn === input.perthToday) return false;
   return true;

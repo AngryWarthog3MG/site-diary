@@ -950,6 +950,16 @@ missing or identical to the production key, rather than falling back. A silent f
 the exact failure it exists to prevent. The cap lives on the key in the Console, because a
 limit the code enforces is a limit the next script can forget.
 
+**R14. Weekends are rest days.** Sunday 6 September showed on Past days as "a hole in the
+diary" with a Record it pill beside it, and the home strip drew it amber. For an EOT diary a
+gap in working days matters; a quiet Saturday does not, and flagging it every week teaches
+the crew to ignore amber. `src/lib/calendar.ts` holds the one definition: Saturday and Sunday
+with nothing recorded are rest days — shown grey, never nagged, never counted as missing on
+the home page, the portfolio, or the weekly ("5 of 5 working days recorded"). A weekend that
+*was* worked records like any other day and the weekly says so ("· 1 weekend day worked").
+The knock-off reminder already skipped weekends; it now reads the same definition, so there
+is nowhere for the two to disagree.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;

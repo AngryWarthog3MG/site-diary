@@ -86,7 +86,10 @@ export function WeeklyReport({ data, narrative, narrativeNote, audience = 'recor
           <p className="lbl">Entries covered</p>
           <p className="serial mono">{data.counts.entryCount}</p>
           <p className="sub">
-            {data.counts.daysWithEntries} of {data.counts.daysInRange} days recorded
+            {data.counts.workingDaysWithEntries} of {data.counts.workingDaysInRange} working days recorded
+            {data.counts.restDaysWithEntries > 0
+              ? ` · ${data.counts.restDaysWithEntries} weekend day${data.counts.restDaysWithEntries === 1 ? '' : 's'} worked`
+              : ''}
           </p>
         </div>
       </header>

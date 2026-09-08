@@ -13,6 +13,7 @@ import { SectionChips } from '@/components/section-chips';
 import { QueueStatus } from '@/components/queue-status';
 import { ReminderToggle } from '@/components/reminder-toggle';
 import { fmtDate } from '@/lib/pdf/dates';
+import { isRestDay } from '@/lib/calendar';
 
 interface WeatherRow {
   temp_max: number | null;
@@ -298,7 +299,7 @@ export function TodayPanel({
             strip.push({
               date,
               label: DOW[cursor.getDay()],
-              state: best ? best.status : date === today ? 'today' : 'gap',
+              state: best ? best.status : date === today ? 'today' : isRestDay(date) ? 'rest' : 'gap',
               href: best ? best.href : date === today ? null : `/record?project=${projectId}&date=${date}`,
             });
             cursor.setDate(cursor.getDate() + 1);
@@ -319,7 +320,8 @@ export function TodayPanel({
           for (let i = 0; i < 7; i += 1) {
             const day = localDate(cursor);
             if (day < (first.entry_date as string)) break;
-            if (!have.has(day)) gaps.push(day);
+            // A weekend with nothing recorded is a rest day, not a missing one.
+            if (!have.has(day) && !isRestDay(day)) gaps.push(day);
             cursor.setDate(cursor.getDate() - 1);
           }
           setMissingDays(gaps);
@@ -694,7 +696,7 @@ export function TodayPanel({
           <p className="label">The last seven days</p>
           <div className="weekstrip" aria-label="The last seven days">
             {week.map((day) => {
-              const title = `${fmtDate(day.date)} — ${day.state === 'signed' ? 'signed · open the diary' : day.state === 'draft' ? 'started, not signed · open it' : day.state === 'today' ? 'today' : 'nothing written down · record it'}`;
+              const title = `${fmtDate(day.date)} — ${day.state === 'signed' ? 'signed · open the diary' : day.state === 'draft' ? 'started, not signed · open it' : day.state === 'today' ? 'today' : day.state === 'rest' ? 'weekend · rest day' : 'nothing written down · record it'}`;
               return day.href ? (
                 <Link
                   key={day.date}
