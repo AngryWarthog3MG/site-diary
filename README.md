@@ -961,14 +961,15 @@ The knock-off reminder already skipped weekends; it now reads the same definitio
 is nowhere for the two to disagree.
 
 **R15. The home page is the button.** On a phone the page ran two and a half screens and
-Talk it through sat below the fold, under a header of stat tiles that the seven-day strip
-already says in colour. The header is now the job, the date and Menu; the button sits straight
-under it, on the first screen. Today's weather readings stay; the week's table went back to the
-weekly, where it lives. The duplicate Refresh, two explainer lines and the blocked-notifications
-notice are gone. The page is 1.5 screens and 109 words, from 2.4 and 258. Nothing a supervisor
-acts on was removed: the strip, the prestart line and the days-without-a-record list are all
-still there. A page that is only a big button looks simple and leaves them guessing whether
-yesterday got signed.
+Talk it through sat below the fold, under a green hero of stat tiles that the seven-day strip
+already says in colour. The owner's brief was "more simplistic", so the hero went entirely:
+Home is one sheet like every other screen. Job and Menu on a line, the day as the heading,
+Talk it through under it with Type it in as a text link, the prestart line, the strip with no
+heading and no legend, whatever is not signed yet, and the weather as one line with a link to
+the week. 1.1 screens and 63 words, from 2.4 and 258. Nothing a supervisor acts on was
+removed; everything that only described the page was. A page that is only a button would
+still leave them guessing whether yesterday got signed, so the strip and the not-signed list
+stay.
 
 **R16. A prestart can be talked through.** The recording goes to Deepgram; the model sorts the
 words into the form's five fields (`src/lib/prestart/dictate.ts`) under a prompt that forbids
