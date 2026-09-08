@@ -72,6 +72,10 @@ improvising; the register once shipped dead because a live smoke test was skippe
   the model), chunking, indexing into `project_document_chunks`. Reference only, never a diary field; `spec-check.ts`
   backs the review screen's Spec tab (read-only, never stored); `prestart-spec.ts` backs the prestart's Spec tab
   (kept on `prestarts.spec_notes`, printed on the prestart PDF)
+- `src/lib/prestart/` — prestart checklist, PDF, spec notes; `dictate.ts` turns a spoken briefing into the
+  form's fields (Deepgram → model, never stores, never ticks a check); `dictation-merge.ts` folds it into typed text
+- `src/lib/calendar.ts` — `isRestDay`: weekends with nothing recorded are rest days, not holes. One definition for
+  the screens, the weekly and the reminder
 - `src/lib/claims/` — the claims register loader and the variation register (`register.ts`:
   statuses, summary arithmetic). Status changes only via the `set_variation_status` RPC
 - `src/lib/weekly/`, `src/lib/monthly/` — reports

@@ -960,6 +960,25 @@ the home page, the portfolio, or the weekly ("5 of 5 working days recorded"). A 
 The knock-off reminder already skipped weekends; it now reads the same definition, so there
 is nowhere for the two to disagree.
 
+**R15. The home page is the button.** On a phone the page ran two and a half screens and
+Talk it through sat below the fold, under a header of stat tiles that the seven-day strip
+already says in colour. The header is now the job, the date and Menu; the button sits straight
+under it, on the first screen. Today's weather readings stay; the week's table went back to the
+weekly, where it lives. The duplicate Refresh, two explainer lines and the blocked-notifications
+notice are gone. The page is 1.5 screens and 109 words, from 2.4 and 258. Nothing a supervisor
+acts on was removed: the strip, the prestart line and the days-without-a-record list are all
+still there. A page that is only a big button looks simple and leaves them guessing whether
+yesterday got signed.
+
+**R16. A prestart can be talked through.** The recording goes to Deepgram; the model sorts the
+words into the form's five fields (`src/lib/prestart/dictate.ts`) under a prompt that forbids
+adding a hazard, control, plant item or permit nobody said — the obvious ones included — and
+returns null for anything not mentioned. The supervisor reads, fixes and saves; nothing is
+stored by the button. A field already typed keeps its words and gains a line
+(`dictation-merge.ts`). The checklist is never ticked from speech: a tick that prints was made
+by a person on the day. The transcript is kept on `prestarts.dictation` as provenance and is
+never printed. `POST /api/prestart/dictate` refuses any role that cannot run prestarts.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;
