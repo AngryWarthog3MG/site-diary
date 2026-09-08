@@ -21,10 +21,13 @@ export function explainModelError(error: unknown): ModelFailure {
   if (/credit balance is too low|purchase credits|Plans & Billing/i.test(text)) {
     return {
       code: 'no_credit',
-      retryable: false,
+      // Retryable: the phone keeps the capture queued and tries again on its
+      // own once the office has topped up. Marking this terminal made the
+      // queue drop the item as "synced" with no proposal behind it.
+      retryable: true,
       message:
         'The AI service has run out of credit. Your recording and transcript are safe; nothing is lost. ' +
-        'The office needs to top up the Anthropic account (Plans & Billing), then tap Write it up again.',
+        'The office needs to top up the Anthropic account (Plans & Billing); the app tries again on its own once they have.',
     };
   }
   if (status === 429 || /rate limit/i.test(text)) {

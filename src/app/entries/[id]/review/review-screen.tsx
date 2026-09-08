@@ -38,6 +38,7 @@ import { SignaturePad } from '@/components/signature-pad';
 import { SpecBlock, type SpecLine } from './spec-block';
 import type { ReviewWeather } from './page';
 import { fmtDate } from '@/lib/pdf/dates';
+import { minutesBetween } from '@/lib/review/minutes';
 
 type Item = Record<string, unknown>;
 
@@ -932,20 +933,6 @@ function DocketSection({
  * at save time, so what the supervisor sees is what the record stores.
  */
 /** Minutes between two clock times, over midnight if it must. */
-function minutesBetween(start: string | null | undefined, end: string | null | undefined): number | null {
-  if (!start || !end) return null;
-  const parse = (value: string) => {
-    const m = /^(\d{1,2}):(\d{2})/.exec(value);
-    return m ? Number(m[1]) * 60 + Number(m[2]) : null;
-  };
-  const from = parse(start);
-  const to = parse(end);
-  if (from == null || to == null) return null;
-  let span = to - from;
-  if (span <= 0) span += 24 * 60;
-  return span > 0 ? span : null;
-}
-
 function workedHours(
   start: string | null | undefined,
   finish: string | null | undefined,

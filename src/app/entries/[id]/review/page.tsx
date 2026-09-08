@@ -4,6 +4,7 @@ import { requireUser } from '@/lib/auth';
 import { ReviewPayload } from '@/lib/review/schema';
 import type { SectionKey } from '@/lib/extraction/schema';
 import { ReviewScreen } from './review-screen';
+import { fillDelayMinutes } from '@/lib/review/minutes';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Diary entry · KBS Daily Diary' };
@@ -75,7 +76,10 @@ export default async function ReviewPage({ params }: { params: Promise<{ id: str
     plant: pick('plant', proposal?.plant ?? []),
     work_items: pick('work_items', proposal?.work_items ?? []),
     variations: pick('variations', proposal?.variations ?? []),
-    delays: pick('delays', proposal?.delays ?? []),
+    // A delay spoken as a span arrives with two times and no minutes (the model
+    // never computes one). The minutes between them are arithmetic, filled here
+    // so the docket and the weekly count the delay; the supervisor confirms it.
+    delays: fillDelayMinutes(pick('delays', proposal?.delays ?? [])),
     pours: pick('pours', proposal?.pours ?? []),
     quantities: pick('quantities', proposal?.quantities ?? []),
     dayworks: pick('dayworks', proposal?.dayworks ?? []),

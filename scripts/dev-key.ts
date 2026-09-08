@@ -26,6 +26,13 @@ export function useDevKey(what: string): void {
     );
     process.exit(1);
   }
+  if (!process.env.ANTHROPIC_API_KEY) {
+    console.error(
+      '\nANTHROPIC_API_KEY is not set, so there is no way to prove ANTHROPIC_DEV_API_KEY is not the production key.\n' +
+        'Keep both in .env.local; the script only runs when they are present and different.\n',
+    );
+    process.exit(1);
+  }
   if (dev === process.env.ANTHROPIC_API_KEY) {
     console.error(
       '\nANTHROPIC_DEV_API_KEY is the same key as ANTHROPIC_API_KEY.\n' +
