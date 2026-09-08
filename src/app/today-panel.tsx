@@ -1,7 +1,6 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import type { EntrySection } from '@/types/database';
@@ -96,10 +95,6 @@ export function TodayPanel({
    * reopening the screen tries again.
    */
   const attempted = useRef<Set<string>>(new Set());
-  // The header's right-hand side, filled from the state this panel already
-  // holds rather than a second set of queries.
-  const [glanceSlot, setGlanceSlot] = useState<HTMLElement | null>(null);
-  useEffect(() => { setGlanceSlot(document.getElementById('hero-glance')); }, []);
 
   const load = useCallback(async () => {
     const today = localDate();
@@ -400,124 +395,62 @@ export function TodayPanel({
   const covered: Set<EntrySection> = detectSections(entry?.transcript_raw ?? '');
 
   const weekday = date ? ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][new Date(`${date}T12:00:00`).getDay()] : '';
-  const glance = !loading && date ? (
-    <div className="glance">
-      <p className="glance__day">{weekday}</p>
-      <p className="glance__date mono">{fmtDate(date)}</p>
-      {weather && (
-        <p className="glance__weather mono">
-          {n(weather.temp_max, '°')} · {n(weather.rainfall_mm, '')} mm · {weather.wind_dir ?? '—'} {n(weather.wind_kmh, '', 0)} km/h
-        </p>
-      )}
-    </div>
-  ) : null;
+  const holes = missingDays.filter((d) => !unfinished.some((u) => u.date === d));
+
+  // One line says what today is. The button says what to do about it, so the
+  // status only speaks when there is something the button does not say.
+  const status = loading
+    ? null
+    : offline
+      ? 'No signal — this is what is saved on the phone. It syncs when you are back in range.'
+      : entry
+        ? entry.status === 'signed'
+          ? `Signed and on the record as ${entry.entry_no ?? 'today’s entry'}.`
+          : entry.awaitingTranscription > 0
+            ? `${entry.segments} recording${entry.segments === 1 ? '' : 's'} saved · ${entry.awaitingTranscription} still turning into words.`
+            : entry.transcript_raw
+              ? `${entry.segments} recording${entry.segments === 1 ? '' : 's'} saved and written up. Check it over, then sign.`
+              : null
+        : null;
 
   return (
-    <>
-      {glanceSlot && glance && createPortal(glance, glanceSlot)}
-      <section className="home-grid" aria-label="Today">
-        <div className="home-card home-card--weather">
-          <div className="home-card__head">
-            <div>
-              <p className="label">Conditions</p>
-              <h2 className="home-card__title">Weather on site</h2>
-            </div>
-          </div>
-          <div className="stats">
-            <div className="stat">
-              <p className="label">Temp</p>
-              <p className="mono stat__value">{weather ? n(weather.temp_max, '°') : '—'}</p>
-              <p className="mono stat__sub">min {weather ? n(weather.temp_min, '°') : '—'}</p>
-            </div>
-            <div className="stat">
-              <p className="label">Rain</p>
-              <p className="mono stat__value">{weather ? n(weather.rainfall_mm, '') : '—'}</p>
-              <p className="mono stat__sub">mm since 9am</p>
-            </div>
-            <div className="stat">
-              <p className="label">Wind</p>
-              <p className="mono stat__value">
-                {weather?.wind_dir ?? '—'} {weather ? n(weather.wind_kmh, '', 0) : ''}
-              </p>
-              <p className="mono stat__sub">km/h</p>
-            </div>
-          </div>
-
-          {weather?.station_name && (
-            <p className="caption mono">
-              {weather.source === 'manual'
-                ? 'Entered by hand'
-                : `${weather.station_name}${
-                    weather.station_distance_km != null
-                      ? ` · ${weather.station_distance_km.toFixed(1)} km from site`
-                      : ''
-                  } · Bureau of Meteorology`}
-            </p>
-          )}
-          {weatherNote && <p className="notice gap">{weatherNote}</p>}
-
-          <Link className="linklike home-weather-week" href={`/reports/weekly?project=${projectId}`}>
-            This week&rsquo;s weather, day by day
-          </Link>
-        </div>
-
-        <div className="home-card home-card--capture">
-      <div className="home-card__head">
-        <div>
-          <p className="label">Today · {fmtDate(date)}</p>
-          <h2 className="home-card__title">Today&rsquo;s diary</h2>
-        </div>
-      </div>
-
-      {!loading && (
-        <p className="today-status">
-          {offline
-            ? 'No signal — this is what is saved on the phone. It will sync when you are back in range.'
-            : entry
-              ? entry.status === 'signed'
-                ? `Signed and on the record as ${entry.entry_no ?? 'today’s entry'}. Nothing more to do today.`
-                : entry.awaitingTranscription > 0
-                  ? `${entry.segments} recording${entry.segments === 1 ? '' : 's'} saved. ${entry.awaitingTranscription} still turning into words — this takes a minute.`
-                  : entry.transcript_raw
-                    ? `${entry.segments} recording${entry.segments === 1 ? '' : 's'} saved and written up. Check it over, then sign.`
-                    : 'Started, but nothing in it yet. Talk it through or type it in.'
-              : 'Nothing written down for today yet.'}
-        </p>
-      )}
+    <section className="home-today" aria-label="Today">
+      <h1 className="home-date">
+        {weekday || ' '} <span className="mono home-date__num">{date ? fmtDate(date) : ''}</span>
+      </h1>
+      {status && <p className="today-status">{status}</p>}
 
       <div className="home-actions">
-      {entry?.status === 'signed' ? (
-        <>
-          <Link className="button" href={`/entries/${entry.id}/signed`}>
-            View the signed entry
-          </Link>
-          {canRecord && (
-            <Link className="button button--quiet" href={`/record?project=${projectId}`}>
-              Record a correction
+        {entry?.status === 'signed' ? (
+          <>
+            <Link className="button" href={`/entries/${entry.id}/signed`}>View the signed entry</Link>
+            {canRecord && (
+              <Link className="button button--quiet" href={`/record?project=${projectId}`}>Record a correction</Link>
+            )}
+          </>
+        ) : canRecord ? (
+          <>
+            <Link className="button button--record" href={`/record?project=${projectId}`}>
+              {entry?.segments ? 'Talk some more' : 'Talk it through'}
             </Link>
-          )}
-          <p style={{ marginTop: '0.625rem', color: 'var(--ink-60)', fontSize: '0.8125rem' }}>
-            A signed entry is never edited. Anything recorded after signing becomes a
-            correction — a new entry, with its own serial, that supersedes this one.
+            <button className="linklike home-typeit" type="button" disabled={writingOut} onClick={writeItOut}>
+              {writingOut ? 'Opening…' : 'Type it in instead'}
+            </button>
+          </>
+        ) : (
+          <p className="notice">
+            You are on this job as {roleLabel}. Recording the diary is the site supervisor&rsquo;s;
+            {canPrestart ? ' your prestarts and toolbox talks are in the menu.' : ' the record and reports are in the menu.'}
           </p>
-        </>
-      ) : canRecord ? (
-        <>
-          <Link className="button button--record" href={`/record?project=${projectId}`}>
-            {entry?.segments ? 'Talk some more' : 'Talk it through'}
-          </Link>
-          <button className="button button--quiet" type="button" disabled={writingOut}
-            onClick={writeItOut}>
-            {writingOut ? 'Opening…' : 'Type it in instead'}
-          </button>
-        </>
-      ) : (
-        <p className="notice">
-          You are on this job as {roleLabel}. Recording the diary is the site supervisor&rsquo;s;
-          {canPrestart ? ' your prestarts and toolbox talks are in the menu.' : ' the record and reports are in the menu.'}
-        </p>
-      )}
+        )}
       </div>
+
+      {canRecord && entry && entry.status !== 'signed' && (entry.hasProposal || entry.hasRecord) && (
+        <Link className="button" href={`/entries/${entry.id}/review`}>
+          {entry.hasRecord ? 'Back to today’s entry' : 'Check it over and sign'}
+        </Link>
+      )}
+
       {!loading && canPrestart && (
         <div className={`prestart-row ${prestart?.done ? 'prestart-row--done' : prestart ? 'prestart-row--open' : ''}`}>
           <span>
@@ -544,79 +477,46 @@ export function TodayPanel({
       )}
 
       {covered.size > 0 && (
-        <div style={{ marginTop: '0.75rem' }}>
+        <div className="home-chips">
           <p className="caption">What you have talked about so far</p>
           <SectionChips covered={covered} />
         </div>
       )}
-
       <QueueStatus />
 
-
-      {canRecord && entry && entry.status !== 'signed' && (entry.hasProposal || entry.hasRecord) && (
-        <Link className="button" href={`/entries/${entry.id}/review`}>
-          {entry.hasRecord ? 'Back to today’s entry' : 'Check it over and sign'}
-        </Link>
-      )}
-
-      <div className="home-card__foot">
       {week.length > 0 && (
-        <>
-          <p className="label">The last seven days</p>
-          <div className="weekstrip" aria-label="The last seven days">
-            {week.map((day) => {
-              const title = `${fmtDate(day.date)} — ${day.state === 'signed' ? 'signed · open the diary' : day.state === 'draft' ? 'started, not signed · open it' : day.state === 'today' ? 'today' : day.state === 'rest' ? 'weekend · rest day' : 'nothing written down · record it'}`;
-              return day.href ? (
-                <Link
-                  key={day.date}
-                  href={day.href}
-                  className={`weekstrip__day weekstrip__day--${day.state} weekstrip__day--link`}
-                  title={title}
-                  aria-label={title}
-                >
-                  <span className="weekstrip__num mono">{Number(day.date.slice(8, 10))}</span>
-                  <span className="weekstrip__dow">{day.label}</span>
-                </Link>
-              ) : (
-                <span key={day.date} className={`weekstrip__day weekstrip__day--${day.state}`} title={title}>
-                  <span className="weekstrip__num mono">{Number(day.date.slice(8, 10))}</span>
-                  <span className="weekstrip__dow">{day.label}</span>
-                </span>
-              );
-            })}
-          </div>
-          <p className="weekstrip__key">
-            <span className="weekstrip__day weekstrip__day--signed" aria-hidden>&nbsp;</span> signed
-            <span className="weekstrip__day weekstrip__day--draft" aria-hidden>&nbsp;</span> started
-            <span className="weekstrip__day weekstrip__day--gap" aria-hidden>&nbsp;</span> nothing written down
-          </p>
-        </>
+        <div className="weekstrip home-week" aria-label="The last seven days">
+          {week.map((day) => {
+            const title = `${fmtDate(day.date)} — ${day.state === 'signed' ? 'signed · open the diary' : day.state === 'draft' ? 'started, not signed · open it' : day.state === 'today' ? 'today' : day.state === 'rest' ? 'weekend · rest day' : 'nothing written down · record it'}`;
+            return day.href ? (
+              <Link key={day.date} href={day.href} className={`weekstrip__day weekstrip__day--${day.state} weekstrip__day--link`} title={title} aria-label={title}>
+                <span className="weekstrip__num mono">{Number(day.date.slice(8, 10))}</span>
+                <span className="weekstrip__dow">{day.label}</span>
+              </Link>
+            ) : (
+              <span key={day.date} className={`weekstrip__day weekstrip__day--${day.state}`} title={title}>
+                <span className="weekstrip__num mono">{Number(day.date.slice(8, 10))}</span>
+                <span className="weekstrip__dow">{day.label}</span>
+              </span>
+            );
+          })}
+        </div>
       )}
 
-      </div>
-      <ReminderToggle />
-        </div>
-
-        {(unfinished.length > 0 || missingDays.length > 0) && (
-          <div className="home-card home-card--attention">
-      {(unfinished.length > 0 || missingDays.length > 0) && (
-        <div className="unfinished">
-          <p className="label">
-            Days without a record · {unfinished.length + missingDays.filter((d) => !unfinished.some((u) => u.date === d)).length}
-          </p>
-          {missingDays
-            .filter((d) => !unfinished.some((u) => u.date === d))
-            .map((d) => (
-              <div key={d} className="unfinished__row">
-                <div>
-                  <p className="mono unfinished__date">{fmtDate(d)}</p>
-                  <p className="unfinished__what">nothing written down</p>
-                </div>
-                <div className="unfinished__actions">
-                  <Link className="button button--quiet" href={`/record?project=${projectId}&date=${d}`}>Record it</Link>
-                </div>
+      {(unfinished.length > 0 || holes.length > 0) && (
+        <div className="unfinished home-unfinished">
+          <p className="label">Not signed yet · {unfinished.length + holes.length}</p>
+          {holes.map((d) => (
+            <div key={d} className="unfinished__row">
+              <div>
+                <p className="mono unfinished__date">{fmtDate(d)}</p>
+                <p className="unfinished__what">nothing written down</p>
               </div>
-            ))}
+              <div className="unfinished__actions">
+                <Link className="button button--quiet" href={`/record?project=${projectId}&date=${d}`}>Record it</Link>
+              </div>
+            </div>
+          ))}
           {unfinished.map((d) => (
             <div key={d.id} className="unfinished__row">
               <div>
@@ -631,8 +531,7 @@ export function TodayPanel({
               {d.mine ? (
                 <div className="unfinished__actions">
                   <Link className="button button--quiet" href={`/entries/${d.id}/review`}>Finish</Link>
-                  <button type="button" className="quotebtn quotebtn--remove" disabled={binning === d.id}
-                    onClick={() => void binDraft(d.id)}>
+                  <button type="button" className="quotebtn quotebtn--remove" disabled={binning === d.id} onClick={() => void binDraft(d.id)}>
                     {binning === d.id ? 'Binning…' : 'Bin'}
                   </button>
                 </div>
@@ -642,9 +541,19 @@ export function TodayPanel({
         </div>
       )}
 
-          </div>
-        )}
-      </section>
-    </>
+      {!loading && (
+        <p className="home-wx mono">
+          {weather
+            ? `${n(weather.temp_max, '°')} · ${n(weather.rainfall_mm, '')} mm since 9am · ${weather.wind_dir ?? '—'} ${n(weather.wind_kmh, '', 0)} km/h${
+                weather.source === 'manual' ? ' · entered by hand' : weather.station_name ? ` · ${weather.station_name}` : ''
+              }`
+            : 'No weather reading yet today'}
+          {' · '}
+          <Link className="linklike" href={`/reports/weekly?project=${projectId}`}>this week</Link>
+        </p>
+      )}
+      {weatherNote && <p className="notice gap">{weatherNote}</p>}
+      <ReminderToggle />
+    </section>
   );
 }

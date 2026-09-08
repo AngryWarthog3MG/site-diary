@@ -46,48 +46,29 @@ export default async function TodayPage({
     );
   }
 
-  const supabase = await createClient();
-
   return (
-    <main className="app-shell home-shell">
-      <section className="home-board">
-        <header className="home-hero">
-          <div className="home-hero__content">
-            <div className="home-eyebrow">
-              <BrandMark size={20} />
-              <span>{current.project.org.name}</span>
-              <span className="home-role">{current.role}</span>
-            </div>
-            <h1 className="home-title">{current.project.name}</h1>
-            <div className="home-hero__tools">
-              <Suspense fallback={null}>
-                <AppMenu slotId="menu-slot-hero" />
-              </Suspense>
-            </div>
-            <div id="menu-slot-hero" className="menu-slot" />
-          </div>
-          <div className="home-hero__side">
-            {/* Filled by TodayPanel: the day, and where the week stands. */}
-            <div id="hero-glance" className="home-hero__glance" />
-            <div className="home-hero__switcher">
-              <ProjectSwitcher memberships={memberships} currentId={current.project_id} />
-            </div>
-          </div>
-        </header>
-
-        <div className="home-content">
-          <TodayPanel
-            projectId={current.project_id}
-            canRecord={canAuthorEntries(current.role)}
-            canPrestart={canRunTalks(current.role)}
-            roleLabel={ROLE_LABEL[current.role].toLowerCase() === 'project manager' ? 'the project manager' : `the ${ROLE_LABEL[current.role].toLowerCase()}`}
-          />
-        </div>
-
-        <footer className="account-bar account-bar--quiet">
-          <p className="account-bar__line">
-            Signed in as <span className="mono">{profile?.full_name ?? email}</span>
+    <main className="app-shell app-shell--narrow home-shell">
+      <section className="sheet home-sheet">
+        <div className="home-top">
+          <p className="label home-top__job">
+            <BrandMark size={18} /> {current.project.name}
           </p>
+          <Suspense fallback={null}>
+            <AppMenu slotId="menu-slot-home" />
+          </Suspense>
+        </div>
+        <div id="menu-slot-home" className="menu-slot" />
+        <ProjectSwitcher memberships={memberships} currentId={current.project_id} />
+
+        <TodayPanel
+          projectId={current.project_id}
+          canRecord={canAuthorEntries(current.role)}
+          canPrestart={canRunTalks(current.role)}
+          roleLabel={ROLE_LABEL[current.role].toLowerCase() === 'project manager' ? 'the project manager' : `the ${ROLE_LABEL[current.role].toLowerCase()}`}
+        />
+
+        <footer className="home-foot">
+          <span className="home-foot__who">{profile?.full_name ?? email}</span>
           <SignOutButton />
         </footer>
       </section>
@@ -110,7 +91,7 @@ function ProjectSwitcher({
   if (active.length < 2) return null;
 
   return (
-    <ul className="chips" style={{ marginTop: '0.875rem' }}>
+    <ul className="chips home-switcher">
       {active.map((m) => (
         <li key={m.project_id}>
           <Link
