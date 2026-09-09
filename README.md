@@ -990,6 +990,19 @@ the docket, which the template already prints as NOT SIGNED. Home says "Matthew 
 today's diary open · 4 on labour so far · Look" in place of the button. Read-only on purpose:
 two authors editing one day would need a merge nobody could sign for.
 
+**R18. A day belongs to the job.** Drafts were the author's alone: every write path — child-table
+RLS, storage, the review RPC, the status update that signs — ran through "my own unsigned
+draft". With two people on one job that meant the supervisor could see the leading hand's day
+and not add a line to it. `app.can_write_entry` and the entries update policy now admit an
+unsigned draft on a job where the caller holds an authoring role (supervisor or admin); a PM
+or leading hand still reads only, nobody touches a signed day, and binning a draft stays with
+its author. Two things were made explicit rather than left to chance. The signature names the
+signer: it used to be attributed to the author whoever moved the row, harmless while those
+were one person and wrong the moment they were not. And `author_id` stays what it was, so the
+record shows who started the day and who put their name to it. The review screen says whose
+day it is and that the last save wins; two people editing one draft at once is a conversation,
+not a merge.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;

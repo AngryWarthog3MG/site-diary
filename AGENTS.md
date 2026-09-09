@@ -143,6 +143,9 @@ Change four of them and the app silently stops capturing what supervisors say. I
   day is signed; a correction carries the day's date and supersedes the current version).
   The API returns 409 `day_open` / `day_signed` first; the queue never turns a blocked
   recording into a correction on its own — that is the supervisor's tap.
+- **A draft is writable by any authoring role on the job, not only its author** — `app.can_write_entry`
+  (SQL) and `canEditEntry` (`src/lib/entries/access.ts`) are the two halves; the signature names the
+  signer (`signed_by := auth.uid()`), `author_id` names who started the day. Deleting a draft stays author-only.
 - **Roles live in one table.** `src/lib/roles.ts` (`canAuthorEntries`, `canRunTalks`, `canSee`,
   `canManageRegisters`, `canExportReports`) is what the menu, the page guards and the APIs read;
   `app.can_run_talks()` and `app.can_manage_registers()` mirror it in SQL. A new role goes in both.
