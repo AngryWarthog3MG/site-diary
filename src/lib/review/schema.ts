@@ -237,10 +237,34 @@ export type ReviewQualityWarning =
   | 'weather_delay_without_impact'
   | 'variation_without_value'
   | 'daywork_without_docket'
+  | 'plant_without_prestart'
   | 'low_confidence_items';
 
-export function reviewQualityWarnings(payload: ReviewPayload): ReviewQualityWarning[] {
+/** What the screen knows beyond the payload: which machines have a signed plant prestart for this day. */
+export interface ReviewContext {
+  /** Register names of plant with a signed prestart on the entry's date; undefined when unknown. */
+  plantPrestarted?: string[];
+}
+
+/** A diary plant item is covered when a prestarted machine's name contains it, or it contains the name. */
+export function plantIsPrestarted(item: string, prestarted: string[]): boolean {
+  const a = item.trim().toLowerCase();
+  if (!a) return true;
+  return prestarted.some((name) => {
+    const b = name.trim().toLowerCase();
+    return b.length > 0 && (b.includes(a) || a.includes(b));
+  });
+}
+
+export function reviewQualityWarnings(payload: ReviewPayload, context: ReviewContext = {}): ReviewQualityWarning[] {
   const warnings = new Set<ReviewQualityWarning>();
+
+  if (
+    context.plantPrestarted &&
+    payload.plant.some((item) => item.item?.trim() && !plantIsPrestarted(item.item, context.plantPrestarted!))
+  ) {
+    warnings.add('plant_without_prestart');
+  }
 
   if (payload.labour.some((item) => item.hours == null)) {
     warnings.add('labour_missing_hours');
@@ -354,6 +378,8 @@ export const WARNING_PROMPTS: Record<string, string> = {
     'A weather delay is listed, but the Weather tab has no impact note. Add what the weather did to the work.',
   variation_without_value:
     'A variation has no value. Say or type an estimate if you have one — the register shows what each variation is worth, and this one reads as $0 until then.',
+  plant_without_prestart:
+    'A machine worked today with no signed plant prestart for it. Do the walk-around and sign it under Plant, or note why it was not done.',
   daywork_without_docket:
     'A daywork has no docket number or photo. Add it if you have it; otherwise it prints as “docket to chase” on the client sheet until one is recorded.',
   low_confidence_items:
@@ -370,5 +396,6 @@ export const WARNING_GROUPS: Partial<Record<ReviewQualityWarning, ItemGroup | 'w
   weather_impact_without_weather_delay: 'weather',
   weather_delay_without_impact: 'weather',
   variation_without_value: 'variations',
+  plant_without_prestart: 'plant',
   daywork_without_docket: 'dayworks',
 };

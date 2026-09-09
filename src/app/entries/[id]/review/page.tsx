@@ -53,6 +53,18 @@ export default async function ReviewPage({ params }: { params: Promise<{ id: str
     startedBy = author?.full_name ?? author?.email ?? 'someone else';
   }
 
+  // Machines with a signed plant prestart on this day, so the review can ask
+  // about any plant that worked without one.
+  const { data: prestartedRows } = await supabase
+    .from('plant_prestarts')
+    .select('plant:plant_register!inner(name)')
+    .eq('project_id', entry.project_id)
+    .eq('prestart_date', entry.entry_date)
+    .not('completed_at', 'is', null);
+  const plantPrestarted = (prestartedRows ?? [])
+    .map((r) => { const p = Array.isArray(r.plant) ? r.plant[0] : r.plant; return (p as { name?: string } | null)?.name ?? ''; })
+    .filter(Boolean);
+
   const { data: extraction } = await supabase
     .from('entry_extractions')
     .select('id, proposal, status, created_at')
@@ -187,6 +199,7 @@ export default async function ReviewPage({ params }: { params: Promise<{ id: str
       hasProposal={Boolean(extraction)}
       hasStored={hasStored}
       startedBy={startedBy}
+      plantPrestarted={plantPrestarted}
     />
   );
 }

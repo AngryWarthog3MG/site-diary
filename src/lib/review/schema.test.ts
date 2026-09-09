@@ -284,3 +284,11 @@ test('every quality warning has text for the supervisor', () => {
     assert.ok(WARNING_PROMPTS[warning].length > 20, `${warning} prompt is too thin`);
   }
 });
+
+test('a machine that worked with no signed plant prestart is a warning, only when the day is known', () => {
+  const payload = ReviewPayload.parse({ plant: [{ item: 'Vac Trailer', hours: 8 }, { item: '1.8t Excavator', hours: 8 }] });
+  assert.deepEqual(reviewQualityWarnings(payload), []); // unknown: no accusation
+  assert.deepEqual(reviewQualityWarnings(payload, { plantPrestarted: ['1.8t Excavator', 'Vac Trailer (KBS-02)'] }), []);
+  assert.deepEqual(reviewQualityWarnings(payload, { plantPrestarted: ['1.8t Excavator'] }), ['plant_without_prestart']);
+  assert.deepEqual(reviewQualityWarnings(payload, { plantPrestarted: [] }), ['plant_without_prestart']);
+});

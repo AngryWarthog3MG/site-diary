@@ -99,6 +99,7 @@ export function AppMenu({ slotId }: { slotId: string }) {
         <p className="label">On site</p>
         <div className="navgrid">
           {see('prestart') && item(`/prestart${q}`, 'Prestarts', 'Morning briefing and sign-on')}
+          {see('plant') && item(`/plant${q}`, 'Plant', 'Machine prestarts, defects and the register')}
           {see('toolbox') && item(`/toolbox${q}`, 'Toolbox talks', 'Weekly talk and sign-on')}
           {see('ask') && item(`/ask${q}`, 'Ask a question', 'From your diary and the job documents')}
           {see('documents') && item(`/documents${q}`, 'Job documents', 'Spec, scope, contract, drawings')}

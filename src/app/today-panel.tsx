@@ -70,6 +70,8 @@ export function TodayPanel({
   // per day: a second recording would be refused, so the button gives way to
   // a line saying who has it and a way to look.
   const [othersToday, setOthersToday] = useState<{ id: string; who: string; labour: number } | null>(null);
+  // Machines whose last plant prestart today said Not to be used.
+  const [taggedOut, setTaggedOut] = useState<string[]>([]);
   const [prestart, setPrestart] = useState<{ id: string; done: boolean; signed: number } | null>(null);
   const [tomorrowPrestart, setTomorrowPrestart] = useState<{ id: string; date: string } | null>(null);
   const [weather, setWeather] = useState<WeatherRow | null>(null);
@@ -152,6 +154,23 @@ export function TodayPanel({
           .limit(1)
           .maybeSingle();
         setTomorrowPrestart(tm ? { id: tm.id as string, date: tm.prestart_date as string } : null);
+      }
+
+      {
+        const { data: pp } = await supabase
+          .from('plant_prestarts')
+          .select('plant_id, fit_for_use, completed_at, plant:plant_register!inner(name)')
+          .eq('project_id', projectId)
+          .eq('prestart_date', today)
+          .not('completed_at', 'is', null)
+          .order('completed_at', { ascending: false });
+        const latest = new Map<string, { fit: boolean; name: string }>();
+        for (const r of pp ?? []) {
+          if (latest.has(r.plant_id as string)) continue;
+          const pl = firstOrNull<{ name: string }>(r.plant);
+          latest.set(r.plant_id as string, { fit: Boolean(r.fit_for_use), name: pl?.name ?? 'A machine' });
+        }
+        setTaggedOut([...latest.values()].filter((v) => !v.fit).map((v) => v.name));
       }
 
       {
@@ -512,6 +531,12 @@ export function TodayPanel({
         </div>
       )}
 
+      {taggedOut.length > 0 && (
+        <div className="prestart-row prestart-row--open home-tagged">
+          <span>Not to be used today: {taggedOut.join(', ')}</span>
+          <Link href={`/plant?project=${projectId}`}>Plant</Link>
+        </div>
+      )}
       {covered.size > 0 && (
         <div className="home-chips">
           <p className="caption">What you have talked about so far</p>

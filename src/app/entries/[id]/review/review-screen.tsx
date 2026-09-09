@@ -129,6 +129,8 @@ export function ReviewScreen(props: {
   hasStored: boolean;
   /** Set when someone else started this day and the viewer is helping with it. */
   startedBy?: string | null;
+  /** Register names of plant with a signed plant prestart on this day. */
+  plantPrestarted?: string[];
 }) {
   const router = useRouter();
   const [payload, setPayload] = useState<ReviewPayload>(props.initial);
@@ -150,7 +152,10 @@ export function ReviewScreen(props: {
   const [activeTab, setActiveTab] = useState<ReviewTab>('labour');
 
   const gaps = useMemo(() => reviewBlockingGaps(payload), [payload]);
-  const qualityWarnings = useMemo(() => reviewQualityWarnings(payload), [payload]);
+  const qualityWarnings = useMemo(
+    () => reviewQualityWarnings(payload, { plantPrestarted: props.plantPrestarted }),
+    [payload, props.plantPrestarted],
+  );
   const gapGroups = useMemo(
     () => new Set(gaps.map((gap) => GAP_PROMPTS[gap]?.group).filter(Boolean) as ItemGroup[]),
     [gaps],

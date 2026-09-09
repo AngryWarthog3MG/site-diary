@@ -21,7 +21,7 @@ export const ROLE_LABEL: Record<MemberRole, string> = {
 
 export const ROLE_HINT: Record<MemberRole, string> = {
   supervisor: 'Records and signs their own diary; runs prestarts and toolbox talks',
-  leading_hand: 'Runs prestarts and toolbox talks; sees past days, the weekly and Today',
+  leading_hand: 'Runs prestarts, plant prestarts and toolbox talks; sees past days, the weekly and Today',
   pm: 'Reads everything — diary, claims, variations, reports — and writes nothing',
   admin: 'Everything a supervisor can, plus who is on the job and its settings',
 };
@@ -51,13 +51,13 @@ export function canExportReports(role: MemberRole): boolean {
 }
 
 export type Screen =
-  | 'today' | 'entries' | 'weekly' | 'prestart' | 'toolbox'
+  | 'today' | 'entries' | 'weekly' | 'prestart' | 'plant' | 'toolbox'
   | 'claims' | 'variations' | 'progress' | 'ask' | 'documents' | 'settings';
 
 /** Which screens a role gets. Everything not listed for a role is refused, not just hidden. */
 export function canSee(role: MemberRole, screen: Screen): boolean {
   if (role === 'leading_hand') {
-    return screen === 'today' || screen === 'entries' || screen === 'weekly' || screen === 'prestart' || screen === 'toolbox';
+    return screen === 'today' || screen === 'entries' || screen === 'weekly' || screen === 'prestart' || screen === 'plant' || screen === 'toolbox';
   }
   if (screen === 'settings') return canAuthorEntries(role);
   return true;

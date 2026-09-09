@@ -40,6 +40,7 @@ const nextConfig: NextConfig = {
     // Prestart and toolbox-talk PDFs.
     '/api/prestart/*/pdf': CHROMIUM,
     '/api/toolbox/*/pdf': CHROMIUM,
+    '/api/plant/*/pdf': CHROMIUM,
     // Weekly (both), monthly bundle, and the cron that generates them.
     '/api/reports/**': CHROMIUM,
     '/api/ops/check': CHROMIUM,

@@ -31,13 +31,14 @@ const ITEMS: Array<{ href: string; label: string; screen: Screen }> = [
   { href: '/variations', label: 'Variations', screen: 'variations' },
   { href: '/progress', label: 'Progress', screen: 'progress' },
   { href: '/prestart', label: 'Prestarts', screen: 'prestart' },
+  { href: '/plant', label: 'Plant', screen: 'plant' },
   { href: '/toolbox', label: 'Toolbox talks', screen: 'toolbox' },
   { href: '/ask', label: 'Ask', screen: 'ask' },
   { href: '/documents', label: 'Job documents', screen: 'documents' },
 ];
 
 /** Tiles every role has, drawn until the role is known. */
-const BEFORE_ROLE: Screen[] = ['today', 'entries', 'weekly', 'prestart', 'toolbox'];
+const BEFORE_ROLE: Screen[] = ['today', 'entries', 'weekly', 'prestart', 'plant', 'toolbox'];
 
 export function SideNav() {
   const pathname = usePathname();

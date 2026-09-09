@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { fmtDate } from '@/lib/pdf/dates';
 import { PrestartSpecPicker } from '../spec-picker';
 import type { SpecNote } from '@/lib/prestart/spec-notes';
@@ -38,6 +38,24 @@ export function NewPrestartForm({
   const [checks, setChecks] = useState<ChecklistState>({});
   const [specNotes, setSpecNotes] = useState<SpecNote[]>([]);
   const [dictation, setDictation] = useState<string | null>(null);
+  // What the plant tick is standing on: machines with a signed plant prestart today.
+  const [plantDone, setPlantDone] = useState<string[] | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      const supabase = createClient();
+      const { data } = await supabase
+        .from('plant_prestarts')
+        .select('plant:plant_register!inner(name)')
+        .eq('project_id', projectId)
+        .eq('prestart_date', date)
+        .not('completed_at', 'is', null);
+      if (cancelled) return;
+      const names = (data ?? []).map((r) => { const p = Array.isArray(r.plant) ? r.plant[0] : r.plant; return (p as { name?: string } | null)?.name ?? ''; }).filter(Boolean);
+      setPlantDone([...new Set(names)]);
+    })();
+    return () => { cancelled = true; };
+  }, [projectId, date]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -145,6 +163,14 @@ export function NewPrestartForm({
           onChange={(e) => setPermits(e.target.value)} />
       </label>
 
+      {plantDone !== null && (
+        <p className={`notice${plantDone.length ? '' : ' gap'}`} style={{ marginTop: '1rem' }}>
+          {plantDone.length
+            ? `Plant prestarted today: ${plantDone.join(', ')}.`
+            : 'No plant prestart signed yet today.'}{' '}
+          <Link className="linklike" href={`/plant?project=${projectId}`}>Plant</Link>
+        </p>
+      )}
       <p className="label" style={{ marginTop: '1rem' }}>Checks — tick what has been done</p>
       <div className="checklist">
         {PRESTART_CHECKS.map((item) => (

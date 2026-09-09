@@ -3412,3 +3412,45 @@ main.sheet--wide .vr-list { grid-template-columns: repeat(auto-fill, minmax(22re
   /* The rail carries Menu; the in-sheet one goes. */
   .home-top .app-menu, .home-top > :not(.home-top__job) { display: none; }
 }
+
+/* ==========================================================================
+   Plant: the walk-around and the fleet.
+   ========================================================================== */
+.machines, .plantreg__list, .defects, .plantpick { list-style: none; margin: 0.5rem 0 0; padding: 0; display: grid; gap: 0.5rem; }
+.machine, .plantreg__list li, .defect { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; padding: 0.7rem 0.85rem; border: 1px solid var(--ink-08); border-radius: 0.6rem; background: rgba(255,255,255,0.7); }
+.machine--fit { border-color: rgba(14, 79, 82, 0.35); }
+.machine--tagged { border-color: rgba(154, 47, 47, 0.45); background: #fff4f2; }
+.machine--picked { margin-bottom: 0.75rem; }
+.machine__name { margin: 0; font-weight: 600; }
+.machine__meta { margin: 0.15rem 0 0; font-size: 0.8125rem; color: var(--ink-60); }
+.plantreg__retired .machine__name { color: var(--ink-40); text-decoration: line-through; }
+.status-pill--danger { background: #9a2f2f; border-color: #9a2f2f; color: #fff; }
+.plantpick__item { width: 100%; text-align: left; display: grid; gap: 0.1rem; padding: 0.7rem 0.85rem; border: 1px solid var(--ink-08); border-radius: 0.6rem; background: #fff; font: inherit; cursor: pointer; }
+.plantpick__item:hover { border-color: var(--teal, #0e4f52); }
+.addplant { margin-top: 1rem; padding-top: 0.75rem; border-top: 1px dashed var(--ink-08); }
+.addplant--compact { border-top: 0; padding-top: 0.25rem; }
+.tri-list { list-style: none; margin: 0.5rem 0 0; padding: 0; display: grid; gap: 0.45rem; }
+.tri { padding: 0.6rem 0.75rem; border: 1px solid var(--ink-08); border-radius: 0.6rem; background: rgba(255,255,255,0.7); }
+.tri--ok { border-color: rgba(14, 79, 82, 0.35); }
+.tri--defect { border-color: rgba(154, 47, 47, 0.5); background: #fff4f2; }
+.tri--na { border-color: var(--ink-08); color: var(--ink-60); }
+.tri__label { margin: 0 0 0.45rem; font-size: 0.9375rem; line-height: 1.35; }
+.tri__buttons { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.4rem; }
+.fitchoice .tri__buttons { grid-template-columns: 1fr 1fr; }
+.tri__btn { min-height: 2.6rem; border: 1px solid var(--ink-08); border-radius: 0.5rem; background: #fff; font: inherit; font-weight: 600; font-size: 0.875rem; cursor: pointer; color: var(--ink-60); }
+.tri__btn--ok.is-on { background: var(--teal, #0e4f52); border-color: var(--teal, #0e4f52); color: #fff; }
+.tri__btn--defect.is-on { background: #9a2f2f; border-color: #9a2f2f; color: #fff; }
+.tri__btn--na.is-on { background: var(--ink-60, #5b6664); border-color: var(--ink-60, #5b6664); color: #fff; }
+.tri__defect { display: grid; grid-template-columns: 1fr auto; gap: 0.4rem; margin-top: 0.5rem; }
+.tri__photo { margin: 0; min-height: 2.4rem; padding: 0 0.8rem; font-size: 0.8125rem; display: inline-flex; align-items: center; cursor: pointer; }
+.tri-list--read .tri { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; }
+.tri-list--read .tri__label { margin: 0; }
+.tri__result { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
+.tri__result--ok { color: var(--teal, #0e4f52); }
+.tri__result--defect { color: #9a2f2f; }
+.tri__result--na { color: var(--ink-40); }
+.fitchoice { margin-top: 1rem; padding: 0.75rem 0.85rem; border: 1px solid rgba(154, 47, 47, 0.35); border-radius: 0.6rem; background: #fff7f5; }
+.defect__close { display: grid; grid-template-columns: 1fr auto; gap: 0.4rem; margin-top: 0.5rem; }
+.defect__close .button { margin: 0; min-height: 2.4rem; }
+.defect__photo { display: block; max-width: 14rem; margin-top: 0.5rem; border-radius: 0.4rem; border: 1px solid var(--ink-08); }
+.sigimg { display: block; max-width: 18rem; border-bottom: 1px solid var(--ink); background: #fff; }
