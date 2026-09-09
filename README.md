@@ -1003,6 +1003,18 @@ record shows who started the day and who put their name to it. The review screen
 day it is and that the last save wins; two people editing one draft at once is a conversation,
 not a merge.
 
+**R19. Chromium rides only where a document is rendered.** Vercel wrote to say the free team had
+used all 10 GB of Function Storage — the disk that keeps every deployment's server code for
+rollback, nothing to do with the diary's data, which lives in Supabase. Two causes. The build
+traced Playwright, Chromium and the PDF reader (about 115 MB) into every one of 36 API functions,
+not only the eight that make PDFs. And Vercel keeps every deployment ever made: there were over
+two hundred, most of them a fortnight of ten-a-day fixes. Both are fixed at once. Tracing is now
+per route — Chromium in the PDF routes and the cron, pdf.js in the document routes, neither
+anywhere else; a route missing from the list fails loudly with "Chromium not found", never
+silently — and the old deployments were deleted, keeping the live one. Nothing was lost:
+deployments hold code, not records, and any of them can be rebuilt from git. The team should
+still move to Pro; a company's site should not run on a free tier's goodwill.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;
