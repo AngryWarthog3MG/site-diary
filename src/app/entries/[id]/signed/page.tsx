@@ -54,7 +54,10 @@ export default async function SignedPage({ params }: { params: Promise<{ id: str
     // job — the supervisor checking what the leading hand has put in, the PM
     // looking at today — gets a read-only view of what has been entered so
     // far, marked as a working draft. Nothing here is on the record yet.
-    if (entry.author_id === userId) redirect(`/entries/${id}/review`);
+    if (
+      entry.author_id === userId ||
+      memberships.some((m) => m.project_id === (entry.project_id as string) && canAuthorEntries(m.role))
+    ) redirect(`/entries/${id}/review`);
     const who = author?.full_name ?? author?.email ?? 'someone else';
     return (
       <main className="sheet">

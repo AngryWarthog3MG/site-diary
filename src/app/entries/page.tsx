@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { requireUser, resolveProject } from '@/lib/auth';
 import { RegisterList, type RegisterRow } from './register-list';
+import { canAuthorEntries } from '@/lib/roles';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Entries · Site Diary' };
@@ -84,7 +85,7 @@ export default async function EntriesPage({
               entry_no: entry.entry_no,
               entry_date: entry.entry_date,
               status: entry.status,
-              mine: entry.author_id === userId,
+              mine: entry.author_id === userId || canAuthorEntries(current.role),
               authorName: author?.full_name ?? author?.email ?? '—',
               correction: Boolean(entry.supersedes_entry_id),
               supersedes: (entry.supersedes_entry_id as string | null) ?? null,

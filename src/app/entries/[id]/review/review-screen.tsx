@@ -127,6 +127,8 @@ export function ReviewScreen(props: {
   weather: ReviewWeather | null;
   hasProposal: boolean;
   hasStored: boolean;
+  /** Set when someone else started this day and the viewer is helping with it. */
+  startedBy?: string | null;
 }) {
   const router = useRouter();
   const [payload, setPayload] = useState<ReviewPayload>(props.initial);
@@ -421,6 +423,12 @@ export function ReviewScreen(props: {
             )}
           </div>
         </header>
+        {props.startedBy && (
+          <p className="notice" style={{ marginTop: '0.75rem' }}>
+            Started by {props.startedBy}. You are both working on this day — whoever saves last
+            wins, so agree who finishes it. Whoever signs puts their name to it.
+          </p>
+        )}
         <p className="review-intro">
           {props.hasStored
             ? 'Your saved entry. Change anything that is not right.'

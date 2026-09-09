@@ -298,6 +298,58 @@ $$;
 reset role;
 select set_config('request.jwt.claims', '', true);
 
+-- ---------------------------------------------------------------------------
+-- 9. Shared drafts: a colleague with an authoring role may finish and sign a
+--    day someone else started, and the signature names the signer.
+-- ---------------------------------------------------------------------------
+insert into auth.users (id, email) values
+  ('55555555-5555-5555-5555-555555555555', 'sup2@example.com');
+insert into public.project_members (project_id, user_id, role) values
+  ('bbbbbbbb-0000-0000-0000-000000000001', '55555555-5555-5555-5555-555555555555', 'supervisor');
+insert into public.entries (id, project_id, entry_date, author_id, transcript_raw)
+values ('cccccccc-0000-0000-0000-000000000009', 'bbbbbbbb-0000-0000-0000-000000000001',
+        date '2026-08-27', '55555555-5555-5555-5555-555555555555',
+        'Sam on the deck all day.');
+
+select set_config('request.jwt.claims',
+  '{"sub":"11111111-1111-1111-1111-111111111111","role":"authenticated"}', true);
+set local role authenticated;  -- the other supervisor, not the author
+
+select public.apply_entry_review('cccccccc-0000-0000-0000-000000000009', $j$
+{
+  "labour": [{"person_name":"Sam Whitely","hours":8}],
+  "sections": [{"section":"labour","state":"captured"}]
+}
+$j$::jsonb);
+
+update public.entries set status = 'signed'
+ where id = 'cccccccc-0000-0000-0000-000000000009';
+
+do $$
+declare r public.entries;
+begin
+  select * into r from public.entries where id = 'cccccccc-0000-0000-0000-000000000009';
+  assert r.status = 'signed', 'a colleague could not sign the shared draft';
+  assert r.author_id = '55555555-5555-5555-5555-555555555555', 'author_id changed on signing';
+  assert r.signed_by = '11111111-1111-1111-1111-111111111111',
+         format('signed_by names %s, expected the signer', r.signed_by);
+  raise notice 'PASS  a colleague finishes and signs a shared draft; the signature names the signer';
+end;
+$$;
+
+reset role;
+select set_config('request.jwt.claims', '', true);
+
+-- The PM still cannot: the same shape on the pm's session touches nothing.
+select set_config('request.jwt.claims',
+  '{"sub":"22222222-2222-2222-2222-222222222222","role":"authenticated"}', true);
+set local role authenticated;
+select tests.expect_error($q$
+  select public.apply_entry_review('cccccccc-0000-0000-0000-000000000001', '{}'::jsonb)
+$q$, 'not an open draft');
+reset role;
+select set_config('request.jwt.claims', '', true);
+
 do $$ begin raise notice ''; raise notice 'ALL REVIEW TESTS PASSED'; end; $$;
 
 rollback;

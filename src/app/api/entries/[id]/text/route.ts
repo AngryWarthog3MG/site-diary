@@ -1,4 +1,5 @@
 import { fail, ok, readJson, requireApiUser, isUuid } from '@/lib/api';
+import { canEditEntry } from '@/lib/entries/access';
 
 const MAX_TEXT_CHARS = 20_000;
 
@@ -35,7 +36,7 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
 
   const { data: entry, error: entryError } = await supabase
     .from('entries')
-    .select('id, status, author_id')
+    .select('id, project_id, status, author_id')
     .eq('id', entryId)
     .maybeSingle();
 
@@ -44,8 +45,8 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
   if (entry.status === 'signed') {
     return fail('entry_signed', 'That entry is signed. Text cannot be added to it.', 409);
   }
-  if (entry.author_id !== user.id) {
-    return fail('forbidden', 'That entry belongs to another supervisor.', 403);
+  if (!(await canEditEntry(supabase, user.id, entry))) {
+    return fail('forbidden', 'That day was started by someone else, and your role on this job cannot write to it.', 403);
   }
 
   // A first-class segment, not a string append: transcript_raw is derived

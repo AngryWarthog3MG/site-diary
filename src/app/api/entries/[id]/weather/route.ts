@@ -3,6 +3,7 @@ import { loadProjectSite, resolveWeather } from '@/lib/weather/resolve';
 import { BOM_ATTRIBUTION } from '@/lib/weather/bom';
 import { mergeWeather } from '@/lib/weather/derive';
 import type { DerivedWeather } from '@/lib/weather/types';
+import { canEditEntry } from '@/lib/entries/access';
 
 export const maxDuration = 30;
 
@@ -35,8 +36,8 @@ export async function POST(_request: Request, context: { params: Promise<{ id: s
   if (entry.status === 'signed') {
     return fail('entry_signed', 'That entry is signed; its weather is part of the record.', 409);
   }
-  if (entry.author_id !== user.id) {
-    return fail('forbidden', 'That entry belongs to another supervisor.', 403);
+  if (!(await canEditEntry(supabase, user.id, entry))) {
+    return fail('forbidden', 'That day was started by someone else, and your role on this job cannot write to it.', 403);
   }
 
   const { data: existing } = await supabase

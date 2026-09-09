@@ -1,5 +1,6 @@
 import { createHash } from 'node:crypto';
 import { fail, ok, requireApiUser, isUuid } from '@/lib/api';
+import { canEditEntry } from '@/lib/entries/access';
 import { extractEntry, ExtractionError, EXTRACTION_MODEL } from '@/lib/extraction/extract';
 import { PROMPT_VERSION } from '@/lib/extraction/prompt';
 import {
@@ -51,8 +52,8 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
   if (entry.status === 'signed') {
     return fail('entry_signed', 'That entry is signed and cannot be re-extracted.', 409);
   }
-  if (entry.author_id !== user.id) {
-    return fail('forbidden', 'That entry belongs to another supervisor.', 403);
+  if (!(await canEditEntry(supabase, user.id, entry))) {
+    return fail('forbidden', 'That day was started by someone else, and your role on this job cannot write to it.', 403);
   }
 
   const transcript = entry.transcript_raw?.trim();

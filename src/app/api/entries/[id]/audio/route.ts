@@ -1,4 +1,5 @@
 import { fail, ok, readJson, requireApiUser, isUuid } from '@/lib/api';
+import { canEditEntry } from '@/lib/entries/access';
 
 /**
  * Register an uploaded recording against a draft entry.
@@ -46,8 +47,8 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
   if (entry.status === 'signed') {
     return fail('entry_signed', 'That entry is signed. Recordings cannot be added to it.', 409);
   }
-  if (entry.author_id !== user.id) {
-    return fail('forbidden', 'That entry belongs to another supervisor.', 403);
+  if (!(await canEditEntry(supabase, user.id, entry))) {
+    return fail('forbidden', 'That day was started by someone else, and your role on this job cannot write to it.', 403);
   }
 
   // The storage policies already scope writes by project and draft ownership;

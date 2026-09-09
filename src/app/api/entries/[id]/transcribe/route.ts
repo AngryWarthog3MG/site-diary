@@ -1,6 +1,7 @@
 import { fail, ok, requireApiUser, isUuid } from '@/lib/api';
 import { buildKeyterms } from '@/lib/transcription/glossary';
 import { transcribeAudio, TranscriptionError } from '@/lib/transcription/deepgram';
+import { canEditEntry } from '@/lib/entries/access';
 
 // A 90-second recording turns around in a few seconds, but a phone draining a
 // backlog can hand over several at once.
@@ -34,8 +35,8 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
   if (entry.status === 'signed') {
     return fail('entry_signed', 'That entry is signed and cannot be re-transcribed.', 409);
   }
-  if (entry.author_id !== user.id) {
-    return fail('forbidden', 'That entry belongs to another supervisor.', 403);
+  if (!(await canEditEntry(supabase, user.id, entry))) {
+    return fail('forbidden', 'That day was started by someone else, and your role on this job cannot write to it.', 403);
   }
 
   const { data: segments, error: segmentsError } = await supabase

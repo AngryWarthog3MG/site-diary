@@ -236,7 +236,7 @@ export function TodayPanel({
               if (replaced.has(row.id)) continue;
               byDate.set(date, { status: 'signed', href: `/entries/${row.id}/signed` });
             } else if (!have || have.status !== 'signed') {
-              const mine = row.author_id === user.id;
+              const mine = row.author_id === user.id || canRecord;
               if (!have || (mine && !have.href.endsWith('/review'))) {
                 byDate.set(date, { status: 'draft', href: mine ? `/entries/${row.id}/review` : `/entries/${row.id}/signed` });
               }
@@ -462,7 +462,7 @@ export function TodayPanel({
               {othersToday.who} has today&rsquo;s diary open
               {othersToday.labour > 0 ? ` · ${othersToday.labour} on labour so far` : ''}
             </span>
-            <Link href={`/entries/${othersToday.id}/signed`}>Look</Link>
+            <Link href={`/entries/${othersToday.id}/${canRecord ? 'review' : 'signed'}`}>{canRecord ? 'Open it' : 'Look'}</Link>
           </div>
         ) : canRecord ? (
           <>
@@ -564,12 +564,14 @@ export function TodayPanel({
                   {!d.mine ? ' · started by someone else' : ''}
                 </p>
               </div>
-              {d.mine ? (
+              {d.mine || canRecord ? (
                 <div className="unfinished__actions">
                   <Link className="button button--quiet" href={`/entries/${d.id}/review`}>Finish</Link>
-                  <button type="button" className="quotebtn quotebtn--remove" disabled={binning === d.id} onClick={() => void binDraft(d.id)}>
-                    {binning === d.id ? 'Binning…' : 'Bin'}
-                  </button>
+                  {d.mine && (
+                    <button type="button" className="quotebtn quotebtn--remove" disabled={binning === d.id} onClick={() => void binDraft(d.id)}>
+                      {binning === d.id ? 'Binning…' : 'Bin'}
+                    </button>
+                  )}
                 </div>
               ) : (
                 <div className="unfinished__actions">

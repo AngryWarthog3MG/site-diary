@@ -38,7 +38,7 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
 
   if (applyError) {
     if (applyError.code === '42501') {
-      return fail('forbidden', 'That entry is not an open draft of yours.', 403);
+      return fail('forbidden', 'That entry is not an open draft you can sign.', 403);
     }
     return fail('server_error', applyError.message, 500);
   }

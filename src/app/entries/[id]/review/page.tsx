@@ -1,6 +1,6 @@
 import { notFound, redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
-import { requireUser } from '@/lib/auth';
+import { requireUser, canAuthorEntries } from '@/lib/auth';
 import { ReviewPayload } from '@/lib/review/schema';
 import type { SectionKey } from '@/lib/extraction/schema';
 import { ReviewScreen } from './review-screen';
@@ -21,7 +21,7 @@ type Row = Record<string, unknown>;
  */
 export default async function ReviewPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const { userId } = await requireUser();
+  const { userId, memberships } = await requireUser();
   const supabase = await createClient();
 
   const { data: entry } = await supabase
@@ -37,9 +37,20 @@ export default async function ReviewPage({ params }: { params: Promise<{ id: str
 
   if (!entry) notFound();
   if (entry.status === 'signed') redirect(`/entries/${id}/signed`);
+  // A day belongs to the job. Its author works on it, and so may anyone with
+  // an authoring role there; a PM or leading hand reads it instead.
+  const canEdit =
+    entry.author_id === userId ||
+    memberships.some((m) => m.project_id === entry.project_id && canAuthorEntries(m.role));
+  if (!canEdit) redirect(`/entries/${id}/signed`);
+  let startedBy: string | null = null;
   if (entry.author_id !== userId) {
-    // PMs read the record; they do not write it.
-    redirect(`/entries/${id}/signed`);
+    const { data: author } = await supabase
+      .from('profiles')
+      .select('full_name, email')
+      .eq('id', entry.author_id)
+      .maybeSingle();
+    startedBy = author?.full_name ?? author?.email ?? 'someone else';
   }
 
   const { data: extraction } = await supabase
@@ -175,6 +186,7 @@ export default async function ReviewPage({ params }: { params: Promise<{ id: str
       weather={weather as ReviewWeather | null}
       hasProposal={Boolean(extraction)}
       hasStored={hasStored}
+      startedBy={startedBy}
     />
   );
 }

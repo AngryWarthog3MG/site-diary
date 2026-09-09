@@ -467,21 +467,53 @@ select tests.expect_error($q$
           '11111111-1111-1111-1111-111111111111')
 $q$, 'row-level security');
 
--- Cannot touch another supervisor's draft.
-select tests.expect_error($q$
-  insert into public.labour (entry_id, person_name, hours)
-  values ('cccccccc-0000-0000-0000-000000000004', 'Nobody', 8)
-$q$, 'row-level security');
+-- A colleague's open draft on the same job is theirs to help with: a
+-- supervisor may add to it (shared drafts, 20260909100000). Entry 4 was
+-- started by supervisor 2.
+insert into public.labour (entry_id, person_name, hours)
+values ('cccccccc-0000-0000-0000-000000000004', 'Added by a colleague', 8);
+delete from public.labour
+ where entry_id = 'cccccccc-0000-0000-0000-000000000004' and person_name = 'Added by a colleague';
+update public.entries set notes = 'colleague note'
+ where id = 'cccccccc-0000-0000-0000-000000000004';
+do $$
+begin
+  assert (select notes from public.entries where id = 'cccccccc-0000-0000-0000-000000000004') = 'colleague note',
+         'a supervisor could not update a colleague''s open draft';
+end;
+$$;
+update public.entries set notes = null where id = 'cccccccc-0000-0000-0000-000000000004';
 
 do $$
 begin
   assert (select count(*) from public.entries) = 4,
          format('supervisor sees %s entries, expected 4 in their project',
                 (select count(*) from public.entries));
-  raise notice 'PASS  supervisor write scope is own drafts in own projects';
+  raise notice 'PASS  supervisor write scope is open drafts on their own jobs';
 end;
 $$;
 
+reset role;
+select set_config('request.jwt.claims', '', true);
+
+-- A PM on the job reads the day and cannot write it, own or otherwise.
+select set_config('request.jwt.claims',
+  '{"sub":"33333333-3333-3333-3333-333333333333","role":"authenticated"}', true);
+set local role authenticated;  -- pm
+select tests.expect_error($q$
+  insert into public.labour (entry_id, person_name, hours)
+  values ('cccccccc-0000-0000-0000-000000000004', 'Nobody', 8)
+$q$, 'row-level security');
+-- Under RLS an update the policy excludes touches no rows rather than erroring.
+update public.entries set notes = 'pm note'
+ where id = 'cccccccc-0000-0000-0000-000000000004';
+do $$
+begin
+  assert (select notes from public.entries where id = 'cccccccc-0000-0000-0000-000000000004') is null,
+         'a PM updated a supervisor''s draft';
+  raise notice 'PASS  a PM cannot write or sign anyone''s draft';
+end;
+$$;
 reset role;
 select set_config('request.jwt.claims', '', true);
 
@@ -508,7 +540,7 @@ select set_config('request.jwt.claims', '', true);
 -- ---------------------------------------------------------------------------
 -- The database owns the signature. A client cannot supply it.
 --
--- entries_update_own_draft lets an author move their own draft to 'signed',
+-- entries_update_open_draft lets an authoring role move a draft to 'signed',
 -- and its WITH CHECK constrains only author_id. Without this guard a
 -- supervisor could back-date signed_at and attribute signed_by to someone
 -- else, and the content hash would not show it because it excludes the
