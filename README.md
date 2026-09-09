@@ -980,6 +980,16 @@ stored by the button. A field already typed keeps its words and gains a line
 by a person on the day. The transcript is kept on `prestarts.dictation` as provenance and is
 never printed. `POST /api/prestart/dictate` refuses any role that cannot run prestarts.
 
+**R17. A colleague's draft can be looked at.** The first morning with two people on one job,
+the leading hand typed the day in and saved it, and the admin could not see a word: Home offered
+him the record button (a second recording would have been refused — one document per day), the
+strip landed on "not signed yet, back to review", and review redirects anyone but the author.
+Now an unsigned entry seen by anyone other than its author is a draft page — who started it,
+that nothing is on the record until they sign, that only they can change it — with a link to
+the docket, which the template already prints as NOT SIGNED. Home says "Matthew Rodgers has
+today's diary open · 4 on labour so far · Look" in place of the button. Read-only on purpose:
+two authors editing one day would need a merge nobody could sign for.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;
