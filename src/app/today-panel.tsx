@@ -66,6 +66,10 @@ export function TodayPanel({
   const [date, setDate] = useState('');
   const [writingOut, setWritingOut] = useState(false);
   const [entry, setEntry] = useState<TodayEntry | null>(null);
+  // Today's diary when someone else on the job opened it first. One document
+  // per day: a second recording would be refused, so the button gives way to
+  // a line saying who has it and a way to look.
+  const [othersToday, setOthersToday] = useState<{ id: string; who: string; labour: number } | null>(null);
   const [prestart, setPrestart] = useState<{ id: string; done: boolean; signed: number } | null>(null);
   const [tomorrowPrestart, setTomorrowPrestart] = useState<{ id: string; date: string } | null>(null);
   const [weather, setWeather] = useState<WeatherRow | null>(null);
@@ -148,6 +152,30 @@ export function TodayPanel({
           .limit(1)
           .maybeSingle();
         setTomorrowPrestart(tm ? { id: tm.id as string, date: tm.prestart_date as string } : null);
+      }
+
+      {
+        const { data: theirs } = await supabase
+          .from('entries')
+          .select('id, author_id, labour(id), author:profiles!entries_author_profiles_fkey(full_name, email)')
+          .eq('project_id', projectId)
+          .eq('entry_date', today)
+          .neq('status', 'signed')
+          .neq('author_id', user.id)
+          .is('supersedes_entry_id', null)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        if (theirs) {
+          const who = firstOrNull<{ full_name: string | null; email: string | null }>(theirs.author);
+          setOthersToday({
+            id: theirs.id as string,
+            who: who?.full_name ?? who?.email ?? 'someone else',
+            labour: ((theirs.labour ?? []) as unknown[]).length,
+          });
+        } else {
+          setOthersToday(null);
+        }
       }
 
       if (data) {
@@ -428,6 +456,14 @@ export function TodayPanel({
               <Link className="button button--quiet" href={`/record?project=${projectId}`}>Record a correction</Link>
             )}
           </>
+        ) : othersToday && !entry ? (
+          <div className="prestart-row prestart-row--open home-theirs">
+            <span>
+              {othersToday.who} has today&rsquo;s diary open
+              {othersToday.labour > 0 ? ` · ${othersToday.labour} on labour so far` : ''}
+            </span>
+            <Link href={`/entries/${othersToday.id}/signed`}>Look</Link>
+          </div>
         ) : canRecord ? (
           <>
             <Link className="button button--record" href={`/record?project=${projectId}`}>
@@ -535,7 +571,11 @@ export function TodayPanel({
                     {binning === d.id ? 'Binning…' : 'Bin'}
                   </button>
                 </div>
-              ) : null}
+              ) : (
+                <div className="unfinished__actions">
+                  <Link className="button button--quiet" href={`/entries/${d.id}/signed`}>Look</Link>
+                </div>
+              )}
             </div>
           ))}
         </div>

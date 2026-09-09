@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { requireUser, canAuthorEntries } from '@/lib/auth';
 import { PdfButton } from './pdf-button';
@@ -19,7 +19,7 @@ export const metadata = { title: 'Signed · Site Diary' };
  */
 export default async function SignedPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const { memberships } = await requireUser();
+  const { memberships, userId } = await requireUser();
   const supabase = await createClient();
 
   const { data: entry } = await supabase
@@ -50,13 +50,31 @@ export default async function SignedPage({ params }: { params: Promise<{ id: str
   const org = first(project?.org) as { name: string; code: string } | null;
 
   if (entry.status !== 'signed') {
+    // The author's own draft lives on the review screen. Anyone else on the
+    // job — the supervisor checking what the leading hand has put in, the PM
+    // looking at today — gets a read-only view of what has been entered so
+    // far, marked as a working draft. Nothing here is on the record yet.
+    if (entry.author_id === userId) redirect(`/entries/${id}/review`);
+    const who = author?.full_name ?? author?.email ?? 'someone else';
     return (
       <main className="sheet">
-        <p className="label">Site Diary</p>
+        <p className="label">{org?.name}</p>
+        <h1 style={{ margin: '0.25rem 0 0', fontSize: '1.375rem', fontWeight: 600 }}>
+          Draft for {fmtDate(entry.entry_date as string)}
+        </h1>
+        <p className="mono" style={{ margin: '0.25rem 0 0', color: 'var(--ink-60)' }}>
+          {project?.name} · started by {who}
+        </p>
         <hr className="rule" />
-        <p className="notice gap">This entry has not been signed yet.</p>
-        <Link className="button button--quiet" href={`/entries/${id}/review`}>
-          Back to review
+        <p className="notice gap">
+          Not signed yet. {who} is still working on this day; nothing in it is on the record
+          until they sign it, and only they can change it.
+        </p>
+        <Link className="button" href={`/entries/${id}/docket`}>
+          See what has been entered so far
+        </Link>
+        <Link className="button button--quiet" href="/">
+          Home
         </Link>
       </main>
     );
