@@ -74,6 +74,9 @@ improvising; the register once shipped dead because a live smoke test was skippe
   (kept on `prestarts.spec_notes`, printed on the prestart PDF)
 - `src/lib/prestart/` — prestart checklist, PDF, spec notes; `dictate.ts` turns a spoken briefing into the
   form's fields (Deepgram → model, never stores, never ticks a check); `dictation-merge.ts` folds it into typed text
+- `src/lib/plant/` — plant prestarts: `checklist.ts` (per-kind checks, frozen labels), `pdf.tsx`. Tables
+  `plant_register` (org-wide fleet), `plant_prestarts` (signed = frozen), `plant_defects`. `app.entry_warnings`
+  raises `plant_without_prestart`; the TS half is `reviewQualityWarnings(payload, { plantPrestarted })`
 - `src/lib/calendar.ts` — `isRestDay`: weekends with nothing recorded are rest days, not holes. One definition for
   the screens, the weekly and the reminder
 - `src/lib/claims/` — the claims register loader and the variation register (`register.ts`:

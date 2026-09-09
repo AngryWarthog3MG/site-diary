@@ -1015,6 +1015,24 @@ silently — and the old deployments were deleted, keeping the live one. Nothing
 deployments hold code, not records, and any of them can be rebuilt from git. The team should
 still move to Pro; a company's site should not run on a free tier's goodwill.
 
+**R20. Plant prestarts.** Before a machine starts for the day the operator walks around it; WA's
+WHS regulations expect that inspection recorded, and the crew prestart carried one tick for it
+with nothing behind it. Three tables. `plant_register` is the company's fleet, shared by every
+job — the checklist picks from it by search, and anyone who runs prestarts can add a machine on
+the spot, because an unfamiliar hire machine at 6:30 is not a phone call to the office. The
+per-job `plant_list` stays the diary's vocabulary for what worked today: the register is the
+fleet, the list is the job. `plant_prestarts` is one inspection — every check with its result and
+the label it carried that morning, hour meter, fit for use or not, the operator's signature; the
+signature arriving completes it, stamped by the database, and from then on it is frozen exactly
+like the crew prestart. `plant_defects` holds anything marked Defect until someone closes it with
+a note. Checklists are per kind of plant in `src/lib/plant/checklist.ts`, with the common
+walk-around items on all of them; nothing is pre-answered. The diary notices: a plant row on a day
+with no signed plant prestart for that machine is a review warning in both halves (TypeScript and
+`app.entry_warnings`), a question and never a veto, matched on name because the diary's plant is
+spoken and the register's is typed. The crew prestart's plant tick now shows which machines were
+actually prestarted, Home says which are tagged out, each inspection prints to one page, and the
+month exports as a spreadsheet for whoever asks after an incident.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;
