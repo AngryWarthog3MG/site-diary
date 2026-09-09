@@ -1,5 +1,10 @@
 import type { NextConfig } from 'next';
 
+const CHROMIUM = [
+  './node_modules/playwright-core/**',
+  './node_modules/@sparticuz/chromium/**',
+];
+
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   // The running build's identity, so an installed phone app can tell it is
@@ -21,12 +26,25 @@ const nextConfig: NextConfig = {
   // PDF route was not matching as written ('/api/entries/[id]/pdf'), so the
   // files were traced into the ops function but not the one that renders
   // real dockets — which is why the probe passed while the button failed.
+  // Only the functions that render a document carry Chromium (~80 MB with
+  // Playwright), and only the document routes carry the PDF reader. Tracing
+  // both into every API function put ~115 MB behind each of 36 routes on
+  // every deployment, which is how a free team's 10 GB of Function Storage
+  // filled up in a fortnight. A route missing from this list fails loudly
+  // ("Chromium not found") — never silently — so add it here, not '/api/**'.
   outputFileTracingIncludes: {
-    '/api/**': [
-      './node_modules/playwright-core/**',
-      './node_modules/@sparticuz/chromium/**',
-      './node_modules/pdfjs-dist/legacy/build/**',
-    ],
+    // Daily docket, client sheet, emailed PDF.
+    '/api/entries/*/pdf': CHROMIUM,
+    '/api/entries/*/client-sheet': CHROMIUM,
+    '/api/entries/*/email': CHROMIUM,
+    // Prestart and toolbox-talk PDFs.
+    '/api/prestart/*/pdf': CHROMIUM,
+    '/api/toolbox/*/pdf': CHROMIUM,
+    // Weekly (both), monthly bundle, and the cron that generates them.
+    '/api/reports/**': CHROMIUM,
+    '/api/ops/check': CHROMIUM,
+    // Job documents: typed PDFs are read with pdf.js.
+    '/api/documents/**': ['./node_modules/pdfjs-dist/legacy/build/**'],
   },
 };
 
