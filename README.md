@@ -1065,6 +1065,16 @@ window an in-flight autosave could land in. All fixed the same day, each pinned 
 lesson is not the bugs, which were ordinary; it is that "one builds, the other reviews" is a
 rule for the day of shipping, not the week after.
 
+**R24. One plant register.** For three days there were two lists called plant: the per-job
+`plant_list` the diary's vocabulary came from, and the company-wide `plant_register` the checklist
+picks from, with the same three machines kept in both by hand. Now there is the register, which is
+the fleet, and `project_plant`, which says which of the fleet is on which job. The extraction's
+known names, the review screen's plant chips, the Plant page's today list and the checklist picker
+all read the same join (`src/lib/plant/on-job.ts`). Ticking On this job in the register is the one
+place a machine joins a job, and checking a machine on the prestart form puts it on the job too,
+because using it here is the fact. The old rows moved across as typed — a supervisor's ownership,
+supplier and aliases beat the seed's guesses — and `plant_list` is gone. Settings points at Plant.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;
