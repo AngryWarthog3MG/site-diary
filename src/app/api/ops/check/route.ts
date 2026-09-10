@@ -1026,7 +1026,7 @@ async function probeBrowser() {
         supersedes_entry_no: null, project_id: 'probe', org_name: 'Probe', org_code: 'PRB',
         project_name: 'Probe', project_code: 'P001', principal_contractor: null,
         author_name: 'Probe', labour: [], plant: [], work_items: [], variations: [], signatures: [],
-        signer_name: 'Probe', labour: [], plant: [], work_items: [], variations: [], signatures: [],
+        signer_name: 'Probe',
         delays: [], pours: [], quantities: [], dayworks: [], photos: [], weather: null, sections: {},
       },
       photos: [],
