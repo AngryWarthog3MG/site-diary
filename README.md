@@ -1098,6 +1098,28 @@ any crew did: the shared database, and supabase-js reporting a dead network as a
 that the classifier filed as permanent. Proved live: prestart, sign-on, finish and plant check
 made with the network cut all arrived intact when it was restored.
 
+**R26. Tickets and inductions.** Two ticks on the prestart — SWMS reviewed, everyone fit and
+inducted — and any name accepted as a plant operator. Now the company keeps each person's tickets
+(`crew_tickets`, per organisation, matched on the name as typed, because the diary, the sign-ons
+and the labour rows all work by name) with expiry and a photo of the card, and each job keeps who
+is inducted onto it (`crew_inductions`). The plant prestart refuses an operator whose recorded
+tickets do not cover the machine, missing or expired; when nothing is recorded for them at all it
+warns and lets the check go ahead, because an empty list is the office's problem and not a reason
+to stop a machine on the strength of a gap in paperwork. The crew prestart marks a sign-on from
+anyone not inducted here, on screen and on the PDF, with a one-tap induction for the supervisor.
+The nightly check emails tickets that have lapsed or lapse within thirty days. What a machine
+needs is a table in `src/lib/crew/tickets.ts`; change it there.
+
+**R25a. Codex on the outbox.** Three findings the same day. A queued edit whose prestart had been
+finished in the meantime touched no row under RLS, returned no error, and was removed as if it had
+applied — it is now reported as refused, with the reason. The cached-page fallback matched a screen
+by path alone, so a kept prestart could open on another job's cached page — the service worker
+(v8) only serves a cached copy for the same job and the screen reads the kept id from the address
+bar, never from props that may belong to another render. And `completed_at` was written from the
+phone's clock — the database now stamps it on prestarts and talks, so a wrong clock or a late
+send cannot forge a receipt time; the phone's clock lives in `completed_on_device_at` where it
+belongs.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;

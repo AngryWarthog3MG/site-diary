@@ -74,6 +74,8 @@ improvising; the register once shipped dead because a live smoke test was skippe
   (kept on `prestarts.spec_notes`, printed on the prestart PDF)
 - `src/lib/prestart/` — prestart checklist, PDF, spec notes; `dictate.ts` turns a spoken briefing into the
   form's fields (Deepgram → model, never stores, never ticks a check); `dictation-merge.ts` folds it into typed text
+- `src/lib/crew/tickets.ts` — tickets (org-wide, by person name) and what each plant kind needs; `crew_inductions`
+  per job. The plant form refuses missing/expired, warns on none recorded; the prestart marks the un-inducted
 - `src/lib/outbox/` — the forms' offline queue (prestart create/edit/sign-on/finish, toolbox sign-on/finish, plant
   check). Any new form write goes through `runOrQueue(live, queue)` with phone-chosen ids, and its replay in
   `sync.ts`; the PDFs print `completed_on_device_at` alongside arrival via `src/lib/pdf/finished-at.ts`
