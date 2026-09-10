@@ -40,6 +40,7 @@ import { SpecBlock, type SpecLine } from './spec-block';
 import type { ReviewWeather } from './page';
 import { fmtDate } from '@/lib/pdf/dates';
 import { minutesBetween } from '@/lib/review/minutes';
+import { loadPlantOnJob, asKnownPlant } from '@/lib/plant/on-job';
 
 type Item = Record<string, unknown>;
 
@@ -1797,14 +1798,8 @@ function PlantShortcuts({
     let cancelled = false;
     void (async () => {
       const supabase = createClient();
-      const { data } = await supabase
-        .from('plant_list')
-        .select('item, hire_type, supplier')
-        .eq('project_id', projectId)
-        .eq('active', true)
-        .order('sort_order')
-        .order('item');
-      if (!cancelled) setList((data ?? []) as Array<{ item: string; hire_type: string | null; supplier: string | null }>);
+      const onJob = await loadPlantOnJob(supabase, projectId);
+      if (!cancelled) setList(asKnownPlant(onJob));
     })();
     return () => { cancelled = true; };
   }, [projectId]);

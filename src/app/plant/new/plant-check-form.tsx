@@ -18,9 +18,10 @@ import { AddPlantForm, type RegisterRow } from '../plant-register';
  * hour meter, say whether it is fit to use, sign. Nothing is pre-answered;
  * the signature is what saves it, and from then on it is frozen.
  */
-export function PlantCheckForm({ projectId, projectName, orgId, register, preselect, defaultOperator }: {
-  projectId: string; projectName: string; orgId: string; register: RegisterRow[]; preselect: string | null; defaultOperator: string;
+export function PlantCheckForm({ projectId, projectName, orgId, register, onJob, preselect, defaultOperator }: {
+  projectId: string; projectName: string; orgId: string; register: RegisterRow[]; onJob: string[]; preselect: string | null; defaultOperator: string;
 }) {
+  const onJobSet = new Set(onJob);
   const router = useRouter();
   const [rows, setRows] = useState(register);
   const [plantId, setPlantId] = useState<string | null>(preselect && register.some((r) => r.id === preselect) ? preselect : null);
@@ -47,7 +48,10 @@ export function PlantCheckForm({ projectId, projectName, orgId, register, presel
 
   const matches = useMemo(() => {
     const q = search.trim().toLowerCase();
-    return rows.filter((r) => !q || `${r.name} ${r.plant_no ?? ''} ${r.make_model ?? ''}`.toLowerCase().includes(q));
+    return rows
+      .filter((r) => !q || `${r.name} ${r.plant_no ?? ''} ${r.make_model ?? ''}`.toLowerCase().includes(q))
+      .sort((a, b) => Number(onJobSet.has(b.id)) - Number(onJobSet.has(a.id)) || a.name.localeCompare(b.name));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rows, search]);
 
   function answer(key: string, result: CheckResult) {
@@ -71,6 +75,10 @@ export function PlantCheckForm({ projectId, projectName, orgId, register, presel
       if (insertError) throw new Error(insertError.message);
       const id = created.id as string;
       const base = `${projectId}/plant/${id}`;
+      // Checking a machine here means it is on this job.
+      if (!onJobSet.has(plant.id)) {
+        await supabase.from('project_plant').upsert({ project_id: projectId, plant_id: plant.id, active: true }, { onConflict: 'project_id,plant_id' });
+      }
       // Defects first, while the prestart is still open to uploads.
       for (const item of defects) {
         let photoPath: string | null = null;
@@ -115,7 +123,7 @@ export function PlantCheckForm({ projectId, projectName, orgId, register, presel
               <li key={r.id}>
                 <button type="button" className="plantpick__item" onClick={() => setPlantId(r.id)}>
                   <span className="machine__name">{r.name}</span>
-                  <span className="machine__meta">{[isPlantKind(r.kind) ? PLANT_KIND_LABEL[r.kind] : r.kind, r.plant_no, r.make_model].filter(Boolean).join(' · ')}</span>
+                  <span className="machine__meta">{[isPlantKind(r.kind) ? PLANT_KIND_LABEL[r.kind] : r.kind, r.plant_no, r.make_model, onJobSet.has(r.id) ? 'on this job' : null].filter(Boolean).join(' · ')}</span>
                 </button>
               </li>
             ))}

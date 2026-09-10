@@ -967,18 +967,17 @@ async function resumeStalled() {
       // reconcile → the project's crew and plant lists → the standard day.
       const { applyStandardDay } = await import('@/lib/extraction/completeness');
       const { applyKnownNames } = await import('@/lib/extraction/known-names');
-      const [{ data: crewRows }, { data: plantRows }] = await Promise.all([
+      const { loadPlantOnJob, asKnownPlant } = await import('@/lib/plant/on-job');
+      const [{ data: crewRows }, plantOnJob] = await Promise.all([
         admin.from('crew').select('name, role, aliases').eq('project_id', entry.project_id as string).eq('active', true),
-        admin.from('plant_list').select('item, hire_type, supplier, aliases').eq('project_id', entry.project_id as string).eq('active', true),
+        loadPlantOnJob(admin, entry.project_id as string),
       ]);
       const { proposal: named } = applyKnownNames(
         reconcileSections(result.proposal).proposal,
         ((crewRows ?? []) as Array<{ name: string; role: string | null; aliases: string[] | null }>).map((c) => ({
           name: c.name, role: c.role, aliases: c.aliases ?? [],
         })),
-        ((plantRows ?? []) as Array<{ item: string; hire_type: string | null; supplier: string | null; aliases: string[] | null }>).map((m) => ({
-          item: m.item, hire_type: m.hire_type as 'wet' | 'dry' | null, supplier: m.supplier, aliases: m.aliases ?? [],
-        })),
+        asKnownPlant(plantOnJob),
       );
       const { proposal } = applyStandardDay(named);
 

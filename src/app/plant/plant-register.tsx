@@ -86,9 +86,23 @@ export function AddPlantForm({ orgId, onAdded, compact }: { orgId: string; onAdd
   );
 }
 
-export function PlantRegister({ orgId, initial, canEdit }: { orgId: string; initial: RegisterRow[]; canEdit: boolean }) {
+export function PlantRegister({ orgId, projectId, initial, onJob: initialOnJob, canEdit }: {
+  orgId: string; projectId: string; initial: RegisterRow[]; onJob: string[]; canEdit: boolean;
+}) {
   const [rows, setRows] = useState<RegisterRow[]>(initial);
+  const [onJob, setOnJob] = useState<Set<string>>(new Set(initialOnJob));
   const [error, setError] = useState<string | null>(null);
+
+  /** Which of the fleet is on this job. The diary's vocabulary reads this. */
+  async function setOnThisJob(row: RegisterRow, on: boolean) {
+    setError(null);
+    const supabase = createClient();
+    const { error: upsertError } = await supabase
+      .from('project_plant')
+      .upsert({ project_id: projectId, plant_id: row.id, active: on, sort_order: rows.findIndex((r) => r.id === row.id) + 1 }, { onConflict: 'project_id,plant_id' });
+    if (upsertError) { setError(upsertError.message); return; }
+    setOnJob((prev) => { const next = new Set(prev); if (on) next.add(row.id); else next.delete(row.id); return next; });
+  }
 
   async function setActive(row: RegisterRow, active: boolean) {
     setError(null);
@@ -112,15 +126,24 @@ export function PlantRegister({ orgId, initial, canEdit }: { orgId: string; init
               </p>
             </div>
             {canEdit && (
-              <button type="button" className="quotebtn" onClick={() => void setActive(r, !r.active)}>
-                {r.active ? 'Retire' : 'Bring back'}
-              </button>
+              <div className="plantreg__actions">
+                {r.active && (
+                  <label className={`checkrow checkrow--inline${onJob.has(r.id) ? ' checkrow--on' : ''}`}>
+                    <input type="checkbox" checked={onJob.has(r.id)} onChange={(e) => void setOnThisJob(r, e.target.checked)} />
+                    <span>On this job</span>
+                  </label>
+                )}
+                <button type="button" className="quotebtn" onClick={() => void setActive(r, !r.active)}>
+                  {r.active ? 'Retire' : 'Bring back'}
+                </button>
+              </div>
             )}
+            {!canEdit && r.active && onJob.has(r.id) && <span className="status-pill status-pill--ready">On this job</span>}
           </li>
         ))}
       </ul>
       {error && <p className="alert">{error}</p>}
-      {canEdit && <AddPlantForm orgId={orgId} onAdded={(row) => setRows([...rows, row])} />}
+      {canEdit && <AddPlantForm orgId={orgId} onAdded={(row) => { setRows([...rows, row]); void setOnThisJob(row, true); }} />}
     </div>
   );
 }

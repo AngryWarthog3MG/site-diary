@@ -21,6 +21,7 @@ export default async function NewPlantPrestartPage({ searchParams }: { searchPar
     .eq('org_id', current.project.org.id)
     .eq('active', true)
     .order('name');
+  const { data: onJob } = await supabase.from('project_plant').select('plant_id').eq('project_id', current.project_id).eq('active', true);
 
   return (
     <PlantCheckForm
@@ -28,6 +29,7 @@ export default async function NewPlantPrestartPage({ searchParams }: { searchPar
       projectName={current.project.name}
       orgId={current.project.org.id}
       register={(register ?? []) as RegisterRow[]}
+      onJob={(onJob ?? []).map((r) => r.plant_id as string)}
       preselect={plant ?? null}
       defaultOperator={profile?.full_name ?? email ?? ''}
     />

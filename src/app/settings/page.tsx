@@ -4,7 +4,7 @@ import { requireUser, resolveProject } from '@/lib/auth';
 import { canSee } from '@/lib/roles';
 import { SettingsForm, type SettingsData } from './settings-form';
 import { CrewList, type CrewRow } from './crew-list';
-import { PlantList, type PlantRow } from './plant-list';
+import Link from 'next/link';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Settings · Site Diary' };
@@ -22,7 +22,7 @@ export default async function SettingsPage({
 
   const supabase = await createClient();
 
-  const [{ data: row }, { data: state }, { data: crew }, { data: plant }] = await Promise.all([
+  const [{ data: row }, { data: state }, { data: crew }] = await Promise.all([
     supabase
       .from('projects')
       .select('id, name, code, principal_contractor, site_lat, site_lng, bom_station_id, active, report_emails, org:organisations!inner(id, name, code)')
@@ -35,12 +35,6 @@ export default async function SettingsPage({
       .eq('project_id', current.project_id)
       .order('sort_order')
       .order('name'),
-    supabase
-      .from('plant_list')
-      .select('id, item, hire_type, supplier, active, aliases')
-      .eq('project_id', current.project_id)
-      .order('sort_order')
-      .order('item'),
   ]);
 
   if (!row) redirect('/');
@@ -88,11 +82,13 @@ export default async function SettingsPage({
           />
         </section>
         <section className="sheet" style={{ marginTop: '1rem' }}>
-          <PlantList
-            projectId={current.project_id}
-            initial={(plant ?? []) as PlantRow[]}
-            canEdit={current.role === 'supervisor' || current.role === 'admin'}
-          />
+          <p className="label">Plant</p>
+          <h2 className="home-card__title">One register, under Plant</h2>
+          <p className="caption">
+            The company&rsquo;s machines live in one place. Tick which are on this job there, and the
+            diary, the review screen and the plant prestarts all read the same list.
+          </p>
+          <Link className="button button--quiet" href={`/plant?project=${current.project_id}`}>Open Plant</Link>
         </section>
       </div>
     </>

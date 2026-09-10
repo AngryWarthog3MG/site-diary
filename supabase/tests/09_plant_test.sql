@@ -124,6 +124,18 @@ select tests.expect_error($q$
 $q$, 'signed and cannot be deleted');
 do $$ begin raise notice 'PASS  a signed plant prestart is frozen'; end $$;
 
+-- Which of the fleet is on this job: the crew decides.
+select set_config('request.jwt.claims', '{"sub":"11111111-1111-1111-1111-111111111111","role":"authenticated"}', true);
+set local role authenticated;
+insert into public.project_plant (project_id, plant_id) values ('bbbbbbbb-0000-0000-0000-000000000001', 'dddddddd-0000-0000-0000-000000000001');
+do $$ begin
+  assert (select active from public.project_plant where project_id = 'bbbbbbbb-0000-0000-0000-000000000001' and plant_id = 'dddddddd-0000-0000-0000-000000000001'),
+         'the supervisor could not put a machine on the job';
+  raise notice 'PASS  a supervisor puts a machine on the job';
+end $$;
+reset role;
+select set_config('request.jwt.claims', '', true);
+
 -- The PM reads and writes nothing.
 select set_config('request.jwt.claims', '{"sub":"33333333-3333-3333-3333-333333333333","role":"authenticated"}', true);
 set local role authenticated;
@@ -134,6 +146,11 @@ end $$;
 select tests.expect_error($q$
   insert into public.plant_register (org_id, name, kind) values ('aaaaaaaa-0000-0000-0000-000000000001', 'Roller', 'roller')
 $q$, 'row-level security');
+update public.project_plant set active = false where project_id = 'bbbbbbbb-0000-0000-0000-000000000001';
+do $$ begin
+  assert (select active from public.project_plant where project_id = 'bbbbbbbb-0000-0000-0000-000000000001' and plant_id = 'dddddddd-0000-0000-0000-000000000001'),
+         'a PM took a machine off the job';
+end $$;
 select tests.expect_error($q$
   insert into public.plant_prestarts (project_id, plant_id, prestart_date, operator_name, conducted_by)
   values ('bbbbbbbb-0000-0000-0000-000000000001', 'dddddddd-0000-0000-0000-000000000001', date '2026-09-09', 'PM',

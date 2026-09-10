@@ -28,15 +28,19 @@ export default async function PlantPage({ searchParams }: { searchParams: Promis
   const canRun = canRunTalks(current.role);
   const q = `?project=${current.project_id}`;
 
-  const [{ data: register }, { data: todays }, { data: open }, { data: recent }] = await Promise.all([
+  const [{ data: register }, { data: todays }, { data: open }, { data: recent }, { data: onJobRows }] = await Promise.all([
     supabase.from('plant_register').select('id, name, kind, make_model, plant_no, ownership, supplier, active').eq('org_id', orgId).order('active', { ascending: false }).order('name'),
     supabase.from('plant_prestarts').select('id, plant_id, operator_name, fit_for_use, completed_at').eq('project_id', current.project_id).eq('prestart_date', today).not('completed_at', 'is', null).order('completed_at', { ascending: false }),
     supabase.from('plant_defects').select('id, plant_id, item_label, note, raised_at, plant:plant_register!inner(name)').eq('project_id', current.project_id).is('closed_at', null).order('raised_at', { ascending: false }),
     supabase.from('plant_prestarts').select('id, prestart_date, operator_name, fit_for_use, completed_at, plant:plant_register!inner(name)').eq('project_id', current.project_id).not('completed_at', 'is', null).order('prestart_date', { ascending: false }).order('completed_at', { ascending: false }).limit(40),
+    supabase.from('project_plant').select('plant_id, active, sort_order').eq('project_id', current.project_id),
   ]);
+  const onJob = new Set((onJobRows ?? []).filter((r) => r.active).map((r) => r.plant_id as string));
+  const order = new Map((onJobRows ?? []).map((r) => [r.plant_id as string, (r.sort_order as number) ?? 0]));
 
   const rows = (register ?? []) as RegisterRow[];
-  const active = rows.filter((r) => r.active);
+  // Today's list is the machines on this job; the fleet is further down.
+  const active = rows.filter((r) => r.active && onJob.has(r.id)).sort((a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0) || a.name.localeCompare(b.name));
   const byPlant = new Map<string, { fit: boolean; operator: string }>();
   for (const t of todays ?? []) if (!byPlant.has(t.plant_id as string)) byPlant.set(t.plant_id as string, { fit: Boolean(t.fit_for_use), operator: t.operator_name as string });
   const name = (v: unknown) => ((Array.isArray(v) ? v[0] : v) as { name?: string } | null)?.name ?? '—';
@@ -57,7 +61,7 @@ export default async function PlantPage({ searchParams }: { searchParams: Promis
 
       <p className="label">Today · {fmtDate(today)}</p>
       {active.length === 0 ? (
-        <p className="notice gap">No plant on the register yet. Add the machines below, then start a prestart.</p>
+        <p className="notice gap">No machines on this job yet. Tick them in the register below, or add one.</p>
       ) : (
         <ul className="machines">
           {active.map((m) => {
@@ -114,8 +118,12 @@ export default async function PlantPage({ searchParams }: { searchParams: Promis
 
       <hr className="rule" />
       <p className="label">Plant register · the whole company</p>
-      <p className="caption">Shared by every job. Anyone who runs prestarts can add a machine; a machine no longer around is retired, never deleted.</p>
-      <PlantRegister orgId={orgId} initial={rows} canEdit={canRun} />
+      <p className="caption">
+        One list for every job. Tick <b>On this job</b> for the machines here — that is what the diary, the
+        review screen and today&rsquo;s prestarts read. Anyone who runs prestarts can add a machine; one no
+        longer around is retired, never deleted.
+      </p>
+      <PlantRegister orgId={orgId} projectId={current.project_id} initial={rows} onJob={[...onJob]} canEdit={canRun} />
 
       <Link className="button button--quiet" href="/">Home</Link>
     </main>

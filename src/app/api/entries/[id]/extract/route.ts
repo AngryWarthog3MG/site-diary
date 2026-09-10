@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 import { fail, ok, requireApiUser, isUuid } from '@/lib/api';
 import { canEditEntry } from '@/lib/entries/access';
+import { loadPlantOnJob, asKnownPlant } from '@/lib/plant/on-job';
 import { extractEntry, ExtractionError, EXTRACTION_MODEL } from '@/lib/extraction/extract';
 import { PROMPT_VERSION } from '@/lib/extraction/prompt';
 import {
@@ -113,18 +114,16 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
   // excavator" is the 1.8t Excavator on dry hire from KBS. Stated hours with
   // no times are laid out from the standard start. Deterministic, in code,
   // before the policy fill below has its turn at anything still blank.
-  const [{ data: crewRows }, { data: plantRows }] = await Promise.all([
+  const [{ data: crewRows }, plantOnJob] = await Promise.all([
     supabase.from('crew').select('name, role, aliases').eq('project_id', entry.project_id).eq('active', true),
-    supabase.from('plant_list').select('item, hire_type, supplier, aliases').eq('project_id', entry.project_id).eq('active', true),
+    loadPlantOnJob(supabase, entry.project_id),
   ]);
   const { proposal: named } = applyKnownNames(
     reconciled,
     ((crewRows ?? []) as Array<{ name: string; role: string | null; aliases: string[] | null }>).map((c) => ({
       name: c.name, role: c.role, aliases: c.aliases ?? [],
     })),
-    ((plantRows ?? []) as Array<{ item: string; hire_type: string | null; supplier: string | null; aliases: string[] | null }>).map((p) => ({
-      item: p.item, hire_type: p.hire_type, supplier: p.supplier, aliases: p.aliases ?? [],
-    })),
+    asKnownPlant(plantOnJob),
   );
   // Site policy: a person whose time nobody stated gets the standard day.
   const { proposal } = applyStandardDay(named);
