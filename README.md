@@ -1082,6 +1082,22 @@ organisation's machines (policy), the prestart form puts a machine on the job be
 inspection exists and stops if that fails, and the names a machine answers to are editable again
 on the register, since the diary recognises "the vac" only because someone typed it.
 
+**R25. The forms work with no signal.** The diary was offline-first from the start; prestarts,
+plant checks and toolbox talks were not, and a form that fails at 6:30 with one bar is a form
+the crew stop using. An outbox on the phone (`src/lib/outbox/`, IndexedDB, its own database —
+idb-keyval cannot add a store to the capture queue's) holds a prestart made offline, every
+sign-on, a finish, a plant check with its photos and signature, a toolbox sign-on and completion,
+each with ids the phone chose, and replays them in order when signal returns. Retries are
+idempotent, a refusal is shown and can be discarded, a network drop keeps waiting, and every
+drain tries because a drain is only ever prompted by signal, the app opening or a tap. A prestart
+made offline runs from the phone on the same screen the crew would see from the server, reopened
+through the cached page by its id (service worker v7 matches a cached screen regardless of
+query). The record keeps both clocks — `completed_at` is arrival, `completed_on_device_at` is the
+press of Finish — and the PDF prints both when they differ. Two things the drill caught before
+any crew did: the shared database, and supabase-js reporting a dead network as a plain object
+that the classifier filed as permanent. Proved live: prestart, sign-on, finish and plant check
+made with the network cut all arrived intact when it was restored.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;
