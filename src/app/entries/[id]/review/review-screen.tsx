@@ -27,6 +27,7 @@ import {
   type PourLike,
 } from '@/lib/docket/reconcile';
 import { compressPhoto } from '@/lib/photos/compress';
+import { photoTakenAt } from '@/lib/photos/taken-at';
 import { localDate } from '@/lib/capture/queue';
 import {
   STANDARD_DAY_START,
@@ -693,6 +694,9 @@ function PhotosBlock({
     setUploadError(null);
     try {
       const supabase = createClient();
+      // Each photo joins the diary the moment its upload lands, so a failure on
+      // the third never loses the first two — and nothing between the upload
+      // and this line can throw (see photoTakenAt).
       const added: ReviewPhoto[] = [];
       for (const file of files) {
         const photo = await compressPhoto(file);
@@ -708,12 +712,12 @@ function PhotosBlock({
           // A photo picked from the gallery was taken when the file says it
           // was, not when it was attached — the gap between the two can be
           // a whole shift, and the record cares which end of it is true.
-          taken_at: new Date(file.lastModified || Date.now()).toISOString(),
+          taken_at: photoTakenAt(file),
           lat: null,
           lng: null,
         });
+        onChange([...photos, ...added]);
       }
-      onChange([...photos, ...added]);
     } catch (err) {
       setUploadError(
         err instanceof Error
