@@ -1043,6 +1043,19 @@ lands, so a failure on the third cannot lose the first two. The general lesson i
 non-negotiable #5 read the other way round: a file in storage the record does not reference is
 as good as lost, so nothing may sit between "uploaded" and "in the day" that can fail.
 
+**R22. Nothing sits in storage unseen.** Thirteen photos and a signature reached storage and the
+record never heard of them, for two days, until a supervisor asked why his photos were not
+showing; then, putting them back, a test cleanup that deleted "the newest row" deleted one of
+his real photos, because the review RPC rewrites every child row on each save and they all carry
+one timestamp. Three guards now. The nightly ops check walks every file in `entry-photos` and
+`entry-audio` against every table that should reference it, puts a photo under an unsigned draft
+back on the day (the supervisor still reviews it before signing), and emails anything it cannot
+put back the day it appears. The review screen's autosave is no longer silent: a failed save
+says so, keeps the page's state and retries until it lands. And the agents' rules now say it
+outright — drills write to the sandbox only; delete only by the exact id or path captured at
+creation, never by inference; storage has no undo; and nothing may sit between "uploaded" and
+"in the day" that can fail.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;
