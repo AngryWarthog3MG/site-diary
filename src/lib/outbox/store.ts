@@ -8,7 +8,10 @@ import { createStore, get, set, del, entries as idbEntries } from 'idb-keyval';
  * queue, for the forms rather than the recordings. Each item is one complete
  * action with the blobs it needs, replayed in the order it happened.
  */
-const store = createStore('site-diary', 'outbox');
+// Its own database, not a second store in the capture queue's: idb-keyval opens
+// a database as it finds it, and adding a store to one that already exists on
+// a phone needs a version upgrade it never performs. The drill hit exactly that.
+const store = createStore('site-diary-outbox', 'outbox');
 
 export type OutboxKind =
   | 'prestart_create'
