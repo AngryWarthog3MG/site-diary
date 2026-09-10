@@ -178,22 +178,53 @@ export function ReviewScreen(props: {
    * applies everything it can see.
    */
   const skipFirstAutosave = useRef(true);
+  // The latest body, readable from a timer or a pagehide handler without a
+  // stale closure; and whether anything is waiting to be saved.
+  const latestBody = useRef<() => unknown>(() => ({}));
+  latestBody.current = bodyForSubmit;
+  const dirtyRef = useRef(false);
+  // A photo or a signature is worth more than a keystroke and is often the
+  // last thing done before the phone goes to the camera or the pocket, so
+  // those save at once rather than after the typing pause.
+  const urgentRef = useRef(false);
+  const flush = useCallback((keepalive = false) => {
+    if (!dirtyRef.current) return;
+    dirtyRef.current = false;
+    void fetch(`/api/entries/${props.entryId}/apply`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(latestBody.current()),
+      keepalive,
+    }).catch(() => {
+      dirtyRef.current = true;
+    });
+  }, [props.entryId]);
   useEffect(() => {
     if (skipFirstAutosave.current) {
       skipFirstAutosave.current = false;
       return;
     }
     if (busy) return;
-    const timer = window.setTimeout(() => {
-      void fetch(`/api/entries/${props.entryId}/apply`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(bodyForSubmit()),
-      }).catch(() => {});
-    }, 2500);
+    dirtyRef.current = true;
+    const delay = urgentRef.current ? 250 : 2500;
+    urgentRef.current = false;
+    const timer = window.setTimeout(() => flush(), delay);
     return () => window.clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [payload, nilConfirmed]);
+  // iOS reloads a backgrounded page without warning — a trip to the camera
+  // is enough. Whatever is pending goes out the moment the page is hidden,
+  // on a request the browser keeps alive after the page is gone.
+  useEffect(() => {
+    const onHide = () => { if (document.visibilityState === 'hidden') flush(true); };
+    const onPageHide = () => flush(true);
+    document.addEventListener('visibilitychange', onHide);
+    window.addEventListener('pagehide', onPageHide);
+    return () => {
+      document.removeEventListener('visibilitychange', onHide);
+      window.removeEventListener('pagehide', onPageHide);
+    };
+  }, [flush]);
 
   const update = useCallback((group: ItemGroup, index: number, key: string, value: unknown) => {
     setPayload((prev) => {
@@ -540,7 +571,7 @@ export function ReviewScreen(props: {
             projectId={props.projectId}
             entryId={props.entryId}
             signatures={payload.signatures}
-            onChange={(signatures) => setPayload((prev) => ({ ...prev, signatures }))}
+            onChange={(signatures) => { urgentRef.current = true; setPayload((prev) => ({ ...prev, signatures })); }}
           />
         )}
 
@@ -559,7 +590,7 @@ export function ReviewScreen(props: {
             photos={payload.photos}
             projectId={props.projectId}
             entryId={props.entryId}
-            onChange={(photos) => setPayload((prev) => ({ ...prev, photos }))}
+            onChange={(photos) => { urgentRef.current = true; setPayload((prev) => ({ ...prev, photos })); }}
           />
         )}
 
