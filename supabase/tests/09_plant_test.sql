@@ -178,7 +178,7 @@ select set_config('request.jwt.claims', '{"sub":"33333333-3333-3333-3333-3333333
 set local role authenticated;
 do $$ begin
   assert (select count(*) from public.plant_register) = 1, 'the PM cannot read the register';
-  assert (select count(*) from public.plant_prestarts) = 2, 'the PM cannot read plant prestarts';
+  assert (select count(*) from public.plant_prestarts) = 3, 'the PM cannot read plant prestarts';
 end $$;
 select tests.expect_error($q$
   insert into public.plant_register (org_id, name, kind) values ('aaaaaaaa-0000-0000-0000-000000000001', 'Roller', 'roller')

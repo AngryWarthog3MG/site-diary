@@ -1108,7 +1108,12 @@ warns and lets the check go ahead, because an empty list is the office's problem
 to stop a machine on the strength of a gap in paperwork. The crew prestart marks a sign-on from
 anyone not inducted here, on screen and on the PDF, with a one-tap induction for the supervisor.
 The nightly check emails tickets that have lapsed or lapse within thirty days. What a machine
-needs is a table in `src/lib/crew/tickets.ts`; change it there.
+needs is a table in `src/lib/crew/tickets.ts`, mirrored by `app.plant_required_tickets` in SQL;
+change both. Codex's pass on this found the two things that matter: induction was read from
+today's list at print time, so a later induction could erase NOT INDUCTED from the record of the
+morning — it is now stored on the sign-on; and the ticket check lived only on the screen, where a
+verdict for the previous operator could let the next one sign — nothing is ready while a lookup
+is pending, and the database refuses a signature the tickets do not cover.
 
 **R25a. Codex on the outbox.** Three findings the same day. A queued edit whose prestart had been
 finished in the meantime touched no row under RLS, returned no error, and was removed as if it had
