@@ -21,7 +21,7 @@
 // v6: forty deploys shipped on v5 without a bump, so a phone that opened the
 // app with no signal was handed a page shell from weeks ago and kept it.
 // Bumped alongside the update check in sw-register.tsx, which is the real fix.
-const VERSION = 'v8';
+const VERSION = 'v9';
 const PAGES = `pages-${VERSION}`;
 const ASSETS = `assets-${VERSION}`;
 const OFFLINE_URL = '/offline.html';
@@ -97,7 +97,10 @@ self.addEventListener('fetch', (event) => {
           // project in its markup, and the wrong job's page is worse than the
           // offline page.
           const want = url.searchParams.get('project');
-          const candidates = await caches.matchAll(request, { ignoreSearch: true });
+          // matchAll lives on an opened Cache, not on CacheStorage — the drill
+          // found that the hard way when the fallback itself threw.
+          const pages = await caches.open(PAGES);
+          const candidates = await pages.matchAll(request, { ignoreSearch: true });
           for (const c of candidates) {
             const have = new URL(c.url).searchParams.get('project');
             if (!want || have === want) return c;
