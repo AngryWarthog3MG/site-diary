@@ -150,6 +150,29 @@ do $$ begin raise notice 'PASS  a job carries only its own organisation''s machi
 reset role;
 select set_config('request.jwt.claims', '', true);
 
+-- The database checks the operator's tickets at signing.
+select set_config('request.jwt.claims', '{"sub":"11111111-1111-1111-1111-111111111111","role":"authenticated"}', true);
+set local role authenticated;
+insert into public.crew_tickets (org_id, person_name, ticket_type, expires_on, created_by)
+values ('aaaaaaaa-0000-0000-0000-000000000001', 'Danny Rowe', 'excavator', date '2026-01-01', '11111111-1111-1111-1111-111111111111');
+insert into public.plant_prestarts (id, project_id, plant_id, prestart_date, operator_name, checks, conducted_by)
+values ('eeeeeeee-0000-0000-0000-000000000003', 'bbbbbbbb-0000-0000-0000-000000000001', 'dddddddd-0000-0000-0000-000000000001',
+        date '2026-09-10', 'danny  rowe', '[{"key":"fuel","label":"Fuel","result":"ok"}]'::jsonb, '11111111-1111-1111-1111-111111111111');
+select tests.expect_error($q$
+  update public.plant_prestarts set signature_path = 'bbbbbbbb-0000-0000-0000-000000000001/plant/eeeeeeee-0000-0000-0000-000000000003/sig.png'
+   where id = 'eeeeeeee-0000-0000-0000-000000000003'
+$q$, 'do not cover this machine');
+update public.crew_tickets set expires_on = date '2027-01-01' where person_name = 'Danny Rowe';
+update public.plant_prestarts set signature_path = 'bbbbbbbb-0000-0000-0000-000000000001/plant/eeeeeeee-0000-0000-0000-000000000003/sig.png'
+ where id = 'eeeeeeee-0000-0000-0000-000000000003';
+do $$ begin
+  assert (select completed_at from public.plant_prestarts where id = 'eeeeeeee-0000-0000-0000-000000000003') is not null,
+         'a current ticket did not let the operator sign';
+  raise notice 'PASS  an expired ticket stops the machine; a current one lets it go; nothing recorded is not a ticket';
+end $$;
+reset role;
+select set_config('request.jwt.claims', '', true);
+
 -- The PM reads and writes nothing.
 select set_config('request.jwt.claims', '{"sub":"33333333-3333-3333-3333-333333333333","role":"authenticated"}', true);
 set local role authenticated;

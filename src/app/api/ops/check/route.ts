@@ -463,14 +463,22 @@ async function reconcileStorage(): Promise<Record<string, unknown>> {
   const audioOrphans = audio.filter((f) => !segUrls.has(f.path)).map((f) => f.path);
   const untranscribed = (segments ?? []).filter((x) => x.transcript_status !== 'done').length;
 
+  // Ticket card photos: a file nothing points at is a credential lying loose.
+  const ticketFiles = await walk('crew-tickets');
+  const { data: ticketRows } = await admin.from('crew_tickets').select('photo_path');
+  const ticketPaths = new Set((ticketRows ?? []).map((r) => r.photo_path as string | null).filter(Boolean) as string[]);
+  const ticketOrphans = ticketFiles.filter((f) => !ticketPaths.has(f.path)).map((f) => f.path);
+
   const fresh = unrecoverable.filter((u) => u.recent);
-  if (attached.length > 0 || fresh.length > 0 || audioOrphans.length > 0) {
+  let emailed = false;
+  if (attached.length > 0 || fresh.length > 0 || audioOrphans.length > 0 || ticketOrphans.length > 0) {
     const lines = [
       ...attached.map((p) => `<li>Put back on its day: <code>${p.split('/').pop()}</code> (${entries.get(p.split('/')[1])?.entry_date ?? '?'})</li>`),
       ...fresh.map((u) => `<li><b>Cannot be recovered:</b> ${u.reason} — <code>${u.path.split('/').pop()}</code> (${u.entryDate ?? '?'})</li>`),
       ...audioOrphans.map((p) => `<li><b>Recording with no row:</b> <code>${p}</code></li>`),
+      ...ticketOrphans.map((p) => `<li><b>Ticket photo with no ticket:</b> <code>${p}</code></li>`),
     ].join('');
-    await fetch('https://api.resend.com/emails', {
+    emailed = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: { Authorization: `Bearer ${process.env.SMTP_PASS?.trim()}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -479,7 +487,7 @@ async function reconcileStorage(): Promise<Record<string, unknown>> {
         subject: `KBS Daily Diary: storage check — ${attached.length} put back, ${fresh.length} to look at`,
         html: `<div style="font-family:Arial,sans-serif"><p>The nightly check compared every stored file against the diary.</p><ul>${lines}</ul></div>`,
       }),
-    }).catch(() => {});
+    }).then((r) => r.ok).catch(() => false);
   }
 
   return {
@@ -490,7 +498,8 @@ async function reconcileStorage(): Promise<Record<string, unknown>> {
     audio_files: audio.length,
     audio_orphans: audioOrphans,
     untranscribed,
-    emailed: attached.length > 0 || fresh.length > 0 || audioOrphans.length > 0,
+    ticket_photo_orphans: ticketOrphans,
+    emailed,
   };
 }
 
@@ -514,7 +523,7 @@ async function ticketDigest(): Promise<Record<string, unknown>> {
   if (expired.length === 0 && soon.length === 0) return { expired: 0, soon: 0 };
   const line = (t: { person_name: string; ticket_type: string; expires_on: string | null }, verb: string) =>
     `<li><b>${t.person_name}</b> — ${t.ticket_type.replace(/_/g, ' ')} ${verb} ${t.expires_on}</li>`;
-  await fetch('https://api.resend.com/emails', {
+  const sent = await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: { Authorization: `Bearer ${process.env.SMTP_PASS?.trim()}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -523,8 +532,8 @@ async function ticketDigest(): Promise<Record<string, unknown>> {
       subject: `KBS Daily Diary: ${expired.length} ticket${expired.length === 1 ? '' : 's'} expired, ${soon.length} expiring within 30 days`,
       html: `<div style="font-family:Arial,sans-serif"><p>Tickets on record:</p><ul>${expired.map((t) => line(t, 'expired')).join('')}${soon.map((t) => line(t, 'expires')).join('')}</ul><p>Update them under Settings → Crew → Tickets and inductions.</p></div>`,
     }),
-  }).catch(() => {});
-  return { expired: expired.length, soon: soon.length, emailed: true };
+  }).then((r) => r.ok).catch(() => false);
+  return { expired: expired.length, soon: soon.length, emailed: sent };
 }
 
 /**

@@ -19,7 +19,7 @@ export default async function PrestartPage({ params }: { params: Promise<{ id: s
     .select(
       `id, project_id, prestart_date, supervisor_name, work_planned, hazards, plant, permits, notes, dictation, spec_notes,
        checklist, completed_at,
-       prestart_attendees(id, attendee_name, fit_for_work, signature_path, created_at)`,
+       prestart_attendees(id, attendee_name, fit_for_work, signature_path, inducted, created_at)`,
     )
     .eq('id', id)
     .maybeSingle();
@@ -56,7 +56,7 @@ export default async function PrestartPage({ params }: { params: Promise<{ id: s
   }
 
   const attendees = ((row.prestart_attendees ?? []) as Array<{
-    id: string; attendee_name: string; fit_for_work: boolean; signature_path: string; created_at: string;
+    id: string; attendee_name: string; fit_for_work: boolean; signature_path: string; inducted: boolean | null; created_at: string;
   }>).sort((a, b) => a.created_at.localeCompare(b.created_at));
 
   return (

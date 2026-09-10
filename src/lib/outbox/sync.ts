@@ -43,7 +43,7 @@ async function replay(item: OutboxItem): Promise<void> {
     case 'prestart_attendee': {
       await uploadIfMissing(p.path as string, blobs.signature, 'image/png');
       const { error } = await supabase.from('prestart_attendees').insert({
-        id: p.attendeeId, prestart_id: item.subjectId, attendee_name: p.name, fit_for_work: p.fit, signature_path: p.path, created_at: p.at,
+        id: p.attendeeId, prestart_id: item.subjectId, attendee_name: p.name, fit_for_work: p.fit, signature_path: p.path, created_at: p.at, inducted: (p.inducted as boolean | null | undefined) ?? null,
       });
       if (error && !isAlreadyDone(error)) throw error;
       return;
@@ -57,6 +57,7 @@ async function replay(item: OutboxItem): Promise<void> {
         // Out of reach: already finished (fine) or gone. Check which.
         const { data: row } = await supabase.from('prestarts').select('completed_at').eq('id', item.subjectId).maybeSingle();
         if (!row) throw Object.assign(new Error('That prestart no longer exists.'), { code: '42501' });
+        if (!row.completed_at) throw Object.assign(new Error('The prestart could not be finished from this account; it is still open.'), { code: '42501' });
       }
       return;
     }
@@ -75,6 +76,7 @@ async function replay(item: OutboxItem): Promise<void> {
       if (!error && (!data || data.length === 0)) {
         const { data: row } = await supabase.from('toolbox_talks').select('completed_at').eq('id', item.subjectId).maybeSingle();
         if (!row) throw Object.assign(new Error('That talk no longer exists.'), { code: '42501' });
+        if (!row.completed_at) throw Object.assign(new Error('The talk could not be finished from this account; it is still open.'), { code: '42501' });
       }
       return;
     }

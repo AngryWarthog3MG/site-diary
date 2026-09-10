@@ -46,10 +46,14 @@ export function PlantCheckForm({ projectId, projectName, orgId, register, onJob,
   // missing or expired ticket stops the signing; an empty record is a warning
   // and a job for the office, because no list is not the same as no ticket.
   const [verdict, setVerdict] = useState<TicketVerdict | null>(null);
+  const [verdictPending, setVerdictPending] = useState(false);
   useEffect(() => {
-    if (!plant) { setVerdict(null); return; }
+    if (!plant) { setVerdict(null); setVerdictPending(false); return; }
     const who = normaliseName(operator);
-    if (!who) { setVerdict(null); return; }
+    if (!who) { setVerdict(null); setVerdictPending(false); return; }
+    // A verdict for the last operator or the last machine must not let this one
+    // sign: nothing is ready until the lookup for what is on screen returns.
+    setVerdictPending(true);
     let cancelled = false;
     const timer = window.setTimeout(async () => {
       try {
@@ -59,7 +63,9 @@ export function PlantCheckForm({ projectId, projectName, orgId, register, onJob,
         const mine = ((data ?? []) as Array<TicketFacts & { person_name: string }>).filter((t) => normaliseName(t.person_name) === who);
         setVerdict(ticketVerdict(kind, mine, today));
       } catch {
-        if (!cancelled) setVerdict(null); // no signal: the check cannot run; nothing is refused on a guess
+        if (!cancelled) setVerdict(null); // no signal: the screen cannot check; the database still will when it syncs
+      } finally {
+        if (!cancelled) setVerdictPending(false);
       }
     }, 400);
     return () => { cancelled = true; window.clearTimeout(timer); };
@@ -70,7 +76,7 @@ export function PlantCheckForm({ projectId, projectName, orgId, register, onJob,
   const defects = items.filter((i) => answers[i.key] === 'defect');
   const answered = plant ? allAnswered(kind, answers) : false;
   const fitDecided = defects.length === 0 ? true : fit != null;
-  const ready = Boolean(plant) && operator.trim().length > 0 && answered && fitDecided && !ticketStop;
+  const ready = Boolean(plant) && operator.trim().length > 0 && answered && fitDecided && !ticketStop && !verdictPending;
   const today = localDate();
 
   const matches = useMemo(() => {
@@ -260,7 +266,7 @@ export function PlantCheckForm({ projectId, projectName, orgId, register, onJob,
 
           {!ready && (
             <p className="notice gap">
-              Still needed before signing: {[!operator.trim() && 'the operator’s name', !answered && 'an answer for every check', !fitDecided && 'fit for use or not', ticketStop && 'an operator whose ticket covers this machine'].filter(Boolean).join(', ')}.
+              Still needed before signing: {[!operator.trim() && 'the operator’s name', !answered && 'an answer for every check', !fitDecided && 'fit for use or not', ticketStop && 'an operator whose ticket covers this machine', !ticketStop && verdictPending && 'a moment while the operator’s tickets are checked'].filter(Boolean).join(', ')}.
             </p>
           )}
           {error && <p className="alert">{error}</p>}

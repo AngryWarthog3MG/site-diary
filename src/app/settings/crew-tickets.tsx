@@ -37,16 +37,20 @@ export function CrewTickets({ orgId, projectId, people, tickets: initialTickets,
       const supabase = createClient();
       const { data: auth } = await supabase.auth.getSession();
       const id = crypto.randomUUID();
-      let photo_path: string | null = null;
-      if (form.photo) {
-        const photo = await compressPhoto(form.photo);
-        photo_path = `${orgId}/${id}.${photo.extension}`;
-        const { error: upErr } = await supabase.storage.from('crew-tickets').upload(photo_path, photo.blob, { contentType: photo.contentType, upsert: false });
-        if (upErr) throw new Error(upErr.message);
-      }
-      const row = { id, org_id: orgId, person_name: person, ticket_type: form.type, ticket_no: form.no.trim() || null, issued_on: form.issued || null, expires_on: form.expires || null, photo_path, created_by: auth.session?.user.id };
+      // The row first, so a photo never sits in storage with nothing pointing
+      // at it; then the photo; then the link.
+      const row = { id, org_id: orgId, person_name: person, ticket_type: form.type, ticket_no: form.no.trim() || null, issued_on: form.issued || null, expires_on: form.expires || null, photo_path: null as string | null, created_by: auth.session?.user.id };
       const { error: insErr } = await supabase.from('crew_tickets').insert(row);
       if (insErr) throw new Error(insErr.message);
+      if (form.photo) {
+        const photo = await compressPhoto(form.photo);
+        const photo_path = `${orgId}/${id}.${photo.extension}`;
+        const { error: upErr } = await supabase.storage.from('crew-tickets').upload(photo_path, photo.blob, { contentType: photo.contentType, upsert: false });
+        if (upErr) throw new Error(`The ticket was saved but its photo did not upload: ${upErr.message}`);
+        const { error: linkErr } = await supabase.from('crew_tickets').update({ photo_path }).eq('id', id);
+        if (linkErr) throw new Error(linkErr.message);
+        row.photo_path = photo_path;
+      }
       setTickets([...tickets, { ...row, active: true }]);
       setForm({ type: 'white_card', no: '', issued: '', expires: '', photo: null });
     } catch (err) { setError(err instanceof Error ? err.message : 'That did not save.'); }

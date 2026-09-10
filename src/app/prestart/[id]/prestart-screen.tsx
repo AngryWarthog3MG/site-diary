@@ -40,6 +40,8 @@ interface Attendee {
   attendee_name: string;
   fit_for_work: boolean;
   signature_path: string;
+  /** Inducted on this job when they signed on; null for sign-ons before this was recorded. */
+  inducted?: boolean | null;
 }
 
 function Blocks({ text }: { text: string }) {
@@ -167,6 +169,9 @@ export function PrestartScreen(props: {
       const attendeeId = outbox.newId();
       const path = `${prestart.projectId}/prestart/${prestart.id}/sig-${attendeeId}.png`;
       const at = new Date().toISOString();
+      // Inducted or not is a fact about this moment, stored with the sign-on.
+      // Unknown (an offline-made prestart carries no induction list) stays null.
+      const inductedNow: boolean | null = props.inducted === undefined ? null : inductedNames.has(normaliseName(trimmed));
       const live = async () => {
         const supabase = createClient();
         const { error: uploadError } = await supabase.storage
@@ -175,12 +180,12 @@ export function PrestartScreen(props: {
         if (uploadError) throw new Error(uploadError.message);
         const { error: insertError } = await supabase
           .from('prestart_attendees')
-          .insert({ id: attendeeId, prestart_id: prestart.id, attendee_name: trimmed, fit_for_work: fit, signature_path: path });
+          .insert({ id: attendeeId, prestart_id: prestart.id, attendee_name: trimmed, fit_for_work: fit, signature_path: path, inducted: inductedNow });
         if (insertError) throw new Error(insertError.message);
       };
       const queue = () => outbox.enqueue({
         kind: 'prestart_attendee', projectId: prestart.projectId, subjectId: prestart.id,
-        payload: { attendeeId, name: trimmed, fit, path, at }, blobs: { signature: blob },
+        payload: { attendeeId, name: trimmed, fit, path, at, inducted: inductedNow }, blobs: { signature: blob },
       }).then(() => undefined);
       const outcome = props.local ? (await queue(), 'queued' as const) : await runOrQueue(live, queue);
       setName('');
@@ -474,7 +479,7 @@ export function PrestartScreen(props: {
           <span>
             {a.attendee_name}
             {!a.fit_for_work && <strong className="notfit-tag"> · not fit for work</strong>}
-            {!isInducted(a.attendee_name) && (
+            {(a.inducted === false || (a.inducted == null && !isInducted(a.attendee_name))) && (
               <>
                 <span className="notinducted-tag">not inducted here</span>
                 {canRun && !isDone && (
