@@ -53,13 +53,21 @@ export function PlantCheckForm({ projectId, projectName, orgId, register, onJob,
     if (!who) { setVerdict(null); setVerdictPending(false); return; }
     // A verdict for the last operator or the last machine must not let this one
     // sign: nothing is ready until the lookup for what is on screen returns.
+    // With no signal the screen cannot check, and must not sit waiting on a
+    // request that will never answer; the database checks when it syncs.
+    if (typeof navigator !== 'undefined' && !navigator.onLine) { setVerdict(null); setVerdictPending(false); return; }
     setVerdictPending(true);
     let cancelled = false;
     const timer = window.setTimeout(async () => {
       try {
         const supabase = createClient();
-        const { data } = await supabase.from('crew_tickets').select('person_name, ticket_type, expires_on, active').eq('org_id', orgId).eq('active', true);
+        const lookup = supabase.from('crew_tickets').select('person_name, ticket_type, expires_on, active').eq('org_id', orgId).eq('active', true);
+        const { data } = await Promise.race([
+          lookup,
+          new Promise<{ data: null }>((resolve) => window.setTimeout(() => resolve({ data: null }), 4000)),
+        ]) as { data: Array<TicketFacts & { person_name: string }> | null };
         if (cancelled) return;
+        if (data == null) { setVerdict(null); return; } // no answer in time: unknown, not refused
         const mine = ((data ?? []) as Array<TicketFacts & { person_name: string }>).filter((t) => normaliseName(t.person_name) === who);
         setVerdict(ticketVerdict(kind, mine, today));
       } catch {
