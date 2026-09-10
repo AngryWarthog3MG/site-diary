@@ -8,6 +8,9 @@ import { BrandMark } from '@/components/brand-mark';
 import { SignaturePad } from '@/components/signature-pad';
 import { parseTalkSummary } from '@/lib/toolbox/summary';
 import { fmtDate } from '@/lib/pdf/dates';
+import * as outbox from '@/lib/outbox/store';
+import { runOrQueue } from '@/lib/outbox/sync';
+import { OutboxStatus } from '@/components/outbox-status';
 
 /**
  * The talk itself. While open: the phone goes around the crew — name, sign,
@@ -33,6 +36,22 @@ export function TalkScreen({
   projectName: string;
 }) {
   const router = useRouter();
+  const [pending, setPending] = useState<Array<{ id: string; name: string; previewUrl: string | null }>>([]);
+  const [pendingFinish, setPendingFinish] = useState<string | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    const load = async () => {
+      const items = await outbox.forSubject(talk.id);
+      if (cancelled) return;
+      setPending(items.filter((i) => i.kind === 'talk_attendee').map((i) => ({ id: i.id, name: String(i.payload.name), previewUrl: i.blobs?.signature ? URL.createObjectURL(i.blobs.signature) : null })));
+      const fin = items.find((i) => i.kind === 'talk_finish');
+      setPendingFinish(fin ? String(fin.payload.at) : null);
+    };
+    void load();
+    const stop = outbox.onOutboxChange(() => void load());
+    return () => { cancelled = true; stop(); };
+  }, [talk.id]);
+  const isDone = talk.completed || pendingFinish !== null;
   const [name, setName] = useState('');
   const [saving, setSaving] = useState(false);
   const [completing, setCompleting] = useState(false);
@@ -76,18 +95,23 @@ export function TalkScreen({
     setSaving(true);
     setError(null);
     try {
-      const supabase = createClient();
-      const path = `${talk.projectId}/toolbox/${talk.id}/sig-${crypto.randomUUID()}.png`;
-      const { error: uploadError } = await supabase.storage
-        .from('entry-photos')
-        .upload(path, blob, { contentType: 'image/png', upsert: false });
-      if (uploadError) throw new Error(uploadError.message);
-      const { error: insertError } = await supabase
-        .from('toolbox_attendees')
-        .insert({ talk_id: talk.id, attendee_name: trimmed, signature_path: path });
-      if (insertError) throw new Error(insertError.message);
+      const attendeeId = outbox.newId();
+      const path = `${talk.projectId}/toolbox/${talk.id}/sig-${attendeeId}.png`;
+      const live = async () => {
+        const supabase = createClient();
+        const { error: uploadError } = await supabase.storage
+          .from('entry-photos')
+          .upload(path, blob, { contentType: 'image/png', upsert: false });
+        if (uploadError) throw new Error(uploadError.message);
+        const { error: insertError } = await supabase
+          .from('toolbox_attendees')
+          .insert({ id: attendeeId, talk_id: talk.id, attendee_name: trimmed, signature_path: path });
+        if (insertError) throw new Error(insertError.message);
+      };
+      const queue = () => outbox.enqueue({ kind: 'talk_attendee', projectId: talk.projectId, subjectId: talk.id, payload: { attendeeId, name: trimmed, path }, blobs: { signature: blob } }).then(() => undefined);
+      const outcome = await runOrQueue(live, queue);
       setName('');
-      router.refresh();
+      if (outcome === 'sent') router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'That sign-on did not save.');
     } finally {
@@ -123,13 +147,18 @@ export function TalkScreen({
     setCompleting(true);
     setError(null);
     try {
-      const supabase = createClient();
-      const { error: updateError } = await supabase
-        .from('toolbox_talks')
-        .update({ completed_at: new Date().toISOString() })
-        .eq('id', talk.id);
-      if (updateError) throw new Error(updateError.message);
-      router.refresh();
+      const at = new Date().toISOString();
+      const live = async () => {
+        const supabase = createClient();
+        const { error: updateError } = await supabase
+          .from('toolbox_talks')
+          .update({ completed_at: at, completed_on_device_at: at })
+          .eq('id', talk.id);
+        if (updateError) throw new Error(updateError.message);
+      };
+      const queue = () => outbox.enqueue({ kind: 'talk_finish', projectId: talk.projectId, subjectId: talk.id, payload: { at } }).then(() => undefined);
+      const outcome = await runOrQueue(live, queue);
+      if (outcome === 'sent') router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not complete the talk.');
     } finally {
@@ -164,10 +193,13 @@ export function TalkScreen({
       <p className="mono page-subtitle">
         {fmtDate(talk.date)} · presented by {talk.presenter}
       </p>
-      <p className={talk.completed ? 'talkstate talkstate--done' : 'talkstate talkstate--open'}>
+      <OutboxStatus />
+      <p className={isDone ? 'talkstate talkstate--done' : 'talkstate talkstate--open'}>
         {talk.completed
           ? 'Done and signed. This talk is locked and cannot be changed.'
-          : 'Not run yet. Read it out, get the crew to sign, then finish it.'}
+          : pendingFinish
+            ? `Completed on this phone at ${new Date(pendingFinish).toTimeString().slice(0, 5)} — it sends when you are back in range, and locks then.`
+            : 'Not run yet. Read it out, get the crew to sign, then finish it.'}
       </p>
       <hr className="rule" />
 
@@ -215,7 +247,7 @@ export function TalkScreen({
               <p className="label">Read this out</p>
               <h2 className="home-card__title">What to cover</h2>
             </div>
-            {!talk.completed && canRun && (
+            {!isDone && canRun && (
               <button className="button button--quiet review-add" type="button"
                 onClick={() => setEditing(true)}>
                 Edit talk
@@ -248,11 +280,11 @@ export function TalkScreen({
         <>
           <p className="label">Who was there</p>
           <h2 className="home-card__title">
-            {attendees.length === 0
+            {attendees.length + pending.length === 0
               ? 'Nobody has signed on yet'
-              : `${attendees.length} signed on`}
+              : `${attendees.length + pending.length} signed on`}
           </h2>
-          {!talk.completed && attendees.length === 0 && canRun && (
+          {!isDone && attendees.length + pending.length === 0 && canRun && (
             <p className="way-hint">
               Read the talk out, then hand the phone around. Each person types their
               name and signs with a finger.
@@ -260,6 +292,17 @@ export function TalkScreen({
           )}
         </>
       )}
+      {!editing && pending.map((a) => (
+        <div key={a.id} className="talk-attendee">
+          {a.previewUrl ? (
+            /* eslint-disable-next-line @next/next/no-img-element */
+            <img src={a.previewUrl} alt="" />
+          ) : (
+            <span className="talk-attendee__pending" />
+          )}
+          <span>{a.name}<span className="pending-tag">waiting for signal</span></span>
+        </div>
+      ))}
       {!editing && attendees.map((a) => (
         <div key={a.id} className="talk-attendee">
           {urls[a.signature_path] ? (
@@ -272,7 +315,7 @@ export function TalkScreen({
         </div>
       ))}
 
-      {!talk.completed && canRun && !editing && (
+      {!isDone && canRun && !editing && (
         <div className="sigslot item" style={{ marginTop: '1rem' }}>
           <p className="label">Hand them the phone</p>
           <label className="fieldcell">
@@ -286,9 +329,9 @@ export function TalkScreen({
 
       {error && <p className="alert">{error}</p>}
 
-      {!talk.completed && canRun && !editing && (
+      {!isDone && canRun && !editing && (
         <>
-          <button className="button" type="button" disabled={completing || attendees.length === 0} onClick={complete}>
+          <button className="button" type="button" disabled={completing || attendees.length + pending.length === 0} onClick={complete}>
             {completing ? 'Finishing…' : 'Finish the talk'}
           </button>
           <p className="way-hint">

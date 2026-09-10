@@ -6,6 +6,7 @@ import { EMBEDDED_FONT_CSS } from '@/lib/pdf/fonts';
 import { PRESTART_CSS } from '@/lib/prestart/pdf';
 import { PlantPrestartDoc, PLANT_CSS, type PlantPrestartPdfData } from '@/lib/plant/pdf';
 import { readChecks, PLANT_KIND_LABEL, OWNERSHIP_LABEL, isPlantKind, type Ownership } from '@/lib/plant/checklist';
+import { finishedAtAwst } from '@/lib/pdf/finished-at';
 
 export const maxDuration = 300;
 export const runtime = 'nodejs';
@@ -20,7 +21,7 @@ export async function POST(_request: Request, context: { params: Promise<{ id: s
   const { data: row } = await supabase
     .from('plant_prestarts')
     .select(
-      `id, project_id, prestart_date, operator_name, hour_meter, checks, fit_for_use, notes, signature_path, completed_at,
+      `id, project_id, prestart_date, operator_name, hour_meter, checks, fit_for_use, notes, signature_path, completed_at, completed_on_device_at,
        plant:plant_register!inner(name, kind, make_model, plant_no, ownership, supplier),
        project:projects!inner(name, code, org:organisations!inner(name, code))`,
     )
@@ -58,9 +59,7 @@ export async function POST(_request: Request, context: { params: Promise<{ id: s
     defects.push({ label: d.item_label as string, note: (d.note as string | null) ?? null, src: await toDataUrl(d.photo_path as string | null, 'image/jpeg') });
   }
 
-  const completed = new Date(Date.parse(row.completed_at) + 480 * 60000);
-  const pad = (n: number) => String(n).padStart(2, '0');
-  const completedAtAwst = `${completed.getUTCFullYear()}-${pad(completed.getUTCMonth() + 1)}-${pad(completed.getUTCDate())} ${pad(completed.getUTCHours())}:${pad(completed.getUTCMinutes())} AWST`;
+  const completedAtAwst = finishedAtAwst(row.completed_at as string, row.completed_on_device_at as string | null);
   const meta = [
     isPlantKind(plant.kind) ? PLANT_KIND_LABEL[plant.kind] : null,
     plant.make_model,

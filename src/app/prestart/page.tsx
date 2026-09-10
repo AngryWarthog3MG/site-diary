@@ -4,6 +4,8 @@ import { requireUser, resolveProject, canRunTalks } from '@/lib/auth';
 import { BrandMark } from '@/components/brand-mark';
 import { fmtDate } from '@/lib/pdf/dates';
 import { perthToday } from '@/lib/push/decide';
+import { OutboxStatus } from '@/components/outbox-status';
+import { LocalPrestarts } from './local-prestarts';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Prestarts · KBS Daily Diary' };
@@ -12,10 +14,10 @@ export const metadata = { title: 'Prestarts · KBS Daily Diary' };
 export default async function PrestartListPage({
   searchParams,
 }: {
-  searchParams: Promise<{ project?: string; ready?: string }>;
+  searchParams: Promise<{ project?: string; ready?: string; kept?: string }>;
 }) {
   const { memberships } = await requireUser();
-  const { project, ready } = await searchParams;
+  const { project, ready, kept } = await searchParams;
   const current = resolveProject(memberships, project);
   if (!current) {
     return (
@@ -54,6 +56,13 @@ export default async function PrestartListPage({
         </Link>
       )}
       <hr className="rule" />
+      {kept && /^\d{4}-\d{2}-\d{2}$/.test(kept) && (
+        <p className="notice" style={{ marginBottom: '0.75rem' }}>
+          Kept on this phone for {fmtDate(kept)} — no signal. It sends on its own when you are back in range.
+        </p>
+      )}
+      <OutboxStatus />
+      <LocalPrestarts projectId={current.project_id} />
 
       {ready && /^\d{4}-\d{2}-\d{2}$/.test(ready) && (
         <p className="notice" style={{ marginBottom: '0.75rem' }}>

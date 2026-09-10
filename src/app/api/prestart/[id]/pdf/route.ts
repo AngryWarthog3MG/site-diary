@@ -6,6 +6,7 @@ import { EMBEDDED_FONT_CSS } from '@/lib/pdf/fonts';
 import { PrestartDoc, PRESTART_CSS, type PrestartPdfData } from '@/lib/prestart/pdf';
 import { readSpecNotes } from '@/lib/prestart/spec-notes';
 import { readChecklist } from '@/lib/prestart/checklist';
+import { finishedAtAwst } from '@/lib/pdf/finished-at';
 
 export const maxDuration = 300;
 export const runtime = 'nodejs';
@@ -25,7 +26,7 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
     .from('prestarts')
     .select(
       `id, project_id, prestart_date, supervisor_name, work_planned, hazards, plant, permits, notes, spec_notes,
-       checklist, completed_at,
+       checklist, completed_at, completed_on_device_at,
        project:projects!inner(name, code, org:organisations!inner(name, code)),
        prestart_attendees(attendee_name, fit_for_work, signature_path, created_at)`,
     )
@@ -67,9 +68,7 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
     });
   }
 
-  const completed = new Date(Date.parse(row.completed_at) + 480 * 60000);
-  const pad = (n: number) => String(n).padStart(2, '0');
-  const completedAtAwst = `${completed.getUTCFullYear()}-${pad(completed.getUTCMonth() + 1)}-${pad(completed.getUTCDate())} ${pad(completed.getUTCHours())}:${pad(completed.getUTCMinutes())} AWST`;
+  const completedAtAwst = finishedAtAwst(row.completed_at as string, row.completed_on_device_at as string | null);
 
   const data: PrestartPdfData = {
     orgName: org.name,

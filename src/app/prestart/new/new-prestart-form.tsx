@@ -12,22 +12,77 @@ import { BrandMark } from '@/components/brand-mark';
 import { PRESTART_CHECKS, type ChecklistState } from '@/lib/prestart/checklist';
 import { DictateButton } from '../dictate-button';
 import { mergeField, appendDictation, type DictatedFields } from '@/lib/prestart/dictation-merge';
+import * as outbox from '@/lib/outbox/store';
+import { runOrQueue } from '@/lib/outbox/sync';
+import { PrestartScreen } from '../[id]/prestart-screen';
+import { readChecklist } from '@/lib/prestart/checklist';
 
 /**
  * What is on, what could hurt someone, the checks — then hand the phone
  * around. Nothing is pre-ticked: a check that prints as done was ticked by
  * the supervisor on the day.
  */
+/**
+ * A prestart made with no signal lives in the outbox until it sends. This
+ * renders it from there — the same screen the crew would see from the
+ * server — so they can sign on and the supervisor can finish it, all kept on
+ * the phone, all sent together when the signal comes back.
+ */
+function LocalPrestart({ localId, projectId, projectName, crew }: { localId: string; projectId: string; projectName: string; crew: string[] }) {
+  const router = useRouter();
+  const [row, setRow] = useState<Record<string, unknown> | null | undefined>(undefined);
+  useEffect(() => {
+    let cancelled = false;
+    const load = async () => {
+      const items = await outbox.forSubject(localId);
+      const create = items.find((i) => i.kind === 'prestart_create');
+      if (cancelled) return;
+      if (!create) {
+        // Sent: the real page has it now.
+        if (items.length === 0) router.replace(`/prestart/${localId}`);
+        else setRow(null);
+        return;
+      }
+      setRow(create.payload.row as Record<string, unknown>);
+    };
+    void load();
+    const stop = outbox.onOutboxChange(() => void load());
+    return () => { cancelled = true; stop(); };
+  }, [localId, router]);
+  if (row === undefined) return <main className="sheet"><p className="caption">Opening…</p></main>;
+  if (row === null) return <main className="sheet"><p className="notice gap">That prestart has been sent. <Link className="linklike" href={`/prestart/${localId}`}>Open it</Link>.</p></main>;
+  return (
+    <PrestartScreen
+      local
+      prestart={{
+        id: localId, projectId, date: String(row.prestart_date), supervisor: String(row.supervisor_name),
+        work: String(row.work_planned), hazards: String(row.hazards), plant: String(row.plant ?? ''), permits: String(row.permits ?? ''),
+        notes: String(row.notes ?? ''), dictation: (row.dictation as string | null) ?? null,
+        checklist: readChecklist(row.checklist), specNotes: (row.spec_notes as SpecNote[]) ?? [], completed: false,
+      }}
+      attendees={[]}
+      crew={crew}
+      canRun
+      projectName={projectName}
+    />
+  );
+}
+
 export function NewPrestartForm({
   projectId,
   projectName,
   defaultSupervisor,
+  crew = [],
+  localId = null,
 }: {
   projectId: string;
   projectName: string;
   defaultSupervisor: string;
+  crew?: string[];
+  localId?: string | null;
 }) {
   const router = useRouter();
+  const [keptLocally, setKeptLocally] = useState<string | null>(localId);
   const [date, setDate] = useState(localDate());
   const [supervisor, setSupervisor] = useState(defaultSupervisor);
   const [work, setWork] = useState('');
@@ -75,33 +130,50 @@ export function NewPrestartForm({
     setError(null);
     try {
       const supabase = createClient();
-      const { data: auth } = await supabase.auth.getUser();
-      const { data, error: insertError } = await supabase
-        .from('prestarts')
-        .insert({
-          project_id: projectId,
-          prestart_date: forDate,
-          supervisor_name: supervisor.trim(),
-          work_planned: work.trim(),
-          hazards: hazards.trim(),
-          plant: plant.trim() || null,
-          permits: permits.trim() || null,
-          notes: notes.trim() || null,
-          checklist: checks,
-          spec_notes: specNotes,
-          dictation,
-          conducted_by: auth.user?.id,
-        })
-        .select('id')
-        .single();
-      if (insertError) throw new Error(insertError.message);
+      const { data: session } = await supabase.auth.getSession();
+      const userId = session.session?.user.id;
+      if (!userId) throw new Error('You are signed out.');
+      const id = outbox.newId();
+      const row = {
+        id,
+        project_id: projectId,
+        prestart_date: forDate,
+        supervisor_name: supervisor.trim(),
+        work_planned: work.trim(),
+        hazards: hazards.trim(),
+        plant: plant.trim() || null,
+        permits: permits.trim() || null,
+        notes: notes.trim() || null,
+        checklist: checks,
+        spec_notes: specNotes,
+        dictation,
+        conducted_by: userId,
+        created_at: new Date().toISOString(),
+      };
+      const live = async () => {
+        const { error: insertError } = await supabase.from('prestarts').insert(row);
+        if (insertError) throw new Error(insertError.message);
+      };
+      const queue = () => outbox.enqueue({ kind: 'prestart_create', projectId, subjectId: id, payload: { row } }).then(() => undefined);
+      const outcome = await runOrQueue(live, queue);
+      if (outcome === 'queued') {
+        // No signal: run it from the phone. The URL carries the id so the
+        // cached page can reopen it later.
+        if (mode === 'morning') { router.push(`/prestart?project=${projectId}&kept=${forDate}`); return; }
+        window.history.replaceState(null, '', `/prestart/new?project=${projectId}&local=${id}`);
+        setKeptLocally(id);
+        setBusy(false);
+        return;
+      }
       if (mode === 'morning') router.push(`/prestart?project=${projectId}&ready=${forDate}`);
-      else router.push(`/prestart/${data.id}`);
+      else router.push(`/prestart/${id}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'The prestart was not created.');
       setBusy(false);
     }
   }
+
+  if (keptLocally) return <LocalPrestart localId={keptLocally} projectId={projectId} projectName={projectName} crew={crew} />;
 
   return (
     <main className="sheet">

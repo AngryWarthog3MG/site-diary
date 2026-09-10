@@ -8,6 +8,7 @@ import { perthToday } from '@/lib/push/decide';
 import { PLANT_KIND_LABEL, isPlantKind } from '@/lib/plant/checklist';
 import { PlantRegister, type RegisterRow } from './plant-register';
 import { DefectList, type DefectRow } from './defect-list';
+import { OutboxStatus } from '@/components/outbox-status';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Plant · KBS Daily Diary' };
@@ -16,9 +17,9 @@ export const metadata = { title: 'Plant · KBS Daily Diary' };
  * Plant: which machines have been walked around this morning, what is
  * tagged out, what is still open from earlier days, and the fleet itself.
  */
-export default async function PlantPage({ searchParams }: { searchParams: Promise<{ project?: string }> }) {
+export default async function PlantPage({ searchParams }: { searchParams: Promise<{ project?: string; kept?: string }> }) {
   const { memberships } = await requireUser();
-  const { project } = await searchParams;
+  const { project, kept } = await searchParams;
   const current = resolveProject(memberships, project);
   if (!current) return <main className="sheet"><p className="notice gap">You are not on an active project.</p></main>;
 
@@ -57,6 +58,13 @@ export default async function PlantPage({ searchParams }: { searchParams: Promis
         the machine until someone closes it.
       </p>
       {canRun && <Link className="button" href={`/plant/new${q}`}>Start a plant prestart</Link>}
+      {kept === '1' && (
+        <p className="notice" style={{ marginTop: '0.75rem' }}>
+          Kept on this phone — no signal. It is signed and complete as far as the crew are concerned; it
+          sends on its own when you are back in range and appears below then.
+        </p>
+      )}
+      <OutboxStatus />
       <hr className="rule" />
 
       <p className="label">Today · {fmtDate(today)}</p>

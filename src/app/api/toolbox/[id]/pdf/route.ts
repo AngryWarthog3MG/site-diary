@@ -4,6 +4,7 @@ import { renderPdfDocument, BrowserUnavailableError } from '@/lib/pdf/render';
 import { DOCKET_CSS } from '@/lib/pdf/styles';
 import { EMBEDDED_FONT_CSS } from '@/lib/pdf/fonts';
 import { ToolboxTalkDoc, TALK_CSS, type TalkPdfData } from '@/lib/toolbox/pdf';
+import { finishedAtAwst } from '@/lib/pdf/finished-at';
 
 export const maxDuration = 300;
 export const runtime = 'nodejs';
@@ -22,7 +23,7 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
   const { data: talk } = await supabase
     .from('toolbox_talks')
     .select(
-      `id, project_id, talk_date, topic, summary, presenter_name, completed_at,
+      `id, project_id, talk_date, topic, summary, presenter_name, completed_at, completed_on_device_at,
        project:projects!inner(name, code, org:organisations!inner(name, code)),
        toolbox_attendees(attendee_name, signature_path, created_at)`,
     )
@@ -55,9 +56,7 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
     attendees.push({ name: row.attendee_name, src: `data:image/png;base64,${bytes.toString('base64')}` });
   }
 
-  const completed = new Date(Date.parse(talk.completed_at) + 480 * 60000);
-  const pad = (n: number) => String(n).padStart(2, '0');
-  const completedAtAwst = `${completed.getUTCFullYear()}-${pad(completed.getUTCMonth() + 1)}-${pad(completed.getUTCDate())} ${pad(completed.getUTCHours())}:${pad(completed.getUTCMinutes())} AWST`;
+  const completedAtAwst = finishedAtAwst(talk.completed_at as string, talk.completed_on_device_at as string | null);
 
   const data: TalkPdfData = {
     orgName: org.name,

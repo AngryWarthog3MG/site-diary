@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { drain } from '@/lib/capture/sync';
+import { drainOutbox } from '@/lib/outbox/sync';
 
 /**
  * One button, top of every screen: send anything still waiting on the
@@ -20,7 +21,7 @@ export function RefreshButton() {
     setBusy(true);
     try {
       // Queued recordings first, so a reload cannot outrun them.
-      await Promise.race([drain(), new Promise((r) => setTimeout(r, 8000))]);
+      await Promise.race([Promise.all([drain(), drainOutbox()]), new Promise((r) => setTimeout(r, 8000))]);
     } catch {
       // Offline or mid-failure: the queue keeps them; the reload is still useful.
     }

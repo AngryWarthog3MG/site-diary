@@ -21,7 +21,7 @@
 // v6: forty deploys shipped on v5 without a bump, so a phone that opened the
 // app with no signal was handed a page shell from weeks ago and kept it.
 // Bumped alongside the update check in sw-register.tsx, which is the real fix.
-const VERSION = 'v6';
+const VERSION = 'v7';
 const PAGES = `pages-${VERSION}`;
 const ASSETS = `assets-${VERSION}`;
 const OFFLINE_URL = '/offline.html';
@@ -88,7 +88,14 @@ self.addEventListener('fetch', (event) => {
           }
           return response;
         })
-        .catch(async () => (await caches.match(request)) || caches.match(OFFLINE_URL)),
+        .catch(
+          async () =>
+            (await caches.match(request)) ||
+            // The same screen with a different query — a prestart kept on the
+            // phone opens through the page that was cached when it was made.
+            (await caches.match(request, { ignoreSearch: true })) ||
+            caches.match(OFFLINE_URL),
+        ),
     );
   }
 });

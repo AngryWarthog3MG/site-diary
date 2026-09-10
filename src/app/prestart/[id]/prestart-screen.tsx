@@ -13,6 +13,9 @@ import { PrestartSpecPicker } from '../spec-picker';
 import type { SpecNote } from '@/lib/prestart/spec-notes';
 import { DictateButton } from '../dictate-button';
 import { mergeField, appendDictation, type DictatedFields } from '@/lib/prestart/dictation-merge';
+import * as outbox from '@/lib/outbox/store';
+import { runOrQueue } from '@/lib/outbox/sync';
+import { OutboxStatus } from '@/components/outbox-status';
 
 interface Prestart {
   id: string;
@@ -61,20 +64,39 @@ function Blocks({ text }: { text: string }) {
  * crew — name, fit or not, sign, next. Finish freezes it (database-enforced)
  * and unlocks the PDF.
  */
-export function PrestartScreen({
-  prestart,
-  attendees,
-  crew,
-  canRun,
-  projectName,
-}: {
+export function PrestartScreen(props: {
   prestart: Prestart;
   attendees: Attendee[];
   crew: string[];
   canRun: boolean;
   projectName: string;
+  /** Set when this prestart exists only on the phone so far: it was made with no signal. */
+  local?: boolean;
 }) {
+  const { prestart, attendees, crew, canRun, projectName } = props;
   const router = useRouter();
+  // Sign-ons and a finish done with no signal sit in the outbox until they
+  // send; the screen shows them as they happened.
+  const [pending, setPending] = useState<Array<{ id: string; name: string; fit: boolean; previewUrl: string | null }>>([]);
+  const [pendingFinish, setPendingFinish] = useState<string | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    const load = async () => {
+      const items = await outbox.forSubject(prestart.id);
+      if (cancelled) return;
+      setPending(items.filter((i) => i.kind === 'prestart_attendee').map((i) => ({
+        id: i.id, name: String(i.payload.name), fit: Boolean(i.payload.fit),
+        previewUrl: i.blobs?.signature ? URL.createObjectURL(i.blobs.signature) : null,
+      })));
+      const fin = items.find((i) => i.kind === 'prestart_finish');
+      setPendingFinish(fin ? String(fin.payload.at) : null);
+    };
+    void load();
+    const stop = outbox.onOutboxChange(() => void load());
+    return () => { cancelled = true; stop(); };
+  }, [prestart.id]);
+  const isDone = prestart.completed || pendingFinish !== null;
+  const signedCount = attendees.length + pending.length;
   const [name, setName] = useState('');
   const [fit, setFit] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -125,19 +147,28 @@ export function PrestartScreen({
     setSaving(true);
     setError(null);
     try {
-      const supabase = createClient();
-      const path = `${prestart.projectId}/prestart/${prestart.id}/sig-${crypto.randomUUID()}.png`;
-      const { error: uploadError } = await supabase.storage
-        .from('entry-photos')
-        .upload(path, blob, { contentType: 'image/png', upsert: false });
-      if (uploadError) throw new Error(uploadError.message);
-      const { error: insertError } = await supabase
-        .from('prestart_attendees')
-        .insert({ prestart_id: prestart.id, attendee_name: trimmed, fit_for_work: fit, signature_path: path });
-      if (insertError) throw new Error(insertError.message);
+      const attendeeId = outbox.newId();
+      const path = `${prestart.projectId}/prestart/${prestart.id}/sig-${attendeeId}.png`;
+      const at = new Date().toISOString();
+      const live = async () => {
+        const supabase = createClient();
+        const { error: uploadError } = await supabase.storage
+          .from('entry-photos')
+          .upload(path, blob, { contentType: 'image/png', upsert: false });
+        if (uploadError) throw new Error(uploadError.message);
+        const { error: insertError } = await supabase
+          .from('prestart_attendees')
+          .insert({ id: attendeeId, prestart_id: prestart.id, attendee_name: trimmed, fit_for_work: fit, signature_path: path });
+        if (insertError) throw new Error(insertError.message);
+      };
+      const queue = () => outbox.enqueue({
+        kind: 'prestart_attendee', projectId: prestart.projectId, subjectId: prestart.id,
+        payload: { attendeeId, name: trimmed, fit, path, at }, blobs: { signature: blob },
+      }).then(() => undefined);
+      const outcome = props.local ? (await queue(), 'queued' as const) : await runOrQueue(live, queue);
       setName('');
       setFit(true);
-      router.refresh();
+      if (outcome === 'sent') router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'That sign-on did not save.');
     } finally {
@@ -149,24 +180,26 @@ export function PrestartScreen({
     setSaving(true);
     setError(null);
     try {
-      const supabase = createClient();
-      const { error: updateError } = await supabase
-        .from('prestarts')
-        .update({
-          prestart_date: draft.date,
-          supervisor_name: draft.supervisor.trim(),
-          work_planned: draft.work.trim(),
-          hazards: draft.hazards.trim(),
-          plant: draft.plant.trim() || null,
-          permits: draft.permits.trim() || null,
-          notes: draft.notes.trim() || null,
-          checklist: draft.checklist,
-          dictation: draft.dictation,
-        })
-        .eq('id', prestart.id);
-      if (updateError) throw new Error(updateError.message);
+      const changes = {
+        prestart_date: draft.date,
+        supervisor_name: draft.supervisor.trim(),
+        work_planned: draft.work.trim(),
+        hazards: draft.hazards.trim(),
+        plant: draft.plant.trim() || null,
+        permits: draft.permits.trim() || null,
+        notes: draft.notes.trim() || null,
+        checklist: draft.checklist,
+        dictation: draft.dictation,
+      };
+      const live = async () => {
+        const supabase = createClient();
+        const { error: updateError } = await supabase.from('prestarts').update(changes).eq('id', prestart.id);
+        if (updateError) throw new Error(updateError.message);
+      };
+      const queue = () => outbox.enqueue({ kind: 'prestart_edit', projectId: prestart.projectId, subjectId: prestart.id, payload: { changes } }).then(() => undefined);
+      const outcome = props.local ? (await queue(), 'queued' as const) : await runOrQueue(live, queue);
       setEditing(false);
-      router.refresh();
+      if (outcome === 'sent') router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Those changes did not save.');
     } finally {
@@ -178,13 +211,18 @@ export function PrestartScreen({
     setFinishing(true);
     setError(null);
     try {
-      const supabase = createClient();
-      const { error: updateError } = await supabase
-        .from('prestarts')
-        .update({ completed_at: new Date().toISOString() })
-        .eq('id', prestart.id);
-      if (updateError) throw new Error(updateError.message);
-      router.refresh();
+      const at = new Date().toISOString();
+      const live = async () => {
+        const supabase = createClient();
+        const { error: updateError } = await supabase
+          .from('prestarts')
+          .update({ completed_at: at, completed_on_device_at: at })
+          .eq('id', prestart.id);
+        if (updateError) throw new Error(updateError.message);
+      };
+      const queue = () => outbox.enqueue({ kind: 'prestart_finish', projectId: prestart.projectId, subjectId: prestart.id, payload: { at } }).then(() => undefined);
+      const outcome = props.local ? (await queue(), 'queued' as const) : await runOrQueue(live, queue);
+      if (outcome === 'sent') router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not finish the prestart.');
     } finally {
@@ -217,13 +255,18 @@ export function PrestartScreen({
       </p>
       <h1 className="page-title">Prestart · {fmtDate(prestart.date)}</h1>
       <p className="mono page-subtitle">Run by {prestart.supervisor}</p>
-      <p className={prestart.completed ? 'talkstate talkstate--done' : 'talkstate talkstate--open'}>
+      <p className={isDone ? 'talkstate talkstate--done' : 'talkstate talkstate--open'}>
         {prestart.completed
           ? 'Finished and signed. This prestart is locked and cannot be changed.'
-          : 'Not finished. Read it out, get everyone to sign on, then finish it.'}
+          : pendingFinish
+            ? `Finished on this phone at ${new Date(pendingFinish).toTimeString().slice(0, 5)} — it sends when you are back in range, and locks then.`
+            : props.local
+              ? 'Kept on this phone until there is signal. Sign the crew on as normal; it all sends together.'
+              : 'Not finished. Read it out, get everyone to sign on, then finish it.'}
       </p>
+      <OutboxStatus />
       <nav className="review-tabs" aria-label="Prestart sections">
-        {([['briefing', 'Briefing', null], ['spec', 'Spec', prestart.specNotes.length], ['signon', 'Sign-on', attendees.length]] as const).map(([key, label, count]) => (
+        {([['briefing', 'Briefing', null], ['spec', 'Spec', prestart.specNotes.length], ['signon', 'Sign-on', signedCount]] as const).map(([key, label, count]) => (
           <button key={key} type="button" className={`review-tab${tab === key ? ' is-active' : ''}`} onClick={() => setTab(key)}>
             {label}
             {count != null && <span className="review-tab__count mono">{count}</span>}
@@ -379,7 +422,7 @@ export function PrestartScreen({
             {attendees.length === 0 ? 'Nobody has signed on yet' : `${attendees.length} signed on`}
             {notFit > 0 ? ` · ${notFit} not fit for work` : ''}
           </h2>
-          {!prestart.completed && attendees.length === 0 && canRun && (
+          {!isDone && signedCount === 0 && canRun && (
             <p className="way-hint">
               Read it out, then hand the phone around. Each person taps or types their name,
               says whether they are fit for work, and signs with a finger.
@@ -388,6 +431,21 @@ export function PrestartScreen({
         </>
       )}
 
+      {!editing && pending.map((a) => (
+        <div key={a.id} className={`talk-attendee${a.fit ? '' : ' talk-attendee--notfit'}`}>
+          {a.previewUrl ? (
+            /* eslint-disable-next-line @next/next/no-img-element */
+            <img src={a.previewUrl} alt="" />
+          ) : (
+            <span className="talk-attendee__pending" />
+          )}
+          <span>
+            {a.name}
+            {!a.fit && <strong className="notfit-tag"> · not fit for work</strong>}
+            <span className="pending-tag">waiting for signal</span>
+          </span>
+        </div>
+      ))}
       {!editing && attendees.map((a) => (
         <div key={a.id} className={`talk-attendee${a.fit_for_work ? '' : ' talk-attendee--notfit'}`}>
           {urls[a.signature_path] ? (
@@ -403,7 +461,7 @@ export function PrestartScreen({
         </div>
       ))}
 
-      {!prestart.completed && canRun && !editing && (
+      {!isDone && canRun && !editing && (
         <div className="sigslot item" style={{ marginTop: '1rem' }}>
           <p className="label">Hand them the phone</p>
           {crew.filter((c) => !signedNames.has(c.toLowerCase())).length > 0 && (
@@ -440,15 +498,15 @@ export function PrestartScreen({
 
       {error && <p className="alert">{error}</p>}
 
-      {!prestart.completed && canRun && !editing && (
+      {!isDone && canRun && !editing && (
         <>
-          <button className="button" type="button" disabled={finishing || attendees.length === 0} onClick={finish}>
+          <button className="button" type="button" disabled={finishing || signedCount === 0} onClick={finish}>
             {finishing ? 'Finishing…' : 'Finish the prestart'}
           </button>
           <p className="way-hint">
-            {attendees.length === 0
+            {signedCount === 0
               ? 'You need at least one signature before you can finish.'
-              : `Locks it with ${attendees.length === 1 ? 'the one signature' : `all ${attendees.length} signatures`}. After this nothing can be changed — that is what makes it a record.`}
+              : `Locks it with ${signedCount === 1 ? 'the one signature' : `all ${signedCount} signatures`}. After this nothing can be changed — that is what makes it a record.`}
           </p>
         </>
       )}

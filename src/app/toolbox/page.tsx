@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 import { requireUser, resolveProject, canRunTalks } from '@/lib/auth';
 import { BrandMark } from '@/components/brand-mark';
 import { fmtDate } from '@/lib/pdf/dates';
+import { OutboxStatus } from '@/components/outbox-status';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Toolbox talks · KBS Daily Diary' };
@@ -50,6 +51,7 @@ export default async function ToolboxPage({
           New toolbox talk
         </Link>
       )}
+      <OutboxStatus />
       <hr className="rule" />
 
       {(talks ?? []).length === 0 && (

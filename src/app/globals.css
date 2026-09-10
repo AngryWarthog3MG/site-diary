@@ -3458,3 +3458,11 @@ main.sheet--wide .vr-list { grid-template-columns: repeat(auto-fill, minmax(22re
 .plantreg__actions { display: flex; align-items: center; gap: 0.75rem; flex: 0 0 auto; }
 .checkrow--inline { margin: 0; padding: 0.35rem 0.6rem; font-size: 0.8125rem; }
 .machine__aliases { display: inline-block; margin-top: 0.25rem; font-size: 0.8125rem; text-align: left; }
+
+/* The outbox: done on the phone, not yet sent. */
+.outbox { margin: 0.75rem 0; padding: 0.7rem 0.85rem; border: 1px solid rgba(14, 79, 82, 0.35); border-radius: 0.6rem; background: #f1f7f6; }
+.outbox--offline { border-color: rgba(154, 106, 9, 0.35); background: #fff7e4; }
+.outbox__line { margin: 0; font-size: 0.875rem; }
+.outbox__blocked { margin: 0.4rem 0 0; font-size: 0.8125rem; color: #9a2f2f; }
+.outbox__send { margin-top: 0.5rem; min-height: 2.4rem; }
+.pending-tag { font-size: 0.75rem; color: var(--amber, #9a6a09); font-weight: 600; margin-left: 0.4rem; }

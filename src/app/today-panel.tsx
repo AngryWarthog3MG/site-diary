@@ -13,6 +13,7 @@ import { QueueStatus } from '@/components/queue-status';
 import { ReminderToggle } from '@/components/reminder-toggle';
 import { fmtDate } from '@/lib/pdf/dates';
 import { isRestDay } from '@/lib/calendar';
+import { OutboxStatus } from '@/components/outbox-status';
 
 interface WeatherRow {
   temp_max: number | null;
@@ -544,6 +545,7 @@ export function TodayPanel({
         </div>
       )}
       <QueueStatus />
+      <OutboxStatus />
 
       {week.length > 0 && (
         <div className="weekstrip home-week" aria-label="The last seven days">
