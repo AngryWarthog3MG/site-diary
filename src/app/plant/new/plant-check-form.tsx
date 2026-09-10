@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
@@ -13,6 +13,7 @@ import { PLANT_CHECKS, PLANT_KIND_LABEL, isPlantKind, allAnswered, type CheckRes
 import { AddPlantForm, type RegisterRow } from '../plant-register';
 import * as outbox from '@/lib/outbox/store';
 import { runOrQueue } from '@/lib/outbox/sync';
+import { ticketVerdict, normaliseName, TICKET_LABEL, type TicketVerdict, type TicketFacts } from '@/lib/crew/tickets';
 
 /**
  * The walk-around, on the phone. Pick the machine (search the register, or
@@ -41,11 +42,35 @@ export function PlantCheckForm({ projectId, projectName, orgId, register, onJob,
 
   const plant = rows.find((r) => r.id === plantId) ?? null;
   const kind: PlantKind = plant && isPlantKind(plant.kind) ? plant.kind : 'other';
+  // The operator's recorded tickets against what this machine needs. A
+  // missing or expired ticket stops the signing; an empty record is a warning
+  // and a job for the office, because no list is not the same as no ticket.
+  const [verdict, setVerdict] = useState<TicketVerdict | null>(null);
+  useEffect(() => {
+    if (!plant) { setVerdict(null); return; }
+    const who = normaliseName(operator);
+    if (!who) { setVerdict(null); return; }
+    let cancelled = false;
+    const timer = window.setTimeout(async () => {
+      try {
+        const supabase = createClient();
+        const { data } = await supabase.from('crew_tickets').select('person_name, ticket_type, expires_on, active').eq('org_id', orgId).eq('active', true);
+        if (cancelled) return;
+        const mine = ((data ?? []) as Array<TicketFacts & { person_name: string }>).filter((t) => normaliseName(t.person_name) === who);
+        setVerdict(ticketVerdict(kind, mine, today));
+      } catch {
+        if (!cancelled) setVerdict(null); // no signal: the check cannot run; nothing is refused on a guess
+      }
+    }, 400);
+    return () => { cancelled = true; window.clearTimeout(timer); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [operator, plant?.id, kind]);
+  const ticketStop = verdict?.kind === 'missing' || verdict?.kind === 'expired';
   const items = PLANT_CHECKS[kind];
   const defects = items.filter((i) => answers[i.key] === 'defect');
   const answered = plant ? allAnswered(kind, answers) : false;
   const fitDecided = defects.length === 0 ? true : fit != null;
-  const ready = Boolean(plant) && operator.trim().length > 0 && answered && fitDecided;
+  const ready = Boolean(plant) && operator.trim().length > 0 && answered && fitDecided && !ticketStop;
   const today = localDate();
 
   const matches = useMemo(() => {
@@ -183,6 +208,14 @@ export function PlantCheckForm({ projectId, projectName, orgId, register, onJob,
             </label>
           </div>
 
+          {verdict && verdict.kind !== 'not_needed' && (
+            <p className={`ticketcheck ticketcheck--${verdict.kind === 'covered' ? 'covered' : verdict.kind === 'none_recorded' ? 'warn' : 'stop'}`} role="status">
+              {verdict.kind === 'covered' && `${operator.trim()} holds a ${TICKET_LABEL[verdict.by].toLowerCase()}${verdict.expires ? `, expires ${fmtDate(verdict.expires)}` : ''}.`}
+              {verdict.kind === 'none_recorded' && `No tickets recorded for ${operator.trim()}. Add them under Settings → Crew. The check can go ahead; the office should catch this up.`}
+              {verdict.kind === 'expired' && `${operator.trim()}'s ${TICKET_LABEL[verdict.by].toLowerCase()} expired ${fmtDate(verdict.expired)}. This machine cannot be signed off to them until it is renewed.`}
+              {verdict.kind === 'missing' && `${operator.trim()} has no ${verdict.needs.map((t) => TICKET_LABEL[t].toLowerCase()).join(' or ')} recorded. This machine cannot be signed off to them.`}
+            </p>
+          )}
           <p className="label" style={{ marginTop: '1rem' }}>Checks · {Object.values(answers).filter(Boolean).length} of {items.length} answered</p>
           <ul className="tri-list">
             {items.map((item) => {
@@ -227,7 +260,7 @@ export function PlantCheckForm({ projectId, projectName, orgId, register, onJob,
 
           {!ready && (
             <p className="notice gap">
-              Still needed before signing: {[!operator.trim() && 'the operator’s name', !answered && 'an answer for every check', !fitDecided && 'fit for use or not'].filter(Boolean).join(', ')}.
+              Still needed before signing: {[!operator.trim() && 'the operator’s name', !answered && 'an answer for every check', !fitDecided && 'fit for use or not', ticketStop && 'an operator whose ticket covers this machine'].filter(Boolean).join(', ')}.
             </p>
           )}
           {error && <p className="alert">{error}</p>}

@@ -16,6 +16,7 @@ import { mergeField, appendDictation, type DictatedFields } from '@/lib/prestart
 import * as outbox from '@/lib/outbox/store';
 import { runOrQueue } from '@/lib/outbox/sync';
 import { OutboxStatus } from '@/components/outbox-status';
+import { normaliseName } from '@/lib/crew/tickets';
 
 interface Prestart {
   id: string;
@@ -72,6 +73,8 @@ export function PrestartScreen(props: {
   projectName: string;
   /** Set when this prestart exists only on the phone so far: it was made with no signal. */
   local?: boolean;
+  /** Names inducted onto this job. A sign-on from anyone else is marked. */
+  inducted?: string[];
 }) {
   const { prestart, attendees, crew, canRun, projectName } = props;
   const router = useRouter();
@@ -96,6 +99,20 @@ export function PrestartScreen(props: {
     return () => { cancelled = true; stop(); };
   }, [prestart.id]);
   const isDone = prestart.completed || pendingFinish !== null;
+  const [inductedNames, setInductedNames] = useState<Set<string>>(new Set((props.inducted ?? []).map(normaliseName)));
+  const isInducted = (n: string) => props.inducted === undefined || inductedNames.has(normaliseName(n));
+  async function inductNow(personName: string) {
+    setError(null);
+    try {
+      const supabase = createClient();
+      const { data: session } = await supabase.auth.getSession();
+      const { error: insErr } = await supabase.from('crew_inductions').insert({ project_id: prestart.projectId, person_name: personName, inducted_by: session.session?.user.id });
+      if (insErr) throw new Error(insErr.message);
+      setInductedNames((prev) => new Set([...prev, normaliseName(personName)]));
+    } catch (err) {
+      setError(err instanceof Error ? `Could not record the induction: ${err.message}` : 'Could not record the induction.');
+    }
+  }
   const signedCount = attendees.length + pending.length;
   const [name, setName] = useState('');
   const [fit, setFit] = useState(true);
@@ -457,6 +474,14 @@ export function PrestartScreen(props: {
           <span>
             {a.attendee_name}
             {!a.fit_for_work && <strong className="notfit-tag"> · not fit for work</strong>}
+            {!isInducted(a.attendee_name) && (
+              <>
+                <span className="notinducted-tag">not inducted here</span>
+                {canRun && !isDone && (
+                  <button type="button" className="linklike" style={{ marginLeft: '0.4rem', fontSize: '0.8125rem' }} onClick={() => void inductNow(a.attendee_name)}>Inducted today</button>
+                )}
+              </>
+            )}
           </span>
         </div>
       ))}

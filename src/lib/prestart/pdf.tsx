@@ -25,7 +25,7 @@ export interface PrestartPdfData {
   checklist: ChecklistState;
   specNotes: Array<{ task: string; area: string | null; requirements: string; citations: Array<{ document: string; revision: string | null; page: number | null }> }>;
   completedAtAwst: string;
-  attendees: Array<{ name: string; fit: boolean; src: string }>;
+  attendees: Array<{ name: string; fit: boolean; src: string; inducted?: boolean }>;
 }
 
 function blocks(text: string): ReactElement[] {
@@ -138,6 +138,7 @@ export function PrestartDoc({ data }: { data: PrestartPdfData }): ReactElement {
               <figcaption>
                 {attendee.name}
                 {!attendee.fit && <span className="notfit"> · NOT FIT FOR WORK</span>}
+                {attendee.inducted === false && <span className="notfit"> · NOT INDUCTED ON THIS JOB</span>}
               </figcaption>
             </figure>
           ))}

@@ -4,6 +4,7 @@ import { BOM_PRODUCT_IDS } from '@/lib/weather/derive';
 import { refreshProjectWeatherDays } from '@/lib/weather/days';
 import type { ProjectSite } from '@/lib/weather/resolve';
 import { classifyOrphan, isRecent, type EntryFacts, type StoredFile } from '@/lib/ops/orphans';
+import { expiring } from '@/lib/crew/tickets';
 
 export const maxDuration = 300;
 export const runtime = 'nodejs';
@@ -54,6 +55,7 @@ export async function GET(request: Request) {
   }
   if (url.searchParams.get('backup') === '1') report.backup = await snapshotRecord();
   if (url.searchParams.get('orphans') === '1') report.orphans = await reconcileStorage();
+  if (url.searchParams.get('tickets') === '1') report.tickets = await ticketDigest();
   if (url.searchParams.get('errors') === '1') report.errors = await errorDigest();
   if (url.searchParams.get('monthly') === '1') {
     report.monthly = await sendMonthlyBundles(url.searchParams.get('force') === '1');
@@ -490,6 +492,39 @@ async function reconcileStorage(): Promise<Record<string, unknown>> {
     untranscribed,
     emailed: attached.length > 0 || fresh.length > 0 || audioOrphans.length > 0,
   };
+}
+
+/**
+ * Nightly: tickets that have lapsed or lapse within thirty days, emailed to
+ * the operator. An expired excavator ticket stops the machine on the plant
+ * prestart; better to hear about it a month out.
+ */
+async function ticketDigest(): Promise<Record<string, unknown>> {
+  const admin = createAdminClient();
+  const { perthToday } = await import('@/lib/push/decide');
+  const today = perthToday();
+  const { data, error } = await admin
+    .from('crew_tickets')
+    .select('person_name, ticket_type, expires_on, active, org:organisations!inner(name)')
+    .eq('active', true)
+    .not('expires_on', 'is', null);
+  if (error) return { error: error.message };
+  const rows = (data ?? []) as Array<{ person_name: string; ticket_type: string; expires_on: string | null; active: boolean }>;
+  const { expired, soon } = expiring(rows, today, 30);
+  if (expired.length === 0 && soon.length === 0) return { expired: 0, soon: 0 };
+  const line = (t: { person_name: string; ticket_type: string; expires_on: string | null }, verb: string) =>
+    `<li><b>${t.person_name}</b> — ${t.ticket_type.replace(/_/g, ' ')} ${verb} ${t.expires_on}</li>`;
+  await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${process.env.SMTP_PASS?.trim()}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      from: `Site Diary <${process.env.SMTP_SENDER ?? 'diary@kbsdailydiary.me'}>`,
+      to: ['mitchell.vanzyl@gmail.com'],
+      subject: `KBS Daily Diary: ${expired.length} ticket${expired.length === 1 ? '' : 's'} expired, ${soon.length} expiring within 30 days`,
+      html: `<div style="font-family:Arial,sans-serif"><p>Tickets on record:</p><ul>${expired.map((t) => line(t, 'expired')).join('')}${soon.map((t) => line(t, 'expires')).join('')}</ul><p>Update them under Settings → Crew → Tickets and inductions.</p></div>`,
+    }),
+  }).catch(() => {});
+  return { expired: expired.length, soon: soon.length, emailed: true };
 }
 
 /**

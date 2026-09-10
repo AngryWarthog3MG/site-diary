@@ -7,6 +7,7 @@ import { PrestartDoc, PRESTART_CSS, type PrestartPdfData } from '@/lib/prestart/
 import { readSpecNotes } from '@/lib/prestart/spec-notes';
 import { readChecklist } from '@/lib/prestart/checklist';
 import { finishedAtAwst } from '@/lib/pdf/finished-at';
+import { normaliseName } from '@/lib/crew/tickets';
 
 export const maxDuration = 300;
 export const runtime = 'nodejs';
@@ -48,6 +49,8 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
   const project = Array.isArray(row.project) ? row.project[0] : row.project;
   const org = Array.isArray(project.org) ? project.org[0] : project.org;
 
+  const { data: inductionRows } = await supabase.from('crew_inductions').select('person_name').eq('project_id', row.project_id);
+  const inducted = new Set((inductionRows ?? []).map((r) => normaliseName(String(r.person_name))));
   const attendees: PrestartPdfData['attendees'] = [];
   const rows = (
     row.prestart_attendees as Array<{
@@ -65,6 +68,7 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
       name: a.attendee_name,
       fit: a.fit_for_work,
       src: `data:image/png;base64,${bytes.toString('base64')}`,
+      inducted: inducted.has(normaliseName(a.attendee_name)),
     });
   }
 

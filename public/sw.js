@@ -21,7 +21,7 @@
 // v6: forty deploys shipped on v5 without a bump, so a phone that opened the
 // app with no signal was handed a page shell from weeks ago and kept it.
 // Bumped alongside the update check in sw-register.tsx, which is the real fix.
-const VERSION = 'v7';
+const VERSION = 'v8';
 const PAGES = `pages-${VERSION}`;
 const ASSETS = `assets-${VERSION}`;
 const OFFLINE_URL = '/offline.html';
@@ -88,14 +88,22 @@ self.addEventListener('fetch', (event) => {
           }
           return response;
         })
-        .catch(
-          async () =>
-            (await caches.match(request)) ||
-            // The same screen with a different query — a prestart kept on the
-            // phone opens through the page that was cached when it was made.
-            (await caches.match(request, { ignoreSearch: true })) ||
-            caches.match(OFFLINE_URL),
-        ),
+        .catch(async () => {
+          const exact = await caches.match(request);
+          if (exact) return exact;
+          // The same screen with a different query — a prestart kept on the
+          // phone opens through the page that was cached when it was made —
+          // but only a copy for the same job. A cached page carries its
+          // project in its markup, and the wrong job's page is worse than the
+          // offline page.
+          const want = url.searchParams.get('project');
+          const candidates = await caches.matchAll(request, { ignoreSearch: true });
+          for (const c of candidates) {
+            const have = new URL(c.url).searchParams.get('project');
+            if (!want || have === want) return c;
+          }
+          return caches.match(OFFLINE_URL);
+        }),
     );
   }
 });

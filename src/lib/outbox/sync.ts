@@ -32,8 +32,12 @@ async function replay(item: OutboxItem): Promise<void> {
       return;
     }
     case 'prestart_edit': {
-      const { error } = await supabase.from('prestarts').update(p.changes as Record<string, unknown>).eq('id', item.subjectId);
+      // A finished prestart is out of reach under RLS, so the update touches
+      // no row and returns no error. That is not success: the change did not
+      // land, and the person who made it must hear so.
+      const { data, error } = await supabase.from('prestarts').update(p.changes as Record<string, unknown>).eq('id', item.subjectId).select('id');
       if (error) throw error;
+      if (!data || data.length === 0) throw Object.assign(new Error('The prestart was finished before this change reached it; the change was not applied.'), { code: '42501' });
       return;
     }
     case 'prestart_attendee': {
@@ -45,9 +49,15 @@ async function replay(item: OutboxItem): Promise<void> {
       return;
     }
     case 'prestart_finish': {
-      const { error } = await supabase.from('prestarts')
-        .update({ completed_at: new Date().toISOString(), completed_on_device_at: p.at }).eq('id', item.subjectId);
+      // completed_at is stamped by the database; the value sent only says "now".
+      const { data, error } = await supabase.from('prestarts')
+        .update({ completed_at: new Date().toISOString(), completed_on_device_at: p.at }).eq('id', item.subjectId).select('id, completed_at');
       if (error && !isFrozen(error)) throw error;
+      if (!error && (!data || data.length === 0)) {
+        // Out of reach: already finished (fine) or gone. Check which.
+        const { data: row } = await supabase.from('prestarts').select('completed_at').eq('id', item.subjectId).maybeSingle();
+        if (!row) throw Object.assign(new Error('That prestart no longer exists.'), { code: '42501' });
+      }
       return;
     }
     case 'talk_attendee': {
@@ -59,9 +69,13 @@ async function replay(item: OutboxItem): Promise<void> {
       return;
     }
     case 'talk_finish': {
-      const { error } = await supabase.from('toolbox_talks')
-        .update({ completed_at: new Date().toISOString(), completed_on_device_at: p.at }).eq('id', item.subjectId);
+      const { data, error } = await supabase.from('toolbox_talks')
+        .update({ completed_at: new Date().toISOString(), completed_on_device_at: p.at }).eq('id', item.subjectId).select('id');
       if (error && !isFrozen(error)) throw error;
+      if (!error && (!data || data.length === 0)) {
+        const { data: row } = await supabase.from('toolbox_talks').select('completed_at').eq('id', item.subjectId).maybeSingle();
+        if (!row) throw Object.assign(new Error('That talk no longer exists.'), { code: '42501' });
+      }
       return;
     }
     case 'plant_prestart': {

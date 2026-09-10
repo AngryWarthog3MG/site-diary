@@ -43,6 +43,8 @@ export default async function PrestartPage({ params }: { params: Promise<{ id: s
     .eq('entry.project_id', row.project_id)
     .order('entry_date', { referencedTable: 'entry', ascending: false })
     .limit(300);
+  const { data: inductionRows } = await supabase.from('crew_inductions').select('person_name').eq('project_id', row.project_id);
+  const inducted = (inductionRows ?? []).map((r) => String(r.person_name));
   const crew: string[] = [];
   for (const r of roster ?? []) {
     const name = String(r.name ?? '').trim();
@@ -76,6 +78,7 @@ export default async function PrestartPage({ params }: { params: Promise<{ id: s
       }}
       attendees={attendees}
       crew={crew.slice(0, 24)}
+      inducted={inducted}
       canRun={canRun}
       projectName={membership?.project.name ?? 'Project'}
     />

@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation';
 import { requireUser, resolveProject, canRunTalks } from '@/lib/auth';
 import { createClient } from '@/lib/supabase/server';
+import { Suspense } from 'react';
 import { NewPrestartForm } from './new-prestart-form';
 
 export const dynamic = 'force-dynamic';
@@ -23,6 +24,7 @@ export default async function NewPrestartPage({
   const { data: crewRows } = await supabase.from('crew').select('name').eq('project_id', current.project_id).eq('active', true).order('sort_order').order('name');
 
   return (
+    <Suspense fallback={null}>
     <NewPrestartForm
       projectId={current.project_id}
       projectName={current.project.name}
@@ -30,5 +32,6 @@ export default async function NewPrestartPage({
       crew={(crewRows ?? []).map((c) => c.name as string)}
       localId={local ?? null}
     />
+    </Suspense>
   );
 }

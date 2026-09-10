@@ -5,6 +5,8 @@ import { canSee } from '@/lib/roles';
 import { SettingsForm, type SettingsData } from './settings-form';
 import { CrewList, type CrewRow } from './crew-list';
 import Link from 'next/link';
+import { CrewTickets, type TicketRow, type InductionRow } from './crew-tickets';
+import { perthToday } from '@/lib/push/decide';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Settings · Site Diary' };
@@ -38,6 +40,11 @@ export default async function SettingsPage({
   ]);
 
   if (!row) redirect('/');
+  const orgIdForTickets = ((Array.isArray(row.org) ? row.org[0] : row.org) as { id: string }).id;
+  const [{ data: tickets }, { data: inductions }] = await Promise.all([
+    supabase.from('crew_tickets').select('id, person_name, ticket_type, ticket_no, issued_on, expires_on, photo_path, active').eq('org_id', orgIdForTickets).eq('active', true).order('expires_on'),
+    supabase.from('crew_inductions').select('person_name, inducted_on').eq('project_id', current.project_id),
+  ]);
 
   const org = (Array.isArray(row.org) ? row.org[0] : row.org) as {
     id: string;
@@ -79,6 +86,17 @@ export default async function SettingsPage({
             projectId={current.project_id}
             initial={(crew ?? []) as CrewRow[]}
             canEdit={current.role === 'supervisor' || current.role === 'admin'}
+          />
+        </section>
+        <section className="sheet" style={{ marginTop: '1rem' }}>
+          <CrewTickets
+            orgId={org.id}
+            projectId={current.project_id}
+            people={((crew ?? []) as CrewRow[]).filter((c) => c.active).map((c) => c.name)}
+            tickets={(tickets ?? []) as TicketRow[]}
+            inductions={(inductions ?? []) as InductionRow[]}
+            canEdit={current.role === 'supervisor' || current.role === 'admin'}
+            today={perthToday()}
           />
         </section>
         <section className="sheet" style={{ marginTop: '1rem' }}>

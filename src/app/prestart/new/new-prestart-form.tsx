@@ -5,7 +5,7 @@ import { fmtDate } from '@/lib/pdf/dates';
 import { PrestartSpecPicker } from '../spec-picker';
 import type { SpecNote } from '@/lib/prestart/spec-notes';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { localDate } from '@/lib/capture/queue';
 import { BrandMark } from '@/components/brand-mark';
@@ -82,7 +82,15 @@ export function NewPrestartForm({
   localId?: string | null;
 }) {
   const router = useRouter();
-  const [keptLocally, setKeptLocally] = useState<string | null>(localId);
+  // The id of a kept prestart comes from the address bar, not from the page's
+  // props: with no signal this page may be served from the cache for a
+  // different query, and the props would then belong to another prestart.
+  const search = useSearchParams();
+  const urlLocal = search.get('local');
+  const urlProject = search.get('project');
+  const [keptLocally, setKeptLocally] = useState<string | null>(urlLocal ?? localId);
+  useEffect(() => { if (urlLocal) setKeptLocally(urlLocal); }, [urlLocal]);
+  const projectMismatch = Boolean(urlProject && urlProject !== projectId);
   const [date, setDate] = useState(localDate());
   const [supervisor, setSupervisor] = useState(defaultSupervisor);
   const [work, setWork] = useState('');
@@ -173,6 +181,17 @@ export function NewPrestartForm({
     }
   }
 
+  if (projectMismatch) {
+    return (
+      <main className="sheet">
+        <p className="notice gap">
+          This screen was opened from the phone&rsquo;s cache for a different job. Open it again once
+          you have signal, or go back and start from Home.
+        </p>
+        <Link className="button button--quiet" href="/">Home</Link>
+      </main>
+    );
+  }
   if (keptLocally) return <LocalPrestart localId={keptLocally} projectId={projectId} projectName={projectName} crew={crew} />;
 
   return (
