@@ -187,17 +187,35 @@ export function ReviewScreen(props: {
   // last thing done before the phone goes to the camera or the pocket, so
   // those save at once rather than after the typing pause.
   const urgentRef = useRef(false);
+  // What the phone knows about the last save. Silence was the old behaviour
+  // and it cost two days of photos; now a failure says so and keeps trying.
+  const [saveState, setSaveState] = useState<'idle' | 'saving' | 'saved' | 'failed'>('idle');
+  const retryRef = useRef<{ timer: number | null; attempt: number }>({ timer: null, attempt: 0 });
   const flush = useCallback((keepalive = false) => {
     if (!dirtyRef.current) return;
     dirtyRef.current = false;
+    setSaveState('saving');
     void fetch(`/api/entries/${props.entryId}/apply`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(latestBody.current()),
       keepalive,
-    }).catch(() => {
-      dirtyRef.current = true;
-    });
+    })
+      .then((res) => {
+        if (!res.ok) throw new Error(String(res.status));
+        retryRef.current.attempt = 0;
+        setSaveState('saved');
+      })
+      .catch(() => {
+        dirtyRef.current = true;
+        setSaveState('failed');
+        // 5 s, 15 s, 45 s, then every two minutes, until it lands.
+        const attempt = Math.min(retryRef.current.attempt + 1, 4);
+        retryRef.current.attempt = attempt;
+        const delay = [5_000, 15_000, 45_000, 120_000][attempt - 1];
+        if (retryRef.current.timer) window.clearTimeout(retryRef.current.timer);
+        retryRef.current.timer = window.setTimeout(() => flush(), delay);
+      });
   }, [props.entryId]);
   useEffect(() => {
     if (skipFirstAutosave.current) {
@@ -460,6 +478,13 @@ export function ReviewScreen(props: {
             )}
           </div>
         </header>
+        {saveState === 'failed' && (
+          <p className="alert savestate" role="status">
+            Not saved yet — the last save did not get through. Trying again; keep the app open
+            until this clears. Nothing on the page is lost.
+          </p>
+        )}
+        {saveState === 'saving' && <p className="caption savestate" role="status">Saving…</p>}
         {props.startedBy && (
           <p className="notice" style={{ marginTop: '0.75rem' }}>
             Started by {props.startedBy}. You are both working on this day — whoever saves last

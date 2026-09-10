@@ -3,6 +3,7 @@ import { fetchProduct } from '@/lib/weather/bom';
 import { BOM_PRODUCT_IDS } from '@/lib/weather/derive';
 import { refreshProjectWeatherDays } from '@/lib/weather/days';
 import type { ProjectSite } from '@/lib/weather/resolve';
+import { classifyOrphan, isRecent, type EntryFacts, type StoredFile } from '@/lib/ops/orphans';
 
 export const maxDuration = 300;
 export const runtime = 'nodejs';
@@ -52,6 +53,7 @@ export async function GET(request: Request) {
     report.exports = await backfillExports();
   }
   if (url.searchParams.get('backup') === '1') report.backup = await snapshotRecord();
+  if (url.searchParams.get('orphans') === '1') report.orphans = await reconcileStorage();
   if (url.searchParams.get('errors') === '1') report.errors = await errorDigest();
   if (url.searchParams.get('monthly') === '1') {
     report.monthly = await sendMonthlyBundles(url.searchParams.get('force') === '1');
@@ -398,6 +400,96 @@ async function snapshotRecord(): Promise<Record<string, unknown>> {
     await admin.storage.from('exports').remove(stale.map((name) => `_backups/${name}`));
   }
   return { stored: `_backups/${today}.json`, bytes: body.length, pruned: stale.length };
+}
+
+/**
+ * Nightly: every file in entry-photos and entry-audio against every table
+ * that should reference it. A photo under an unsigned draft that the day does
+ * not know about is put back on the day (the supervisor still reviews it
+ * before signing). Anything that cannot be put back is emailed to the
+ * operator the day it appears, so nothing sits in storage unseen. Thirteen
+ * of Matty's photos sat like that for two days before anyone noticed.
+ */
+async function reconcileStorage(): Promise<Record<string, unknown>> {
+  const admin = createAdminClient();
+  const referenced = new Set<string>();
+  const addRef = (v: unknown) => {
+    if (typeof v === 'string' && v) referenced.add(v);
+    if (Array.isArray(v)) v.forEach(addRef);
+  };
+  const sources: Array<[string, string[]]> = [
+    ['photos', ['url']], ['entry_signatures', ['image_path']], ['pours', ['docket_photo_urls']],
+    ['variations', ['photo_urls']], ['dayworks', ['photo_urls']], ['daywork_dockets', ['photo_urls']],
+    ['prestart_attendees', ['signature_path']], ['toolbox_attendees', ['signature_path']],
+    ['plant_prestarts', ['signature_path']], ['plant_defects', ['photo_path']],
+  ];
+  for (const [table, cols] of sources) {
+    const { data } = await admin.from(table).select(cols.join(','));
+    for (const row of ((data ?? []) as unknown) as Array<Record<string, unknown>>) for (const c of cols) addRef(row[c]);
+  }
+  const { data: entryRows } = await admin.from('entries').select('id, status, project_id, entry_date');
+  const entries = new Map<string, EntryFacts>((entryRows ?? []).map((e) => [e.id as string, e as EntryFacts]));
+
+  const walk = async (bucket: string, prefix = ''): Promise<StoredFile[]> => {
+    const out: StoredFile[] = [];
+    const { data } = await admin.storage.from(bucket).list(prefix, { limit: 1000 });
+    for (const item of data ?? []) {
+      const path = prefix ? `${prefix}/${item.name}` : item.name;
+      if (item.id == null) out.push(...(await walk(bucket, path)));
+      else out.push({ path, createdAt: (item.created_at as string | null) ?? null });
+    }
+    return out;
+  };
+
+  const photos = await walk('entry-photos');
+  const now = Date.now();
+  const attached: string[] = [];
+  const unrecoverable: Array<{ path: string; reason: string; entryDate: string | null; recent: boolean }> = [];
+  for (const file of photos) {
+    const action = classifyOrphan(file, referenced, entries);
+    if (action.kind === 'attach') {
+      const { error } = await admin.from('photos').insert({ entry_id: action.entryId, url: action.path, caption: null, taken_at: action.takenAt });
+      if (!error) attached.push(action.path);
+    } else if (action.kind === 'unrecoverable') {
+      unrecoverable.push({ path: action.path, reason: action.reason, entryDate: action.entryDate, recent: isRecent(file, now) });
+    }
+  }
+
+  const audio = await walk('entry-audio');
+  const { data: segments } = await admin.from('entry_audio').select('url, transcript_status');
+  const segUrls = new Set((segments ?? []).map((x) => x.url as string));
+  const audioOrphans = audio.filter((f) => !segUrls.has(f.path)).map((f) => f.path);
+  const untranscribed = (segments ?? []).filter((x) => x.transcript_status !== 'done').length;
+
+  const fresh = unrecoverable.filter((u) => u.recent);
+  if (attached.length > 0 || fresh.length > 0 || audioOrphans.length > 0) {
+    const lines = [
+      ...attached.map((p) => `<li>Put back on its day: <code>${p.split('/').pop()}</code> (${entries.get(p.split('/')[1])?.entry_date ?? '?'})</li>`),
+      ...fresh.map((u) => `<li><b>Cannot be recovered:</b> ${u.reason} — <code>${u.path.split('/').pop()}</code> (${u.entryDate ?? '?'})</li>`),
+      ...audioOrphans.map((p) => `<li><b>Recording with no row:</b> <code>${p}</code></li>`),
+    ].join('');
+    await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${process.env.SMTP_PASS?.trim()}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        from: `Site Diary <${process.env.SMTP_SENDER ?? 'diary@kbsdailydiary.me'}>`,
+        to: ['mitchell.vanzyl@gmail.com'],
+        subject: `KBS Daily Diary: storage check — ${attached.length} put back, ${fresh.length} to look at`,
+        html: `<div style="font-family:Arial,sans-serif"><p>The nightly check compared every stored file against the diary.</p><ul>${lines}</ul></div>`,
+      }),
+    }).catch(() => {});
+  }
+
+  return {
+    files: photos.length,
+    attached,
+    unrecoverable: unrecoverable.length,
+    unrecoverable_recent: fresh.length,
+    audio_files: audio.length,
+    audio_orphans: audioOrphans,
+    untranscribed,
+    emailed: attached.length > 0 || fresh.length > 0 || audioOrphans.length > 0,
+  };
 }
 
 /**

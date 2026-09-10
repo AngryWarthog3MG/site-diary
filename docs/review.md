@@ -94,3 +94,11 @@ Report findings ranked most severe first. For each: the file and line, one sente
 defect, and a concrete failure scenario — inputs or state that produce the wrong record.
 Say plainly when a check does not apply to this diff rather than padding the list. No
 finding is better than a speculative one.
+
+## 8. Does a drill, script or cleanup touch live data?
+
+Any script that writes to a real project's rows or storage, or deletes anything it did not
+create by exact id or path in the same run, is a finding on its own — whatever it was
+proving. Drills run on the sandbox (T001). Deletions name the exact object; "newest" is a
+guess, and the review RPC rewrites every child row on each save so timestamps do not
+distinguish them. Storage removals cannot be undone.

@@ -173,6 +173,18 @@ Change four of them and the app silently stops capturing what supervisors say. I
   balance twice and took writing-up and Ask down on site. Run the eval when the prompt or
   schema changed, once, not after every idea; treat invention (a value nobody said) as a
   harder failure than a miss. A full run is ~250k output tokens, about US$4.
+- **Drills that write go to the sandbox (T001), never to a live job's draft.** Wake T001
+  (`active=true`), run, put it back to sleep in a `finally`. Proving a fix on a real
+  supervisor's day is how a real photo got deleted on 2026-09-10.
+- **Delete only by the exact id or path you captured when you created the thing.** Never
+  "the newest", "the latest", or anything inferred — `apply_entry_review` rewrites every
+  child row on each save, so they all share a timestamp. Storage has no undo: a
+  `storage.remove` is final. When in doubt, leave the file; the nightly `orphans=1` check
+  reports anything the record does not reference.
+- **Nothing may sit between "uploaded" and "in the day" that can fail.** A file in storage
+  the record does not reference is as good as lost. Add the row (or the payload entry) the
+  moment the upload lands, make the code between the two unable to throw, and save at once
+  rather than after a debounce — an iPhone reloads a backgrounded page without warning.
 - Prefer deleting a feature over weakening a guarantee to make it work. See README §R5.
 
 ## More than one agent works on this repo
