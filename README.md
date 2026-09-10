@@ -1056,6 +1056,15 @@ outright — drills write to the sandbox only; delete only by the exact id or pa
 creation, never by inference; storage has no undo; and nothing may sit between "uploaded" and
 "in the day" that can fail.
 
+**R23. Codex pass 6.** Eighteen commits shipped to a live crew in three days without the second
+pair of eyes the house rule demands, and the review of them said do not ship: six highs. The
+docket named the author as signatory when shared drafts had just made signer and author
+different people; a plant prestart could be born complete, completed by hand or signed over an
+empty checklist, and its defects rewritten after signing; signing a diary was two calls with a
+window an in-flight autosave could land in. All fixed the same day, each pinned in a suite. The
+lesson is not the bugs, which were ordinary; it is that "one builds, the other reviews" is a
+rule for the day of shipping, not the week after.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;
