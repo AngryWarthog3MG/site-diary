@@ -6,7 +6,7 @@ import { PLANT_KINDS, PLANT_KIND_LABEL, OWNERSHIP_LABEL, type PlantKind, type Ow
 
 export interface RegisterRow {
   id: string; name: string; kind: string; make_model: string | null; plant_no: string | null;
-  ownership: string; supplier: string | null; active: boolean;
+  ownership: string; supplier: string | null; active: boolean; aliases?: string[] | null;
 }
 
 /** Add a machine to the fleet, or retire one. Used on the Plant page and inline from the checklist. */
@@ -30,7 +30,7 @@ export function AddPlantForm({ orgId, onAdded, compact }: { orgId: string; onAdd
       const { data, error: insertError } = await supabase
         .from('plant_register')
         .insert({ org_id: orgId, name: trimmed, kind, plant_no: plantNo.trim() || null, make_model: makeModel.trim() || null, ownership, supplier: supplier.trim() || null, created_by: auth.user?.id })
-        .select('id, name, kind, make_model, plant_no, ownership, supplier, active')
+        .select('id, name, kind, make_model, plant_no, ownership, supplier, active, aliases')
         .single();
       if (insertError) throw new Error(/duplicate|unique/i.test(insertError.message) ? `${trimmed}${plantNo ? ` (${plantNo})` : ''} is already on the register.` : insertError.message);
       onAdded(data as RegisterRow);
@@ -104,6 +104,18 @@ export function PlantRegister({ orgId, projectId, initial, onJob: initialOnJob, 
     setOnJob((prev) => { const next = new Set(prev); if (on) next.add(row.id); else next.delete(row.id); return next; });
   }
 
+  /** The names the diary should recognise for this machine — "the vac", "digger". */
+  const [aliasDraft, setAliasDraft] = useState<Record<string, string>>({});
+  async function saveAliases(row: RegisterRow) {
+    setError(null);
+    const aliases = (aliasDraft[row.id] ?? '').split(',').map((a) => a.trim()).filter(Boolean);
+    const supabase = createClient();
+    const { error: updateError } = await supabase.from('plant_register').update({ aliases }).eq('id', row.id);
+    if (updateError) { setError(updateError.message); return; }
+    setRows(rows.map((r) => (r.id === row.id ? { ...r, aliases } : r)));
+    setAliasDraft((d) => { const next = { ...d }; delete next[row.id]; return next; });
+  }
+
   async function setActive(row: RegisterRow, active: boolean) {
     setError(null);
     const supabase = createClient();
@@ -124,6 +136,21 @@ export function PlantRegister({ orgId, projectId, initial, onJob: initialOnJob, 
                 {[PLANT_KIND_LABEL[r.kind as PlantKind] ?? r.kind, r.make_model, OWNERSHIP_LABEL[r.ownership as Ownership] ?? r.ownership, r.supplier].filter(Boolean).join(' · ')}
                 {!r.active ? ' · retired' : ''}
               </p>
+              {canEdit && r.active ? (
+                aliasDraft[r.id] !== undefined ? (
+                  <div className="defect__close">
+                    <input className="field field--sm" value={aliasDraft[r.id]} placeholder="the vac, digger, trailer"
+                      onChange={(e) => setAliasDraft({ ...aliasDraft, [r.id]: e.target.value })} />
+                    <button className="button button--outline" type="button" onClick={() => void saveAliases(r)}>Save</button>
+                  </div>
+                ) : (
+                  <button type="button" className="linklike machine__aliases" onClick={() => setAliasDraft({ ...aliasDraft, [r.id]: (r.aliases ?? []).join(', ') })}>
+                    {(r.aliases ?? []).length ? `Also called: ${(r.aliases ?? []).join(', ')}` : 'Add the names the crew call it'}
+                  </button>
+                )
+              ) : (r.aliases ?? []).length > 0 ? (
+                <p className="machine__meta">Also called: {(r.aliases ?? []).join(', ')}</p>
+              ) : null}
             </div>
             {canEdit && (
               <div className="plantreg__actions">

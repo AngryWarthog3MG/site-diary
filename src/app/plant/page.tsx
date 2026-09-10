@@ -29,7 +29,7 @@ export default async function PlantPage({ searchParams }: { searchParams: Promis
   const q = `?project=${current.project_id}`;
 
   const [{ data: register }, { data: todays }, { data: open }, { data: recent }, { data: onJobRows }] = await Promise.all([
-    supabase.from('plant_register').select('id, name, kind, make_model, plant_no, ownership, supplier, active').eq('org_id', orgId).order('active', { ascending: false }).order('name'),
+    supabase.from('plant_register').select('id, name, kind, make_model, plant_no, ownership, supplier, active, aliases').eq('org_id', orgId).order('active', { ascending: false }).order('name'),
     supabase.from('plant_prestarts').select('id, plant_id, operator_name, fit_for_use, completed_at').eq('project_id', current.project_id).eq('prestart_date', today).not('completed_at', 'is', null).order('completed_at', { ascending: false }),
     supabase.from('plant_defects').select('id, plant_id, item_label, note, raised_at, plant:plant_register!inner(name)').eq('project_id', current.project_id).is('closed_at', null).order('raised_at', { ascending: false }),
     supabase.from('plant_prestarts').select('id, prestart_date, operator_name, fit_for_use, completed_at, plant:plant_register!inner(name)').eq('project_id', current.project_id).not('completed_at', 'is', null).order('prestart_date', { ascending: false }).order('completed_at', { ascending: false }).limit(40),

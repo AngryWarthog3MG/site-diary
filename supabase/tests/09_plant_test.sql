@@ -136,6 +136,20 @@ end $$;
 reset role;
 select set_config('request.jwt.claims', '', true);
 
+-- But not a machine from another organisation.
+insert into public.organisations (id, name, code) values ('aaaaaaaa-0000-0000-0000-000000000002', 'Someone Else', 'ELS');
+insert into public.plant_register (id, org_id, name, kind) values
+  ('dddddddd-0000-0000-0000-000000000099', 'aaaaaaaa-0000-0000-0000-000000000002', 'Their Roller', 'roller');
+select set_config('request.jwt.claims', '{"sub":"11111111-1111-1111-1111-111111111111","role":"authenticated"}', true);
+set local role authenticated;
+select tests.expect_error($q$
+  insert into public.project_plant (project_id, plant_id)
+  values ('bbbbbbbb-0000-0000-0000-000000000001', 'dddddddd-0000-0000-0000-000000000099')
+$q$, 'row-level security');
+do $$ begin raise notice 'PASS  a job carries only its own organisation''s machines'; end $$;
+reset role;
+select set_config('request.jwt.claims', '', true);
+
 -- The PM reads and writes nothing.
 select set_config('request.jwt.claims', '{"sub":"33333333-3333-3333-3333-333333333333","role":"authenticated"}', true);
 set local role authenticated;

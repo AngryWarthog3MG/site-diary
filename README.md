@@ -1074,6 +1074,13 @@ all read the same join (`src/lib/plant/on-job.ts`). Ticking On this job in the r
 place a machine joins a job, and checking a machine on the prestart form puts it on the job too,
 because using it here is the fact. The old rows moved across as typed — a supervisor's ownership,
 supplier and aliases beat the seed's guesses — and `plant_list` is gone. Settings points at Plant.
+Codex's pass on the merge flagged that the data move matched machines by name within the
+organisation, which could mis-map two jobs' same-named machines; on the live data — one job,
+three distinct names, an alias-less seed — every row was checked after the run and came across
+exactly. The pass also caught three things that are fixed: a job can only carry its own
+organisation's machines (policy), the prestart form puts a machine on the job before the
+inspection exists and stops if that fails, and the names a machine answers to are editable again
+on the register, since the diary recognises "the vac" only because someone typed it.
 
 ## Not built, and deliberately so
 

@@ -68,6 +68,14 @@ export function PlantCheckForm({ projectId, projectName, orgId, register, onJob,
       if (!auth.user) throw new Error('You are signed out.');
       const checks: StoredCheck[] = items.map((i) => ({ key: i.key, label: i.label, result: answers[i.key] as CheckResult }));
       const fitForUse = defects.length === 0 ? true : Boolean(fit);
+      // Checking a machine here means it is on this job — and that has to be
+      // true before the inspection exists, not hoped for afterwards.
+      if (!onJobSet.has(plant.id)) {
+        const { error: jobErr } = await supabase
+          .from('project_plant')
+          .upsert({ project_id: projectId, plant_id: plant.id, active: true }, { onConflict: 'project_id,plant_id' });
+        if (jobErr) throw new Error(`Could not put ${plant.name} on this job: ${jobErr.message}`);
+      }
       const { data: created, error: insertError } = await supabase
         .from('plant_prestarts')
         .insert({ project_id: projectId, plant_id: plant.id, prestart_date: today, operator_name: operator.trim(), hour_meter: hourMeter.trim() ? Number(hourMeter) : null, checks, fit_for_use: fitForUse, notes: notes.trim() || null, conducted_by: auth.user.id })
@@ -75,10 +83,6 @@ export function PlantCheckForm({ projectId, projectName, orgId, register, onJob,
       if (insertError) throw new Error(insertError.message);
       const id = created.id as string;
       const base = `${projectId}/plant/${id}`;
-      // Checking a machine here means it is on this job.
-      if (!onJobSet.has(plant.id)) {
-        await supabase.from('project_plant').upsert({ project_id: projectId, plant_id: plant.id, active: true }, { onConflict: 'project_id,plant_id' });
-      }
       // Defects first, while the prestart is still open to uploads.
       for (const item of defects) {
         let photoPath: string | null = null;
