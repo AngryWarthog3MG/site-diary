@@ -1033,6 +1033,16 @@ spoken and the register's is typed. The crew prestart's plant tick now shows whi
 actually prestarted, Home says which are tagged out, each inspection prints to one page, and the
 month exports as a spreadsheet for whoever asks after an incident.
 
+**R21. A photo joins the diary the moment its upload lands.** Thirteen photos over two days
+reached storage and the diary never heard of them: between the successful upload and the photo
+entering the day sat `new Date(file.lastModified).toISOString()`, an iPhone handed back a
+timestamp that line could not stomach, and the RangeError it threw was caught and reported as
+"photo did not upload" — after the upload had succeeded. `photoTakenAt` turns any timestamp it
+cannot trust into now and never throws, and each photo is added to the day as its own upload
+lands, so a failure on the third cannot lose the first two. The general lesson is the one in
+non-negotiable #5 read the other way round: a file in storage the record does not reference is
+as good as lost, so nothing may sit between "uploaded" and "in the day" that can fail.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;
