@@ -191,11 +191,13 @@ export function ReviewScreen(props: {
   // and it cost two days of photos; now a failure says so and keeps trying.
   const [saveState, setSaveState] = useState<'idle' | 'saving' | 'saved' | 'failed'>('idle');
   const retryRef = useRef<{ timer: number | null; attempt: number }>({ timer: null, attempt: 0 });
+  const autosaveTimerRef = useRef<number | null>(null);
+  const inflightRef = useRef<Promise<unknown> | null>(null);
   const flush = useCallback((keepalive = false) => {
     if (!dirtyRef.current) return;
     dirtyRef.current = false;
     setSaveState('saving');
-    void fetch(`/api/entries/${props.entryId}/apply`, {
+    inflightRef.current = fetch(`/api/entries/${props.entryId}/apply`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(latestBody.current()),
@@ -227,6 +229,7 @@ export function ReviewScreen(props: {
     const delay = urgentRef.current ? 250 : 2500;
     urgentRef.current = false;
     const timer = window.setTimeout(() => flush(), delay);
+    autosaveTimerRef.current = timer;
     return () => window.clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [payload, nilConfirmed]);
@@ -337,6 +340,12 @@ export function ReviewScreen(props: {
   async function submit(mode: 'saving' | 'signing') {
     setBusy(mode);
     setError(null);
+    // Sign and save carry the whole payload themselves. Nothing older may be
+    // in flight or queued behind them.
+    if (autosaveTimerRef.current) window.clearTimeout(autosaveTimerRef.current);
+    if (retryRef.current.timer) window.clearTimeout(retryRef.current.timer);
+    dirtyRef.current = false;
+    await inflightRef.current?.catch(() => {});
 
     const body = bodyForSubmit();
     const url =

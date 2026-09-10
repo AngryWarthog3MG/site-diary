@@ -32,7 +32,10 @@ export interface DocketEntry {
   project_code: string;
   principal_contractor: string | null;
 
+  /** Who started the day. */
   author_name: string;
+  /** Who signed it — usually the author, but a colleague may finish and sign a day. */
+  signer_name: string;
 
   labour: Row[];
   plant: Row[];
@@ -79,7 +82,7 @@ export async function loadDocketEntry(
     .from('entries')
     .select(
       `id, entry_no, entry_date, status, signed_at, content_hash, supersedes_entry_id, notes,
-       project_id, author_id,
+       project_id, author_id, signed_by,
        project:projects!inner(name, code, principal_contractor,
                               org:organisations!inner(name, code)),
        labour(*), plant(*), work_items(*), variations(*), delays(*), pours(*),
@@ -100,6 +103,10 @@ export async function loadDocketEntry(
     .select('full_name, email')
     .eq('id', row.author_id as string)
     .maybeSingle();
+  const signerId = (row.signed_by as string | null) ?? (row.author_id as string);
+  const { data: signer } = signerId === row.author_id
+    ? { data: author }
+    : await supabase.from('profiles').select('full_name, email').eq('id', signerId).maybeSingle();
 
   let supersededNo: string | null = null;
   if (row.supersedes_entry_id) {
@@ -141,6 +148,8 @@ export async function loadDocketEntry(
 
     author_name:
       (author?.full_name as string | null) ?? (author?.email as string | null) ?? 'Unknown',
+    signer_name:
+      (signer?.full_name as string | null) ?? (signer?.email as string | null) ?? 'Unknown',
 
     labour: list('labour'),
     plant: list('plant'),

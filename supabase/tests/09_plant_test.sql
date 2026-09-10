@@ -48,8 +48,55 @@ do $$ begin
          'an unsigned prestart is already complete';
 end $$;
 
+-- Born signed? No: completed_at and signature_path are dropped on insert.
+insert into public.plant_prestarts (id, project_id, plant_id, prestart_date, operator_name, checks, conducted_by, completed_at, signature_path)
+values ('eeeeeeee-0000-0000-0000-000000000002', 'bbbbbbbb-0000-0000-0000-000000000001', 'dddddddd-0000-0000-0000-000000000001',
+        date '2026-09-09', 'Sam Whitely', '[]'::jsonb, '11111111-1111-1111-1111-111111111111', now(), 'x/y/z.png');
+do $$ begin
+  assert (select completed_at is null and signature_path is null from public.plant_prestarts where id = 'eeeeeeee-0000-0000-0000-000000000002'),
+         'a prestart was born signed';
+end $$;
+-- Completed by hand? No: completed_at set directly is ignored.
+update public.plant_prestarts set completed_at = now() where id = 'eeeeeeee-0000-0000-0000-000000000002';
+do $$ begin
+  assert (select completed_at from public.plant_prestarts where id = 'eeeeeeee-0000-0000-0000-000000000002') is null,
+         'completed_at could be set by hand';
+end $$;
+-- Signed with no checks answered? Refused.
+select tests.expect_error($q$
+  update public.plant_prestarts set signature_path = 'bbbbbbbb-0000-0000-0000-000000000001/plant/eeeeeeee-0000-0000-0000-000000000002/sig.png'
+   where id = 'eeeeeeee-0000-0000-0000-000000000002'
+$q$, 'no checks answered');
+-- A signature stored somewhere else? Refused.
+select tests.expect_error($q$
+  update public.plant_prestarts set checks = '[{"key":"fuel","label":"Fuel","result":"ok"}]'::jsonb,
+         signature_path = 'bbbbbbbb-0000-0000-0000-000000000001/plant/eeeeeeee-0000-0000-0000-000000000001/sig.png'
+   where id = 'eeeeeeee-0000-0000-0000-000000000002'
+$q$, 'own folder');
+do $$ begin raise notice 'PASS  a plant prestart is never born signed, cannot be completed by hand, and signs only over real checks'; end $$;
+
+insert into public.plant_defects (id, project_id, plant_id, prestart_id, item_key, item_label, note, raised_by)
+values ('ffffffff-0000-0000-0000-000000000001', 'bbbbbbbb-0000-0000-0000-000000000001', 'dddddddd-0000-0000-0000-000000000001',
+        'eeeeeeee-0000-0000-0000-000000000001', 'tracks', 'Tracks', 'Left track slack', '11111111-1111-1111-1111-111111111111');
+
 update public.plant_prestarts set signature_path = 'bbbbbbbb-0000-0000-0000-000000000001/plant/eeeeeeee-0000-0000-0000-000000000001/sig.png'
  where id = 'eeeeeeee-0000-0000-0000-000000000001';
+
+-- The defect keeps what it said; closing it is the one change allowed.
+select tests.expect_error($q$
+  update public.plant_defects set note = 'nothing wrong really' where id = 'ffffffff-0000-0000-0000-000000000001'
+$q$, 'keeps what it said');
+select tests.expect_error($q$
+  insert into public.plant_defects (project_id, plant_id, prestart_id, item_key, item_label, raised_by)
+  values ('bbbbbbbb-0000-0000-0000-000000000001', 'dddddddd-0000-0000-0000-000000000001', 'eeeeeeee-0000-0000-0000-000000000001',
+          'late', 'Added later', '11111111-1111-1111-1111-111111111111')
+$q$, 'cannot be added');
+update public.plant_defects set closed_at = now(), closed_by = '11111111-1111-1111-1111-111111111111', closed_note = 'Tensioned'
+ where id = 'ffffffff-0000-0000-0000-000000000001';
+do $$ begin
+  assert (select closed_at from public.plant_defects where id = 'ffffffff-0000-0000-0000-000000000001') is not null, 'a defect could not be closed';
+  raise notice 'PASS  a defect of a signed inspection can only be closed';
+end $$;
 
 do $$ begin
   assert (select completed_at from public.plant_prestarts where id = 'eeeeeeee-0000-0000-0000-000000000001') is not null,
@@ -82,7 +129,7 @@ select set_config('request.jwt.claims', '{"sub":"33333333-3333-3333-3333-3333333
 set local role authenticated;
 do $$ begin
   assert (select count(*) from public.plant_register) = 1, 'the PM cannot read the register';
-  assert (select count(*) from public.plant_prestarts) = 1, 'the PM cannot read plant prestarts';
+  assert (select count(*) from public.plant_prestarts) = 2, 'the PM cannot read plant prestarts';
 end $$;
 select tests.expect_error($q$
   insert into public.plant_register (org_id, name, kind) values ('aaaaaaaa-0000-0000-0000-000000000001', 'Roller', 'roller')

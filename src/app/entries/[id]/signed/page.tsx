@@ -25,7 +25,7 @@ export default async function SignedPage({ params }: { params: Promise<{ id: str
   const { data: entry } = await supabase
     .from('entries')
     .select(
-      `id, entry_no, entry_date, status, signed_at, content_hash, supersedes_entry_id, author_id, project_id,
+      `id, entry_no, entry_date, status, signed_at, content_hash, supersedes_entry_id, author_id, signed_by, project_id,
        project:projects!inner(name, code, org:organisations!inner(name, code)),
        dayworks(id), variations(id)`,
     )
@@ -42,6 +42,12 @@ export default async function SignedPage({ params }: { params: Promise<{ id: str
     .select('full_name, email')
     .eq('id', entry.author_id)
     .maybeSingle();
+  // Whoever signed is the signatory. A colleague may finish and sign a day
+  // someone else started; the record shows both.
+  const signerId = (entry.signed_by as string | null) ?? (entry.author_id as string);
+  const { data: signer } = signerId === entry.author_id
+    ? { data: author }
+    : await supabase.from('profiles').select('full_name, email').eq('id', signerId).maybeSingle();
 
   const dayworkCount = ((entry.dayworks ?? []) as unknown[]).length;
   const variationCount = ((entry.variations ?? []) as unknown[]).length;
@@ -104,7 +110,10 @@ export default async function SignedPage({ params }: { params: Promise<{ id: str
       <div className="grid-2">
         <div>
           <p className="label">Signed by</p>
-          <p style={{ margin: '0.25rem 0 0' }}>{author?.full_name ?? author?.email ?? '—'}</p>
+          <p style={{ margin: '0.25rem 0 0' }}>{signer?.full_name ?? signer?.email ?? '—'}</p>
+          {signerId !== entry.author_id && (
+            <p className="caption" style={{ margin: '0.15rem 0 0' }}>Started by {author?.full_name ?? author?.email ?? '—'}</p>
+          )}
         </div>
         <div>
           <p className="label">Signed at</p>

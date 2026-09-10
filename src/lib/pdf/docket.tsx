@@ -357,7 +357,10 @@ function Signature({
           <div className="sig__grid">
             <div>
               <p className="lbl">Signatory</p>
-              <p>{entry.author_name}</p>
+              <p>{entry.signer_name ?? entry.author_name}</p>
+              {entry.signer_name && entry.signer_name !== entry.author_name && (
+                <p className="src">Day started by {entry.author_name}</p>
+              )}
             </div>
             <div>
               <p className="lbl">Signed at</p>

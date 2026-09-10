@@ -40,3 +40,8 @@ test('recent means the last 48 hours', () => {
   assert.equal(isRecent(f('x', '2026-09-02T10:52:00Z'), now), false);
   assert.equal(isRecent(f('x', null), now), false);
 });
+
+test('a photo whose folder is another project is never attached', () => {
+  const action = classifyOrphan(f(`other-project/${DRAFT}/abc.jpg`), new Set(), entries);
+  assert.equal(action.kind, 'unrecoverable');
+});

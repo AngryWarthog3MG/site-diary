@@ -31,40 +31,32 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
     return fail('bad_request', `${first.path.join('.') || 'payload'}: ${first.message}`, 400);
   }
 
-  const { error: applyError } = await supabase.rpc('apply_entry_review', {
+  // One transaction: the payload on the screen is applied and the status
+  // moves in the same call, so no autosave still in flight can land between
+  // the two. The database does the rest — gaps, serial, signature, hash.
+  const { data: state, error: signError } = await supabase.rpc('sign_entry', {
     p_entry_id: entryId,
     p_payload: parsed.data,
   });
 
-  if (applyError) {
-    if (applyError.code === '42501') {
+  if (signError) {
+    if (signError.code === '42501' || /not an open draft/.test(signError.message)) {
       return fail('forbidden', 'That entry is not an open draft you can sign.', 403);
     }
-    return fail('server_error', applyError.message, 500);
-  }
-
-  const { data: signed, error: signError } = await supabase
-    .from('entries')
-    .update({ status: 'signed' })
-    .eq('id', entryId)
-    .select('id, entry_no, content_hash, signed_at, signed_by, entry_date')
-    .single();
-
-  if (signError) {
-    // The immutability trigger raises check_violation when gaps remain. Hand
-    // the supervisor the reason rather than a database error.
     if (signError.message.includes('blocking gaps remain')) {
-      return fail(
-        'bad_request',
-        signError.message.replace(/^.*blocking gaps remain: /, 'Still to do: '),
-        409,
-      );
+      return fail('bad_request', signError.message.replace(/^.*blocking gaps remain: /, 'Still to do: '), 409);
     }
     if (signError.message.includes('is signed and cannot be modified')) {
       return fail('entry_signed', 'That entry has already been signed.', 409);
     }
     return fail('server_error', signError.message, 500);
   }
+  const { data: signed } = await supabase
+    .from('entries')
+    .select('id, entry_no, content_hash, signed_at, signed_by, entry_date')
+    .eq('id', entryId)
+    .single();
+  void state;
 
   await supabase
     .from('entry_extractions')

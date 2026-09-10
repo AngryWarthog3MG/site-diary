@@ -350,6 +350,35 @@ $q$, 'not an open draft');
 reset role;
 select set_config('request.jwt.claims', '', true);
 
+-- ---------------------------------------------------------------------------
+-- 10. sign_entry applies the payload and signs in one call.
+-- ---------------------------------------------------------------------------
+insert into public.entries (id, project_id, entry_date, author_id, transcript_raw)
+values ('cccccccc-0000-0000-0000-000000000010', 'bbbbbbbb-0000-0000-0000-000000000001',
+        date '2026-08-28', '55555555-5555-5555-5555-555555555555', 'Danny on the deck.');
+select set_config('request.jwt.claims',
+  '{"sub":"11111111-1111-1111-1111-111111111111","role":"authenticated"}', true);
+set local role authenticated;
+do $$
+declare v jsonb; r public.entries;
+begin
+  v := public.sign_entry('cccccccc-0000-0000-0000-000000000010', $j$
+    {"labour":[{"person_name":"Danny Rowe","hours":8}],"sections":[{"section":"labour","state":"captured"}]}
+  $j$::jsonb);
+  select * into r from public.entries where id = 'cccccccc-0000-0000-0000-000000000010';
+  assert r.status = 'signed', 'sign_entry did not sign';
+  assert r.signed_by = '11111111-1111-1111-1111-111111111111', 'sign_entry attributed the signature wrongly';
+  assert (select count(*) from public.labour where entry_id = r.id) = 1, 'sign_entry did not apply the payload';
+  assert v ->> 'status' = 'signed', 'sign_entry returned a stale state';
+  raise notice 'PASS  sign_entry applies and signs in one transaction, naming the signer';
+end;
+$$;
+select tests.expect_error($q$
+  select public.sign_entry('cccccccc-0000-0000-0000-000000000010', '{}'::jsonb)
+$q$, 'not an open draft');
+reset role;
+select set_config('request.jwt.claims', '', true);
+
 do $$ begin raise notice ''; raise notice 'ALL REVIEW TESTS PASSED'; end; $$;
 
 rollback;
