@@ -103,7 +103,9 @@ export async function drainOutbox(): Promise<OutboxReport> {
     for (const item of items) {
       if (item.state === 'blocked') { report.blocked += 1; continue; }
       if (stalled.has(item.subjectId)) { report.remaining += 1; continue; }
-      if (item.nextAttemptAt > Date.now()) { report.remaining += 1; stalled.add(item.subjectId); continue; }
+      // Every drain is prompted by something — signal back, the app opened, a
+      // tap — so every drain tries. nextAttemptAt is kept for the record of
+      // what happened, not as a gate: with no signal there is nothing to loop.
       await outbox.patch(item.id, { state: 'syncing' });
       try {
         await replay(item);
