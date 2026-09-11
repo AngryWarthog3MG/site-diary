@@ -1136,6 +1136,19 @@ correction is the way, a day with nothing yet is started. The owner's words were
 backdate it"; the answer in this app is never a back-dated row on today, it is the right day's
 diary.
 
+**R28. A variation is the description, who did it, and the reference.** The owner's words. Who
+directed it, when, and a guessed value are off the form: the value is priced and agreed on the
+variation register, not guessed at knock-off, and "directed by" was a box that mostly held a
+company name the register already knows. Their columns stay for what was typed before; a
+proposal can no longer fill them, because nothing the supervisor cannot see may be saved unseen;
+and their two review warnings went with them. `crew` is new — the people who did the work, tapped
+from the job's crew or typed — and it is conditional in the content hash exactly like labour's
+times, absent when null, so all 23 entries signed before today still verify (checked on the live
+database after the migration). The docket, the client sheet, the weekly and the claims export
+print it where the three that left used to sit. The extraction is not yet taught the field: that
+is a prompt change and a $4 eval run, held until the spend is approved, so for now the voice path
+leaves crew for the supervisor to tap in.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;
