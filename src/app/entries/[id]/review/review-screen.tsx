@@ -35,6 +35,8 @@ import {
   STANDARD_DAY_HOURS,
 } from '@/lib/extraction/completeness';
 import { BrandMark } from '@/components/brand-mark';
+import { DayNav } from '@/components/day-nav';
+import type { DayNeighbours } from '@/lib/entries/neighbours';
 import { SignaturePad } from '@/components/signature-pad';
 import { SpecBlock, type SpecLine } from './spec-block';
 import type { ReviewWeather } from './page';
@@ -133,6 +135,8 @@ export function ReviewScreen(props: {
   startedBy?: string | null;
   /** Register names of plant with a signed plant prestart on this day. */
   plantPrestarted?: string[];
+  /** The day before and after, as recorded — back/forward from this day. */
+  neighbours?: DayNeighbours;
 }) {
   const router = useRouter();
   const [payload, setPayload] = useState<ReviewPayload>(props.initial);
@@ -488,6 +492,7 @@ export function ReviewScreen(props: {
             )}
           </div>
         </header>
+        {props.neighbours && <DayNav neighbours={props.neighbours} target="day" />}
         {saveState === 'failed' && (
           <p className="alert savestate" role="status">
             Not saved yet — the last save did not get through. Trying again; keep the app open

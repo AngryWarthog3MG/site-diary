@@ -5,6 +5,8 @@ import { loadDocketEntry } from '@/lib/pdf/load';
 import { DailyDocket, type PhotoImage } from '@/lib/pdf/docket';
 import { collectPhotoPaths } from '@/lib/pdf/photos';
 import { DOCKET_CSS } from '@/lib/pdf/styles';
+import { DayNav } from '@/components/day-nav';
+import { loadDayNeighbours } from '@/lib/entries/neighbours';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Docket · Site Diary' };
@@ -37,9 +39,15 @@ export default async function DocketPage({ params }: { params: Promise<{ id: str
     }
   }
 
+  // Screen only — the PDF is rendered from DailyDocket alone, never from this page.
+  const neighbours = await loadDayNeighbours(supabase, entry.project_id, entry.entry_date);
+
   return (
     <>
       <style dangerouslySetInnerHTML={{ __html: DOCKET_CSS }} />
+      <div className="docket-daynav">
+        <DayNav neighbours={neighbours} target="docket" />
+      </div>
       <DailyDocket entry={entry} photos={photos} />
     </>
   );

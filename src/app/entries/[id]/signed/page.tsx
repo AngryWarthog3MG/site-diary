@@ -6,6 +6,8 @@ import { PdfButton } from './pdf-button';
 import { CorrectButton } from './correct-button';
 import { EmailPdfButton } from './email-button';
 import { fmtDate } from '@/lib/pdf/dates';
+import { DayNav } from '@/components/day-nav';
+import { loadDayNeighbours } from '@/lib/entries/neighbours';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Signed · Site Diary' };
@@ -54,6 +56,7 @@ export default async function SignedPage({ params }: { params: Promise<{ id: str
   const clientItems = dayworkCount + variationCount;
   const project = first(entry.project) as { name: string; code: string; org: unknown } | null;
   const org = first(project?.org) as { name: string; code: string } | null;
+  const neighbours = await loadDayNeighbours(supabase, entry.project_id as string, entry.entry_date as string);
 
   if (entry.status !== 'signed') {
     // The author's own draft lives on the review screen. Anyone else on the
@@ -74,6 +77,7 @@ export default async function SignedPage({ params }: { params: Promise<{ id: str
         <p className="mono" style={{ margin: '0.25rem 0 0', color: 'var(--ink-60)' }}>
           {project?.name} · started by {who}
         </p>
+        <DayNav neighbours={neighbours} target="day" />
         <hr className="rule" />
         <p className="notice gap">
           Not signed yet. {who} is still working on this day; nothing in it is on the record
@@ -104,6 +108,7 @@ export default async function SignedPage({ params }: { params: Promise<{ id: str
       <p className="mono" style={{ margin: '0.25rem 0 0', color: 'var(--ink-60)' }}>
         {project?.name} · {fmtDate(entry.entry_date as string)}
       </p>
+      <DayNav neighbours={neighbours} target="day" />
 
       <hr className="rule" />
 

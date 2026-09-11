@@ -102,14 +102,17 @@ test('blocking gaps mirror the database gates', () => {
   assert.deepEqual(proposalBlockingGaps(p), [
     'delay_missing_times',
     'pour_missing_volume_m3',
-    'variation_missing_vr_ref',
+    'variation_missing_number',
   ]);
 });
 
-test('a photo is optional; the VR reference is what gates a variation', () => {
-  // Owner decision, 2026-08-27.
+test('a photo is optional; the register number is what gates a variation', () => {
+  // Owner decisions, 2026-08-27 and 2026-09-11. A spoken "VR-014" reads as
+  // register item 14; a client reference that is not a number leaves the gap.
   const p = proposal({ variations: [V('Extra work', { vr_ref: 'VR-014' })] });
   assert.deepEqual(proposalBlockingGaps(p), []);
+  const q = proposal({ variations: [V('Extra work', { vr_ref: 'per PM email 3/9' })] });
+  assert.deepEqual(proposalBlockingGaps(q), ['variation_missing_number']);
 });
 
 test('an unstated day becomes the standard day; anything stated is kept', () => {

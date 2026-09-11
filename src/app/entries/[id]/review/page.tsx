@@ -7,6 +7,8 @@ import { ReviewPayload } from '@/lib/review/schema';
 import type { SectionKey } from '@/lib/extraction/schema';
 import { ReviewScreen } from './review-screen';
 import { fillDelayMinutes } from '@/lib/review/minutes';
+import { parseRegisterNumber } from '@/lib/review/register-number';
+import { loadDayNeighbours } from '@/lib/entries/neighbours';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Diary entry · KBS Daily Diary' };
@@ -108,10 +110,8 @@ export default async function ReviewPage({ params }: { params: Promise<{ id: str
     variations: pick(
       'variations',
       ((proposal?.variations ?? []) as Array<Record<string, unknown>>).map((v) => {
-        const said = String(v.vr_ref ?? '');
-        const m = /^\s*(?:v(?:ariation)?|vr)?[\s\-#.]*0*(\d{1,3})\s*$/i.exec(said);
-        const n = m ? Number(m[1]) : null;
-        return { ...v, directed_by: null, directed_at: null, estimated_cost: null, vr_ref: null, register_seq: n && n >= 1 && n <= 999 ? n : null };
+        const n = parseRegisterNumber(v.vr_ref as string | null);
+        return { ...v, directed_by: null, directed_at: null, estimated_cost: null, vr_ref: null, register_seq: n };
       }),
     ),
     // A delay spoken as a span arrives with two times and no minutes (the model
@@ -222,6 +222,8 @@ export default async function ReviewPage({ params }: { params: Promise<{ id: str
   const orgCode =
     (Array.isArray(project?.org) ? project?.org[0]?.code : project?.org?.code) ?? '';
 
+  const neighbours = await loadDayNeighbours(supabase, entry.project_id, entry.entry_date);
+
   return (
     <ReviewScreen
       entryId={entry.id}
@@ -237,6 +239,7 @@ export default async function ReviewPage({ params }: { params: Promise<{ id: str
       hasStored={hasStored}
       startedBy={startedBy}
       plantPrestarted={plantPrestarted}
+      neighbours={neighbours}
     />
   );
 }

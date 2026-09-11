@@ -4,6 +4,7 @@ import {
   type SectionKey,
   type SectionOutcome,
 } from './schema.ts';
+import { parseRegisterNumber } from '../review/register-number.ts';
 
 /**
  * The completeness check (brief §4) and the blocking gaps, both deterministic.
@@ -101,13 +102,15 @@ export function followUpQuestions(proposal: ExtractionProposal): FollowUp[] {
  * The blocking gates, evaluated against a proposal rather than the database,
  * so the review screen can show them before anything is applied. Codes match
  * `app.entry_blocking_gaps()` so the two never disagree. A variation photo is
- * optional (owner decision, 2026-08-27); the VR reference is not.
+ * optional (owner decision, 2026-08-27); the register number is not — and the
+ * model only ever hears a reference, so a variation is numbered here only when
+ * what was said reads as a plain number (the review page maps it the same way).
  */
 export function proposalBlockingGaps(proposal: ExtractionProposal): string[] {
   const gaps = new Set<string>();
 
   for (const variation of proposal.variations) {
-    if (!variation.vr_ref?.trim()) gaps.add('variation_missing_vr_ref');
+    if (parseRegisterNumber(variation.vr_ref) == null) gaps.add('variation_missing_number');
   }
   for (const pour of proposal.pours) {
     if (pour.volume_m3 == null) gaps.add('pour_missing_volume_m3');
