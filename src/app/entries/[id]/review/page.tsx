@@ -1,3 +1,5 @@
+import Link from 'next/link';
+import { fmtDate } from '@/lib/pdf/dates';
 import { notFound, redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { requireUser, canAuthorEntries } from '@/lib/auth';
@@ -165,7 +167,26 @@ export default async function ReviewPage({ params }: { params: Promise<{ id: str
    */
   const parsed = ReviewPayload.safeParse(assembled);
   if (!parsed.success) {
-    console.error('review: proposal did not fit the contract', parsed.error.issues[0]);
+    console.error('review: payload did not fit the contract', parsed.error.issues[0]);
+    // Stored rows that will not parse are a fault in the app, never an empty
+    // day. On 2026-09-11 a new field rejected null and every day with an
+    // older variation opened blank — and an empty form with autosave behind
+    // it is one tap from deleting what it failed to show. Refuse to render
+    // the editor; nothing is touched.
+    if (hasStored) {
+      return (
+        <main className="sheet">
+          <p className="label">Daily diary · {fmtDate(entry.entry_date)}</p>
+          <p className="notice gap">
+            This day could not be opened. Everything recorded on it is safe in the record and nothing
+            has been changed — the app could not read one of its fields. Refresh once; if it persists,
+            tell the office. Do not re-type the day.
+          </p>
+          <Link className="button button--quiet" href={`/entries/${id}/docket`}>See what is recorded (read only)</Link>
+          <Link className="button button--quiet" href="/">Home</Link>
+        </main>
+      );
+    }
   }
   const initial: ReviewPayload = parsed.success
     ? parsed.data

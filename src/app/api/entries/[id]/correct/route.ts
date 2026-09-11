@@ -87,7 +87,7 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
       supabase.from('labour').select('person_name, role, area, hours, overtime_hours, source_quote, confidence').eq('entry_id', entry.id),
       supabase.from('plant').select('item, hire_type, hours, idle_hours, supplier, source_quote, confidence').eq('entry_id', entry.id),
       supabase.from('work_items').select('area, description, percent_complete, source_quote, confidence').eq('entry_id', entry.id),
-      supabase.from('variations').select('description, directed_by, directed_at, vr_ref, estimated_cost, photo_urls, source_quote, confidence').eq('entry_id', entry.id),
+      supabase.from('variations').select('description, directed_by, directed_at, vr_ref, estimated_cost, crew, photo_urls, source_quote, confidence').eq('entry_id', entry.id),
       supabase.from('delays').select('start_time, end_time, duration_mins, cause, personnel_affected, category, source_quote, confidence').eq('entry_id', entry.id),
       supabase.from('pours').select('location, volume_m3, mix_spec, supplier, docket_nos, start_time, finish_time, docket_photo_urls, source_quote, confidence').eq('entry_id', entry.id),
       supabase.from('quantities').select('item_type, area, quantity, unit, source_quote, confidence').eq('entry_id', entry.id),

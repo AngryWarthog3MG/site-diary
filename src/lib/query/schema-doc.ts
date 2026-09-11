@@ -27,7 +27,8 @@ diary.work_items     entry_no, entry_date, project_id, project_name,
                      area text, description text, percent_complete numeric
 diary.variations     entry_no, entry_date, project_id, project_name,
                      description text, directed_by text, directed_at timestamptz, vr_ref text,
-                     estimated_cost numeric, photo_count integer, variation_id uuid
+                     estimated_cost numeric, photo_count integer, variation_id uuid,
+                     crew text[] (who did the work, by name)
 diary.delays         entry_no, entry_date, project_id, project_name,
                      start_time time, end_time time, duration_mins integer, cause text,
                      personnel_affected integer,
