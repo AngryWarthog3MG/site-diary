@@ -38,7 +38,6 @@ export function ClientSheet({
   const supervisor = signatures.find((s) => s.role === 'supervisor') ?? null;
   const client = signatures.find((s) => s.role === 'client') ?? null;
   const totalHours = dayworks.reduce((sum, r) => sum + (Number(r.hours) || 0), 0);
-  const totalCost = variations.reduce((sum, r) => sum + (Number(r.estimated_cost) || 0), 0);
 
   return (
     <article className="docket csheet">
@@ -109,9 +108,7 @@ export function ClientSheet({
               <tr>
                 <th className="k">VR ref</th>
                 <th className="w">Description</th>
-                <th>Directed by</th>
-                <th className="k">Directed at</th>
-                <th className="n">Est. cost</th>
+                <th>Who did it</th>
               </tr>
             </thead>
             <tbody>
@@ -119,20 +116,10 @@ export function ClientSheet({
                 <tr key={i}>
                   <td className="k">{text(r.vr_ref)}</td>
                   <td className="w">{text(r.description)}</td>
-                  <td>{text(r.directed_by)}</td>
-                  <td className="k">{shortInstant((r.directed_at as string | null) ?? null)}</td>
-                  <td className="n mono">{num(r.estimated_cost)}</td>
+                  <td>{text(((r.crew as string[] | null) ?? []).join(', ') || null)}</td>
                 </tr>
               ))}
             </tbody>
-            {totalCost > 0 ? (
-              <tfoot>
-                <tr>
-                  <td colSpan={4}>Total estimated</td>
-                  <td className="n mono">{num(totalCost)}</td>
-                </tr>
-              </tfoot>
-            ) : null}
           </table>
         )}
       </section>

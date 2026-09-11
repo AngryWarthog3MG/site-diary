@@ -72,7 +72,7 @@ export async function GET(request: Request) {
         r.entry_no,
         r.vr_ref ?? 'NO VR REF',
         r.description,
-        r.directed_by,
+        r.crew.join('; '),
         null,
         null,
         null,

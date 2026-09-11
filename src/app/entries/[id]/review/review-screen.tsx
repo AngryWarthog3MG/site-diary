@@ -967,6 +967,54 @@ function PlantField({ field, value, projectId, onChange }: {
 }
 
 /**
+ * A list of people: tap a name from the job's crew, or type one. Used for who
+ * did a variation, so the register can say whose hours it was.
+ */
+function NamesField({ field, value, projectId, onChange }: {
+  field: FieldDef; value: string[]; projectId: string; onChange: (value: unknown) => void;
+}) {
+  const [roster, setRoster] = useState<string[]>([]);
+  const [typed, setTyped] = useState('');
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      const supabase = createClient();
+      const { data } = await supabase.from('crew').select('name').eq('project_id', projectId).eq('active', true).order('sort_order').order('name');
+      if (!cancelled) setRoster((data ?? []).map((r) => String(r.name)));
+    })();
+    return () => { cancelled = true; };
+  }, [projectId]);
+  const have = new Set(value.map((v) => v.trim().toLowerCase()));
+  const add = (name: string) => { const n = name.trim(); if (!n || have.has(n.toLowerCase())) return; onChange([...value, n]); };
+  return (
+    <div className="fieldcell">
+      <span className="label">{field.label}</span>
+      {value.length > 0 && (
+        <div className="crewchips">
+          {value.map((n) => (
+            <button key={n} type="button" className="quotebtn crewchip crewchip--on" onClick={() => onChange(value.filter((v) => v !== n))} title="Remove">
+              {n} ×
+            </button>
+          ))}
+        </div>
+      )}
+      {roster.filter((n) => !have.has(n.toLowerCase())).length > 0 && (
+        <div className="crewchips">
+          {roster.filter((n) => !have.has(n.toLowerCase())).map((n) => (
+            <button key={n} type="button" className="quotebtn crewchip" onClick={() => add(n)}>+ {n}</button>
+          ))}
+        </div>
+      )}
+      <div className="photo-add-pair">
+        <input className="field field--sm" value={typed} placeholder="Someone else — type a name" onChange={(e) => setTyped(e.target.value)}
+          onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); add(typed); setTyped(''); } }} />
+        <button type="button" className="button button--quiet" style={{ marginTop: 0 }} disabled={!typed.trim()} onClick={() => { add(typed); setTyped(''); }}>Add</button>
+      </div>
+    </div>
+  );
+}
+
+/**
  * Dayworks belong to the day they were done. If that is not today, the
  * sheet is on that day's diary — open it, or start it if there is none.
  */
@@ -1317,6 +1365,9 @@ function Field({
   }
   if (field.kind === 'plant') {
     return <PlantField field={field} value={(value as string | null) ?? null} projectId={projectId} onChange={onChange} />;
+  }
+  if (field.kind === 'names') {
+    return <NamesField field={field} value={(value as string[] | null) ?? []} projectId={projectId} onChange={onChange} />;
   }
 
   const common = {

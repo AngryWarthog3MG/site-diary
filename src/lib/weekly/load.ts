@@ -137,9 +137,8 @@ export interface WeeklyData {
       date: string;
       entry_no: string;
       description: string;
-      directed_by: string | null;
+      crew: string[];
       vr_ref: string | null;
-      estimated_cost: number | null;
       referenced: boolean;
     }>;
     unreferenced: number;
@@ -468,9 +467,8 @@ export function aggregateVariations(
         date: String(row.entry_date ?? ''),
         entry_no: String(row.entry_no ?? ''),
         description: String(row.description ?? ''),
-        directed_by: (row.directed_by as string | null) ?? null,
+        crew: Array.isArray(row.crew) ? (row.crew as string[]) : [],
         vr_ref: vr,
-        estimated_cost: row.estimated_cost == null ? null : num(row.estimated_cost),
         referenced: vr != null,
       };
     });
@@ -609,7 +607,7 @@ export async function loadWeeklyData(
         supabase,
         scope(
           'variations',
-          'entry_no, entry_date, description, directed_by, vr_ref, estimated_cost',
+          'entry_no, entry_date, description, crew, vr_ref',
         ),
       ),
       diaryQuery(
@@ -643,7 +641,7 @@ export async function loadWeeklyData(
          labour(person_name, role, hours, overtime_hours),
          plant(item, hire_type, hours, idle_hours, supplier),
          work_items(area, description, percent_complete),
-         variations(description, directed_by, vr_ref, estimated_cost),
+         variations(description, crew, vr_ref),
          delays(cause, category, start_time, end_time, duration_mins, personnel_affected),
          pours(location, volume_m3, mix_spec, supplier),
          quantities(item_type, area, quantity, unit),

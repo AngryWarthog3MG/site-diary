@@ -33,7 +33,7 @@ export interface ClaimsData {
       entry_no: string;
       vr_ref: string | null;
       description: string;
-      directed_by: string | null;
+      crew: string[];
       estimated_cost: number | null;
       variation_id: string | null;
     }>;
@@ -100,7 +100,7 @@ export async function loadClaimsData(
     ),
     diaryQuery(
       supabase,
-      `select entry_no, entry_date, vr_ref, description, directed_by, estimated_cost, variation_id from diary.variations ${where} order by entry_date`,
+      `select entry_no, entry_date, vr_ref, description, crew, estimated_cost, variation_id from diary.variations ${where} order by entry_date`,
     ),
     diaryQuery(
       supabase,
@@ -140,7 +140,7 @@ export async function loadClaimsData(
     entry_no: String(row.entry_no ?? ''),
     vr_ref: ((row.vr_ref as string | null) ?? '').trim() || null,
     description: String(row.description ?? ''),
-    directed_by: (row.directed_by as string | null) ?? null,
+    crew: Array.isArray(row.crew) ? (row.crew as string[]) : [],
     estimated_cost: row.estimated_cost == null ? null : num(row.estimated_cost),
     variation_id: (row.variation_id as string | null) ?? null,
   }));

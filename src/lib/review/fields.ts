@@ -14,7 +14,7 @@ import {
  * rather than a new form.
  */
 
-export type FieldKind = 'text' | 'textarea' | 'number' | 'time' | 'select' | 'datetime' | 'list' | 'plant';
+export type FieldKind = 'text' | 'textarea' | 'number' | 'time' | 'select' | 'datetime' | 'list' | 'plant' | 'names';
 
 export interface FieldDef {
   key: string;
@@ -146,17 +146,11 @@ export const SECTIONS: SectionDef[] = [
     identity: 'description',
     fields: [
       { key: 'description', label: 'Description', kind: 'textarea' },
+      // Who directed it, when, and a guessed value are gone from the form
+      // (owner, 2026-09-11). The value is priced and agreed on the variation
+      // register; the description, the crew and the reference are the day.
+      { key: 'crew', label: 'Who did it', kind: 'names' },
       { key: 'vr_ref', label: 'VR ref', kind: 'text', narrow: true },
-      { key: 'directed_by', label: 'Directed by', kind: 'text', narrow: true },
-      { key: 'directed_at', label: 'Directed at', kind: 'datetime', narrow: true },
-      {
-        key: 'estimated_cost',
-        label: 'Value $ (estimate)',
-        kind: 'number',
-        suffix: '$',
-        step: '1',
-        narrow: true,
-      },
       { key: 'photo_urls', label: 'Photos', kind: 'list' },
     ],
     blank: () => ({
@@ -165,6 +159,7 @@ export const SECTIONS: SectionDef[] = [
       directed_at: null,
       vr_ref: null,
       estimated_cost: null,
+      crew: [],
       photo_urls: [],
       ...CONFIDENCE_BLANK,
     }),

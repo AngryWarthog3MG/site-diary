@@ -98,7 +98,12 @@ export default async function ReviewPage({ params }: { params: Promise<{ id: str
     labour: pick('labour', proposal?.labour ?? []),
     plant: pick('plant', proposal?.plant ?? []),
     work_items: pick('work_items', proposal?.work_items ?? []),
-    variations: pick('variations', proposal?.variations ?? []),
+    // Directed by / at and a value are off the form: nothing the supervisor
+    // cannot see may ride in from a proposal and be saved unseen.
+    variations: pick(
+      'variations',
+      ((proposal?.variations ?? []) as Array<Record<string, unknown>>).map((v) => ({ ...v, directed_by: null, directed_at: null, estimated_cost: null })),
+    ),
     // A delay spoken as a span arrives with two times and no minutes (the model
     // never computes one). The minutes between them are arithmetic, filled here
     // so the docket and the weekly count the delay; the supervisor confirms it.

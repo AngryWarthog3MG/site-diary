@@ -89,9 +89,7 @@ export function DailyDocket({
         columns={[
           ['VR ref', (r) => text(r.vr_ref), 'k'],
           ['Description', (r) => text(r.description), 'w'],
-          ['Directed by', (r) => text(r.directed_by)],
-          ['Directed at', (r) => shortInstant(r.directed_at as string | null), 'k'],
-          ['Est. cost', (r) => num(r.estimated_cost), 'n'],
+          ['Who did it', (r) => text(((r.crew as string[] | null) ?? []).join(', ') || null)],
           ['Photos', (r) => String(((r.photo_urls as string[] | null) ?? []).length), 'n'],
         ]}
       />

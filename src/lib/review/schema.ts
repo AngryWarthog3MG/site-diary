@@ -59,10 +59,14 @@ export const ReviewWorkItem = z.object({
 
 export const ReviewVariation = z.object({
   description: z.string().trim().min(1),
+  // Kept nullable for rows recorded before the form dropped them; the form
+  // no longer offers them and a proposal never fills them.
   directed_by: nullableText,
   directed_at: z.string().nullable().catch(null),
   vr_ref: nullableText,
   estimated_cost: nullableNumber,
+  /** The people who did the work, by name. */
+  crew: z.array(z.string().trim().min(1)).default([]),
   photo_urls: urls,
   source_quote: nullableText,
   confidence,
@@ -231,11 +235,9 @@ export type ReviewQualityWarning =
   | 'plant_missing_hours'
   | 'delay_people_without_cause'
   | 'pour_volume_without_docket'
-  | 'variation_ref_without_directed_by'
   | 'quantity_missing_unit'
   | 'weather_impact_without_weather_delay'
   | 'weather_delay_without_impact'
-  | 'variation_without_value'
   | 'daywork_without_docket'
   | 'plant_without_prestart'
   | 'low_confidence_items';
@@ -285,17 +287,11 @@ export function reviewQualityWarnings(payload: ReviewPayload, context: ReviewCon
   ) {
     warnings.add('pour_volume_without_docket');
   }
-  if (payload.variations.some((item) => item.vr_ref?.trim() && !item.directed_by?.trim())) {
-    warnings.add('variation_ref_without_directed_by');
-  }
   if (payload.quantities.some((item) => item.quantity != null && !item.unit?.trim())) {
     warnings.add('quantity_missing_unit');
   }
   // Money leaks here: a variation with no figure prints as "worth $0" on the
   // register, and a daywork with no docket is the one that never gets paid.
-  if (payload.variations.some((item) => item.estimated_cost == null)) {
-    warnings.add('variation_without_value');
-  }
   if (payload.dayworks.some((item) => !item.docket_ref?.trim() && item.photo_urls.length === 0)) {
     warnings.add('daywork_without_docket');
   }
@@ -368,16 +364,12 @@ export const WARNING_PROMPTS: Record<string, string> = {
     'A delay records people affected but no cause. Add the cause if you know it.',
   pour_volume_without_docket:
     'A concrete pour has volume but no docket number or docket photo. Attach the docket where possible.',
-  variation_ref_without_directed_by:
-    'A variation has a VR reference but no “directed by”. Add who instructed it if known.',
   quantity_missing_unit:
     'A quantity has a number but no unit. Add the unit so the total makes sense later.',
   weather_impact_without_weather_delay:
     'Weather impact is described, but there is no weather delay item. Check whether a delay should be added.',
   weather_delay_without_impact:
     'A weather delay is listed, but the Weather tab has no impact note. Add what the weather did to the work.',
-  variation_without_value:
-    'A variation has no value. Say or type an estimate if you have one — the register shows what each variation is worth, and this one reads as $0 until then.',
   plant_without_prestart:
     'A machine worked today with no signed plant prestart for it. Do the walk-around and sign it under Plant, or note why it was not done.',
   daywork_without_docket:
@@ -391,11 +383,9 @@ export const WARNING_GROUPS: Partial<Record<ReviewQualityWarning, ItemGroup | 'w
   plant_missing_hours: 'plant',
   delay_people_without_cause: 'delays',
   pour_volume_without_docket: 'pours',
-  variation_ref_without_directed_by: 'variations',
   quantity_missing_unit: 'quantities',
   weather_impact_without_weather_delay: 'weather',
   weather_delay_without_impact: 'weather',
-  variation_without_value: 'variations',
   plant_without_prestart: 'plant',
   daywork_without_docket: 'dayworks',
 };

@@ -237,8 +237,6 @@ test('quality warnings catch soft review issues without becoming blocking gaps',
     'plant_missing_hours',
     'pour_volume_without_docket',
     'quantity_missing_unit',
-    'variation_ref_without_directed_by',
-    'variation_without_value',
     'weather_delay_without_impact',
   ]);
 });
@@ -250,7 +248,7 @@ test('a variation without a value and a daywork without a docket are asked about
     dayworks: [{ description: 'Remove fencing', hours: 2, docket_ref: null }],
   });
   assert.deepEqual(reviewBlockingGaps(payload), []);
-  assert.deepEqual(reviewQualityWarnings(payload), ['daywork_without_docket', 'variation_without_value']);
+  assert.deepEqual(reviewQualityWarnings(payload), ['daywork_without_docket']);
   const settled = ReviewPayload.parse({
     ...empty,
     variations: [variation({ vr_ref: 'VR-12', directed_by: 'Lendlease', estimated_cost: 2000 })],
