@@ -3,6 +3,7 @@ import { canExportReports } from '@/lib/roles';
 import { fail, requireApiUser, isUuid, isDate } from '@/lib/api';
 import { loadWeeklyData, WeeklyLoadError } from '@/lib/weekly/load';
 import { renderWeeklyPdf } from '@/lib/weekly/render';
+import { loadWeeklyPhotos } from '@/lib/weekly/photos';
 import { ensureProjectWeatherDays } from '@/lib/weather/days';
 import { BrowserUnavailableError } from '@/lib/pdf/render';
 
@@ -52,7 +53,8 @@ export async function GET(request: Request) {
     if (data.entries.length === 0) {
       return fail('not_found', 'No diary entries in that range yet.', 404);
     }
-    const pdf = await renderWeeklyPdf({ data, narrative: null, audience: 'internal' });
+    const photos = await loadWeeklyPhotos(supabase, project.id, start, end, { includeUnsigned: true });
+    const pdf = await renderWeeklyPdf({ data, narrative: null, audience: 'internal', photos });
     const filename = `${orgCode}_${project.code}_weekly_${start}_${end}.pdf`;
     return new Response(Buffer.from(pdf), {
       status: 200,

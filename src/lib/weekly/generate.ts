@@ -4,6 +4,7 @@ import { loadWeeklyData, type WeeklyData } from './load';
 import { ensureProjectWeatherDays } from '@/lib/weather/days';
 import { generateNarrative } from './narrative';
 import { renderWeeklyPdf } from './render';
+import { loadWeeklyPhotos } from './photos';
 
 /**
  * One weekly report, generated and stored — shared by the on-demand route
@@ -35,7 +36,10 @@ export async function generateWeeklyReport(
   const data = await loadWeeklyData(supabase, project, start, end, { includeUnsigned: true });
   if (data.entries.length === 0) return { empty: true };
 
-  const { result: narrative, rejected, failure } = await generateNarrative(data);
+  const [{ result: narrative, rejected, failure }, photos] = await Promise.all([
+    generateNarrative(data),
+    loadWeeklyPhotos(supabase, project.id, start, end, { includeUnsigned: true }),
+  ]);
   const narrativeNote = rejected
     ? 'Commentary was withheld: the draft referenced figures not present in the record.'
     : narrative
@@ -46,6 +50,7 @@ export async function generateWeeklyReport(
     data,
     narrative: narrative?.narrative ?? null,
     narrativeNote,
+    photos,
   });
 
   const objectPath = `${project.id}/weekly/${start}_${end}.pdf`;

@@ -1,6 +1,7 @@
 import type { ReactElement } from 'react';
 import { LOGO_DATA_URI } from '@/lib/pdf/logo';
 import type { WeeklyData } from './load';
+import type { WeeklyPhotos } from './photos';
 import { fmtDate } from '@/lib/pdf/dates';
 
 /**
@@ -48,9 +49,11 @@ export interface WeeklyReportProps {
    * commentary, no marks, one quiet line naming any days not yet signed.
    */
   audience?: 'record' | 'internal';
+  /** The week's photographs, day by day. Absent when the caller did not gather them. */
+  photos?: WeeklyPhotos;
 }
 
-export function WeeklyReport({ data, narrative, narrativeNote, audience = 'record' }: WeeklyReportProps): ReactElement {
+export function WeeklyReport({ data, narrative, narrativeNote, audience = 'record', photos }: WeeklyReportProps): ReactElement {
   const { labour, plant, pours, quantities, delays, weather, variations } = data;
   const internal = audience === 'internal';
   // Days whose figures come from an unsigned draft. On the record every figure
@@ -340,7 +343,6 @@ export function WeeklyReport({ data, narrative, narrativeNote, audience = 'recor
                 <th>Labour</th>
                 <th>Plant</th>
                 <th className="n">Hours</th>
-                <th>Docket</th>
               </tr>
             </thead>
             <tbody>
@@ -351,13 +353,6 @@ export function WeeklyReport({ data, narrative, narrativeNote, audience = 'recor
                   <td>{row.labour ?? '—'}</td>
                   <td>{row.plant ?? '—'}</td>
                   <td className="n mono">{fmt(row.hours)}</td>
-                  <td className={row.docket_ref || row.docket_added ? 'mono' : 'vr-missing'}>
-                    {row.docket_ref
-                      ? row.docket_ref
-                      : row.docket_added
-                        ? <>{row.docket_added.ref}<span className="src"> added {fmtDate(row.docket_added.on)}</span></>
-                        : 'Docket to chase'}
-                  </td>
                 </tr>
               ))}
             </tbody>
@@ -365,7 +360,6 @@ export function WeeklyReport({ data, narrative, narrativeNote, audience = 'recor
               <tr>
                 <td colSpan={4}>Total dayworks hours<TotalMark dates={data.dayworks.rows.map((r) => r.date)} /></td>
                 <td className="n mono">{fmt(data.dayworks.totalHours)}</td>
-                <td />
               </tr>
             </tfoot>
           </table>
@@ -514,6 +508,37 @@ export function WeeklyReport({ data, narrative, narrativeNote, audience = 'recor
         )}
       </section>
 
+      {photos && photos.days.length > 0 && (
+        <section className="sect photos wphotos">
+          <p className="lbl">Photographs this week</p>
+          {photos.days.map((day) => (
+            <div key={day.date} className="wphotos__day">
+              <p className="wphotos__head mono">
+                <D date={day.date} />
+                {day.signed && day.entry_no ? ` · ${day.entry_no}` : internal ? ' · not yet signed' : ''}
+              </p>
+              <div className="photos__grid">
+                {day.photos.map((photo, index) => (
+                  <figure key={index}>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={photo.src} alt={photo.caption ?? photo.context} data-shrink="1000" />
+                    <figcaption className="mono">
+                      {photo.context}
+                      {photo.caption ? ` — ${photo.caption}` : ''}
+                    </figcaption>
+                  </figure>
+                ))}
+              </div>
+            </div>
+          ))}
+          {photos.omitted > 0 && (
+            <p className="src">
+              {photos.omitted} more photograph{photos.omitted === 1 ? '' : 's'} from this week are in the daily dockets.
+            </p>
+          )}
+        </section>
+      )}
+
       <section className="sect">
         <p className="lbl">Entries in this report</p>
         <p className="entries-line mono">
@@ -568,6 +593,10 @@ export const WEEKLY_CSS = `
 }
 .entries-line { margin: 1mm 0 0; font-size: 8.5pt; color: #5A6469; }
 .weekly th.n, .weekly td.n { padding-left: 3mm; }
+.wphotos__day { break-inside: auto; margin-top: 3mm; }
+.wphotos__head { margin: 0 0 1.5mm; font-size: 8.5pt; font-weight: 700; color: #16211F; }
+.wphotos .photos__grid { grid-template-columns: 1fr 1fr 1fr; gap: 3.5mm; }
+.wphotos img { height: 48mm; }
 @media screen and (max-width: 830px) {
   .subtable { width: 100%; }
 }

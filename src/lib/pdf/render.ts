@@ -153,6 +153,30 @@ export interface DocumentMeta {
   footerLeft: string;
 }
 
+/** Runs inside Chromium: draws each marked image onto a canvas and swaps in the smaller JPEG. */
+async function shrinkMarkedImages(): Promise<void> {
+  const images = Array.from(document.querySelectorAll<HTMLImageElement>('img[data-shrink]'));
+  for (const img of images) {
+    try {
+      const max = Number(img.dataset.shrink) || 1000;
+      if (!img.complete) await new Promise<void>((done) => { img.onload = () => done(); img.onerror = () => done(); });
+      const w = img.naturalWidth, h = img.naturalHeight;
+      if (!w || !h || Math.max(w, h) <= max) continue;
+      const scale = max / Math.max(w, h);
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.round(w * scale);
+      canvas.height = Math.round(h * scale);
+      const ctx = canvas.getContext('2d');
+      if (!ctx) continue;
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      const small = canvas.toDataURL('image/jpeg', 0.72);
+      await new Promise<void>((done) => { img.onload = () => done(); img.onerror = () => done(); img.src = small; });
+    } catch {
+      // Leave the original in place; a full-size photograph beats a missing one.
+    }
+  }
+}
+
 export async function renderPdfDocument(html: string, meta: DocumentMeta): Promise<Uint8Array> {
   const page = await (await browser()).newPage();
 
@@ -161,6 +185,11 @@ export async function renderPdfDocument(html: string, meta: DocumentMeta): Promi
     // Everything is embedded, so this resolves immediately — but laying out
     // before the faces are ready would silently produce a fallback-font PDF.
     await page.evaluate(() => document.fonts.ready);
+    // Opt-in: an <img data-shrink="N"> is re-encoded in the page to at most
+    // N px on its longest side before printing. The weekly carries a week of
+    // photographs and would otherwise weigh what forty phone photos weigh.
+    // The daily docket uses no such attribute, so its bytes are untouched.
+    await page.evaluate(shrinkMarkedImages);
 
     const raw = await page.pdf({
       format: 'A4',
