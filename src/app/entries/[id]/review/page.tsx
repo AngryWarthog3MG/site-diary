@@ -110,7 +110,10 @@ export default async function ReviewPage({ params }: { params: Promise<{ id: str
     delays: fillDelayMinutes(pick('delays', proposal?.delays ?? [])),
     pours: pick('pours', proposal?.pours ?? []),
     quantities: pick('quantities', proposal?.quantities ?? []),
-    dayworks: pick('dayworks', proposal?.dayworks ?? []),
+    dayworks: pick(
+      'dayworks',
+      ((proposal?.dayworks ?? []) as Array<Record<string, unknown>>).map((d) => ({ ...d, docket_ref: null })),
+    ),
     photos: pick('photos', proposal?.photos ?? []),
     // Only a reading the supervisor entered by hand seeds the editable form.
     // BOM numbers are shown read-only from the stored row; putting them in

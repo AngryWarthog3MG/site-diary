@@ -65,8 +65,8 @@ export const ReviewVariation = z.object({
   directed_at: z.string().nullable().catch(null),
   vr_ref: nullableText,
   estimated_cost: nullableNumber,
-  /** The people who did the work, by name. */
-  crew: z.array(z.string().trim().min(1)).default([]),
+  /** The people who did the work, by name. Null in rows saved before the field existed. */
+  crew: z.array(z.string().trim().min(1)).nullable().default([]).transform((v) => v ?? []),
   photo_urls: urls,
   source_quote: nullableText,
   confidence,
