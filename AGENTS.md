@@ -194,6 +194,10 @@ Change four of them and the app silently stops capturing what supervisors say. I
   child row on each save, so they all share a timestamp. Storage has no undo: a
   `storage.remove` is final. When in doubt, leave the file; the nightly `orphans=1` check
   reports anything the record does not reference.
+- **Never hand-roll an orphan re-attach.** A one-off script on 2026-09-10 treated "not in
+  `photos`" as "unreferenced" and copied six daywork photographs onto the day as day photos.
+  The only definition of "referenced" is `reconcileStorage` (every table that can hold a path);
+  to put files back, run `/api/ops/check?orphans=1` and read its report — nothing else.
 - **Nothing may sit between "uploaded" and "in the day" that can fail.** A file in storage
   the record does not reference is as good as lost. Add the row (or the payload entry) the
   moment the upload lands, make the code between the two unable to throw, and save at once

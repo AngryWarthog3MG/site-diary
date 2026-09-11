@@ -1042,6 +1042,11 @@ cannot trust into now and never throws, and each photo is added to the day as it
 lands, so a failure on the third cannot lose the first two. The general lesson is the one in
 non-negotiable #5 read the other way round: a file in storage the record does not reference is
 as good as lost, so nothing may sit between "uploaded" and "in the day" that can fail.
+*Postscript, 2026-09-11:* the one-off script that re-attached the thirteen counted a file as
+unreferenced when no `photos` row named it — and never looked at `dayworks.photo_urls`. Six of the
+thirteen were already on Thursday's dayworks, so they were copied onto the day as well and the
+daily appendix listed them twice. The nightly `reconcileStorage` checks every table that can hold
+a path, which is why it exists and why no script should do this by hand again (house rule).
 
 **R22. Nothing sits in storage unseen.** Thirteen photos and a signature reached storage and the
 record never heard of them, for two days, until a supervisor asked why his photos were not
