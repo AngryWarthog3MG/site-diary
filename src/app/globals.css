@@ -3487,3 +3487,8 @@ main.sheet--wide .vr-list { grid-template-columns: repeat(auto-fill, minmax(22re
 
 .anotherday { margin: 0 0 0.75rem; padding: 0.6rem 0.75rem; border: 1px dashed var(--ink-08); border-radius: 0.6rem; }
 .anotherday .photo-add-pair { margin-top: 0.4rem; }
+
+.vr-slots { display: grid; grid-template-columns: repeat(auto-fill, minmax(4.2rem, 1fr)); gap: 0.3rem; margin: 0.75rem 0 1rem; }
+.vr-slot { display: block; text-align: center; padding: 0.35rem 0.2rem; border: 1px dashed var(--ink-08); border-radius: 0.4rem; font-family: var(--mono, ui-monospace, monospace); font-size: 0.75rem; color: var(--ink-40); text-decoration: none; }
+.vr-slot--used { border-style: solid; border-color: var(--teal, #0e4f52); color: var(--teal, #0e4f52); font-weight: 700; background: #f1f7f6; }
+.vr-slot--paid { border-color: var(--ink-60); color: var(--ink-60); background: #fff; }

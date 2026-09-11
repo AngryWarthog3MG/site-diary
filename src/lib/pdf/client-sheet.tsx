@@ -106,7 +106,7 @@ export function ClientSheet({
           <table>
             <thead>
               <tr>
-                <th className="k">VR ref</th>
+                <th className="k">No.</th>
                 <th className="w">Description</th>
                 <th>Who did it</th>
               </tr>
@@ -114,7 +114,7 @@ export function ClientSheet({
             <tbody>
               {variations.map((r: Row, i) => (
                 <tr key={i}>
-                  <td className="k">{text(r.vr_ref)}</td>
+                  <td className="k">{r.register_seq == null ? '—' : `V-${String(r.register_seq).padStart(3, '0')}`}</td>
                   <td className="w">{text(r.description)}</td>
                   <td>{text(((r.crew as string[] | null) ?? []).join(', ') || null)}</td>
                 </tr>

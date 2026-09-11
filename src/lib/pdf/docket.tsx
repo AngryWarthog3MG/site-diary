@@ -87,7 +87,7 @@ export function DailyDocket({
         entry={entry}
         rows={entry.variations}
         columns={[
-          ['VR ref', (r) => text(r.vr_ref), 'k'],
+          ['No.', (r) => (r.register_seq == null ? '—' : `V-${String(r.register_seq).padStart(3, '0')}`), 'k'],
           ['Description', (r) => text(r.description), 'w'],
           ['Who did it', (r) => text(((r.crew as string[] | null) ?? []).join(', ') || null)],
           ['Photos', (r) => String(((r.photo_urls as string[] | null) ?? []).length), 'n'],

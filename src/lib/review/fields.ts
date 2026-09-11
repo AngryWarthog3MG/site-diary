@@ -14,7 +14,7 @@ import {
  * rather than a new form.
  */
 
-export type FieldKind = 'text' | 'textarea' | 'number' | 'time' | 'select' | 'datetime' | 'list' | 'plant' | 'names';
+export type FieldKind = 'text' | 'textarea' | 'number' | 'time' | 'select' | 'datetime' | 'list' | 'plant' | 'names' | 'regno';
 
 export interface FieldDef {
   key: string;
@@ -150,7 +150,9 @@ export const SECTIONS: SectionDef[] = [
       // (owner, 2026-09-11). The value is priced and agreed on the variation
       // register; the description, the crew and the reference are the day.
       { key: 'crew', label: 'Who did it', kind: 'names' },
-      { key: 'vr_ref', label: 'VR ref', kind: 'text', narrow: true },
+      // The day carries only the register number; the client's VR reference,
+      // the value and the status live on the register item (owner, 2026-09-11).
+      { key: 'register_seq', label: 'Variation number', kind: 'regno' },
       { key: 'photo_urls', label: 'Photos', kind: 'list' },
     ],
     blank: () => ({
@@ -160,6 +162,7 @@ export const SECTIONS: SectionDef[] = [
       vr_ref: null,
       estimated_cost: null,
       crew: [],
+      register_seq: null,
       photo_urls: [],
       ...CONFIDENCE_BLANK,
     }),

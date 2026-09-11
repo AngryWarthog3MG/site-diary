@@ -138,7 +138,7 @@ export interface WeeklyData {
       entry_no: string;
       description: string;
       crew: string[];
-      vr_ref: string | null;
+      register_seq: number | null;
       referenced: boolean;
     }>;
     unreferenced: number;
@@ -462,14 +462,14 @@ export function aggregateVariations(
     .slice()
     .sort((a, b) => String(a.entry_date).localeCompare(String(b.entry_date)))
     .map((row) => {
-      const vr = ((row.vr_ref as string | null) ?? '').trim() || null;
+      const seq = row.register_seq == null ? null : Number(row.register_seq);
       return {
         date: String(row.entry_date ?? ''),
         entry_no: String(row.entry_no ?? ''),
         description: String(row.description ?? ''),
         crew: Array.isArray(row.crew) ? (row.crew as string[]) : [],
-        vr_ref: vr,
-        referenced: vr != null,
+        register_seq: seq,
+        referenced: seq != null,
       };
     });
   return { rows: out, unreferenced: out.filter((v) => !v.referenced).length };
@@ -607,7 +607,7 @@ export async function loadWeeklyData(
         supabase,
         scope(
           'variations',
-          'entry_no, entry_date, description, crew, vr_ref',
+          'entry_no, entry_date, description, crew, register_seq',
         ),
       ),
       diaryQuery(
@@ -641,7 +641,7 @@ export async function loadWeeklyData(
          labour(person_name, role, hours, overtime_hours),
          plant(item, hire_type, hours, idle_hours, supplier),
          work_items(area, description, percent_complete),
-         variations(description, crew, vr_ref),
+         variations(description, crew, register_seq),
          delays(cause, category, start_time, end_time, duration_mins, personnel_affected),
          pours(location, volume_m3, mix_spec, supplier),
          quantities(item_type, area, quantity, unit),

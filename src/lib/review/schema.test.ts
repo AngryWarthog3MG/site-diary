@@ -56,7 +56,7 @@ test('the four gates match the database, code for code', () => {
   assert.deepEqual(reviewBlockingGaps(payload), [
     'delay_missing_times',
     'pour_missing_volume_m3',
-    'variation_missing_vr_ref',
+    'variation_missing_number',
   ]);
 });
 
@@ -83,8 +83,8 @@ test('a photo is optional — with or without one, only the VR reference gates',
     variations: [variation({ photo_urls: ['proj/entry/vr.jpg'] })],
   });
   const withoutPhoto = ReviewPayload.parse({ ...empty, variations: [variation()] });
-  assert.deepEqual(reviewBlockingGaps(withPhoto), ['variation_missing_vr_ref']);
-  assert.deepEqual(reviewBlockingGaps(withoutPhoto), ['variation_missing_vr_ref']);
+  assert.deepEqual(reviewBlockingGaps(withPhoto), ['variation_missing_number']);
+  assert.deepEqual(reviewBlockingGaps(withoutPhoto), ['variation_missing_number']);
 });
 
 test('a delay needs both ends, not just one', () => {
@@ -106,12 +106,12 @@ test('a pour of zero is a volume; a pour of null is not', () => {
   assert.deepEqual(reviewBlockingGaps(missing), ['pour_missing_volume_m3']);
 });
 
-test('whitespace is not a VR reference', () => {
+test('an old client reference is not a register number', () => {
   const payload = ReviewPayload.parse({
     ...empty,
-    variations: [variation({ vr_ref: '   ', photo_urls: ['p/e/x.jpg'] })],
+    variations: [variation({ vr_ref: 'VR-014', register_seq: null, photo_urls: ['p/e/x.jpg'] })],
   });
-  assert.deepEqual(reviewBlockingGaps(payload), ['variation_missing_vr_ref']);
+  assert.deepEqual(reviewBlockingGaps(payload), ['variation_missing_number']);
 });
 
 // --- the contract ----------------------------------------------------------
@@ -215,7 +215,7 @@ test('an extraction-shaped variation — no photo fields at all — parses and g
   assert.deepEqual(payload.pours[0].docket_photo_urls, []);
   assert.deepEqual(reviewBlockingGaps(payload), [
     'pour_missing_volume_m3',
-    'variation_missing_vr_ref',
+    'variation_missing_number',
   ]);
 });
 
@@ -226,7 +226,7 @@ test('quality warnings catch soft review issues without becoming blocking gaps',
     plant: [{ item: 'Excavator' }],
     delays: [{ category: 'weather', personnel_affected: 3, start_time: '09:00', end_time: '10:00' }],
     pours: [{ location: 'Slab', volume_m3: 6 }],
-    variations: [{ ...variation({ vr_ref: 'VR-12', directed_by: null }) }],
+    variations: [{ ...variation({ register_seq: 12, directed_by: null }) }],
     quantities: [{ item_type: 'Topsoil', quantity: 12 }],
   });
 
@@ -244,14 +244,14 @@ test('quality warnings catch soft review issues without becoming blocking gaps',
 test('a variation without a value and a daywork without a docket are asked about, never blocked', () => {
   const payload = ReviewPayload.parse({
     ...empty,
-    variations: [variation({ vr_ref: 'VR-12', directed_by: 'Lendlease', estimated_cost: null })],
+    variations: [variation({ register_seq: 12, directed_by: 'Lendlease', estimated_cost: null })],
     dayworks: [{ description: 'Remove fencing', hours: 2, docket_ref: null }],
   });
   assert.deepEqual(reviewBlockingGaps(payload), []);
   assert.deepEqual(reviewQualityWarnings(payload), ['daywork_without_docket']);
   const settled = ReviewPayload.parse({
     ...empty,
-    variations: [variation({ vr_ref: 'VR-12', directed_by: 'Lendlease', estimated_cost: 2000 })],
+    variations: [variation({ register_seq: 12, directed_by: 'Lendlease', estimated_cost: 2000 })],
     dayworks: [{ description: 'Remove fencing', hours: 2, docket_ref: 'DW-114' }],
   });
   assert.deepEqual(reviewQualityWarnings(settled), []);

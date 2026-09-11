@@ -97,14 +97,17 @@ test('delays total by category and convert to hours', () => {
   assert.deepEqual(out.byCategory[0], { category: 'weather', minutes: 180, hours: 3 });
 });
 
-test('variations flag missing VR references', () => {
+test('variations flag the days that never picked a register number', () => {
   const out = aggregateVariations([
-    { entry_date: '2026-08-24', entry_no: 'A', description: 'Extra footing', vr_ref: 'VR-014' },
-    { entry_date: '2026-08-25', entry_no: 'B', description: 'Rock breakout', vr_ref: '  ' },
+    { entry_date: '2026-08-24', entry_no: 'A', description: 'Extra footing', register_seq: 14, crew: ['Matty'] },
+    { entry_date: '2026-08-25', entry_no: 'B', description: 'Rock breakout', register_seq: null, crew: null },
   ]);
   assert.equal(out.unreferenced, 1);
   assert.equal(out.rows[0].referenced, true);
-  assert.equal(out.rows[1].vr_ref, null);
+  assert.equal(out.rows[0].register_seq, 14);
+  assert.deepEqual(out.rows[0].crew, ['Matty']);
+  assert.equal(out.rows[1].register_seq, null);
+  assert.deepEqual(out.rows[1].crew, []);
 });
 
 test('plant is one line per machine, however the days labelled it', () => {

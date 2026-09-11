@@ -32,6 +32,7 @@ export interface ClaimsData {
       date: string;
       entry_no: string;
       vr_ref: string | null;
+      register_seq: number | null;
       description: string;
       crew: string[];
       estimated_cost: number | null;
@@ -100,7 +101,7 @@ export async function loadClaimsData(
     ),
     diaryQuery(
       supabase,
-      `select entry_no, entry_date, vr_ref, description, crew, estimated_cost, variation_id from diary.variations ${where} order by entry_date`,
+      `select entry_no, entry_date, vr_ref, register_seq, description, crew, estimated_cost, variation_id from diary.variations ${where} order by entry_date`,
     ),
     diaryQuery(
       supabase,
@@ -141,6 +142,7 @@ export async function loadClaimsData(
     vr_ref: ((row.vr_ref as string | null) ?? '').trim() || null,
     description: String(row.description ?? ''),
     crew: Array.isArray(row.crew) ? (row.crew as string[]) : [],
+    register_seq: row.register_seq == null ? null : Number(row.register_seq),
     estimated_cost: row.estimated_cost == null ? null : num(row.estimated_cost),
     variation_id: (row.variation_id as string | null) ?? null,
   }));
@@ -190,7 +192,7 @@ export async function loadClaimsData(
     variations: {
       rows: variationRows,
       totalCost: round2(variationRows.reduce((sum, r) => sum + (r.estimated_cost ?? 0), 0)),
-      unreferenced: variationRows.filter((r) => !r.vr_ref).length,
+      unreferenced: variationRows.filter((r) => r.register_seq == null).length,
       register,
       summary: summariseRegister(register),
       openDays,
@@ -213,7 +215,7 @@ async function loadRegister(supabase: SupabaseClient, projectId: string): Promis
       .eq('project_id', projectId),
     supabase
       .from('variation_register_links')
-      .select('register_id, variation:variations(id, entry:entries!inner(id, entry_no, entry_date, status, project_id))')
+      .select('register_id, variation:variations(id, crew, entry:entries!inner(id, entry_no, entry_date, status, project_id))')
       .eq('variation.entry.project_id', projectId),
   ]);
   const out = new Map<string, RegisterItem>();
@@ -223,10 +225,11 @@ async function loadRegister(supabase: SupabaseClient, projectId: string): Promis
       estimated_cost: row.estimated_cost == null ? null : num(row.estimated_cost),
       agreed_cost: row.agreed_cost == null ? null : num(row.agreed_cost),
       mentions: [],
+      crew: [],
       signed: false,
     });
   }
-  type LinkRow = { register_id: string; variation: { id: string; entry: { id: string; entry_no: string | null; entry_date: string; status: string } | Array<{ id: string; entry_no: string | null; entry_date: string; status: string }> } | null };
+  type LinkRow = { register_id: string; variation: { id: string; crew: string[] | null; entry: { id: string; entry_no: string | null; entry_date: string; status: string } | Array<{ id: string; entry_no: string | null; entry_date: string; status: string }> } | null };
   for (const link of (links ?? []) as unknown as LinkRow[]) {
     const item = out.get(link.register_id);
     const variation = Array.isArray(link.variation) ? link.variation[0] : link.variation;
@@ -234,6 +237,7 @@ async function loadRegister(supabase: SupabaseClient, projectId: string): Promis
     if (!item || !entry) continue;
     const signed = entry.status === 'signed';
     item.mentions.push({ date: entry.entry_date, entry_no: signed ? entry.entry_no : null, entry_id: entry.id, signed });
+    for (const n of variation.crew ?? []) if (!item.crew.some((c) => c.toLowerCase() === n.toLowerCase())) item.crew.push(n);
     if (signed) item.signed = true;
   }
   return [...out.values()]

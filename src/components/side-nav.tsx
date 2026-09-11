@@ -28,7 +28,7 @@ const ITEMS: Array<{ href: string; label: string; screen: Screen }> = [
   { href: '/entries', label: 'Past days', screen: 'entries' },
   { href: '/reports/weekly', label: 'Weekly report', screen: 'weekly' },
   { href: '/claims', label: 'Claims', screen: 'claims' },
-  { href: '/variations', label: 'Variations', screen: 'variations' },
+  { href: '/variations', label: 'Variation register', screen: 'variations' },
   { href: '/progress', label: 'Progress', screen: 'progress' },
   { href: '/prestart', label: 'Prestarts', screen: 'prestart' },
   { href: '/plant', label: 'Plant', screen: 'plant' },

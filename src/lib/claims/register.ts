@@ -45,6 +45,8 @@ export interface RegisterItem {
   mentions: Array<{ date: string; entry_no: string | null; entry_id: string; signed: boolean }>;
   /** Whether any signed diary records it. Until then it is provisional. */
   signed: boolean;
+  /** Everyone named on it across its days. */
+  crew: string[];
 }
 
 /** V-007: how a register number reads on screen and in a conversation. */

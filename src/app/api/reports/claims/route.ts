@@ -70,7 +70,7 @@ export async function GET(request: Request) {
         'variation',
         r.date,
         r.entry_no,
-        r.vr_ref ?? 'NO VR REF',
+        r.register_seq == null ? 'NO NUMBER' : `V-${String(r.register_seq).padStart(3, '0')}`,
         r.description,
         r.crew.join('; '),
         null,

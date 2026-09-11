@@ -7,7 +7,7 @@ import { BrandMark } from '@/components/brand-mark';
 import { RegisterSection } from '@/app/claims/register-section';
 
 export const dynamic = 'force-dynamic';
-export const metadata = { title: 'Variations · KBS Daily Diary' };
+export const metadata = { title: 'Variation register · KBS Daily Diary' };
 
 /**
  * The variation register on its own: every variation the diary has signed,
@@ -49,7 +49,7 @@ export default async function VariationsPage({
       <p className="label">
         <BrandMark size={18} /> {current.project.name}
       </p>
-      <h1 className="page-title">Variations</h1>
+      <h1 className="page-title">Variation register</h1>
       <p className="page-subtitle">
         Every variation you have signed off, tracked from raised to paid. A variation joins
         this list the day you sign the diary that records it; from there you move it along as

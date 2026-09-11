@@ -85,7 +85,7 @@ export async function loadDocketEntry(
        project_id, author_id, signed_by,
        project:projects!inner(name, code, principal_contractor,
                               org:organisations!inner(name, code)),
-       labour(*), plant(*), work_items(*), variations(*), delays(*), pours(*),
+       labour(*), plant(*), work_items(*), variations(*, variation_number), delays(*), pours(*),
        quantities(*), dayworks(*, docket_added:daywork_dockets(docket_ref, received_on)), photos(*), entry_signatures(*), weather(*), entry_sections(*)`,
     )
     .eq('id', entryId)
@@ -154,7 +154,12 @@ export async function loadDocketEntry(
     labour: list('labour'),
     plant: list('plant'),
     work_items: list('work_items'),
-    variations: list('variations'),
+    // Days signed before numbers lived on the day carry theirs through the
+    // register link (variation_number); the stored row never changes.
+    variations: list('variations').map((v) => ({
+      ...v,
+      register_seq: v.register_seq ?? v.variation_number ?? null,
+    })),
     delays: list('delays'),
     pours: list('pours'),
     quantities: list('quantities'),

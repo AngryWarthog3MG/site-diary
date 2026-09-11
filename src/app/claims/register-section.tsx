@@ -75,9 +75,21 @@ export function RegisterSection({ data, userId, canManage }: { data: ClaimsData;
           </p>
           {/* Cards, not a wide table: this is read on a phone at the
               end of the day as often as at a desk. */}
+          {/* The job's numbers, one to fifty and beyond if used: what is taken,
+              what is free. A day picks from these. */}
+          <div className="vr-slots" aria-label="Variation numbers">
+            {Array.from({ length: Math.max(50, ...data.variations.register.map((r) => r.seq)) }, (_, i) => i + 1).map((n) => {
+              const used = data.variations.register.find((r) => r.seq === n);
+              return used ? (
+                <a key={n} className={`vr-slot vr-slot--used vr-slot--${used.status}`} href={`#vr-${n}`} title={used.title}>{registerNumber(n)}</a>
+              ) : (
+                <span key={n} className="vr-slot" title="Not used yet">{registerNumber(n)}</span>
+              );
+            })}
+          </div>
           <ul className="vr-list">
             {data.variations.register.map((item) => (
-              <li key={item.id} className={`vr-card vr-card--${item.status}`}>
+              <li key={item.id} id={`vr-${item.seq}`} className={`vr-card vr-card--${item.status}`}>
                 <div className="vr-card__head">
                   <span className="mono vr-card__ref">
                     {registerNumber(item.seq)}
@@ -106,6 +118,7 @@ export function RegisterSection({ data, userId, canManage }: { data: ClaimsData;
                   {(item.status === 'approved' || item.status === 'rejected') && item.decided_on && ` · decided ${fmtDate(item.decided_on)}`}
                   {item.status === 'paid' && item.paid_on && ` · paid ${fmtDate(item.paid_on)}`}
                 </p>
+                {item.crew.length > 0 && <p className="vr-card__meta">Who did it: {item.crew.join(', ')}</p>}
                 {item.notes && <p className="vr-card__notes">{item.notes}</p>}
                 {canManage ? (
                   <VariationStatusControl

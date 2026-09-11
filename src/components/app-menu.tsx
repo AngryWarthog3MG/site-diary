@@ -90,7 +90,7 @@ export function AppMenu({ slotId }: { slotId: string }) {
           {see('entries') && item(`/entries${q}`, 'Past days', 'Signed days and their PDFs')}
           {see('weekly') && item(`/reports/weekly${q}`, 'Weekly report', 'The week, rolled up')}
           {see('claims') && item(`/claims${q}`, 'Claims', 'Delays, variations, dayworks')}
-          {see('variations') && item(`/variations${q}`, 'Variations', 'Raised to paid, each one tracked')}
+          {see('variations') && item(`/variations${q}`, 'Variation register', 'V-001 to V-050 — each one from raised to paid')}
           {see('progress') && item(`/progress${q}`, 'Progress', 'How far along each area is')}
         </div>
       </section>

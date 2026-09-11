@@ -967,6 +967,42 @@ function PlantField({ field, value, projectId, onChange }: {
 }
 
 /**
+ * Which variation on the register this day's work belongs to. V-001 to V-050
+ * are always offered; a number already in use shows its title, an unused one
+ * says so, and picking an unused one opens it on the register with this day's
+ * description as its title.
+ */
+function RegisterNumberField({ field, value, projectId, onChange }: {
+  field: FieldDef; value: number | null; projectId: string; onChange: (value: unknown) => void;
+}) {
+  const [titles, setTitles] = useState<Record<number, string>>({});
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      const supabase = createClient();
+      const { data } = await supabase.from('variation_register').select('seq, title').eq('project_id', projectId);
+      if (cancelled) return;
+      const next: Record<number, string> = {};
+      for (const r of data ?? []) next[Number(r.seq)] = String(r.title ?? '');
+      setTitles(next);
+    })();
+    return () => { cancelled = true; };
+  }, [projectId]);
+  const top = Math.max(50, ...Object.keys(titles).map(Number), value ?? 0);
+  const numbers = Array.from({ length: top }, (_, i) => i + 1);
+  const label = (n: number) => `V-${String(n).padStart(3, '0')}${titles[n] ? ` — ${titles[n]}` : ' — not used yet'}`;
+  return (
+    <label className="fieldcell">
+      <span className="label">{field.label}</span>
+      <select className="field field--sm" value={value ?? ''} onChange={(e) => onChange(e.target.value === '' ? null : Number(e.target.value))}>
+        <option value="">Pick the variation…</option>
+        {numbers.map((n) => <option key={n} value={n}>{label(n)}</option>)}
+      </select>
+    </label>
+  );
+}
+
+/**
  * A list of people: tap a name from the job's crew, or type one. Used for who
  * did a variation, so the register can say whose hours it was.
  */
@@ -1368,6 +1404,9 @@ function Field({
   }
   if (field.kind === 'names') {
     return <NamesField field={field} value={(value as string[] | null) ?? []} projectId={projectId} onChange={onChange} />;
+  }
+  if (field.kind === 'regno') {
+    return <RegisterNumberField field={field} value={(value as number | null) ?? null} projectId={projectId} onChange={onChange} />;
   }
 
   const common = {

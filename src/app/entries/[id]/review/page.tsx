@@ -102,9 +102,17 @@ export default async function ReviewPage({ params }: { params: Promise<{ id: str
     work_items: pick('work_items', proposal?.work_items ?? []),
     // Directed by / at and a value are off the form: nothing the supervisor
     // cannot see may ride in from a proposal and be saved unseen.
+    // A number the supervisor said — "variation three", "V-3" — is the register
+    // number, read off the reference the model heard; anything else stays
+    // unpicked and the gap asks. The client's VR reference is not the day's.
     variations: pick(
       'variations',
-      ((proposal?.variations ?? []) as Array<Record<string, unknown>>).map((v) => ({ ...v, directed_by: null, directed_at: null, estimated_cost: null })),
+      ((proposal?.variations ?? []) as Array<Record<string, unknown>>).map((v) => {
+        const said = String(v.vr_ref ?? '');
+        const m = /^\s*(?:v(?:ariation)?|vr)?[\s\-#.]*0*(\d{1,3})\s*$/i.exec(said);
+        const n = m ? Number(m[1]) : null;
+        return { ...v, directed_by: null, directed_at: null, estimated_cost: null, vr_ref: null, register_seq: n && n >= 1 && n <= 999 ? n : null };
+      }),
     ),
     // A delay spoken as a span arrives with two times and no minutes (the model
     // never computes one). The minutes between them are arithmetic, filled here

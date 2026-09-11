@@ -174,10 +174,10 @@ values ('cccccccc-0000-0000-0000-000000000001', 'Extra rock breaking at Pier 3')
 select tests.expect_error($q$
   update public.entries set status = 'signed'
    where id = 'cccccccc-0000-0000-0000-000000000001'
-$q$, 'variation_missing_vr_ref');
+$q$, 'variation_missing_number');
 
 update public.variations
-   set vr_ref = 'VR-014',
+   set register_seq = 14,
        photo_urls = array['bbbbbbbb-0000-0000-0000-000000000001/cccccccc-0000-0000-0000-000000000001/vr014.jpg']
  where entry_id = 'cccccccc-0000-0000-0000-000000000001';
 
@@ -671,8 +671,9 @@ declare
   v_ev   int;
 begin
   select * into v_reg from public.variation_register
-   where project_id = 'bbbbbbbb-0000-0000-0000-000000000001' and vr_ref = 'VR-014';
-  assert found, 'signing did not register the variation';
+   where project_id = 'bbbbbbbb-0000-0000-0000-000000000001' and seq = 14;
+  assert found, 'the number picked on the day did not register the variation';
+  assert v_reg.vr_ref is null, 'the day carries only the number; the client reference is set on the register';
   assert v_reg.status = 'raised', 'a fresh item is raised';
   assert v_reg.raised_on = date '2026-08-24', 'raised on the diary day';
   assert v_reg.title = 'Extra rock breaking at Pier 3', 'title is the diary wording';
@@ -709,14 +710,22 @@ begin
   insert into public.entries (id, project_id, entry_date, author_id)
   values ('cccccccc-0000-0000-0000-000000000088', 'bbbbbbbb-0000-0000-0000-000000000001',
           date '2026-09-01', '11111111-1111-1111-1111-111111111111');
+  -- Unnumbered: nothing registers. The gap on review asks for the number.
   insert into public.variations (id, entry_id, description)
-  values ('dddddddd-0000-0000-0000-000000000088', 'cccccccc-0000-0000-0000-000000000088', 'Extra kerb at the bus bay');
+  values ('dddddddd-0000-0000-0000-000000000087', 'cccccccc-0000-0000-0000-000000000088', 'Unnumbered for now');
+  assert not exists (select 1 from public.variation_register_links where variation_id = 'dddddddd-0000-0000-0000-000000000087'),
+         'a row with no number was registered by its words';
+  delete from public.variations where id = 'dddddddd-0000-0000-0000-000000000087';
+
+  insert into public.variations (id, entry_id, description, register_seq)
+  values ('dddddddd-0000-0000-0000-000000000088', 'cccccccc-0000-0000-0000-000000000088', 'Extra kerb at the bus bay', 15);
 
   select r.* into v_item from public.variation_register r
     join public.variation_register_links l on l.register_id = r.id
    where l.variation_id = 'dddddddd-0000-0000-0000-000000000088';
-  assert found, 'a draft variation is registered as it is written';
-  assert v_item.seq = v_signed.seq + 1, format('numbers run on: %s after %s', v_item.seq, v_signed.seq);
+  assert found, 'a draft variation with a number is registered as it is written';
+  assert v_item.seq = 15, format('the item carries the number picked, got %s', v_item.seq);
+  assert v_item.title = 'Extra kerb at the bus bay', 'the first day''s words name the item';
   assert v_item.status = 'raised' and v_item.raised_on = date '2026-09-01', 'raised on the draft day';
 
   -- The review screen re-saves: rows are deleted and written again.
@@ -724,14 +733,14 @@ begin
   select count(*) into v_links from public.variation_register_links where register_id = v_item.id;
   assert v_links = 0, 'the mention went with the row';
   assert exists (select 1 from public.variation_register where id = v_item.id), 'the item itself stays';
-  insert into public.variations (entry_id, description, vr_ref)
-  values ('cccccccc-0000-0000-0000-000000000088', 'Extra kerb at the bus bay', 'VR-020');
+  insert into public.variations (entry_id, description, register_seq)
+  values ('cccccccc-0000-0000-0000-000000000088', 'Extra kerb at the bus bay, reworded', 15);
   select r.* into v_again from public.variation_register r
     join public.variation_register_links l on l.register_id = r.id
     join public.variations v on v.id = l.variation_id
    where v.entry_id = 'cccccccc-0000-0000-0000-000000000088';
   assert v_again.id = v_item.id and v_again.seq = v_item.seq, 'same item, same number, after a re-save';
-  assert v_again.vr_ref = 'VR-020', 'a reference stated later fills the blank';
+  assert v_again.title = 'Extra kerb at the bus bay', 'a reworded later day does not rename the item';
 
   perform public.remove_variation_item(v_item.id);
   assert not exists (select 1 from public.variation_register where id = v_item.id), 'an unsigned item can be removed';
@@ -772,7 +781,7 @@ begin
   select state into v_state from public.entry_sections
    where entry_id = 'cccccccc-0000-0000-0000-000000000088' and section = 'variations';
   assert v_state = 'captured', 'the day now has variations captured';
-  assert (select vr_ref from public.variations where id = v_new) = 'vr-014', 'reference carried across';
+  assert (select register_seq from public.variations where id = v_new) = v_signed.seq, 'the number carried across';
 
   begin
     perform public.record_variation_on_day(v_signed.id, 'cccccccc-0000-0000-0000-000000000088');
@@ -788,16 +797,35 @@ begin
     if sqlerrm like 'TESTFAIL%' then raise; end if;
     assert sqlerrm like '%signed%', sqlerrm;
   end;
-  begin
-    perform public.record_variation_on_day(v_signed.id, 'cccccccc-0000-0000-0000-000000000089');
-    raise exception 'TESTFAIL: recorded on another supervisor''s day';
-  exception when others then
-    if sqlerrm like 'TESTFAIL%' then raise; end if;
-    assert sqlerrm like '%another supervisor%', sqlerrm;
-  end;
-  raise notice 'PASS  a variation is recorded on another day only as the author, once, unsigned';
+  -- A colleague's open day is writable by an authoring role (shared drafts).
+  v_new := public.record_variation_on_day(v_signed.id, 'cccccccc-0000-0000-0000-000000000089');
+  assert (select register_seq from public.variations where id = v_new) = v_signed.seq, 'recorded on a colleague''s open day';
+  raise notice 'PASS  a variation is recorded on another day once, unsigned, by an authoring role';
 end;
 $$;
+
+-- A PM may not record a variation on anyone's day.
+reset role;
+select set_config('request.jwt.claims',
+  '{"sub":"33333333-3333-3333-3333-333333333333","role":"authenticated"}', true);
+set local role authenticated;
+do $$
+declare v_signed public.variation_register;
+begin
+  select * into v_signed from public.variation_register
+   where project_id = 'bbbbbbbb-0000-0000-0000-000000000001' and vr_ref = 'vr-014';
+  begin
+    perform public.record_variation_on_day(v_signed.id, 'cccccccc-0000-0000-0000-000000000089');
+    raise exception 'TESTFAIL: a PM recorded a variation on a day';
+  exception when others then
+    if sqlerrm like 'TESTFAIL%' then raise; end if;
+    assert sqlerrm like '%not an open draft you can write to%' or sqlerrm like '%not on one of your projects%', sqlerrm;
+  end;
+  raise notice 'PASS  a PM cannot record a variation on a day';
+end;
+$$;
+reset role;
+select set_config('request.jwt.claims', '', true);
 
 -- A leading hand reads the register and may not change it: the RPC refuses,
 -- whatever the phone shows.

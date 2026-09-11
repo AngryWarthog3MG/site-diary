@@ -67,6 +67,8 @@ export const ReviewVariation = z.object({
   estimated_cost: nullableNumber,
   /** The people who did the work, by name. Null in rows saved before the field existed. */
   crew: z.array(z.string().trim().min(1)).nullable().default([]).transform((v) => v ?? []),
+  /** The register number the day's work belongs to (V-007 is 7). Null until picked; null in rows saved before it existed. */
+  register_seq: z.number().int().min(1).max(999).nullable().default(null).catch(null),
   photo_urls: urls,
   source_quote: nullableText,
   confidence,
@@ -216,9 +218,10 @@ export function reviewBlockingGaps(payload: ReviewPayload): string[] {
   const gaps = new Set<string>();
 
   for (const variation of payload.variations) {
-    if (!variation.vr_ref?.trim()) gaps.add('variation_missing_vr_ref');
-    // A photo is optional (owner decision, 2026-08-27). The VR reference is
-    // not: without it the variation cannot be claimed.
+    // The register number is the day's reference (owner, 2026-09-11): without
+    // it the day's work belongs to no item on the register and cannot be
+    // claimed. A photo stays optional (owner, 2026-08-27).
+    if (variation.register_seq == null) gaps.add('variation_missing_number');
   }
   for (const pour of payload.pours) {
     if (pour.volume_m3 == null) gaps.add('pour_missing_volume_m3');
@@ -332,10 +335,10 @@ export function reviewQualityWarnings(payload: ReviewPayload, context: ReviewCon
  * it matters, shown against the offending section.
  */
 export const GAP_PROMPTS: Record<string, { group: ItemGroup; short: string; why: string }> = {
-  variation_missing_vr_ref: {
+  variation_missing_number: {
     group: 'variations',
-    short: 'Variation needs a VR reference',
-    why: 'Without a reference the claim has nothing to hang on.',
+    short: 'Variation needs its register number',
+    why: 'Pick which variation on the register this day\u2019s work belongs to. Without it the claim has nothing to hang on.',
   },
   pour_missing_volume_m3: {
     group: 'pours',

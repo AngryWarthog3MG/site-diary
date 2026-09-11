@@ -161,7 +161,7 @@ do $$
 declare gaps jsonb;
 begin
   gaps := public.entry_review_state('cccccccc-0000-0000-0000-000000000001') -> 'blocking_gaps';
-  assert gaps @> '["variation_missing_vr_ref"]'::jsonb, format('missing vr gap: %s', gaps);
+  assert gaps @> '["variation_missing_number"]'::jsonb, format('missing number gap: %s', gaps);
   -- Owner decision 2026-08-27: a missing photo is no longer a gap.
   assert not gaps @> '["variation_missing_photo"]'::jsonb,
          format('the photo gap should be gone, got %s', gaps);
@@ -205,7 +205,7 @@ $$;
 select public.apply_entry_review('cccccccc-0000-0000-0000-000000000001', $j$
 {
   "labour": [{"person_name":"Danny Rowe","hours":9}],
-  "variations": [{"description":"Extra rock breaking","vr_ref":"VR-014"}],
+  "variations": [{"description":"Extra rock breaking","register_seq":14}],
   "delays": [{"cause":"Rain","start_time":"09:30","end_time":"11:15","category":"weather"}],
   "pours": [{"location":"Pier 3 headstock","volume_m3":18.5}],
   "sections": [{"section":"labour","state":"captured"}]

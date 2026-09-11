@@ -493,7 +493,7 @@ export function WeeklyReport({ data, narrative, narrativeNote, audience = 'recor
                 <th>Date</th>
                 <th className="w">Description</th>
                 <th>Who did it</th>
-                <th>VR ref</th>
+                <th>No.</th>
               </tr>
             </thead>
             <tbody>
@@ -503,7 +503,7 @@ export function WeeklyReport({ data, narrative, narrativeNote, audience = 'recor
                   <td className="w">{row.description}</td>
                   <td>{row.crew.length ? row.crew.join(', ') : '—'}</td>
                   <td className={row.referenced ? 'mono' : 'vr-missing'}>
-                    {row.vr_ref ?? 'NO VR REF'}
+                    {row.register_seq == null ? 'NO NUMBER' : `V-${String(row.register_seq).padStart(3, '0')}`}
                   </td>
                 </tr>
               ))}
