@@ -1161,6 +1161,22 @@ contract the page refuses to render the editor at all — it says the day could 
 that nothing has been changed, and links to the read-only docket. The proposal-only fallback
 stays: a malformed proposal has nothing stored to lose.
 
+**R30. The register number is the day's reference.** The owner's model, in his words: the
+register holds variations one to fifty for the job; on the day you pick the number the work
+belongs to from a dropdown; the register collates the days. Before this, a day's variation was
+registered by matching its words — every autosave of a half-typed description ("Widen irrigat")
+minted a new register item, and a client reference typed on the day was the only way to say
+which item was meant. Now the day carries `register_seq` and nothing else identifies the item:
+the trigger finds the item by (project, number) or creates it with that number and the first
+day's words as its title, and never again matches text or a `vr_ref`. The signing gap asks for
+the number. Recording an item on another day stamps that day's row with the number. Two things
+about the record. `register_seq` is conditional in the canonical JSON, so every entry signed
+before it existed still verifies; and rows on signed days cannot be backfilled — the immutability
+trigger refuses, and setting the column would change the hash — so they keep their number through
+the link they already had (`public.variation_number`, a PostgREST computed field the docket
+loader, the correction route and `diary.variations` all read). The client's reference, the value
+and the status stay on the register item, where a PM sets them once, not on fifty days.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;

@@ -87,7 +87,11 @@ improvising; the register once shipped dead because a live smoke test was skippe
 - `src/lib/calendar.ts` — `isRestDay`: weekends with nothing recorded are rest days, not holes. One definition for
   the screens, the weekly and the reminder
 - `src/lib/claims/` — the claims register loader and the variation register (`register.ts`:
-  statuses, summary arithmetic). Status changes only via the `set_variation_status` RPC
+  statuses, summary arithmetic). Status changes only via the `set_variation_status` RPC. A day's variation
+  is identified by its register number alone (`variations.register_seq`, picked from a dropdown of
+  1–50); the trigger registers by number, never by words or a client reference. Rows on days signed
+  before the column existed carry theirs through the link (`public.variation_number`) — read that,
+  never assume the column
 - `src/lib/weekly/`, `src/lib/monthly/` — reports
 - `supabase/migrations/` — append only; never edit an applied migration
 - `README.md` — the design record, including why each decision went the way it did.
