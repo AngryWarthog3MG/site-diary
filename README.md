@@ -1187,6 +1187,17 @@ draft to whoever may edit it and to a read-only view for everyone else. The ends
 day", "Latest day") rather than disappearing, so a thumb does not hunt for a button that was
 there a moment ago.
 
+**R32. Hours on a variation are a fact about the day.** The owner: "add the hours worked on the
+variation within the days, rather than the register." How long the crew was on a variation is
+known at knock-off, by the person who was there, and it is different every day — so it is typed
+on the day's row beside who did it, and the register adds the days up ("Hours from the days").
+Nothing is typed on the register that a day could have said, which is the same reason the value
+is *not* on the day: a price is agreed once, by a PM, not guessed nightly by a supervisor. The
+column is nullable and conditional in the hash; unstated prints a dash, and a day that said
+nothing adds nothing to the total — a blank is not a zero. The docket carries a Hours column and
+a total, so the printed day and the register agree to the quarter hour. Extraction does not yet
+hear it: that goes with `crew` into the next prompt version and its one eval run.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;
