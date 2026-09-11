@@ -56,10 +56,11 @@ export async function loadWeeklyPhotos(
     .order('entry_date')
     .order('created_at');
   const rows = (data ?? []) as Row[];
-  const superseded = new Set(rows.map((r) => r.supersedes_entry_id as string | null).filter(Boolean));
-  const current = rows.filter(
-    (r) => !superseded.has(r.id as string) && (options.includeUnsigned || r.status === 'signed'),
-  );
+  // A day is superseded only by a version this report includes: a signed
+  // weekly does not let a draft correction hide the signed day's photographs.
+  const included = rows.filter((r) => options.includeUnsigned || r.status === 'signed');
+  const superseded = new Set(included.map((r) => r.supersedes_entry_id as string | null).filter(Boolean));
+  const current = included.filter((r) => !superseded.has(r.id as string));
 
   const wanted: Array<{ day: WeeklyPhotoDay; path: string; context: string; caption: string | null }> = [];
   const days: WeeklyPhotoDay[] = [];

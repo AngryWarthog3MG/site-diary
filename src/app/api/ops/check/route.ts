@@ -777,6 +777,16 @@ async function sendWeeklyReports(force = false): Promise<Record<string, unknown>
         results.push({ project: project.code, skipped: 'no signed entries this week' });
         continue;
       }
+      // A week of photographs can outgrow an attachment; the monthly already
+      // falls back to a link, and the weekly does the same at the same line.
+      const weeklyHeavy = generation.pdf.length > 30 * 1024 * 1024;
+      let weeklyLink: string | null = null;
+      if (weeklyHeavy) {
+        const { data: link } = await admin.storage
+          .from('exports')
+          .createSignedUrl(generation.objectPath, 7 * 24 * 60 * 60);
+        weeklyLink = link?.signedUrl ?? null;
+      }
       const send = await fetch('https://api.resend.com/emails', {
         method: 'POST',
         headers: {
@@ -792,14 +802,17 @@ async function sendWeeklyReports(force = false): Promise<Record<string, unknown>
             `<p style="font-size:11px;letter-spacing:.08em;color:#1f5c33;font-weight:bold;text-transform:uppercase">Weekly site report</p>` +
             `<h2 style="margin:.25em 0">${project.name}</h2>` +
             `<p style="margin:.25em 0">${monday} to ${sunday} · ${generation.data.counts.entryCount} signed ${generation.data.counts.entryCount === 1 ? 'entry' : 'entries'}</p>` +
-            `<p style="margin:.25em 0;color:#555">The report is attached. Tables are the signed record; the commentary is AI-drafted and labelled as such.</p>` +
+            `<p style="margin:.25em 0;color:#555">${weeklyHeavy ? 'The report is linked below.' : 'The report is attached.'} Tables are the signed record; the commentary is AI-drafted and labelled as such.</p>` +
+            (weeklyHeavy && weeklyLink ? `<p><a href="${weeklyLink}">Download the report</a> (link valid seven days — too large to attach).</p>` : '') +
             `</div>`,
-          attachments: [
-            {
-              filename: `${orgCode}_${project.code}_weekly_${monday}.pdf`,
-              content: Buffer.from(generation.pdf).toString('base64'),
-            },
-          ],
+          attachments: weeklyHeavy
+            ? []
+            : [
+                {
+                  filename: `${orgCode}_${project.code}_weekly_${monday}.pdf`,
+                  content: Buffer.from(generation.pdf).toString('base64'),
+                },
+              ],
         }),
       });
       if (!send.ok) {

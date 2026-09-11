@@ -159,7 +159,15 @@ async function shrinkMarkedImages(): Promise<void> {
   for (const img of images) {
     try {
       const max = Number(img.dataset.shrink) || 1000;
-      if (!img.complete) await new Promise<void>((done) => { img.onload = () => done(); img.onerror = () => done(); });
+      // Bounded: an image that never settles must not hold the print. It is
+      // left as it is and the page prints with it.
+      const settle = (apply?: () => void) =>
+        new Promise<void>((done) => {
+          const timer = setTimeout(done, 5000);
+          img.onload = img.onerror = () => { clearTimeout(timer); done(); };
+          apply?.();
+        });
+      if (!img.complete) await settle();
       const w = img.naturalWidth, h = img.naturalHeight;
       if (!w || !h || Math.max(w, h) <= max) continue;
       const scale = max / Math.max(w, h);
@@ -170,7 +178,7 @@ async function shrinkMarkedImages(): Promise<void> {
       if (!ctx) continue;
       ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
       const small = canvas.toDataURL('image/jpeg', 0.72);
-      await new Promise<void>((done) => { img.onload = () => done(); img.onerror = () => done(); img.src = small; });
+      await settle(() => { img.src = small; });
     } catch {
       // Leave the original in place; a full-size photograph beats a missing one.
     }
