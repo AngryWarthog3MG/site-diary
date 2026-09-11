@@ -1149,6 +1149,18 @@ print it where the three that left used to sit. The extraction is not yet taught
 is a prompt change and a $4 eval run, held until the spend is approved, so for now the voice path
 leaves crew for the supervisor to tap in.
 
+**R29. A day that will not load is never shown as an empty day.** An hour after R28 shipped, the
+owner opened Monday and saw nothing where his day had been. The new `crew` field rejected null,
+every variation saved before the migration had `crew` null, the review contract failed to parse,
+and the page fell back — by design, for a malformed *proposal* — to an empty docket. For stored
+rows that design was one tap from disaster: the empty form had autosave behind it, and a single
+edit would have applied the empty payload and deleted every row it had failed to show. Nobody
+tapped. Two fixes. A new nullable column is nullable in the review contract too (Codex found it
+within the hour; the rule is now in the review checklist). And when stored rows do not fit the
+contract the page refuses to render the editor at all — it says the day could not be opened,
+that nothing has been changed, and links to the read-only docket. The proposal-only fallback
+stays: a malformed proposal has nothing stored to lose.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;

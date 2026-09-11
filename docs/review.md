@@ -102,3 +102,10 @@ create by exact id or path in the same run, is a finding on its own — whatever
 proving. Drills run on the sandbox (T001). Deletions name the exact object; "newest" is a
 guess, and the review RPC rewrites every child row on each save so timestamps do not
 distinguish them. Storage removals cannot be undone.
+
+## 9. Does a new column reach the review contract as nullable?
+
+A column added nullable to a child table is null on every row that existed before it. If the
+review contract (`src/lib/review/schema.ts`) requires it, every open draft with such a row
+fails to parse and the page falls back. Check the zod field accepts null and maps it to the
+empty value. This blanked every day with an older variation on 2026-09-11.
