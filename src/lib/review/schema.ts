@@ -69,6 +69,8 @@ export const ReviewVariation = z.object({
   crew: z.array(z.string().trim().min(1)).nullable().default([]).transform((v) => v ?? []),
   /** The register number the day's work belongs to (V-007 is 7). Null until picked; null in rows saved before it existed. */
   register_seq: z.number().int().min(1).max(999).nullable().default(null).catch(null),
+  /** Hours the crew spent on it that day. Unstated is null, never a guess; null in rows saved before the field existed. */
+  hours: z.number().min(0).max(24).nullable().default(null).catch(null),
   photo_urls: urls,
   source_quote: nullableText,
   confidence,

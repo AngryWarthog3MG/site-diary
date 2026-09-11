@@ -119,6 +119,7 @@ export function RegisterSection({ data, userId, canManage }: { data: ClaimsData;
                   {item.status === 'paid' && item.paid_on && ` · paid ${fmtDate(item.paid_on)}`}
                 </p>
                 {item.crew.length > 0 && <p className="vr-card__meta">Who did it: {item.crew.join(', ')}</p>}
+                {item.hours > 0 && <p className="vr-card__meta">Hours from the days: {item.hours}</p>}
                 {item.notes && <p className="vr-card__notes">{item.notes}</p>}
                 {canManage ? (
                   <VariationStatusControl

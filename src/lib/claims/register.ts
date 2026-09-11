@@ -47,6 +47,8 @@ export interface RegisterItem {
   signed: boolean;
   /** Everyone named on it across its days. */
   crew: string[];
+  /** Hours the days stated, added up. A day that stated none adds nothing. */
+  hours: number;
 }
 
 /** V-007: how a register number reads on screen and in a conversation. */

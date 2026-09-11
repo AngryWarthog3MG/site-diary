@@ -74,7 +74,7 @@ export async function GET(request: Request) {
         r.description,
         r.crew.join('; '),
         null,
-        null,
+        r.hours,
         null,
         r.estimated_cost,
       ]),

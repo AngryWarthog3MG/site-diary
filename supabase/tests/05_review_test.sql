@@ -205,7 +205,7 @@ $$;
 select public.apply_entry_review('cccccccc-0000-0000-0000-000000000001', $j$
 {
   "labour": [{"person_name":"Danny Rowe","hours":9}],
-  "variations": [{"description":"Extra rock breaking","register_seq":14}],
+  "variations": [{"description":"Extra rock breaking","register_seq":14,"hours":3.5}],
   "delays": [{"cause":"Rain","start_time":"09:30","end_time":"11:15","category":"weather"}],
   "pours": [{"location":"Pier 3 headstock","volume_m3":18.5}],
   "sections": [{"section":"labour","state":"captured"}]
@@ -217,6 +217,11 @@ declare v jsonb;
 begin
   assert public.entry_review_state('cccccccc-0000-0000-0000-000000000001') -> 'blocking_gaps'
          = '[]'::jsonb, 'gaps did not clear';
+  assert (select hours from public.variations where entry_id = 'cccccccc-0000-0000-0000-000000000001') = 3.5,
+         'the hours stated on the day were not stored';
+  assert app.canonical_entry_json((select e from public.entries e where e.id = 'cccccccc-0000-0000-0000-000000000001'))
+           -> 'variations' -> 0 ? 'hours',
+         'stated hours are part of the signed record';
 
   update public.entries set status = 'signed'
    where id = 'cccccccc-0000-0000-0000-000000000001';

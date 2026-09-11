@@ -150,6 +150,9 @@ export const SECTIONS: SectionDef[] = [
       // (owner, 2026-09-11). The value is priced and agreed on the variation
       // register; the description, the crew and the reference are the day.
       { key: 'crew', label: 'Who did it', kind: 'names' },
+      // Hours are a fact about the day, so they are recorded here and the
+      // register adds the days up (owner, 2026-09-11).
+      { key: 'hours', label: 'Hours on it', kind: 'number', step: '0.25', narrow: true },
       // The day carries only the register number; the client's VR reference,
       // the value and the status live on the register item (owner, 2026-09-11).
       { key: 'register_seq', label: 'Variation number', kind: 'regno' },
@@ -163,6 +166,7 @@ export const SECTIONS: SectionDef[] = [
       estimated_cost: null,
       crew: [],
       register_seq: null,
+      hours: null,
       photo_urls: [],
       ...CONFIDENCE_BLANK,
     }),

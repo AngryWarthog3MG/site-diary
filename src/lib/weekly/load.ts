@@ -139,9 +139,12 @@ export interface WeeklyData {
       description: string;
       crew: string[];
       register_seq: number | null;
+      hours: number | null;
       referenced: boolean;
     }>;
     unreferenced: number;
+    /** Hours stated on the days; a day that said nothing adds nothing. */
+    totalHours: number;
   };
   /**
    * Days in the range that are recorded but not yet signed. Their figures
@@ -469,10 +472,15 @@ export function aggregateVariations(
         description: String(row.description ?? ''),
         crew: Array.isArray(row.crew) ? (row.crew as string[]) : [],
         register_seq: seq,
+        hours: row.hours == null ? null : Number(row.hours),
         referenced: seq != null,
       };
     });
-  return { rows: out, unreferenced: out.filter((v) => !v.referenced).length };
+  return {
+    rows: out,
+    unreferenced: out.filter((v) => !v.referenced).length,
+    totalHours: Math.round(out.reduce((sum, v) => sum + (v.hours ?? 0), 0) * 100) / 100,
+  };
 }
 
 /** Work performed, chronological — what the labour hours were spent on. */
@@ -607,7 +615,7 @@ export async function loadWeeklyData(
         supabase,
         scope(
           'variations',
-          'entry_no, entry_date, description, crew, register_seq',
+          'entry_no, entry_date, description, crew, register_seq, hours',
         ),
       ),
       diaryQuery(
@@ -641,7 +649,7 @@ export async function loadWeeklyData(
          labour(person_name, role, hours, overtime_hours),
          plant(item, hire_type, hours, idle_hours, supplier),
          work_items(area, description, percent_complete),
-         variations(description, crew, register_seq),
+         variations(description, crew, register_seq, hours),
          delays(cause, category, start_time, end_time, duration_mins, personnel_affected),
          pours(location, volume_m3, mix_spec, supplier),
          quantities(item_type, area, quantity, unit),

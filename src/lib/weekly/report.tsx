@@ -493,6 +493,7 @@ export function WeeklyReport({ data, narrative, narrativeNote, audience = 'recor
                 <th>Date</th>
                 <th className="w">Description</th>
                 <th>Who did it</th>
+                <th className="n">Hours</th>
                 <th>No.</th>
               </tr>
             </thead>
@@ -502,6 +503,7 @@ export function WeeklyReport({ data, narrative, narrativeNote, audience = 'recor
                   <td className="k mono"><D date={row.date} /></td>
                   <td className="w">{row.description}</td>
                   <td>{row.crew.length ? row.crew.join(', ') : '—'}</td>
+                  <td className="n mono">{row.hours == null ? '—' : row.hours}</td>
                   <td className={row.referenced ? 'mono' : 'vr-missing'}>
                     {row.register_seq == null ? 'NO NUMBER' : `V-${String(row.register_seq).padStart(3, '0')}`}
                   </td>

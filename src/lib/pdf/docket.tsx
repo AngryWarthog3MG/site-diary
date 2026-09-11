@@ -90,8 +90,10 @@ export function DailyDocket({
           ['No.', (r) => (r.register_seq == null ? '—' : `V-${String(r.register_seq).padStart(3, '0')}`), 'k'],
           ['Description', (r) => text(r.description), 'w'],
           ['Who did it', (r) => text(((r.crew as string[] | null) ?? []).join(', ') || null)],
+          ['Hours', (r) => num(r.hours), 'n'],
           ['Photos', (r) => String(((r.photo_urls as string[] | null) ?? []).length), 'n'],
         ]}
+        total={['Total hours', totalOf(entry.variations, 2, 'hours')]}
       />
 
       <Table

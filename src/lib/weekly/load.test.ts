@@ -99,9 +99,12 @@ test('delays total by category and convert to hours', () => {
 
 test('variations flag the days that never picked a register number', () => {
   const out = aggregateVariations([
-    { entry_date: '2026-08-24', entry_no: 'A', description: 'Extra footing', register_seq: 14, crew: ['Matty'] },
-    { entry_date: '2026-08-25', entry_no: 'B', description: 'Rock breakout', register_seq: null, crew: null },
+    { entry_date: '2026-08-24', entry_no: 'A', description: 'Extra footing', register_seq: 14, crew: ['Matty'], hours: '3.5' },
+    { entry_date: '2026-08-25', entry_no: 'B', description: 'Rock breakout', register_seq: null, crew: null, hours: null },
   ]);
+  assert.equal(out.totalHours, 3.5);
+  assert.equal(out.rows[0].hours, 3.5);
+  assert.equal(out.rows[1].hours, null);
   assert.equal(out.unreferenced, 1);
   assert.equal(out.rows[0].referenced, true);
   assert.equal(out.rows[0].register_seq, 14);

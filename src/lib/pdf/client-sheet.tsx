@@ -109,6 +109,7 @@ export function ClientSheet({
                 <th className="k">No.</th>
                 <th className="w">Description</th>
                 <th>Who did it</th>
+                <th className="n">Hours</th>
               </tr>
             </thead>
             <tbody>
@@ -117,6 +118,7 @@ export function ClientSheet({
                   <td className="k">{r.register_seq == null ? '—' : `V-${String(r.register_seq).padStart(3, '0')}`}</td>
                   <td className="w">{text(r.description)}</td>
                   <td>{text(((r.crew as string[] | null) ?? []).join(', ') || null)}</td>
+                  <td className="n mono">{num(r.hours)}</td>
                 </tr>
               ))}
             </tbody>
