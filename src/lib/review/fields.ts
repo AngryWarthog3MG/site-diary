@@ -14,7 +14,7 @@ import {
  * rather than a new form.
  */
 
-export type FieldKind = 'text' | 'textarea' | 'number' | 'time' | 'select' | 'datetime' | 'list';
+export type FieldKind = 'text' | 'textarea' | 'number' | 'time' | 'select' | 'datetime' | 'list' | 'plant';
 
 export interface FieldDef {
   key: string;
@@ -237,10 +237,13 @@ export const SECTIONS: SectionDef[] = [
     identity: 'description',
     fields: [
       { key: 'description', label: 'Description', kind: 'textarea' },
-      { key: 'docket_ref', label: 'Docket / ref', kind: 'text', narrow: true },
+      // The docket number is chased after signing (claims → dayworks dockets),
+      // not typed here: the sheet is what was done, the docket is the paper
+      // that follows it. docket_ref stays in the record for the dockets that
+      // were typed before this changed.
       { key: 'hours', label: 'Hours', kind: 'number', step: '0.25', narrow: true },
       { key: 'labour', label: 'Labour', kind: 'text', placeholder: 'Who, and how many' },
-      { key: 'plant', label: 'Plant', kind: 'text', narrow: true },
+      { key: 'plant', label: 'Plant', kind: 'plant', placeholder: 'Other plant — Stihl saw, plate compactor…' },
       { key: 'materials', label: 'Materials', kind: 'text', narrow: true },
       { key: 'photo_urls', label: 'Dayworks photos', kind: 'list' },
     ],

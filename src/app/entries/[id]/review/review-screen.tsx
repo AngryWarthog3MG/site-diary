@@ -926,6 +926,83 @@ function PhotoCard({
   );
 }
 
+/**
+ * Plant on a daywork: pick from the machines on this job, or type the small
+ * plant that is never on a register — a Stihl saw, a plate compactor. Both
+ * land in the one text the sheet prints, comma-separated.
+ */
+function PlantField({ field, value, projectId, onChange }: {
+  field: FieldDef; value: string | null; projectId: string; onChange: (value: unknown) => void;
+}) {
+  const [onJob, setOnJob] = useState<string[]>([]);
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      const supabase = createClient();
+      const rows = await loadPlantOnJob(supabase, projectId).catch(() => []);
+      if (!cancelled) setOnJob(rows.map((r) => r.name));
+    })();
+    return () => { cancelled = true; };
+  }, [projectId]);
+  const chosen = (value ?? '').split(',').map((v) => v.trim()).filter(Boolean);
+  const remaining = onJob.filter((n) => !chosen.some((c) => c.toLowerCase() === n.toLowerCase()));
+  return (
+    <div className="fieldcell">
+      <span className="label">{field.label}</span>
+      {remaining.length > 0 && (
+        <select className="field field--sm" value="" onChange={(e) => { if (!e.target.value) return; onChange([...chosen, e.target.value].join(', ')); }}>
+          <option value="">Add plant on site…</option>
+          {remaining.map((n) => <option key={n} value={n}>{n}</option>)}
+        </select>
+      )}
+      <input
+        className="field field--sm"
+        style={remaining.length > 0 ? { marginTop: '0.35rem' } : undefined}
+        value={value ?? ''}
+        placeholder={field.placeholder}
+        onChange={(e) => onChange(e.target.value === '' ? null : e.target.value)}
+      />
+    </div>
+  );
+}
+
+/**
+ * Dayworks belong to the day they were done. If that is not today, the
+ * sheet is on that day's diary — open it, or start it if there is none.
+ */
+function AnotherDay({ projectId, entryDate }: { projectId: string; entryDate: string }) {
+  const router = useRouter();
+  const [date, setDate] = useState('');
+  const [note, setNote] = useState<string | null>(null);
+  async function go() {
+    if (!date || date === entryDate) return;
+    setNote('Opening…');
+    const supabase = createClient();
+    const { data } = await supabase
+      .from('entries')
+      .select('id, status, supersedes_entry_id')
+      .eq('project_id', projectId)
+      .eq('entry_date', date)
+      .order('created_at', { ascending: false });
+    const rows = data ?? [];
+    const open = rows.find((r) => r.status !== 'signed');
+    if (open) { router.push(`/entries/${open.id}/review`); return; }
+    const signed = rows.find((r) => r.status === 'signed' && !rows.some((x) => x.supersedes_entry_id === r.id));
+    if (signed) { setNote(`${fmtDate(date)} is signed. Dayworks for it go on a correction — open that day and record one.`); window.setTimeout(() => router.push(`/entries/${signed.id}/signed`), 1200); return; }
+    router.push(`/record?project=${projectId}&date=${date}`);
+  }
+  return (
+    <div className="anotherday">
+      <span className="caption">Dayworks for another day go on that day&rsquo;s diary.</span>
+      <div className="photo-add-pair">
+        <input className="field field--sm" type="date" value={date} max={localDate()} onChange={(e) => setDate(e.target.value)} />
+        <button type="button" className="button button--quiet" style={{ marginTop: 0 }} disabled={!date || date === entryDate} onClick={() => void go()}>Open that day</button>
+      </div>
+      {note && <p className="caption">{note}</p>}
+    </div>
+  );
+}
+
 function DocketSection({
   section,
   reasons,
@@ -963,6 +1040,7 @@ function DocketSection({
         </button>
       </div>
 
+      {section.group === 'dayworks' && <AnotherDay projectId={projectId} entryDate={entryDate} />}
       {section.group === 'labour' && (
         <CrewShortcuts
           projectId={projectId}
@@ -1236,6 +1314,9 @@ function Field({
         onChange={onChange}
       />
     );
+  }
+  if (field.kind === 'plant') {
+    return <PlantField field={field} value={(value as string | null) ?? null} projectId={projectId} onChange={onChange} />;
   }
 
   const common = {

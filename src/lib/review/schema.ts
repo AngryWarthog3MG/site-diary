@@ -381,7 +381,7 @@ export const WARNING_PROMPTS: Record<string, string> = {
   plant_without_prestart:
     'A machine worked today with no signed plant prestart for it. Do the walk-around and sign it under Plant, or note why it was not done.',
   daywork_without_docket:
-    'A daywork has no docket number or photo. Add it if you have it; otherwise it prints as “docket to chase” on the client sheet until one is recorded.',
+    'A daywork has no photo. Add one if you can; the docket itself is chased after signing and prints as “docket to chase” on the client sheet until it is recorded.',
   low_confidence_items:
     'One or more extracted items were low confidence. Open the highlighted section and check them before signing.',
 };
