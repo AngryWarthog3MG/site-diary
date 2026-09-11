@@ -1177,6 +1177,16 @@ the link they already had (`public.variation_number`, a PostgREST computed field
 loader, the correction route and `diary.variations` all read). The client's reference, the value
 and the status stay on the register item, where a PM sets them once, not on fifty days.
 
+**R31. Back a day, forward a day.** From any day — its review screen, its signed page, its
+docket — the day before and the day after are one tap away (`src/components/day-nav.tsx`,
+`loadDayNeighbours`). "The day before" is the previous day *recorded* on the job, not the previous
+calendar date: a rest day or a day nobody wrote up is not a page, so it is not a stop. Each day is
+its current version — a corrected day shows the correction, never the superseded original. The
+docket view steps to the next docket; the day view steps to the next day's page, which routes a
+draft to whoever may edit it and to a read-only view for everyone else. The ends say so ("First
+day", "Latest day") rather than disappearing, so a thumb does not hunt for a button that was
+there a moment ago.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;
