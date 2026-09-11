@@ -1125,6 +1125,17 @@ phone's clock — the database now stamps it on prestarts and talks, so a wrong 
 send cannot forge a receipt time; the phone's clock lives in `completed_on_device_at` where it
 belongs.
 
+**R27. The dayworks sheet asks for what a supervisor has at knock-off.** The docket number is
+chased after signing from the claims screen and prints as "docket to chase" until it lands, so a
+box for it on the sheet asked for a number nobody had yet. It is off the form; the column stays
+for what was typed before it went. Plant on a daywork is picked from the machines on this job,
+with a box for the small plant that never reaches a register — a Stihl saw, a plate compactor —
+both landing in the one text the sheet prints. And because dayworks belong to the day they were
+done, the tab offers a date: an open draft for that day opens on review, a signed day is told a
+correction is the way, a day with nothing yet is started. The owner's words were "I need to
+backdate it"; the answer in this app is never a back-dated row on today, it is the right day's
+diary.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;
