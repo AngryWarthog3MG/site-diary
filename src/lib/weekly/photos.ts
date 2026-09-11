@@ -90,8 +90,18 @@ export async function loadWeeklyPhotos(
     days.push(day);
   }
 
-  const total = wanted.length;
-  const take = wanted.slice(0, MAX_WEEKLY_PHOTOS);
+  // One print per photograph per day. A photo taken on a daywork is also the
+  // day's photo (same file, both places); the daily appendix lists it under
+  // each, the weekly shows it once, with the item it belongs to.
+  const seen = new Set<string>();
+  const distinct = wanted.filter((w) => {
+    const key = `${w.day.date}:${w.path}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+  const total = distinct.length;
+  const take = distinct.slice(0, MAX_WEEKLY_PHOTOS);
   for (const item of take) {
     const { data: file } = await supabase.storage.from(PHOTO_BUCKET).download(item.path);
     if (!file) continue;
