@@ -1201,6 +1201,18 @@ Codex (pass 12) added two things the same day: a blank is *asked about* on revie
 warning, never a block, because "I don't know" is an honest answer — and the client sheet totals
 variation hours as it already did dayworks, so the sheet sent for sign-off does not undercount.
 
+**R33. The weekly carries the week's photographs.** The owner asked for the photos being
+uploaded to appear on the weekly summary, and for the dayworks table to lose its docket column
+(the docket left the day form in R27 and is chased on the client sheet). Photographs are the
+evidence a PM forwards, so they are embedded, not linked — the same archival rule as the daily
+appendix — grouped by day, each with the item it belongs to (a variation's number, a daywork's
+description, a concrete docket's pour). Two things keep it a document rather than a download. A
+photo that sits on a daywork and on the day is the same file in two places; the weekly prints it
+once. And the images are re-encoded inside Chromium before printing (`img[data-shrink]` in the
+shared renderer): this week's twenty-five phone photographs weigh 34 MB in storage and 4 MB in
+the report. The daily docket carries no such mark, so its bytes are untouched — the determinism
+check says so. Eighty photographs is the cap; the remainder is counted and left in the dockets.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;

@@ -92,7 +92,9 @@ improvising; the register once shipped dead because a live smoke test was skippe
   1–50); the trigger registers by number, never by words or a client reference. Rows on days signed
   before the column existed carry theirs through the link (`public.variation_number`) — read that,
   never assume the column
-- `src/lib/weekly/`, `src/lib/monthly/` — reports
+- `src/lib/weekly/`, `src/lib/monthly/` — reports. `weekly/photos.ts` gathers the week's photographs (embedded,
+  one print per photo per day, capped); `img[data-shrink]` in `src/lib/pdf/render.ts` re-encodes marked images
+  before printing — never mark an image in the daily docket, its bytes must not change
 - `supabase/migrations/` — append only; never edit an applied migration
 - `README.md` — the design record, including why each decision went the way it did.
   Read the relevant section before changing behaviour in that area.
