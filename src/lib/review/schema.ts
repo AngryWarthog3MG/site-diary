@@ -238,6 +238,7 @@ export function reviewBlockingGaps(payload: ReviewPayload): string[] {
 export type ReviewQualityWarning =
   | 'labour_missing_hours'
   | 'plant_missing_hours'
+  | 'variation_missing_hours'
   | 'delay_people_without_cause'
   | 'pour_volume_without_docket'
   | 'quantity_missing_unit'
@@ -278,6 +279,11 @@ export function reviewQualityWarnings(payload: ReviewPayload, context: ReviewCon
   }
   if (payload.plant.some((item) => item.hours == null)) {
     warnings.add('plant_missing_hours');
+  }
+  // Hours on a variation are the day's fact (R32); the model does not hear
+  // them yet, so a blank is asked about — never blocked, never guessed.
+  if (payload.variations.some((item) => item.hours == null)) {
+    warnings.add('variation_missing_hours');
   }
   if (payload.delays.some((item) => item.personnel_affected != null && !item.cause?.trim())) {
     warnings.add('delay_people_without_cause');
@@ -371,6 +377,8 @@ export const WARNING_PROMPTS: Record<string, string> = {
     'A concrete pour has volume but no docket number or docket photo. Attach the docket where possible.',
   quantity_missing_unit:
     'A quantity has a number but no unit. Add the unit so the total makes sense later.',
+  variation_missing_hours:
+    'A variation has no hours on it. Add how long the crew was on it today, or leave it blank if you do not know — the register adds the days up.',
   weather_impact_without_weather_delay:
     'Weather impact is described, but there is no weather delay item. Check whether a delay should be added.',
   weather_delay_without_impact:
@@ -386,6 +394,7 @@ export const WARNING_PROMPTS: Record<string, string> = {
 export const WARNING_GROUPS: Partial<Record<ReviewQualityWarning, ItemGroup | 'weather'>> = {
   labour_missing_hours: 'labour',
   plant_missing_hours: 'plant',
+  variation_missing_hours: 'variations',
   delay_people_without_cause: 'delays',
   pour_volume_without_docket: 'pours',
   quantity_missing_unit: 'quantities',

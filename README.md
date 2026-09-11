@@ -1197,6 +1197,9 @@ column is nullable and conditional in the hash; unstated prints a dash, and a da
 nothing adds nothing to the total — a blank is not a zero. The docket carries a Hours column and
 a total, so the printed day and the register agree to the quarter hour. Extraction does not yet
 hear it: that goes with `crew` into the next prompt version and its one eval run.
+Codex (pass 12) added two things the same day: a blank is *asked about* on review — a soft
+warning, never a block, because "I don't know" is an honest answer — and the client sheet totals
+variation hours as it already did dayworks, so the sheet sent for sign-off does not undercount.
 
 ## Not built, and deliberately so
 

@@ -38,6 +38,7 @@ export function ClientSheet({
   const supervisor = signatures.find((s) => s.role === 'supervisor') ?? null;
   const client = signatures.find((s) => s.role === 'client') ?? null;
   const totalHours = dayworks.reduce((sum, r) => sum + (Number(r.hours) || 0), 0);
+  const variationHours = variations.reduce((sum, r) => sum + (Number(r.hours) || 0), 0);
 
   return (
     <article className="docket csheet">
@@ -122,6 +123,12 @@ export function ClientSheet({
                 </tr>
               ))}
             </tbody>
+            <tfoot>
+              <tr>
+                <td colSpan={3}>Total hours</td>
+                <td className="n mono">{num(variationHours)}</td>
+              </tr>
+            </tfoot>
           </table>
         )}
       </section>
