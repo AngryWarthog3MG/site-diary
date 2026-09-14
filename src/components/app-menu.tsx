@@ -92,6 +92,7 @@ export function AppMenu({ slotId }: { slotId: string }) {
           {see('claims') && item(`/claims${q}`, 'Claims', 'Delays, variations, dayworks')}
           {see('variations') && item(`/variations${q}`, 'Variation register', 'V-001 to V-050 — each one from raised to paid')}
           {see('progress') && item(`/progress${q}`, 'Progress', 'How far along each area is')}
+          {see('safety') && item(`/safety${q}`, 'Safety', 'Open actions, expiring tickets, injuries and rates — read from the record')}
         </div>
       </section>
 

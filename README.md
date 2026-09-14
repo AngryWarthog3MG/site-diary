@@ -1361,6 +1361,21 @@ role requires. Codex's review of document control landed with it: an offline ack
 version superseded before it reached the server is dropped rather than retried forever, the
 controlled-documents bucket is walked by the nightly check, and a document must be a PDF or a scan.
 
+**R43. The safety dashboard has no table of its own.** The tenth and last module of the plan, and the
+reason it was built last: every figure on it is read from the nine before it, so there is nothing to
+type, nothing to forget to update, and nothing that can disagree with the record. On site now, the
+prestart, permits live and permits past their window, plant tagged out; corrective actions open and
+overdue across incidents and inspections, listed with owner and date; injuries split into medical
+treatment or worse and first aid, near misses, hazards, notifiable events, the hours worked on signed
+diaries and a rate per million hours that says what it divides by — it is not an LTIFR, because
+lost-time days are not recorded, and the page says so rather than let a client assume; days since the
+last injury; six months of reports as bars; and everything expiring or outstanding — tickets,
+subcontractor paperwork, SWMS not signed by everyone, documents not read by everyone — each with a
+link to where it is fixed. A one-page PDF of the same for the monthly report. Codex's review of the
+training matrix landed with it: a custom competency with a validity expires from its issue date, a
+name that holds two roles owes both, a retired competency that a role still requires keeps showing
+its gap, and a photo that uploads but fails to link says so.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;

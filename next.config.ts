@@ -48,6 +48,7 @@ const nextConfig: NextConfig = {
     '/api/permits/*/pdf': CHROMIUM,
     '/api/gate/sign': CHROMIUM,
     '/api/training/pdf': CHROMIUM,
+    '/api/safety/pdf': CHROMIUM,
     // Weekly (both), monthly bundle, and the cron that generates them.
     '/api/reports/**': CHROMIUM,
     '/api/ops/check': CHROMIUM,

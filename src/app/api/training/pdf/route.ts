@@ -25,14 +25,14 @@ export async function GET(request: Request) {
   const today = perthToday();
   const [{ data: crew }, { data: tickets }, { data: reqs }, { data: custom }] = await Promise.all([
     supabase.from('crew').select('name, role').eq('project_id', projectId).eq('active', true),
-    supabase.from('crew_tickets').select('person_name, ticket_type, expires_on, active').eq('org_id', org.id),
+    supabase.from('crew_tickets').select('person_name, ticket_type, expires_on, active, issued_on').eq('org_id', org.id),
     supabase.from('competency_requirements').select('role, competency').eq('org_id', org.id),
-    supabase.from('org_competencies').select('key, label').eq('org_id', org.id).eq('active', true),
+    supabase.from('org_competencies').select('key, label, valid_months, active').eq('org_id', org.id),
   ]);
   const crewList = ((crew ?? []) as Array<{ name: string; role: string | null }>);
   const norm = (n: string) => n.trim().toLowerCase().replace(/\s+/g, ' ');
-  const people = mergePeople(crewList, ((tickets ?? []) as Array<TicketFacts & { person_name: string }>).filter((t) => crewList.some((c) => norm(c.name) === norm(t.person_name))));
-  const { rows, columns } = buildMatrix(people, competencies((custom ?? []) as Array<{ key: string; label: string }>), (reqs ?? []) as Array<{ role: string; competency: string }>, today);
+  const people = mergePeople(crewList, ((tickets ?? []) as Array<TicketFacts & { person_name: string; issued_on: string | null }>).filter((t) => crewList.some((c) => norm(c.name) === norm(t.person_name))));
+  const { rows, columns } = buildMatrix(people, competencies((custom ?? []) as Array<{ key: string; label: string; valid_months: number | null; active: boolean }>), (reqs ?? []) as Array<{ role: string; competency: string }>, today);
   const mark: Record<string, string> = { current: '●', expiring: '◔', expired: '✕', missing: '' };
   const html = ['<!doctype html>', '<html lang="en-AU"><head><meta charset="utf-8">', `<title>Training matrix — ${esc(project.name)}</title>`,
     `<style>${EMBEDDED_FONT_CSS}</style>`, `<style>${DOCKET_CSS}</style>`,

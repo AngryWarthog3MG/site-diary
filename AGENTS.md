@@ -137,6 +137,11 @@ improvising; the register once shipped dead because a live smoke test was skippe
   keyed) and `competency_requirements` (role → competency; role normalised). Records stay in `crew_tickets`. Screens
   `/training` (job or whole company; tap a cell to record), `/training/requirements`; PDF GET `/api/training/pdf?project`;
   nightly `tickets=1` also emails `trainingGaps()`
+- `src/lib/safety/` — the dashboard: `stats.ts` (pure: `classify` injuries MTI/FAI, `injurySummary` with the
+  rate per million labour hours, `daysSinceLastInjury`, `monthBuckets`, `overdue`), `load.ts` (one gather under the
+  caller's RLS across sign-ins, prestarts, plant, permits, incidents, inspections, tickets, subcontractors, SWMS,
+  documents, labour hours). Screen `/safety`; GET `/api/safety/pdf?project`. No tables of its own — every number
+  is read from the modules, never typed
 - `src/lib/calendar.ts` — `isRestDay`: weekends with nothing recorded are rest days, not holes. One definition for
   the screens, the weekly and the reminder
 - `src/lib/claims/` — the claims register loader and the variation register (`register.ts`:

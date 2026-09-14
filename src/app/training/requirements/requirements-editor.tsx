@@ -31,6 +31,8 @@ export function RequirementsEditor({ orgId, userId, roles, requirements, compete
     setLabel(''); setMonths('');
   });
   const retireCustom = (id: string, active: boolean) => run(async () => {
+    const c = custom.find((x) => x.id === id);
+    if (active && c && requirements.some((r) => r.competency === c.key)) throw new Error(`${c.label} is still required by a role — untick it there first.`);
     const { error: e } = await createClient().from('org_competencies').update({ active: !active }).eq('id', id); if (e) throw new Error(e.message);
   });
   return (

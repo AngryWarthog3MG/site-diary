@@ -1224,13 +1224,13 @@ async function trainingGaps(): Promise<Record<string, unknown>> {
   for (const org of orgs ?? []) {
     const [{ data: reqs }, { data: custom }, { data: tickets }, { data: crew }] = await Promise.all([
       admin.from('competency_requirements').select('role, competency').eq('org_id', org.id),
-      admin.from('org_competencies').select('key, label').eq('org_id', org.id).eq('active', true),
-      admin.from('crew_tickets').select('person_name, ticket_type, expires_on, active').eq('org_id', org.id),
+      admin.from('org_competencies').select('key, label, valid_months, active').eq('org_id', org.id),
+      admin.from('crew_tickets').select('person_name, ticket_type, expires_on, active, issued_on').eq('org_id', org.id),
       admin.from('crew').select('name, role, project:projects!inner(org_id, active)').eq('project.org_id', org.id).eq('project.active', true).eq('active', true),
     ]);
     if (!reqs || reqs.length === 0) continue;
-    const people = mergePeople((crew ?? []) as Array<{ name: string; role: string | null }>, (tickets ?? []) as Array<{ person_name: string; ticket_type: string; expires_on: string | null; active: boolean }>);
-    const { rows } = buildMatrix(people, competencies((custom ?? []) as Array<{ key: string; label: string }>), reqs as Array<{ role: string; competency: string }>, today);
+    const people = mergePeople((crew ?? []) as Array<{ name: string; role: string | null }>, (tickets ?? []) as Array<{ person_name: string; ticket_type: string; expires_on: string | null; active: boolean; issued_on: string | null }>);
+    const { rows } = buildMatrix(people, competencies((custom ?? []) as Array<{ key: string; label: string; valid_months: number | null; active: boolean }>), reqs as Array<{ role: string; competency: string }>, today);
     const short = rows.filter((r) => r.gaps.length > 0);
     results.push({ org: org.code, people: rows.length, short: short.length });
     const esc = (v: string) => v.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');

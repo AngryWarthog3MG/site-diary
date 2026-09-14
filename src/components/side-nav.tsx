@@ -30,6 +30,7 @@ const ITEMS: Array<{ href: string; label: string; screen: Screen }> = [
   { href: '/claims', label: 'Claims', screen: 'claims' },
   { href: '/variations', label: 'Variation register', screen: 'variations' },
   { href: '/progress', label: 'Progress', screen: 'progress' },
+  { href: '/safety', label: 'Safety', screen: 'safety' },
   { href: '/signin', label: 'Site sign-in', screen: 'signin' },
   { href: '/prestart', label: 'Prestarts', screen: 'prestart' },
   { href: '/swms', label: 'SWMS & JSA', screen: 'swms' },

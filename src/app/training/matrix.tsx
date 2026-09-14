@@ -32,8 +32,11 @@ export function Matrix({ rows, columns, allCompetencies, orgId, projectId, userI
         const c = await compressPhoto(photo);
         const path = `${orgId}/${id}.${c.extension}`;
         const { error: upErr } = await supabase.storage.from('crew-tickets').upload(path, c.blob, { contentType: c.contentType, upsert: false });
-        if (!upErr) await supabase.from('crew_tickets').update({ photo_path: path }).eq('id', id);
-        else setError(`Saved; the photo did not upload: ${upErr.message}`);
+        if (upErr) setError(`Saved; the photo did not upload: ${upErr.message}`);
+        else {
+          const { data: linked, error: linkErr } = await supabase.from('crew_tickets').update({ photo_path: path }).eq('id', id).select('id');
+          if (linkErr || !linked || linked.length === 0) setError('Saved; the photo uploaded but could not be linked to the ticket — the nightly check will report it.');
+        }
       }
       setAdding(null); setNo(''); setIssued(''); setExpires(''); setPhoto(null);
       router.refresh();

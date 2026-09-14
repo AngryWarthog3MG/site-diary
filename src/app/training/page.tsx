@@ -27,14 +27,14 @@ export default async function TrainingPage({ searchParams }: { searchParams: Pro
     wholeCompany ? crewQuery.eq('project.org_id', orgId) : crewQuery.eq('project_id', current.project_id),
     supabase.from('crew_tickets').select('person_name, ticket_type, expires_on, active, issued_on').eq('org_id', orgId),
     supabase.from('competency_requirements').select('role, competency').eq('org_id', orgId),
-    supabase.from('org_competencies').select('key, label').eq('org_id', orgId).eq('active', true).order('label'),
+    supabase.from('org_competencies').select('key, label, valid_months, active').eq('org_id', orgId).order('label'),
   ]);
   const today = perthToday();
   const crewList = ((crew ?? []) as Array<{ name: string; role: string | null }>).map((c) => ({ name: c.name, role: c.role }));
   const ticketRows = ((tickets ?? []) as Array<TicketFacts & { person_name: string; issued_on: string | null }>);
   // On a job: its crew, with their tickets. Whole company: everyone with a ticket too.
   const people = mergePeople(crewList, wholeCompany ? ticketRows : ticketRows.filter((t) => crewList.some((c) => c.name.trim().toLowerCase().replace(/\s+/g, ' ') === t.person_name.trim().toLowerCase().replace(/\s+/g, ' '))));
-  const comps = competencies((custom ?? []) as Array<{ key: string; label: string }>);
+  const comps = competencies((custom ?? []) as Array<{ key: string; label: string; valid_months: number | null; active: boolean }>);
   const { rows, columns } = buildMatrix(people, comps, (reqs ?? []) as Array<{ role: string; competency: string }>, today);
   const q = `?project=${current.project_id}`;
   const canManage = canAuthorEntries(current.role);
