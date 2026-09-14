@@ -20,7 +20,9 @@ export type OutboxKind =
   | 'prestart_finish'
   | 'talk_attendee'
   | 'talk_finish'
-  | 'plant_prestart';
+  | 'plant_prestart'
+  | 'signin_in'
+  | 'signin_out';
 
 export type OutboxState = 'queued' | 'syncing' | 'blocked' | 'failed';
 
@@ -49,6 +51,8 @@ export const KIND_LABEL: Record<OutboxKind, string> = {
   talk_attendee: 'a toolbox sign-on',
   talk_finish: 'a finished toolbox talk',
   plant_prestart: 'a plant check',
+  signin_in: 'a site sign-in',
+  signin_out: 'a site sign-out',
 };
 
 const CHANGED = 'outbox-changed';

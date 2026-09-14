@@ -1808,7 +1808,7 @@ function CrewShortcuts({
     let cancelled = false;
     void (async () => {
       const supabase = createClient();
-      const [{ data: prev }, { data: keywords }, { data: crewRows }] = await Promise.all([
+      const [{ data: prev }, { data: keywords }, { data: crewRows }, { data: gate }] = await Promise.all([
         supabase
           .from('entries')
           .select('id, entry_no, entry_date')
@@ -1832,9 +1832,25 @@ function CrewShortcuts({
           .eq('active', true)
           .order('sort_order')
           .order('name'),
+        // Whoever signed in at the gate that day is on the list too, even if
+        // they are not on the crew roster — a subbie who worked is labour.
+        supabase
+          .from('site_signins')
+          .select('person_name, person_kind, company')
+          .eq('project_id', projectId)
+          .eq('signin_date', entryDate)
+          .order('signed_in_on_device_at'),
       ]);
       if (cancelled) return;
-      setRoster(((crewRows ?? []) as Array<{ name: string; role: string | null }>));
+      const rosterRows = ((crewRows ?? []) as Array<{ name: string; role: string | null }>).slice();
+      const rosterKeys = new Set(rosterRows.map((r) => r.name.trim().toLowerCase()));
+      for (const g of (gate ?? []) as Array<{ person_name: string; person_kind: string; company: string | null }>) {
+        const key = g.person_name.trim().toLowerCase();
+        if (rosterKeys.has(key)) continue;
+        rosterKeys.add(key);
+        rosterRows.push({ name: g.person_name, role: g.company ? `${g.company} · signed in` : 'signed in at the gate' });
+      }
+      setRoster(rosterRows);
 
       const names = new Set((keywords ?? []).map((k) => String(k.term)));
       if (prev) {

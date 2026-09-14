@@ -3531,3 +3531,24 @@ main.sheet--wide .vr-list { grid-template-columns: repeat(auto-fill, minmax(22re
 }
 .review-hero + .daynav { margin-top: 0.85rem; }
 .docket-daynav { max-width: 46rem; margin: 0.75rem auto 0; padding: 0 1rem; }
+
+/* Site sign-in: the gate on the phone. */
+.signin { margin-top: 0.5rem; }
+.signin__head { display: flex; align-items: baseline; justify-content: space-between; gap: 0.75rem; }
+.signin__title { margin: 1rem 0 0.5rem; font-size: 1.0625rem; font-weight: 600; }
+.signin__title .count { display: inline-block; min-width: 1.6em; margin-left: 0.35rem; padding: 0.05rem 0.45rem; border-radius: 999px; background: var(--teal); color: #fff; font-size: 0.8125rem; text-align: center; }
+.signin__list { list-style: none; margin: 0; padding: 0; }
+.signin__row { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; padding: 0.6rem 0; border-bottom: 1px solid var(--ink-12); }
+.signin__row--pending { opacity: 0.75; }
+.signin__who { display: flex; flex-direction: column; gap: 0.15rem; min-width: 0; }
+.signin__name { font-weight: 600; }
+.signin__meta { font-size: 0.8125rem; color: var(--ink-60); }
+.signin__flag { display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.06em; color: #9A2B2B; }
+.signin__ok { font-size: 0.75rem; color: var(--ink-60); }
+.signin__actions { display: flex; flex-direction: column; align-items: flex-end; gap: 0.25rem; }
+.signin__out { width: auto; min-height: 40px; padding: 0.35rem 0.9rem; font-size: 0.875rem; }
+.signin__undo { font-size: 0.75rem; }
+.signin__add { margin-top: 1.25rem; }
+.signin__grid { display: grid; grid-template-columns: 1fr auto; gap: 0.5rem; }
+.signin__list--left .signin__name { font-weight: 500; }
+.daynav__today { align-self: center; font-size: 0.875rem; color: var(--ink-60); }

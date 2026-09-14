@@ -80,6 +80,27 @@ async function replay(item: OutboxItem): Promise<void> {
       }
       return;
     }
+    case 'signin_in': {
+      // The row's id and the phone's time were chosen at the gate; the
+      // database stamps the arrival and decides `inducted` itself.
+      const { error } = await supabase.from('site_signins').insert({
+        id: item.subjectId, project_id: item.projectId, signin_date: p.date, person_name: p.name,
+        company: p.company ?? null, person_kind: p.kind, signed_in_on_device_at: p.at, signed_in_by: p.by,
+      });
+      if (error && !isAlreadyDone(error)) throw error;
+      return;
+    }
+    case 'signin_out': {
+      const { data, error } = await supabase.from('site_signins')
+        .update({ signed_out_at: new Date().toISOString(), signed_out_on_device_at: p.at }).eq('id', item.subjectId).select('id');
+      if (error && !isFrozen(error)) throw error;
+      if (!error && (!data || data.length === 0)) {
+        const { data: row } = await supabase.from('site_signins').select('signed_out_at').eq('id', item.subjectId).maybeSingle();
+        if (!row) throw Object.assign(new Error('That sign-in no longer exists.'), { code: '42501' });
+        if (!row.signed_out_at) throw Object.assign(new Error('The sign-out could not be recorded from this account.'), { code: '42501' });
+      }
+      return;
+    }
     case 'plant_prestart': {
       if (p.putOnJob) {
         const { error } = await supabase.from('project_plant')

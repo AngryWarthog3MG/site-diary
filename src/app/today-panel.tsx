@@ -75,6 +75,7 @@ export function TodayPanel({
   const [taggedOut, setTaggedOut] = useState<string[]>([]);
   const [prestart, setPrestart] = useState<{ id: string; done: boolean; signed: number } | null>(null);
   const [tomorrowPrestart, setTomorrowPrestart] = useState<{ id: string; date: string } | null>(null);
+  const [onSite, setOnSite] = useState(0);
   const [weather, setWeather] = useState<WeatherRow | null>(null);
   const [weatherNote, setWeatherNote] = useState<string | null>(null);
   const [attribution, setAttribution] = useState<string | null>(null);
@@ -155,6 +156,17 @@ export function TodayPanel({
           .limit(1)
           .maybeSingle();
         setTomorrowPrestart(tm ? { id: tm.id as string, date: tm.prestart_date as string } : null);
+      }
+
+      {
+        // Who is on site right now — the gate's list, for everyone on the job.
+        const { count } = await supabase
+          .from('site_signins')
+          .select('id', { count: 'exact', head: true })
+          .eq('project_id', projectId)
+          .eq('signin_date', today)
+          .is('signed_out_at', null);
+        setOnSite(count ?? 0);
       }
 
       {
@@ -523,6 +535,12 @@ export function TodayPanel({
           ) : (
             <Link href={`/prestart/new?project=${projectId}`}>Start it</Link>
           )}
+        </div>
+      )}
+      {!loading && (
+        <div className={`prestart-row ${onSite > 0 ? 'prestart-row--done' : ''}`}>
+          <span>{onSite > 0 ? `On site now · ${onSite}` : 'Nobody signed in at the gate yet'}</span>
+          <Link href={`/signin?project=${projectId}`}>{canPrestart ? 'Sign-in' : 'Look'}</Link>
         </div>
       )}
       {!loading && canPrestart && tomorrowPrestart && (
