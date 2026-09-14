@@ -1288,6 +1288,21 @@ across both. Four standard checklists ship (site walk, environmental, quality, p
 first inspection can happen the day the module lands; a company copies and edits them into its own.
 Not built: scoring, scheduled inspections with a reminder, and inspections tied to a permit.
 
+**R38. A permit is two signatures over every control, for one window.** The fifth safety module.
+The shape is the paper permit the industry already trusts, made honest by the database: the issuer
+walks the controls for that kind of work (hot work, excavation, confined space, heights, electrical)
+and every one is answered yes or not applicable — "unanswered" is not an option — then the issuer
+signs and hands the phone to the permit holder, who signs to accept. Only then is it issued,
+numbered PTW-001… in order, and frozen. It ends with a close-out — the area left safe, the fire
+watch done, the isolations removed — signed by whoever closes it; or a cancellation, with a reason.
+A permit past its window is not quietly expired: it stays on the list in red until someone closes
+it, because work that ran over is exactly what a permit exists to catch. The permit names the SWMS
+in use and warns when a listed worker has not signed on to it. Windows are bounded at issue (start
+within a week, run at most thirty days) so a typo cannot issue a permit for 2036. Codex's review of
+inspections landed the same day: an open inspection belongs to whoever started it, actions attach
+only once it is signed, the signature is uploaded before the row so a refused upload leaves nothing
+half-made, and a saved-but-unsigned inspection can be signed later from its own page.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;

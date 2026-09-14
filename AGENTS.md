@@ -108,6 +108,12 @@ improvising; the register once shipped dead because a live smoke test was skippe
   then frozen; items are a snapshot of the template), `inspection_actions` (same shape and rules as incident
   actions). Inspecting = `app.can_run_talks`; actions = `app.can_manage_incidents`. Outbox kind `inspection_submit`
   (photos + signature as blobs, one item). The orphan check reads paths inside `items` JSON (addRef recurses)
+- `src/lib/permits/` — permits to work: `model.ts` (kinds, per-kind controls before work and at close-out,
+  `permitRef` PTW-001, `live`/`expired`), `pdf.tsx`. Table `permits`: born open; issued only when every control is
+  yes/N/A, both signatures sit in its own folder and the window is sane (`app.permit_controls_answered`,
+  `app.permit_path_ok`); then frozen but for close-out (every check + signature) or cancel (with a reason); then
+  frozen entirely. A permit past `valid_to` still counts until closed. Raising/closing = `app.can_manage_incidents`.
+  Outbox kinds `permit_issue` (two signature blobs) and `permit_close`
 - `src/lib/calendar.ts` — `isRestDay`: weekends with nothing recorded are rest days, not holes. One definition for
   the screens, the weekly and the reminder
 - `src/lib/claims/` — the claims register loader and the variation register (`register.ts`:
