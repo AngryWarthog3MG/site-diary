@@ -1303,6 +1303,19 @@ inspections landed the same day: an open inspection belongs to whoever started i
 only once it is signed, the signature is uploaded before the row so a refused upload leaves nothing
 half-made, and a saved-but-unsigned inspection can be signed later from its own page.
 
+**R39. The gate code opens one thing.** A visitor at a gate with nobody standing there scans the
+sign and signs themselves in on their own phone: name, company, why they are here, a mobile for the
+roll call, the site rules read and accepted, a signature. No account, no app — the code on the sign
+is the key, and it opens exactly one thing: this job's sign-in. The server does the writing with the
+service role, marks the row *self-signed* with no account behind it, and the database refuses that
+combination from anyone who is signed in, so a supervisor's tap and a visitor's own sign-in are told
+apart forever. The visitor's phone remembers the sign-in and offers "sign out" on the way back
+through; the id it holds is the only key, so nobody signs out anybody else. The code is rotatable —
+print a new sign, the old one stops working the moment the new code saves — and the gate refuses to
+sign in sixty people in ten minutes, which is not a gate, it is a script. Codex's review of permits
+landed with it: a permit issued with no signal is judged by when the phone issued it, not when it
+reached the server hours later.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;

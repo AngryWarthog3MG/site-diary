@@ -114,6 +114,12 @@ improvising; the register once shipped dead because a live smoke test was skippe
   `app.permit_path_ok`); then frozen but for close-out (every check + signature) or cancel (with a reason); then
   frozen entirely. A permit past `valid_to` still counts until closed. Raising/closing = `app.can_manage_incidents`.
   Outbox kinds `permit_issue` (two signature blobs) and `permit_close`
+- `src/lib/gate/` — the visitor gate: `model.ts` (`newGateToken`, `gateUrl`, `DEFAULT_RULES`, `validateGateSignIn`).
+  Table `gate_tokens` (one active per job; rotate = revoke + new). Public routes `/gate/[token]` and
+  `/api/gate/[token]/{signin,signout}` (listed in `PUBLIC_PATHS`; service role; rate limit 60/10 min per job) write
+  `site_signins` rows with `self_signed = true` and `signed_in_by null` — the trigger refuses that combination from
+  any signed-in account. The visitor's phone keeps the row id (localStorage) as its only key to sign out.
+  `/signin/gate` shows the QR (`qrcode` → SVG) and prints the A4 sign (`/api/gate/sign`)
 - `src/lib/calendar.ts` — `isRestDay`: weekends with nothing recorded are rest days, not holes. One definition for
   the screens, the weekly and the reminder
 - `src/lib/claims/` — the claims register loader and the variation register (`register.ts`:
