@@ -1379,6 +1379,9 @@ followed: days since the last injury reads the last injury the job ever recorded
 the twelve-month window, so a job 400 days clear says 400 rather than "none"; an injury recorded with
 no treatment is its own figure, never counted as first aid; the action table says how many it leaves
 out; and a competency's validity clamps to month end, so 31 January plus one month is 28 February.
+The pass after that caught the window the action count still lived in: an open corrective action
+on an inspection from 120 days ago is still open, so the actions are now read from the action
+tables themselves with no date on them, and only the injury figures keep the twelve-month window.
 
 ## Not built, and deliberately so
 
