@@ -1374,7 +1374,11 @@ subcontractor paperwork, SWMS not signed by everyone, documents not read by ever
 link to where it is fixed. A one-page PDF of the same for the monthly report. Codex's review of the
 training matrix landed with it: a custom competency with a validity expires from its issue date, a
 name that holds two roles owes both, a retired competency that a role still requires keeps showing
-its gap, and a photo that uploads but fails to link says so.
+its gap, and a photo that uploads but fails to link says so. Its review of the dashboard itself
+followed: days since the last injury reads the last injury the job ever recorded, not the last within
+the twelve-month window, so a job 400 days clear says 400 rather than "none"; an injury recorded with
+no treatment is its own figure, never counted as first aid; the action table says how many it leaves
+out; and a competency's validity clamps to month end, so 31 January plus one month is 28 February.
 
 ## Not built, and deliberately so
 
