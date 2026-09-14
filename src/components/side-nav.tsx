@@ -42,6 +42,7 @@ const ITEMS: Array<{ href: string; label: string; screen: Screen }> = [
   { href: '/ask', label: 'Ask', screen: 'ask' },
   { href: '/documents', label: 'Job documents', screen: 'documents' },
   { href: '/subcontractors', label: 'Subcontractors', screen: 'subcontractors' },
+  { href: '/training', label: 'Training matrix', screen: 'training' },
 ];
 
 /** Tiles every role has, drawn until the role is known. */

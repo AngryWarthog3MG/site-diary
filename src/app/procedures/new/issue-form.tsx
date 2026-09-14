@@ -29,6 +29,9 @@ export function IssueForm({ orgId, projectId, userId, documentId, existingTitle 
       if (!documentId && !title.trim()) throw new Error('The document needs a title.');
       if (!file) throw new Error('Attach the document — a PDF.');
       if (file.size > 50 * 1024 * 1024) throw new Error('The file is over 50 MB.');
+      const ext0 = file.name.split('.').pop()?.toLowerCase() ?? '';
+      const okType = ['application/pdf', 'image/jpeg', 'image/png'].includes(file.type) || (!file.type && ['pdf', 'jpg', 'jpeg', 'png'].includes(ext0));
+      if (!okType) throw new Error('The document must be a PDF (or a JPEG/PNG scan).');
       const supabase = createClient();
       let docId = documentId ?? null;
       if (!docId) {
@@ -39,7 +42,8 @@ export function IssueForm({ orgId, projectId, userId, documentId, existingTitle 
       const versionId = crypto.randomUUID();
       const ext = file.name.split('.').pop()?.toLowerCase() || 'pdf';
       const path = `${orgId}/${docId}/${versionId}.${ext}`;
-      const { error: upErr } = await supabase.storage.from('controlled-docs').upload(path, file, { contentType: file.type || 'application/pdf', upsert: false });
+      const contentType = file.type || (ext0 === 'pdf' ? 'application/pdf' : ext0 === 'png' ? 'image/png' : 'image/jpeg');
+      const { error: upErr } = await supabase.storage.from('controlled-docs').upload(path, file, { contentType, upsert: false });
       if (upErr) throw new Error(`The file did not upload: ${upErr.message}`);
       const { error: vErr } = await supabase.from('document_versions').insert({ id: versionId, document_id: docId, file_path: path, summary: summary.trim() || null, issued_by: userId });
       if (vErr) { await supabase.storage.from('controlled-docs').remove([path]).catch(() => undefined); throw new Error(vErr.message); }

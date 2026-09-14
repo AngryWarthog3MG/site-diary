@@ -132,6 +132,11 @@ improvising; the register once shipped dead because a live smoke test was skippe
   first then row), `document_acknowledgements` (current version only, once per person, frozen; signature in
   `entry-photos` `{project}/document/{ack}/sig.png`). Issuing = `app.can_manage_crew`; acknowledging = `app.can_run_talks`.
   Outbox kind `doc_ack`. Screens under `/procedures` (not `/documents`, which is the job's reference documents for Ask)
+- `src/lib/training/` — the training matrix: `model.ts` (`competencies` = fixed ticket types + the org's own,
+  `cellFor`, `buildMatrix`, `mergePeople`; relative imports — Node-tested). Tables `org_competencies` (org's own,
+  keyed) and `competency_requirements` (role → competency; role normalised). Records stay in `crew_tickets`. Screens
+  `/training` (job or whole company; tap a cell to record), `/training/requirements`; PDF GET `/api/training/pdf?project`;
+  nightly `tickets=1` also emails `trainingGaps()`
 - `src/lib/calendar.ts` — `isRestDay`: weekends with nothing recorded are rest days, not holes. One definition for
   the screens, the weekly and the reminder
 - `src/lib/claims/` — the claims register loader and the variation register (`register.ts`:

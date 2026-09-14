@@ -1,3 +1,5 @@
+import { buildMatrix, competencies, mergePeople } from '@/lib/training/model';
+
 import { perthToday } from '@/lib/push/decide';
 import { compliance, DOC_LABEL, VERDICT_LABEL, type DocFacts } from '@/lib/subcontractors/model';
 import { notifyOffice, unnotifiedUrgent } from '@/lib/incidents/notify';
@@ -61,6 +63,7 @@ export async function GET(request: Request) {
   if (url.searchParams.get('orphans') === '1') report.orphans = await reconcileStorage();
   if (url.searchParams.get('tickets') === '1') report.tickets = await ticketDigest();
   if (url.searchParams.get('tickets') === '1') report.subcontractors = await subcontractorDigest();
+  if (url.searchParams.get('tickets') === '1') report.training = await trainingGaps();
   if (url.searchParams.get('errors') === '1') report.errors = await errorDigest();
   if (url.searchParams.get('monthly') === '1') {
     report.monthly = await sendMonthlyBundles(url.searchParams.get('force') === '1');
@@ -490,9 +493,16 @@ async function reconcileStorage(): Promise<Record<string, unknown>> {
   const subOrphans = subFiles.filter((f) => !subPaths.has(f.path)).map((f) => f.path);
   const subMissing = [...subPaths].filter((p) => !subFileSet.has(p));
 
+  // Controlled documents: a file with no version row is an issue that never landed.
+  const docFiles = await walk('controlled-docs');
+  const { data: versionRows } = await admin.from('document_versions').select('file_path');
+  const versionPaths = new Set((versionRows ?? []).map((r) => r.file_path as string));
+  const docOrphans = docFiles.filter((f) => !versionPaths.has(f.path)).map((f) => f.path);
+  const docMissing = [...versionPaths].filter((p) => !docFiles.some((f) => f.path === p));
+
   const fresh = unrecoverable.filter((u) => u.recent);
   let emailed = false;
-  if (attached.length > 0 || fresh.length > 0 || audioOrphans.length > 0 || ticketOrphans.length > 0 || subOrphans.length > 0 || subMissing.length > 0) {
+  if (attached.length > 0 || fresh.length > 0 || audioOrphans.length > 0 || ticketOrphans.length > 0 || subOrphans.length > 0 || subMissing.length > 0 || docOrphans.length > 0 || docMissing.length > 0) {
     const lines = [
       ...attached.map((p) => `<li>Put back on its day: <code>${p.split('/').pop()}</code> (${entries.get(p.split('/')[1])?.entry_date ?? '?'})</li>`),
       ...fresh.map((u) => `<li><b>Cannot be recovered:</b> ${u.reason} — <code>${u.path.split('/').pop()}</code> (${u.entryDate ?? '?'})</li>`),
@@ -500,6 +510,8 @@ async function reconcileStorage(): Promise<Record<string, unknown>> {
       ...ticketOrphans.map((p) => `<li><b>Ticket photo with no ticket:</b> <code>${p}</code></li>`),
       ...subOrphans.map((p) => `<li><b>Subcontractor file with no document:</b> <code>${p}</code></li>`),
       ...subMissing.map((p) => `<li><b>Subcontractor document whose file is gone:</b> <code>${p}</code></li>`),
+      ...docOrphans.map((p) => `<li><b>Controlled document file with no version:</b> <code>${p}</code></li>`),
+      ...docMissing.map((p) => `<li><b>Document version whose file is gone:</b> <code>${p}</code></li>`),
     ].join('');
     emailed = await fetch('https://api.resend.com/emails', {
       method: 'POST',
@@ -522,6 +534,10 @@ async function reconcileStorage(): Promise<Record<string, unknown>> {
     audio_orphans: audioOrphans,
     untranscribed,
     ticket_photo_orphans: ticketOrphans,
+    subcontractor_file_orphans: subOrphans,
+    subcontractor_files_missing: subMissing,
+    document_file_orphans: docOrphans,
+    document_files_missing: docMissing,
     emailed,
   };
 }
@@ -1195,4 +1211,41 @@ async function subcontractorDigest(): Promise<Record<string, unknown>> {
     }),
   }).then((r) => r.ok).catch(() => false);
   return { flagged: rows.length, emailed: sent };
+}
+
+
+/** Who is short of a competency their role requires, per organisation — emailed when any. */
+async function trainingGaps(): Promise<Record<string, unknown>> {
+  const admin = createAdminClient();
+  const today = perthToday();
+  const { data: orgs } = await admin.from('organisations').select('id, code');
+  const results: Array<Record<string, unknown>> = [];
+  const lines: string[] = [];
+  for (const org of orgs ?? []) {
+    const [{ data: reqs }, { data: custom }, { data: tickets }, { data: crew }] = await Promise.all([
+      admin.from('competency_requirements').select('role, competency').eq('org_id', org.id),
+      admin.from('org_competencies').select('key, label').eq('org_id', org.id).eq('active', true),
+      admin.from('crew_tickets').select('person_name, ticket_type, expires_on, active').eq('org_id', org.id),
+      admin.from('crew').select('name, role, project:projects!inner(org_id, active)').eq('project.org_id', org.id).eq('project.active', true).eq('active', true),
+    ]);
+    if (!reqs || reqs.length === 0) continue;
+    const people = mergePeople((crew ?? []) as Array<{ name: string; role: string | null }>, (tickets ?? []) as Array<{ person_name: string; ticket_type: string; expires_on: string | null; active: boolean }>);
+    const { rows } = buildMatrix(people, competencies((custom ?? []) as Array<{ key: string; label: string }>), reqs as Array<{ role: string; competency: string }>, today);
+    const short = rows.filter((r) => r.gaps.length > 0);
+    results.push({ org: org.code, people: rows.length, short: short.length });
+    const esc = (v: string) => v.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    for (const r of short) lines.push(`<li><b>${esc(r.name)}</b> (${esc(org.code as string)}${r.role ? `, ${esc(r.role)}` : ''}) — ${esc(r.gaps.join('; '))}</li>`);
+  }
+  if (lines.length === 0) return { results, emailed: false };
+  const sent = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${process.env.SMTP_PASS?.trim()}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      from: `Site Diary <${process.env.SMTP_SENDER ?? 'diary@kbsdailydiary.me'}>`,
+      to: ['mitchell.vanzyl@gmail.com'],
+      subject: `KBS Daily Diary: ${lines.length} ${lines.length === 1 ? 'person is' : 'people are'} short of a required competency`,
+      html: `<div style="font-family:Arial,sans-serif;max-width:600px"><p>Training gaps against each role's requirements, as of ${today}:</p><ul>${lines.join('')}</ul></div>`,
+    }),
+  }).then((r) => r.ok).catch(() => false);
+  return { results, emailed: sent };
 }

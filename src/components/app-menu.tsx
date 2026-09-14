@@ -117,6 +117,7 @@ export function AppMenu({ slotId }: { slotId: string }) {
         <p className="label">Setup</p>
         <div className="navgrid">
           {see('subcontractors') && item(`/subcontractors${q}`, 'Subcontractors', 'Insurances, SWMS and licences, chased before they lapse')}
+          {see('training') && item(`/training${q}`, 'Training matrix', 'Who holds what, what each role needs, what is expiring')}
           {see('settings') && item(`/settings${q}`, 'Settings', 'Hours, emails, crew and plant lists')}
           {me?.canRecord && item(`/settings/members${q}`, 'Who is on this job', 'Crew and PM access')}
           {me?.canRecord && item(`/settings/vocabulary${q}`, 'Words and names', 'Names and site terms')}

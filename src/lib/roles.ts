@@ -51,7 +51,7 @@ export function canExportReports(role: MemberRole): boolean {
 }
 
 export type Screen =
-  | 'today' | 'entries' | 'weekly' | 'prestart' | 'plant' | 'toolbox' | 'signin' | 'swms' | 'incidents' | 'inspections' | 'permits' | 'subcontractors' | 'procedures'
+  | 'today' | 'entries' | 'weekly' | 'prestart' | 'plant' | 'toolbox' | 'signin' | 'swms' | 'incidents' | 'inspections' | 'permits' | 'subcontractors' | 'procedures' | 'training'
   | 'claims' | 'variations' | 'progress' | 'ask' | 'documents' | 'settings';
 
 /** Which screens a role gets. Everything not listed for a role is refused, not just hidden. */

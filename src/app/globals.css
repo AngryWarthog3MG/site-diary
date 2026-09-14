@@ -3599,3 +3599,20 @@ main.sheet--wide .vr-list { grid-template-columns: repeat(auto-fill, minmax(22re
 .subbie__req { margin: 0.2rem 0; }
 .subbie__req--soon { color: #9A6A09; font-weight: 600; }
 .subbie__req--bad { color: #9A2B2B; font-weight: 600; }
+
+/* Training matrix. */
+.matrix__scroll { overflow-x: auto; margin: 0.75rem 0; }
+.matrix__table { border-collapse: collapse; font-size: 0.8125rem; }
+.matrix__table th, .matrix__table td { border: 1px solid var(--ink-12); padding: 0.3rem 0.4rem; }
+.matrix__person { text-align: left; min-width: 9rem; background: var(--paper); position: sticky; left: 0; }
+.matrix__col { height: 8.5rem; vertical-align: bottom; padding: 0.25rem; }
+.matrix__col span { display: inline-block; writing-mode: vertical-rl; transform: rotate(180deg); font-size: 0.7rem; font-weight: 600; color: var(--ink-60); white-space: nowrap; }
+.matrix__cell { text-align: center; width: 2rem; }
+.matrix__mark { font: inherit; background: none; border: 0; padding: 0.35rem 0.5rem; cursor: pointer; color: var(--ink-60); }
+.matrix__cell--current .matrix__mark { color: var(--teal); }
+.matrix__cell--expiring .matrix__mark { color: #9A6A09; }
+.matrix__cell--expired .matrix__mark { color: #9A2B2B; font-weight: 700; }
+.matrix__cell--required.matrix__cell--missing, .matrix__cell--required.matrix__cell--expired { background: #FDECEC; }
+.matrix__cell--required-on { background: var(--teal-tint, rgba(13,90,88,0.08)); }
+.matrix__cell--required-on .matrix__mark { color: var(--teal); font-weight: 700; }
+.matrix__row--gap .matrix__person { border-left: 3px solid #9A2B2B; }

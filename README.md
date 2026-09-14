@@ -1349,6 +1349,18 @@ pointing at nothing. Codex's review of subcontractors landed with it: a job enga
 organisation's subcontractors, a retired certificate stays retired, and an insurance with no expiry
 recorded is not evidence of cover — it is missing.
 
+**R42. The training matrix is the ticket list, laid out against what each role must hold.** The ninth
+safety module, and deliberately thin: the company already keeps every ticket by person and type, so
+the matrix adds only two facts — the competencies the company defines for itself (its own induction, a
+VOC it runs) and the competencies each role must hold — and computes the rest. Every cell is current,
+expiring within 30 days, expired or missing, from the dates alone; a cell goes red only where the
+person's role requires it and they do not hold it, so a labourer is not marked short of an excavator
+ticket. Roles come from the crew list, so the matrix follows what the supervisor already types. A
+tap on a cell records the ticket where the gap is. The nightly email names who is short of what their
+role requires. Codex's review of document control landed with it: an offline acknowledgement of a
+version superseded before it reached the server is dropped rather than retried forever, the
+controlled-documents bucket is walked by the nightly check, and a document must be a PDF or a scan.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;
