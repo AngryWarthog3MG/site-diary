@@ -1323,6 +1323,19 @@ does not reveal who is on site. One finding was accepted as designed: a permit s
 no signal and received at 17:00 is issued at 08:00 — the record prints both times, and that is the
 truth of it.
 
+**R40. A subcontractor's paperwork is judged from dates, at the gate.** The seventh safety module.
+The company keeps each subcontractor once — name, ABN, contact — with its documents and their
+expiry dates: public liability, workers' compensation and its SWMS are required; licences, other
+insurances, a safety plan and an induction record are kept alongside. Nothing is a judgement typed
+in a box: compliant, expiring, lapsed or missing is computed from the dates every time it is
+looked at, so the register, the gate and the nightly email can never disagree. It surfaces where
+it matters — when someone from that company signs in, the register row says LAPSED or PAPERWORK
+MISSING in red beside their name, and a company nobody has recorded is flagged too. A document is
+a record: a renewed certificate is added and the old one retired, never rewritten or deleted, so
+the question "what did you hold on the day of the incident" always has an answer. Engagement is
+per job with a scope and dates. Not built: a subcontractor portal where the company uploads its
+own renewals, and reading the expiry off the certificate with the model.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;

@@ -3594,3 +3594,8 @@ main.sheet--wide .vr-list { grid-template-columns: repeat(auto-fill, minmax(22re
 .gate-admin__qr { width: min(260px, 70vw); margin: 0 auto; }
 .gate-admin__qr svg { width: 100%; height: auto; }
 .gate-admin__url { font-size: 0.8125rem; word-break: break-all; margin: 0.5rem 0 0.25rem; }
+
+/* Subcontractors. */
+.subbie__req { margin: 0.2rem 0; }
+.subbie__req--soon { color: #9A6A09; font-weight: 600; }
+.subbie__req--bad { color: #9A2B2B; font-weight: 600; }

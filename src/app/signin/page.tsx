@@ -8,6 +8,7 @@ import { fmtDate } from '@/lib/pdf/dates';
 import { perthToday } from '@/lib/push/decide';
 import { OutboxStatus } from '@/components/outbox-status';
 import { normaliseName } from '@/lib/crew/tickets';
+import { compliance, normaliseCompany, type DocFacts } from '@/lib/subcontractors/model';
 import type { SignInRow } from '@/lib/signin/register';
 import { SignInScreen } from './signin-screen';
 
@@ -46,7 +47,7 @@ export default async function SignInPage({
   const today = perthToday();
   const day = date && DATE_RE.test(date) ? date : today;
   const supabase = await createClient();
-  const [{ data: rows }, { data: crewRows }, { data: inductionRows }] = await Promise.all([
+  const [{ data: rows }, { data: crewRows }, { data: inductionRows }, { data: subRows }] = await Promise.all([
     supabase
       .from('site_signins')
       .select('id, person_name, company, person_kind, inducted, signed_in_at, signed_in_on_device_at, signed_out_at, signed_out_on_device_at, signed_in_by, self_signed, contact')
@@ -55,7 +56,10 @@ export default async function SignInPage({
       .order('signed_in_on_device_at'),
     supabase.from('crew').select('name').eq('project_id', current.project_id).eq('active', true).order('sort_order').order('name'),
     supabase.from('crew_inductions').select('person_name').eq('project_id', current.project_id),
+    supabase.from('subcontractors').select('name, active, subcontractor_documents(kind, expires_on, active)').eq('org_id', current.project.org.id).eq('active', true),
   ]);
+  const companies = ((subRows ?? []) as Array<{ name: string; subcontractor_documents: DocFacts[] }>)
+    .map((s) => ({ name: s.name, key: normaliseCompany(s.name), verdict: compliance(s.subcontractor_documents ?? [], today).verdict }));
 
   const q = `?project=${current.project_id}`;
   return (
@@ -94,6 +98,7 @@ export default async function SignInPage({
         inducted={(inductionRows ?? []).map((r) => normaliseName(String(r.person_name)))}
         canRun={canRunTalks(current.role)}
         userId={userId}
+        companies={companies}
       />
     </main>
   );

@@ -1,3 +1,5 @@
+import { perthToday } from '@/lib/push/decide';
+import { compliance, DOC_LABEL, VERDICT_LABEL, type DocFacts } from '@/lib/subcontractors/model';
 import { notifyOffice, unnotifiedUrgent } from '@/lib/incidents/notify';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { fetchProduct } from '@/lib/weather/bom';
@@ -58,6 +60,7 @@ export async function GET(request: Request) {
   if (url.searchParams.get('safety') === '1') report.safety = await resendUrgentIncidents();
   if (url.searchParams.get('orphans') === '1') report.orphans = await reconcileStorage();
   if (url.searchParams.get('tickets') === '1') report.tickets = await ticketDigest();
+  if (url.searchParams.get('tickets') === '1') report.subcontractors = await subcontractorDigest();
   if (url.searchParams.get('errors') === '1') report.errors = await errorDigest();
   if (url.searchParams.get('monthly') === '1') {
     report.monthly = await sendMonthlyBundles(url.searchParams.get('force') === '1');
@@ -1146,4 +1149,39 @@ async function resendUrgentIncidents(): Promise<Record<string, unknown>> {
     results.push({ project: w.project, ref: `INC-${String(w.seq).padStart(3, '0')}`, ...outcome });
   }
   return { waiting: waiting.length, results };
+}
+
+
+/** Subcontractors whose paperwork has lapsed or lapses within 30 days, emailed to the operator. */
+async function subcontractorDigest(): Promise<Record<string, unknown>> {
+  const admin = createAdminClient();
+  const today = perthToday();
+  const { data, error } = await admin
+    .from('subcontractors')
+    .select('id, name, org:organisations!inner(code), subcontractor_documents(kind, expires_on, active)')
+    .eq('active', true);
+  if (error) return { error: error.message };
+  const rows = ((data ?? []) as Array<{ name: string; org: unknown; subcontractor_documents: DocFacts[] }>)
+    .map((r) => ({ name: r.name, org: ((Array.isArray(r.org) ? r.org[0] : r.org) as { code: string }).code, result: compliance(r.subcontractor_documents ?? [], today) }))
+    .filter((r) => r.result.verdict === 'lapsed' || r.result.verdict === 'expiring' || r.result.verdict === 'missing');
+  if (rows.length === 0) return { flagged: 0 };
+  const lines = rows.map((r) => {
+    const parts = [
+      ...r.result.lapsed.map((k) => `${DOC_LABEL[k]} lapsed`),
+      ...r.result.missing.map((k) => `${DOC_LABEL[k]} missing`),
+      ...r.result.expiring.map((e) => `${DOC_LABEL[e.kind]} expires ${e.expires_on}`),
+    ];
+    return `<li><b>${r.name}</b> (${r.org}) — ${VERDICT_LABEL[r.result.verdict]}: ${parts.join('; ')}</li>`;
+  });
+  const sent = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${process.env.SMTP_PASS?.trim()}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      from: `Site Diary <${process.env.SMTP_SENDER ?? 'diary@kbsdailydiary.me'}>`,
+      to: ['mitchell.vanzyl@gmail.com'],
+      subject: `KBS Daily Diary: ${rows.length} subcontractor${rows.length === 1 ? '' : 's'} with paperwork to chase`,
+      html: `<div style="font-family:Arial,sans-serif;max-width:600px"><p>Subcontractor paperwork, as of ${today}:</p><ul>${lines.join('')}</ul></div>`,
+    }),
+  }).then((r) => r.ok).catch(() => false);
+  return { flagged: rows.length, emailed: sent };
 }

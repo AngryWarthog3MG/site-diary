@@ -120,6 +120,12 @@ improvising; the register once shipped dead because a live smoke test was skippe
   `site_signins` rows with `self_signed = true` and `signed_in_by null` — the trigger refuses that combination from
   any signed-in account. The visitor's phone keeps the row id (localStorage) as its only key to sign out.
   `/signin/gate` shows the QR (`qrcode` → SVG) and prints the A4 sign (`/api/gate/sign`)
+- `src/lib/subcontractors/` — subcontractor compliance: `model.ts` (`REQUIRED_DOCS` = public liability, workers'
+  comp, SWMS; `compliance()` → compliant/expiring/lapsed/missing/none_recorded from dates alone; `normaliseCompany`).
+  Tables `subcontractors` (org; unique per normalised name), `subcontractor_documents` (retired, never rewritten or
+  deleted), `project_subcontractors` (engagement per job). Bucket `subcontractor-docs` `{org}/{sub}/{doc}.ext`, row
+  first then file. Managing = `app.can_manage_crew` (org) / `app.can_manage_incidents` (engagement). The gate register
+  flags a lapsed company on sign-in; nightly `tickets=1` also emails the subcontractor digest
 - `src/lib/calendar.ts` — `isRestDay`: weekends with nothing recorded are rest days, not holes. One definition for
   the screens, the weekly and the reminder
 - `src/lib/claims/` — the claims register loader and the variation register (`register.ts`:

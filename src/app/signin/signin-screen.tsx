@@ -10,6 +10,7 @@ import {
   PERSON_KINDS, KIND_LABEL, splitDay, eventClock, hoursOnSite,
   type PersonKind, type SignInRow,
 } from '@/lib/signin/register';
+import { normaliseCompany, VERDICT_LABEL, type Verdict } from '@/lib/subcontractors/model';
 
 type Row = SignInRow & { signed_in_by: string | null; pending?: boolean; self_signed?: boolean; contact?: string | null };
 
@@ -23,6 +24,8 @@ interface Props {
   inducted: string[];
   canRun: boolean;
   userId: string;
+  /** The organisation's subcontractors and their paperwork verdict today. */
+  companies?: Array<{ name: string; key: string; verdict: Verdict }>;
 }
 
 /**
@@ -168,6 +171,12 @@ export function SignInScreen(props: Props) {
   }
 
   const inductedNow = (row: Row) => row.inducted || inductedSet.has(normaliseName(row.person_name));
+  const companyFlag = (row: Row) => {
+    if (!row.company || !props.companies) return null;
+    const match = props.companies.find((c) => c.key === normaliseCompany(row.company ?? ''));
+    if (!match) return row.person_kind === 'subcontractor' ? 'company not on the subcontractor list' : null;
+    return match.verdict === 'compliant' ? null : VERDICT_LABEL[match.verdict].toUpperCase();
+  };
 
   return (
     <section className="signin">
@@ -194,6 +203,7 @@ export function SignInScreen(props: Props) {
                   {row.self_signed ? ' · via the gate' : ''}{row.contact ? ` · ${row.contact}` : ''}
                   {row.pending ? ' · waiting for signal' : ''}
                 </span>
+                {companyFlag(row) && <span className="signin__flag">{companyFlag(row)}</span>}
                 {row.inducted === false && !inductedNow(row) ? (
                   <span className="signin__flag">
                     NOT INDUCTED
@@ -237,7 +247,8 @@ export function SignInScreen(props: Props) {
           <div className="signin__grid">
             <label className="fieldcell">
               <span className="label">Company</span>
-              <input className="field field--sm" value={company} placeholder="Optional" onChange={(e) => setCompany(e.target.value)} />
+              <input className="field field--sm" value={company} list="signin-companies" placeholder="Optional" onChange={(e) => setCompany(e.target.value)} />
+              <datalist id="signin-companies">{(props.companies ?? []).map((c) => <option key={c.name} value={c.name} />)}</datalist>
             </label>
             <label className="fieldcell fieldcell--narrow">
               <span className="label">Here as</span>
