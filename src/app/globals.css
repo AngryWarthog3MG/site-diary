@@ -3552,3 +3552,15 @@ main.sheet--wide .vr-list { grid-template-columns: repeat(auto-fill, minmax(22re
 .signin__grid { display: grid; grid-template-columns: 1fr auto; gap: 0.5rem; }
 .signin__list--left .signin__name { font-weight: 500; }
 .daynav__today { align-self: center; font-size: 0.875rem; color: var(--ink-60); }
+
+/* SWMS and JSA. */
+.swms__status--active { color: var(--teal); font-weight: 600; }
+.swms__activity { margin: 0.5rem 0 0.75rem; white-space: pre-wrap; }
+.swms__hrcw { margin: 0.25rem 0 0; padding-left: 1.1rem; }
+.swms__step { padding: 0.6rem 0; border-top: 1px solid var(--ink-12); }
+.swms__step p { margin: 0.2rem 0; }
+.swms__stepno { font-size: 0.75rem; color: var(--ink-60); }
+.swms__step .label { display: inline; margin-right: 0.35rem; }
+.swms-step { padding: 0.75rem 0 0.25rem; border-top: 1px dashed var(--ink-30); }
+.swms-step__risks { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+.swms-form .checkrow--inline { margin-bottom: 0.3rem; }

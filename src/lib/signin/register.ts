@@ -63,6 +63,6 @@ export function hoursOnSite(row: SignInRow): number | null {
   const out = row.signed_out_on_device_at ?? row.signed_out_at;
   if (!out) return null;
   const mins = (Date.parse(out) - Date.parse(row.signed_in_on_device_at)) / 60000;
-  if (!Number.isFinite(mins) || mins < 0) return null;
+  if (!Number.isFinite(mins) || mins < 0 || mins > 24 * 60) return null;
   return Math.round(mins / 15) / 4;
 }

@@ -59,11 +59,30 @@ begin
   raise notice 'PASS  the database trims, decides induction and stamps the arrival';
 end $$;
 
--- The same person twice while still on site: refused, not doubled.
+-- The same person twice while still on site: refused, not doubled — however the spaces fell.
 select tests.expect_error($q$
   insert into public.site_signins (project_id, signin_date, person_name, signed_in_by)
   values ('bbbbbbbb-0000-0000-0000-000000000001', date '2026-09-14', 'DANNY ROWE', '22222222-2222-2222-2222-222222222222')
 $q$, 'site_signins_one_open_idx');
+select tests.expect_error($q$
+  insert into public.site_signins (project_id, signin_date, person_name, signed_in_by)
+  values ('bbbbbbbb-0000-0000-0000-000000000001', date '2026-09-14', 'Danny    Rowe', '22222222-2222-2222-2222-222222222222')
+$q$, 'site_signins_one_open_idx');
+
+-- A phone clock nowhere near the day is not a fact: the server's time stands in and the row says so.
+insert into public.site_signins (id, project_id, signin_date, person_name, signed_in_on_device_at, signed_in_by)
+values ('dddddddd-0000-0000-0000-000000000009', 'bbbbbbbb-0000-0000-0000-000000000001', date '2026-09-14', 'Kel  Brady',
+        timestamptz '2036-01-01 00:00+08', '22222222-2222-2222-2222-222222222222');
+do $$
+declare k public.site_signins;
+begin
+  select * into k from public.site_signins where id = 'dddddddd-0000-0000-0000-000000000009';
+  assert k.person_name = 'Kel Brady', 'internal spaces were not collapsed';
+  assert k.signed_in_on_device_at >= now() - interval '1 minute', 'a 2036 phone clock was kept as the sign-in time';
+  assert k.notes like '%clock out of range%', 'the substituted clock was not noted on the row';
+  raise notice 'PASS  names collapse their spaces; a wild phone clock is replaced and noted';
+end $$;
+delete from public.site_signins where id = 'dddddddd-0000-0000-0000-000000000009';
 
 -- Nothing on an open sign-in changes but the sign-out.
 select tests.expect_error($q$

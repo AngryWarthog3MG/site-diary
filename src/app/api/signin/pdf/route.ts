@@ -25,7 +25,9 @@ export async function POST(request: Request) {
   const projectId = url.searchParams.get('project');
   const date = url.searchParams.get('date');
   if (!isUuid(projectId)) return fail('bad_request', 'Bad project id.', 400);
-  if (!isDate(date)) return fail('bad_request', 'date must be YYYY-MM-DD.', 400);
+  if (!isDate(date) || new Date(`${date}T00:00:00Z`).toISOString().slice(0, 10) !== date) {
+    return fail('bad_request', 'date must be a real YYYY-MM-DD date.', 400);
+  }
 
   const { data: project } = await supabase
     .from('projects')
@@ -51,6 +53,9 @@ export async function POST(request: Request) {
     .sort()
     .at(-1);
   const instant = latest ? new Date(latest) : new Date(`${date}T00:00:00Z`);
+  // One stored file per state of the register: a roll call printed during an
+  // incident stays reproducible at its path after the gate moves on.
+  const stateHash = createHash('sha256').update(JSON.stringify(list)).digest('hex');
   const data: SignInPdfData = {
     orgName: org.name,
     orgCode: org.code,
@@ -81,7 +86,7 @@ export async function POST(request: Request) {
       subject: `${project.name} — site attendance register, ${date}`,
       keywords: [org.code, project.code, date, 'attendance'],
       instant,
-      idSeed: createHash('sha256').update(JSON.stringify(list)).digest('hex'),
+      idSeed: stateHash,
       footerLeft: `${org.code}_${project.code} · ATTENDANCE · ${date}`,
     });
   } catch (err) {
@@ -90,11 +95,13 @@ export async function POST(request: Request) {
   }
 
   const admin = createAdminClient();
-  const objectPath = `${projectId}/signin/${date}.pdf`;
+  const objectPath = `${projectId}/signin/${date}-${stateHash.slice(0, 8)}.pdf`;
   const { error: uploadError } = await admin.storage
     .from('exports')
-    .upload(objectPath, Buffer.from(pdf), { contentType: 'application/pdf', upsert: true });
-  if (uploadError) return fail('server_error', `Could not store the register: ${uploadError.message}`, 500);
+    .upload(objectPath, Buffer.from(pdf), { contentType: 'application/pdf', upsert: false });
+  if (uploadError && !/exists/i.test(uploadError.message)) {
+    return fail('server_error', `Could not store the register: ${uploadError.message}`, 500);
+  }
   const { data: link, error: linkError } = await admin.storage.from('exports').createSignedUrl(objectPath, 3600);
   if (linkError || !link) return fail('server_error', 'Stored but no link could be made.', 500);
   return ok({ url: link.signedUrl, path: objectPath, people: list.length, bytes: pdf.length });

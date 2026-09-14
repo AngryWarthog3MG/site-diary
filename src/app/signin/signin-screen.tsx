@@ -100,7 +100,7 @@ export function SignInScreen(props: Props) {
         if (!data || data.length === 0) throw new Error('That sign-out was not recorded — it may already be signed out. Refresh.');
       };
       const queue = () => outbox.enqueue({
-        kind: 'signin_out', projectId: props.projectId, subjectId: row.id, payload: { at },
+        kind: 'signin_out', projectId: props.projectId, subjectId: row.id, payload: { at, date: props.date, name: row.person_name },
       }).then(() => undefined);
       const outcome = row.pending ? (await queue(), 'queued' as const) : await runOrQueue(live, queue);
       setRows((prev) => prev.map((r) => (r.id === row.id ? { ...r, signed_out_at: at, signed_out_on_device_at: at } : r)));
@@ -121,6 +121,12 @@ export function SignInScreen(props: Props) {
     setBusy(row.id);
     setError(null);
     try {
+      if (row.pending) {
+        // Never reached the server: take it out of the queue and it never will.
+        for (const item of await outbox.forSubject(row.id)) await outbox.remove(item.id);
+        setRows((prev) => prev.filter((r) => r.id !== row.id));
+        return;
+      }
       const supabase = createClient();
       const { data, error: delErr } = await supabase.from('site_signins').delete().eq('id', row.id).select('id');
       if (delErr) throw new Error(delErr.message);
@@ -201,7 +207,7 @@ export function SignInScreen(props: Props) {
                   <button type="button" className="button button--quiet signin__out" disabled={busy != null} onClick={() => void signOut(row)}>
                     {busy === row.id ? '…' : 'Sign out'}
                   </button>
-                  {row.signed_in_by === props.userId && !row.pending && (
+                  {row.signed_in_by === props.userId && (
                     <button type="button" className="linklike signin__undo" disabled={busy != null} onClick={() => void undo(row)}>Wrong tap</button>
                   )}
                 </div>

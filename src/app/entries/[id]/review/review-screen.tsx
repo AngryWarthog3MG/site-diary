@@ -1832,13 +1832,14 @@ function CrewShortcuts({
           .eq('active', true)
           .order('sort_order')
           .order('name'),
-        // Whoever signed in at the gate that day is on the list too, even if
-        // they are not on the crew roster — a subbie who worked is labour.
+        // Crew and subbies who signed in at the gate that day are on the list
+        // too — a subbie who worked is labour. Visitors and deliveries are not.
         supabase
           .from('site_signins')
           .select('person_name, person_kind, company')
           .eq('project_id', projectId)
           .eq('signin_date', entryDate)
+          .in('person_kind', ['crew', 'subcontractor'])
           .order('signed_in_on_device_at'),
       ]);
       if (cancelled) return;

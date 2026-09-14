@@ -21,7 +21,7 @@ const PHOTO = /\.(jpe?g|png|webp|heic|heif|gif)$/i;
 export function classifyOrphan(file: StoredFile, referenced: Set<string>, entries: Map<string, EntryFacts>): OrphanAction {
   if (referenced.has(file.path)) return { kind: 'ignore', path: file.path };
   const [first, second, third] = file.path.split('/');
-  if (second === 'prestart' || second === 'plant') return { kind: 'ignore', path: file.path };
+  if (second === 'prestart' || second === 'plant' || second === 'swms') return { kind: 'ignore', path: file.path };
   const entry = second ? entries.get(second) : undefined;
   if (!entry || !third) return { kind: 'unrecoverable', path: file.path, reason: 'no entry for this folder', entryDate: null };
   if (entry.project_id !== first) {

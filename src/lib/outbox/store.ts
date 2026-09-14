@@ -22,7 +22,8 @@ export type OutboxKind =
   | 'talk_finish'
   | 'plant_prestart'
   | 'signin_in'
-  | 'signin_out';
+  | 'signin_out'
+  | 'swms_signon';
 
 export type OutboxState = 'queued' | 'syncing' | 'blocked' | 'failed';
 
@@ -53,6 +54,7 @@ export const KIND_LABEL: Record<OutboxKind, string> = {
   plant_prestart: 'a plant check',
   signin_in: 'a site sign-in',
   signin_out: 'a site sign-out',
+  swms_signon: 'a SWMS sign-on',
 };
 
 const CHANGED = 'outbox-changed';

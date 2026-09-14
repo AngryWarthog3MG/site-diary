@@ -1,5 +1,6 @@
 'use client';
 
+import { normaliseName } from '../crew/tickets';
 import { createClient } from '@/lib/supabase/client';
 import * as outbox from './store';
 import type { OutboxItem } from './store';
@@ -80,6 +81,14 @@ async function replay(item: OutboxItem): Promise<void> {
       }
       return;
     }
+    case 'swms_signon': {
+      await uploadIfMissing(p.path as string, blobs.signature, 'image/png');
+      const { error } = await supabase.from('swms_signons').insert({
+        id: p.signonId, swms_id: item.subjectId, attendee_name: p.name, signature_path: p.path, signed_on_device_at: p.at, created_by: p.by,
+      });
+      if (error && !isAlreadyDone(error)) throw error;
+      return;
+    }
     case 'signin_in': {
       // The row's id and the phone's time were chosen at the gate; the
       // database stamps the arrival and decides `inducted` itself.
@@ -87,6 +96,10 @@ async function replay(item: OutboxItem): Promise<void> {
         id: item.subjectId, project_id: item.projectId, signin_date: p.date, person_name: p.name,
         company: p.company ?? null, person_kind: p.kind, signed_in_on_device_at: p.at, signed_in_by: p.by,
       });
+      // Two phones signed the same person in while offline: the first row in
+      // wins and this one is not needed — the person is on site. Its sign-out,
+      // if queued, finds the open row by name (below). The same id twice is
+      // the ordinary replay case.
       if (error && !isAlreadyDone(error)) throw error;
       return;
     }
@@ -96,8 +109,19 @@ async function replay(item: OutboxItem): Promise<void> {
       if (error && !isFrozen(error)) throw error;
       if (!error && (!data || data.length === 0)) {
         const { data: row } = await supabase.from('site_signins').select('signed_out_at').eq('id', item.subjectId).maybeSingle();
-        if (!row) throw Object.assign(new Error('That sign-in no longer exists.'), { code: '42501' });
-        if (!row.signed_out_at) throw Object.assign(new Error('The sign-out could not be recorded from this account.'), { code: '42501' });
+        if (row && !row.signed_out_at) throw Object.assign(new Error('The sign-out could not be recorded from this account.'), { code: '42501' });
+        if (!row) {
+          // This phone's sign-in lost to another phone's for the same person:
+          // sign out whichever row is open for that name on that day.
+          const key = normaliseName(String(p.name ?? ''));
+          const { data: open } = await supabase.from('site_signins').select('id, person_name')
+            .eq('project_id', item.projectId).eq('signin_date', p.date).is('signed_out_at', null);
+          const match = (open ?? []).find((r) => normaliseName(String(r.person_name)) === key);
+          if (!match) throw Object.assign(new Error('That sign-in no longer exists and nobody by that name is on site.'), { code: '42501' });
+          const { error: e2 } = await supabase.from('site_signins')
+            .update({ signed_out_at: new Date().toISOString(), signed_out_on_device_at: p.at }).eq('id', match.id);
+          if (e2 && !isFrozen(e2)) throw e2;
+        }
       }
       return;
     }
