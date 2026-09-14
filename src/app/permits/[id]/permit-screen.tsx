@@ -28,7 +28,6 @@ export function PermitScreen({ permit: p, canManage, userId }: Props) {
   const [checks, setChecks] = useState<Control[]>(closeoutFor(p.kind));
   const [note, setNote] = useState('');
   const [closing, setClosing] = useState(false);
-  const [cancelReason, setCancelReason] = useState('');
   const nowIso = new Date().toISOString();
   const isLive = live(p, nowIso); const isExpired = expired(p, nowIso);
 
@@ -66,10 +65,10 @@ export function PermitScreen({ permit: p, canManage, userId }: Props) {
     const outcome = await runOrQueue(live_, queue);
     if (outcome !== 'sent') router.push(`/permits?project=${p.projectId}`);
   });
-  const cancel = () => run('cancel the permit', async () => {
-    if (!cancelReason.trim()) throw new Error('Say why.');
+  const cancel = (reason: string) => run('cancel the permit', async () => {
+    if (!reason.trim()) throw new Error('Say why.');
     if (!window.confirm('Cancel this permit? Work under it must stop. This cannot be undone.')) return;
-    const { data, error: e } = await createClient().from('permits').update({ status: 'cancelled', cancel_reason: cancelReason.trim() }).eq('id', p.id).select('id');
+    const { data, error: e } = await createClient().from('permits').update({ status: 'cancelled', cancel_reason: reason.trim() }).eq('id', p.id).select('id');
     if (e) throw new Error(e.message);
     if (!data || data.length === 0) throw new Error('Not allowed from this account.');
   });
@@ -141,7 +140,7 @@ export function PermitScreen({ permit: p, canManage, userId }: Props) {
       {p.status === 'issued' && canManage && !closing && (
         <div className="photo-add-pair">
           <button type="button" className="button" disabled={busy != null} onClick={() => setClosing(true)}>Close out</button>
-          <button type="button" className="button button--quiet" disabled={busy != null} onClick={() => { const r = window.prompt('Why is the permit cancelled?'); if (r) { setCancelReason(r); setTimeout(() => void cancel(), 0); } }}>Cancel the permit</button>
+          <button type="button" className="button button--quiet" disabled={busy != null} onClick={() => { const r = window.prompt('Why is the permit cancelled?'); if (r) void cancel(r); }}>Cancel the permit</button>
         </div>
       )}
       {p.status === 'issued' && canManage && closing && (

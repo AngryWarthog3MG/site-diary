@@ -87,6 +87,14 @@ end $$;
 select tests.expect_error($q$
   update public.permits set valid_to = now() + interval '3 days' where id = 'dddddddd-0000-0000-0000-000000000001'
 $q$, 'frozen');
+-- Close-out fields do not move while the permit stays issued; a bare control does not count.
+select tests.expect_error($q$
+  update public.permits set closeout_note = 'sneaky' where id = 'dddddddd-0000-0000-0000-000000000001'
+$q$, 'by closing or cancelling');
+do $$ begin
+  assert not app.permit_controls_answered('[{"result":"yes"}]'::jsonb), 'a control with no label counted as answered';
+  assert app.permit_controls_answered('[{"key":"a","label":"A","result":"na"}]'::jsonb), 'a real control did not count';
+end $$;
 -- A window in the past, or absurd, is refused at issue.
 insert into public.permits (id, project_id, kind, title, valid_from, valid_to, controls, issuer_name, holder_name, issued_by)
 values ('dddddddd-0000-0000-0000-000000000002', 'bbbbbbbb-0000-0000-0000-000000000001', 'other', 'Old', now() - interval '10 days', now() - interval '9 days',

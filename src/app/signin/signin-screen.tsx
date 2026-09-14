@@ -11,7 +11,7 @@ import {
   type PersonKind, type SignInRow,
 } from '@/lib/signin/register';
 
-type Row = SignInRow & { signed_in_by: string; pending?: boolean };
+type Row = SignInRow & { signed_in_by: string | null; pending?: boolean; self_signed?: boolean; contact?: string | null };
 
 interface Props {
   projectId: string;
@@ -191,6 +191,7 @@ export function SignInScreen(props: Props) {
                   {row.person_kind !== 'crew' ? KIND_LABEL[row.person_kind] : 'Crew'}
                   {row.company ? ` · ${row.company}` : ''}
                   {' · in '}{eventClock(row.signed_in_on_device_at, row.signed_in_at)}
+                  {row.self_signed ? ' · via the gate' : ''}{row.contact ? ` · ${row.contact}` : ''}
                   {row.pending ? ' · waiting for signal' : ''}
                 </span>
                 {row.inducted === false && !inductedNow(row) ? (

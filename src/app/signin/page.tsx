@@ -49,7 +49,7 @@ export default async function SignInPage({
   const [{ data: rows }, { data: crewRows }, { data: inductionRows }] = await Promise.all([
     supabase
       .from('site_signins')
-      .select('id, person_name, company, person_kind, inducted, signed_in_at, signed_in_on_device_at, signed_out_at, signed_out_on_device_at, signed_in_by')
+      .select('id, person_name, company, person_kind, inducted, signed_in_at, signed_in_on_device_at, signed_out_at, signed_out_on_device_at, signed_in_by, self_signed, contact')
       .eq('project_id', current.project_id)
       .eq('signin_date', day)
       .order('signed_in_on_device_at'),
@@ -68,6 +68,9 @@ export default async function SignInPage({
         Everyone on site, in and out at the gate. The list of who is here is the roll call; the
         day&rsquo;s register is the attendance record.
       </p>
+      {canRunTalks(current.role) && current.role !== 'leading_hand' && (
+        <Link className="button button--quiet" href={`/signin/gate${q}`}>Gate code and sign</Link>
+      )}
       <nav className="daynav" aria-label="Other days">
         <Link className="daynav__link" href={`/signin${q}&date=${shiftDate(day, -1)}`} rel="prev">
           <span aria-hidden="true">‹</span> {fmtDate(shiftDate(day, -1)).slice(0, 5)}
@@ -86,7 +89,7 @@ export default async function SignInPage({
         projectId={current.project_id}
         date={day}
         isToday={day === today}
-        rows={(rows ?? []) as Array<SignInRow & { signed_in_by: string }>}
+        rows={(rows ?? []) as Array<SignInRow & { signed_in_by: string | null; self_signed: boolean; contact: string | null }>}
         crew={(crewRows ?? []).map((c) => String(c.name))}
         inducted={(inductionRows ?? []).map((r) => normaliseName(String(r.person_name)))}
         canRun={canRunTalks(current.role)}

@@ -87,16 +87,26 @@ async function replay(item: OutboxItem): Promise<void> {
       if (rowErr && !isAlreadyDone(rowErr)) throw rowErr;
       await uploadIfMissing(p.issuerPath as string, blobs.issuer, 'image/png');
       await uploadIfMissing(p.holderPath as string, blobs.holder, 'image/png');
-      const { error: issueErr } = await supabase.from('permits')
-        .update({ status: 'issued', issuer_signature_path: p.issuerPath, holder_signature_path: p.holderPath, issued_on_device_at: p.at }).eq('id', item.subjectId);
+      const { data: issued, error: issueErr } = await supabase.from('permits')
+        .update({ status: 'issued', issuer_signature_path: p.issuerPath, holder_signature_path: p.holderPath, issued_on_device_at: p.at }).eq('id', item.subjectId).select('id');
       if (issueErr && !isFrozen(issueErr)) throw issueErr;
+      if (!issueErr && (!issued || issued.length === 0)) {
+        const { data: row } = await supabase.from('permits').select('status').eq('id', item.subjectId).maybeSingle();
+        if (!row) throw Object.assign(new Error('That permit no longer exists.'), { code: '42501' });
+        if (row.status === 'open') throw Object.assign(new Error('The permit could not be issued from this account; it is still open.'), { code: '42501' });
+      }
       return;
     }
     case 'permit_close': {
       await uploadIfMissing(p.sigPath as string, blobs.signature, 'image/png');
-      const { error } = await supabase.from('permits')
-        .update({ status: 'closed', closeout_checks: p.checks, closeout_note: p.note ?? null, closeout_signature_path: p.sigPath, closed_on_device_at: p.at }).eq('id', item.subjectId);
+      const { data: closed, error } = await supabase.from('permits')
+        .update({ status: 'closed', closeout_checks: p.checks, closeout_note: p.note ?? null, closeout_signature_path: p.sigPath, closed_on_device_at: p.at }).eq('id', item.subjectId).select('id');
       if (error && !isFrozen(error)) throw error;
+      if (!error && (!closed || closed.length === 0)) {
+        const { data: row } = await supabase.from('permits').select('status').eq('id', item.subjectId).maybeSingle();
+        if (!row) throw Object.assign(new Error('That permit no longer exists.'), { code: '42501' });
+        if (row.status === 'issued') throw Object.assign(new Error('The permit could not be closed from this account; it is still issued.'), { code: '42501' });
+      }
       return;
     }
     case 'inspection_submit': {

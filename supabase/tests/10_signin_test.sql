@@ -146,12 +146,33 @@ do $$ begin
   raise notice 'PASS  anyone on gate duty signs out; only the recorder undoes a tap';
 end $$;
 
+-- The gate: a self-signed sign-in comes only through the server (no account), and carries no account.
+reset role;
+select set_config('request.jwt.claims', '', true);
+insert into public.site_signins (id, project_id, signin_date, person_name, person_kind, company, contact, self_signed, rules_acknowledged_at)
+values ('dddddddd-0000-0000-0000-000000000010', 'bbbbbbbb-0000-0000-0000-000000000001', date '2026-09-14', 'Jo Visitor', 'visitor', 'ACME', '0400 000 000', true, now());
+do $$ begin
+  assert (select signed_in_by is null and self_signed from public.site_signins where id = 'dddddddd-0000-0000-0000-000000000010'), 'a gate sign-in was not recorded as self-signed';
+end $$;
+select tests.expect_error($q$
+  insert into public.site_signins (project_id, signin_date, person_name, person_kind)
+  values ('bbbbbbbb-0000-0000-0000-000000000001', date '2026-09-14', 'Nobody', 'visitor')
+$q$, 'made by someone');
+select set_config('request.jwt.claims', '{"sub":"11111111-1111-1111-1111-111111111111","role":"authenticated"}', true);
+set local role authenticated;
+select tests.expect_error($q$
+  insert into public.site_signins (project_id, signin_date, person_name, person_kind, self_signed, signed_in_by)
+  values ('bbbbbbbb-0000-0000-0000-000000000001', date '2026-09-14', 'Fake Gate', 'visitor', true, '11111111-1111-1111-1111-111111111111')
+$q$, 'through the gate');
+do $$ begin raise notice 'PASS  gate sign-ins come only through the server and carry no account'; end $$;
+reset role;
+
 -- The PM reads the register and writes nothing.
 reset role;
 select set_config('request.jwt.claims', '{"sub":"33333333-3333-3333-3333-333333333333","role":"authenticated"}', true);
 set local role authenticated;
 do $$ begin
-  assert (select count(*) from public.site_signins where project_id = 'bbbbbbbb-0000-0000-0000-000000000001') = 2, 'the PM cannot read the register';
+  assert (select count(*) from public.site_signins where project_id = 'bbbbbbbb-0000-0000-0000-000000000001') = 3, 'the PM cannot read the register';
 end $$;
 select tests.expect_error($q$
   insert into public.site_signins (project_id, signin_date, person_name, signed_in_by)

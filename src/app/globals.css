@@ -3587,3 +3587,10 @@ main.sheet--wide .vr-list { grid-template-columns: repeat(auto-fill, minmax(22re
 /* Permits to work. */
 .permit-form__pair { grid-template-columns: 1fr 1fr; }
 .permit .item p .label, .permit-form .item p .label { display: inline; margin-right: 0.35rem; }
+
+/* The visitor gate. */
+.gate-rules { margin: 0.25rem 0 0.75rem; padding-left: 1.1rem; line-height: 1.5; }
+.gate-admin__code { text-align: center; }
+.gate-admin__qr { width: min(260px, 70vw); margin: 0 auto; }
+.gate-admin__qr svg { width: 100%; height: auto; }
+.gate-admin__url { font-size: 0.8125rem; word-break: break-all; margin: 0.5rem 0 0.25rem; }

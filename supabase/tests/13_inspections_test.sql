@@ -92,7 +92,7 @@ $q$, 'signed inspection');
 select tests.expect_error($q$
   insert into public.inspections (project_id, template_name, inspection_date, inspector_name, conducted_by)
   values ('bbbbbbbb-0000-0000-0000-000000000001', 'Future walk', current_date + 30, 'Sup', '11111111-1111-1111-1111-111111111111')
-$q$, 'last two months');
+$q$, 'within the last year');
 reset role;
 select set_config('request.jwt.claims', '{"sub":"22222222-2222-2222-2222-222222222222","role":"authenticated"}', true);
 set local role authenticated;
