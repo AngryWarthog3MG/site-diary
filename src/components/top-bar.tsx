@@ -18,7 +18,7 @@ export function TopBar() {
   const pathname = usePathname();
   // Today carries Menu and Refresh in its own green header, under the
   // serial; everywhere else they live in this bar.
-  if (pathname === '/' || /^\/(signin|login|auth|verify|offline)/.test(pathname)) return null;
+  if (pathname === '/' || /^\/(gate|login|auth|verify|offline)/.test(pathname)) return null;
 
   return (
     <header className="topbar">
