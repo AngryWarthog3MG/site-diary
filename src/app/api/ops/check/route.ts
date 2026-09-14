@@ -435,7 +435,7 @@ async function reconcileStorage(): Promise<Record<string, unknown>> {
   const sources: Array<[string, string[]]> = [
     ['photos', ['url']], ['entry_signatures', ['image_path']], ['pours', ['docket_photo_urls']],
     ['variations', ['photo_urls']], ['dayworks', ['photo_urls']], ['daywork_dockets', ['photo_urls']],
-    ['prestart_attendees', ['signature_path']], ['toolbox_attendees', ['signature_path']], ['swms_signons', ['signature_path']], ['incidents', ['photo_urls']], ['incident_updates', ['photo_urls']], ['inspections', ['signature_path', 'items']], ['permits', ['issuer_signature_path', 'holder_signature_path', 'closeout_signature_path']], ['site_signins', ['signature_path']],
+    ['prestart_attendees', ['signature_path']], ['toolbox_attendees', ['signature_path']], ['swms_signons', ['signature_path']], ['incidents', ['photo_urls']], ['incident_updates', ['photo_urls']], ['inspections', ['signature_path', 'items']], ['permits', ['issuer_signature_path', 'holder_signature_path', 'closeout_signature_path']], ['site_signins', ['signature_path']], ['document_acknowledgements', ['signature_path']],
     ['plant_prestarts', ['signature_path']], ['plant_defects', ['photo_path']],
   ];
   for (const [table, cols] of sources) {
@@ -482,14 +482,24 @@ async function reconcileStorage(): Promise<Record<string, unknown>> {
   const ticketPaths = new Set((ticketRows ?? []).map((r) => r.photo_path as string | null).filter(Boolean) as string[]);
   const ticketOrphans = ticketFiles.filter((f) => !ticketPaths.has(f.path)).map((f) => f.path);
 
+  // Subcontractor certificates: a file with no document row, or a row whose file is gone.
+  const subFiles = await walk('subcontractor-docs');
+  const { data: subDocs } = await admin.from('subcontractor_documents').select('file_path').not('file_path', 'is', null);
+  const subPaths = new Set((subDocs ?? []).map((r) => r.file_path as string));
+  const subFileSet = new Set(subFiles.map((f) => f.path));
+  const subOrphans = subFiles.filter((f) => !subPaths.has(f.path)).map((f) => f.path);
+  const subMissing = [...subPaths].filter((p) => !subFileSet.has(p));
+
   const fresh = unrecoverable.filter((u) => u.recent);
   let emailed = false;
-  if (attached.length > 0 || fresh.length > 0 || audioOrphans.length > 0 || ticketOrphans.length > 0) {
+  if (attached.length > 0 || fresh.length > 0 || audioOrphans.length > 0 || ticketOrphans.length > 0 || subOrphans.length > 0 || subMissing.length > 0) {
     const lines = [
       ...attached.map((p) => `<li>Put back on its day: <code>${p.split('/').pop()}</code> (${entries.get(p.split('/')[1])?.entry_date ?? '?'})</li>`),
       ...fresh.map((u) => `<li><b>Cannot be recovered:</b> ${u.reason} — <code>${u.path.split('/').pop()}</code> (${u.entryDate ?? '?'})</li>`),
       ...audioOrphans.map((p) => `<li><b>Recording with no row:</b> <code>${p}</code></li>`),
       ...ticketOrphans.map((p) => `<li><b>Ticket photo with no ticket:</b> <code>${p}</code></li>`),
+      ...subOrphans.map((p) => `<li><b>Subcontractor file with no document:</b> <code>${p}</code></li>`),
+      ...subMissing.map((p) => `<li><b>Subcontractor document whose file is gone:</b> <code>${p}</code></li>`),
     ].join('');
     emailed = await fetch('https://api.resend.com/emails', {
       method: 'POST',
@@ -1171,7 +1181,8 @@ async function subcontractorDigest(): Promise<Record<string, unknown>> {
       ...r.result.missing.map((k) => `${DOC_LABEL[k]} missing`),
       ...r.result.expiring.map((e) => `${DOC_LABEL[e.kind]} expires ${e.expires_on}`),
     ];
-    return `<li><b>${r.name}</b> (${r.org}) — ${VERDICT_LABEL[r.result.verdict]}: ${parts.join('; ')}</li>`;
+    const esc = (v: string) => v.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    return `<li><b>${esc(r.name)}</b> (${esc(r.org)}) — ${VERDICT_LABEL[r.result.verdict]}: ${esc(parts.join('; '))}</li>`;
   });
   const sent = await fetch('https://api.resend.com/emails', {
     method: 'POST',

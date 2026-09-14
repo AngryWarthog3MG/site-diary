@@ -1336,6 +1336,19 @@ the question "what did you hold on the day of the incident" always has an answer
 per job with a scope and dates. Not built: a subcontractor portal where the company uploads its
 own renewals, and reading the expiry off the certificate with the model.
 
+**R41. A version is a file, a date and the names of everyone who read it.** The eighth safety module.
+A controlled document — a policy, a procedure, a plan — is one thing with a number; each issue of it is
+a version with its own file and its summary of what changed; issuing a version supersedes the one
+before, under a lock so two supervisors uploading at once cannot both be version 4. The crew
+acknowledge a version the way they sign on to a SWMS: name and finger on the supervisor's phone,
+once per person per version, so a new version means everyone reads again — the list says "5 of 7 on
+this job have read it" and names the two who have not. Nothing issued or acknowledged is ever edited
+or removed; a superseded version keeps its signatures, because they were made to those words. The
+file goes up before the row that names it, and a failed row removes the file, so nothing is left
+pointing at nothing. Codex's review of subcontractors landed with it: a job engages only its own
+organisation's subcontractors, a retired certificate stays retired, and an insurance with no expiry
+recorded is not evidence of cover — it is missing.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;

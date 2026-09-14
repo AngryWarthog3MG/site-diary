@@ -62,6 +62,24 @@ do $$ begin
   raise notice 'PASS  a document is retired, never rewritten or removed';
 end $$;
 
+-- A retired document stays retired; another organisation's subcontractor cannot be engaged.
+select set_config('request.jwt.claims', '{"sub":"11111111-1111-1111-1111-111111111111","role":"authenticated"}', true);
+set local role authenticated;
+select tests.expect_error($q$
+  update public.subcontractor_documents set active = true where id = 'eeeeeeee-0000-0000-0000-000000000001'
+$q$, 'stays retired');
+reset role;
+insert into public.organisations (id, name, code) values ('aaaaaaaa-0000-0000-0000-000000000002', 'Other Co', 'OTH');
+insert into public.subcontractors (id, org_id, name) values ('dddddddd-0000-0000-0000-000000000002', 'aaaaaaaa-0000-0000-0000-000000000002', 'Foreign Sub');
+select set_config('request.jwt.claims', '{"sub":"11111111-1111-1111-1111-111111111111","role":"authenticated"}', true);
+set local role authenticated;
+select tests.expect_error($q$
+  insert into public.project_subcontractors (project_id, subcontractor_id, created_by)
+  values ('bbbbbbbb-0000-0000-0000-000000000001', 'dddddddd-0000-0000-0000-000000000002', '11111111-1111-1111-1111-111111111111')
+$q$, 'own organisation');
+do $$ begin raise notice 'PASS  retired stays retired; a job engages only its own organisation''s subcontractors'; end $$;
+reset role;
+
 -- Engagement on the job by a manager; the leading hand reads and does not write.
 select set_config('request.jwt.claims', '{"sub":"11111111-1111-1111-1111-111111111111","role":"authenticated"}', true);
 set local role authenticated;

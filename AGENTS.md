@@ -126,6 +126,12 @@ improvising; the register once shipped dead because a live smoke test was skippe
   deleted), `project_subcontractors` (engagement per job). Bucket `subcontractor-docs` `{org}/{sub}/{doc}.ext`, row
   first then file. Managing = `app.can_manage_crew` (org) / `app.can_manage_incidents` (engagement). The gate register
   flags a lapsed company on sign-in; nightly `tickets=1` also emails the subcontractor digest
+- `src/lib/documents-control/` — policies and procedures: `model.ts` (`coverage` of the crew against a version's
+  acknowledgements). Tables `controlled_documents` (org; unique title), `document_versions` (numbered under a lock;
+  issuing supersedes the current; frozen; never deleted; file in `controlled-docs` `{org}/{doc}/{version}.pdf`, file
+  first then row), `document_acknowledgements` (current version only, once per person, frozen; signature in
+  `entry-photos` `{project}/document/{ack}/sig.png`). Issuing = `app.can_manage_crew`; acknowledging = `app.can_run_talks`.
+  Outbox kind `doc_ack`. Screens under `/procedures` (not `/documents`, which is the job's reference documents for Ask)
 - `src/lib/calendar.ts` — `isRestDay`: weekends with nothing recorded are rest days, not holes. One definition for
   the screens, the weekly and the reminder
 - `src/lib/claims/` — the claims register loader and the variation register (`register.ts`:

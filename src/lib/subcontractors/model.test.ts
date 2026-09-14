@@ -19,9 +19,15 @@ test('lapsed beats missing beats expiring beats compliant', () => {
 test('a retired document does not count, and the longest-lasting one is judged', () => {
   const old = { kind: 'public_liability' as const, expires_on: '2026-01-01', active: true };
   const renewed = { kind: 'public_liability' as const, expires_on: '2027-01-01', active: true };
-  const r = compliance([old, renewed, { kind: 'workers_comp', expires_on: null, active: true }, { kind: 'swms', expires_on: null, active: true }], today);
+  const wc = { kind: 'workers_comp' as const, expires_on: '2027-06-01', active: true };
+  const r = compliance([old, renewed, wc, { kind: 'swms', expires_on: null, active: true }], today);
   assert.equal(r.verdict, 'compliant');
-  assert.equal(compliance([{ ...renewed, active: false }, { kind: 'workers_comp', expires_on: null, active: true }, { kind: 'swms', expires_on: null, active: true }], today).verdict, 'missing');
+  assert.equal(compliance([{ ...renewed, active: false }, wc, { kind: 'swms', expires_on: null, active: true }], today).verdict, 'missing');
+});
+test('an insurance with no expiry recorded is missing, not forever', () => {
+  const r = compliance([{ kind: 'public_liability', expires_on: null, active: true }, { kind: 'workers_comp', expires_on: '2027-01-01', active: true }, { kind: 'swms', expires_on: null, active: true }], today);
+  assert.equal(r.verdict, 'missing');
+  assert.deepEqual(r.missing, ['public_liability']);
 });
 test('company names match however the suffix was typed', () => {
   assert.equal(normaliseCompany('Whitely Plumbing Pty Ltd'), normaliseCompany('whitely   plumbing'));

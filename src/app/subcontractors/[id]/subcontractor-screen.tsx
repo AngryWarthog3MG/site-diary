@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { fmtDate } from '@/lib/pdf/dates';
-import { DOC_KINDS, DOC_LABEL, REQUIRED_DOCS, VERDICT_LABEL, type DocKind, type ComplianceResult } from '@/lib/subcontractors/model';
+import { DOC_KINDS, DOC_LABEL, REQUIRED_DOCS, NEEDS_EXPIRY, VERDICT_LABEL, type DocKind, type ComplianceResult } from '@/lib/subcontractors/model';
 
 export interface SubcontractorView {
   id: string; orgId: string; name: string; abn: string | null; trade: string | null; contact_name: string | null; contact_phone: string | null; contact_email: string | null; notes: string | null; active: boolean;
@@ -47,15 +47,21 @@ export function SubcontractorScreen({ sub, projectId, projectName, canManage, us
     if (!title.trim()) throw new Error('Give the document a title — the insurer and policy, or the licence.');
     if (issued && expires && expires < issued) throw new Error('It cannot expire before it was issued.');
     const supabase = createClient();
-    // The row first, so a file never sits in storage with nothing pointing at it.
+    if (NEEDS_EXPIRY.includes(adding) && !expires) throw new Error('Insurance has a term — record the expiry date.');
+    // The file first, then the row that names it: a row is never left pointing
+    // at nothing, and a file left without its row is removed here and reported
+    // by the nightly check if that fails too.
     const id = crypto.randomUUID();
     const ext = file ? (file.name.split('.').pop()?.toLowerCase() || 'pdf') : null;
     const filePath = file ? `${sub.orgId}/${sub.id}/${id}.${ext}` : null;
-    const { error: e } = await supabase.from('subcontractor_documents').insert({ id, subcontractor_id: sub.id, kind: adding, title: title.trim(), reference: reference.trim() || null, issued_on: issued || null, expires_on: expires || null, file_path: filePath, created_by: userId });
-    if (e) throw new Error(e.message);
     if (file && filePath) {
       const { error: upErr } = await supabase.storage.from('subcontractor-docs').upload(filePath, file, { contentType: file.type || 'application/pdf', upsert: false });
-      if (upErr) throw new Error(`The document was saved but its file did not upload: ${upErr.message}`);
+      if (upErr) throw new Error(`The file did not upload: ${upErr.message}`);
+    }
+    const { error: e } = await supabase.from('subcontractor_documents').insert({ id, subcontractor_id: sub.id, kind: adding, title: title.trim(), reference: reference.trim() || null, issued_on: issued || null, expires_on: expires || null, file_path: filePath, created_by: userId });
+    if (e) {
+      if (filePath) await supabase.storage.from('subcontractor-docs').remove([filePath]).catch(() => undefined);
+      throw new Error(e.message);
     }
     setAdding(null); setTitle(''); setReference(''); setIssued(''); setExpires(''); setFile(null);
   });

@@ -19,6 +19,8 @@ export const DOC_LABEL: Record<DocKind, string> = {
 
 /** What a subcontractor must hold, current, to work on a job. */
 export const REQUIRED_DOCS: readonly DocKind[] = ['public_liability', 'workers_comp', 'swms'];
+/** Insurance always has a term: a certificate with no expiry recorded is not evidence of cover. */
+export const NEEDS_EXPIRY: readonly DocKind[] = ['public_liability', 'workers_comp'];
 
 export interface DocFacts { kind: DocKind; expires_on: string | null; active: boolean }
 
@@ -48,7 +50,7 @@ export function compliance(docs: readonly DocFacts[], today: string, horizonDays
   const limit = addDays(today, horizonDays);
   const missing: DocKind[] = []; const lapsed: DocKind[] = []; const expiring: ComplianceResult['expiring'] = [];
   for (const kind of REQUIRED_DOCS) {
-    const ofKind = active.filter((d) => d.kind === kind);
+    const ofKind = active.filter((d) => d.kind === kind && !(NEEDS_EXPIRY.includes(kind) && d.expires_on == null));
     if (ofKind.length === 0) { missing.push(kind); continue; }
     // The best document is the one that lasts longest; no expiry lasts forever.
     const best = ofKind.reduce((a, b) => (a.expires_on == null ? a : b.expires_on == null ? b : a.expires_on >= b.expires_on ? a : b));

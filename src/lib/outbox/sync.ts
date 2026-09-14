@@ -81,6 +81,14 @@ async function replay(item: OutboxItem): Promise<void> {
       }
       return;
     }
+    case 'doc_ack': {
+      await uploadIfMissing(p.path as string, blobs.signature, 'image/png');
+      const { error } = await supabase.from('document_acknowledgements').insert({
+        id: p.ackId, version_id: item.subjectId, person_name: p.name, signature_path: p.path, project_id: item.projectId, recorded_by: p.by, acknowledged_on_device_at: p.at,
+      });
+      if (error && !isAlreadyDone(error)) throw error;
+      return;
+    }
     case 'permit_issue': {
       // The row, then both signatures, then the issue that the database checks.
       const { error: rowErr } = await supabase.from('permits').insert({ id: item.subjectId, project_id: item.projectId, ...(p.row as Record<string, unknown>) });
