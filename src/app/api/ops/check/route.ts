@@ -420,13 +420,19 @@ async function reconcileStorage(): Promise<Record<string, unknown>> {
   const addRef = (v: unknown) => {
     if (typeof v === 'string' && v) referenced.add(v);
     if (Array.isArray(v)) v.forEach(addRef);
-    // Paths inside JSON (an inspection's items carry photo_urls per item).
-    else if (v && typeof v === 'object') Object.values(v as Record<string, unknown>).forEach(addRef);
+    // Paths inside JSON (an inspection's items carry photo_urls per item) —
+    // only under keys that hold paths, so a note that quotes a path does not
+    // vouch for a lost file.
+    else if (v && typeof v === 'object') {
+      for (const [k, val] of Object.entries(v as Record<string, unknown>)) {
+        if (/photo_urls|_path$|^url$|^urls$|^items$/.test(k)) addRef(val);
+      }
+    }
   };
   const sources: Array<[string, string[]]> = [
     ['photos', ['url']], ['entry_signatures', ['image_path']], ['pours', ['docket_photo_urls']],
     ['variations', ['photo_urls']], ['dayworks', ['photo_urls']], ['daywork_dockets', ['photo_urls']],
-    ['prestart_attendees', ['signature_path']], ['toolbox_attendees', ['signature_path']], ['swms_signons', ['signature_path']], ['incidents', ['photo_urls']], ['incident_updates', ['photo_urls']], ['inspections', ['signature_path', 'items']],
+    ['prestart_attendees', ['signature_path']], ['toolbox_attendees', ['signature_path']], ['swms_signons', ['signature_path']], ['incidents', ['photo_urls']], ['incident_updates', ['photo_urls']], ['inspections', ['signature_path', 'items']], ['permits', ['issuer_signature_path', 'holder_signature_path', 'closeout_signature_path']],
     ['plant_prestarts', ['signature_path']], ['plant_defects', ['photo_path']],
   ];
   for (const [table, cols] of sources) {

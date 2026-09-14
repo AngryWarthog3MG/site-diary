@@ -29,6 +29,7 @@ export default async function InspectionPage({ params }: { params: Promise<{ id:
     area: r.area, inspector_name: r.inspector_name, items: readItems(r.items), summary: r.summary, signature_path: r.signature_path,
     completed_at: r.completed_at, completed_on_device_at: r.completed_on_device_at,
     actions: ((r.inspection_actions ?? []) as InspectionView['actions']).slice().sort((a, b) => (a.due_on ?? '9999').localeCompare(b.due_on ?? '9999')),
+    conducted_by: r.conducted_by,
   };
   return (
     <main className="sheet">

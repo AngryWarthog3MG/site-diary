@@ -22,6 +22,9 @@ export function classifyOrphan(file: StoredFile, referenced: Set<string>, entrie
   if (referenced.has(file.path)) return { kind: 'ignore', path: file.path };
   const [first, second, third] = file.path.split('/');
   if (second === 'prestart' || second === 'plant' || second === 'swms') return { kind: 'ignore', path: file.path };
+  if (second === 'permit') {
+    return { kind: 'unrecoverable', path: file.path, reason: 'a permit signature whose permit never landed', entryDate: null };
+  }
   if (second === 'inspection') {
     return { kind: 'unrecoverable', path: file.path, reason: 'an inspection photo whose inspection never landed', entryDate: null };
   }

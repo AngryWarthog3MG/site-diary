@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { fmtDate } from '@/lib/pdf/dates';
+import { SignaturePad } from '@/components/signature-pad';
 import { finishedAtAwst } from '@/lib/pdf/finished-at';
 import { KIND_LABEL, RESULT_LABEL, findings, answered, actionOverdue, type InspectionItem, type InspectionKind } from '@/lib/inspections/model';
 
@@ -11,6 +12,7 @@ export interface InspectionView {
   id: string; projectId: string; template_name: string; kind: InspectionKind; inspection_date: string; area: string | null; inspector_name: string;
   items: InspectionItem[]; summary: string | null; signature_path: string | null; completed_at: string | null; completed_on_device_at: string | null;
   actions: Array<{ id: string; item_key: string | null; action: string; owner_name: string | null; due_on: string | null; done_at: string | null; done_note: string | null; created_by: string }>;
+  conducted_by: string;
 }
 interface Props { inspection: InspectionView; crew: string[]; canManage: boolean; userId: string; today: string }
 
@@ -57,6 +59,15 @@ export function InspectionScreen({ inspection: r, crew, canManage, userId, today
     const { data, error: e } = await createClient().from('inspection_actions').delete().eq('id', id).select('id');
     if (e) throw new Error(e.message);
     if (!data || data.length === 0) throw new Error('Not allowed from this account, or already done.');
+  });
+  const signNow = (blob: Blob) => run('sign it', async () => {
+    const supabase = createClient();
+    const sigPath = `${r.projectId}/inspection/${r.id}/sig-${crypto.randomUUID()}.png`;
+    const { error: upErr } = await supabase.storage.from('entry-photos').upload(sigPath, blob, { contentType: 'image/png', upsert: false });
+    if (upErr) throw new Error(upErr.message);
+    const { data, error: e } = await supabase.from('inspections').update({ signature_path: sigPath, completed_on_device_at: new Date().toISOString() }).eq('id', r.id).select('id');
+    if (e) throw new Error(e.message);
+    if (!data || data.length === 0) throw new Error('Only whoever started this inspection can sign it.');
   });
   const pdf = () => run('make the PDF', async () => {
     const res = await fetch(`/api/inspections/${r.id}/pdf`, { method: 'POST' });
@@ -148,6 +159,13 @@ export function InspectionScreen({ inspection: r, crew, canManage, userId, today
         <div className="talk-attendee">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={urls[r.signature_path]} alt="" /><span>{r.inspector_name}</span>
+        </div>
+      )}
+      {!done && r.conducted_by === userId && (
+        <div className="sigslot item">
+          <p className="label">Sign to finish</p>
+          <p className="way-hint">This inspection was saved but not signed. Sign it and it becomes the record.</p>
+          <SignaturePad disabled={busy != null} saving={busy === 'sign it'} onSave={signNow} />
         </div>
       )}
       {error && <p className="alert" role="alert">{error}</p>}

@@ -59,7 +59,7 @@ export function InspectionForm({ projectId, userId, today, inspector, templates 
     setError(null);
     const id = outbox.newId();
     const at = new Date().toISOString();
-    const sigPath = `${projectId}/inspection/${id}/signature.png`;
+    const sigPath = `${projectId}/inspection/${id}/sig-${outbox.newId()}.png`;
     const photoPaths: Array<{ key: string; path: string; type: string; blob: Blob }> = [];
     const items = template.items.map((i) => {
       const paths = (photos[i.key] ?? []).map((p) => { const path = `${projectId}/inspection/${id}/${outbox.newId()}.${p.ext}`; photoPaths.push({ key: `${i.key}-${photoPaths.length}`, path, type: p.type, blob: p.blob }); return path; });
@@ -76,10 +76,11 @@ export function InspectionForm({ projectId, userId, today, inspector, templates 
           const { error: e } = await supabase.storage.from('entry-photos').upload(ph.path, ph.blob, { contentType: ph.type, upsert: false });
           if (e) throw new Error(e.message);
         }
-        const { error: rowErr } = await supabase.from('inspections').insert({ id, project_id: projectId, ...row });
-        if (rowErr) throw new Error(rowErr.message);
+        // The signature lands before the row, so a refused upload leaves nothing half-made.
         const { error: sigErr } = await supabase.storage.from('entry-photos').upload(sigPath, sig, { contentType: 'image/png', upsert: false });
         if (sigErr) throw new Error(sigErr.message);
+        const { error: rowErr } = await supabase.from('inspections').insert({ id, project_id: projectId, ...row });
+        if (rowErr) throw new Error(rowErr.message);
         const { data, error: doneErr } = await supabase.from('inspections').update({ signature_path: sigPath, completed_on_device_at: at }).eq('id', id).select('id');
         if (doneErr) throw new Error(doneErr.message);
         if (!data || data.length === 0) throw new Error('The inspection was saved but could not be signed from this account.');

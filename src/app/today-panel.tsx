@@ -77,6 +77,7 @@ export function TodayPanel({
   const [tomorrowPrestart, setTomorrowPrestart] = useState<{ id: string; date: string } | null>(null);
   const [onSite, setOnSite] = useState(0);
   const [safety, setSafety] = useState({ open: 0, overdue: 0 });
+  const [permits, setPermits] = useState({ live: 0, expired: 0 });
   const [weather, setWeather] = useState<WeatherRow | null>(null);
   const [weatherNote, setWeatherNote] = useState<string | null>(null);
   const [attribution, setAttribution] = useState<string | null>(null);
@@ -184,6 +185,10 @@ export function TodayPanel({
           .eq('inspection.project_id', projectId)
           .is('done_at', null);
         const lateInspections = ((ia ?? []) as Array<{ due_on: string | null; done_at: string | null }>).filter((a) => a.due_on != null && a.due_on < today).length;
+        const { data: pm } = await supabase.from('permits').select('valid_from, valid_to').eq('project_id', projectId).eq('status', 'issued');
+        const nowIso = new Date().toISOString();
+        const permitRows = (pm ?? []) as Array<{ valid_from: string; valid_to: string }>;
+        setPermits({ live: permitRows.filter((p) => p.valid_from <= nowIso && nowIso <= p.valid_to).length, expired: permitRows.filter((p) => p.valid_to < nowIso).length });
         setSafety({
           open: rows.length,
           overdue: rows.reduce((n, r) => n + r.incident_actions.filter((a) => a.done_at == null && a.due_on != null && a.due_on < today).length, 0) + lateInspections,
@@ -556,6 +561,12 @@ export function TodayPanel({
           ) : (
             <Link href={`/prestart/new?project=${projectId}`}>Start it</Link>
           )}
+        </div>
+      )}
+      {!loading && (permits.live > 0 || permits.expired > 0) && (
+        <div className={`prestart-row ${permits.expired > 0 ? 'prestart-row--open' : 'prestart-row--done'}`}>
+          <span>{permits.live > 0 ? `${permits.live} permit${permits.live === 1 ? '' : 's'} to work live` : ''}{permits.live > 0 && permits.expired > 0 ? ' · ' : ''}{permits.expired > 0 ? `${permits.expired} past ${permits.expired === 1 ? 'its' : 'their'} window, not closed` : ''}</span>
+          <Link href={`/permits?project=${projectId}`}>Permits</Link>
         </div>
       )}
       {!loading && (safety.open > 0 || safety.overdue > 0) && (

@@ -3583,3 +3583,7 @@ main.sheet--wide .vr-list { grid-template-columns: repeat(auto-fill, minmax(22re
 .tri__btn--ok { background: var(--teal); color: #fff; border-color: var(--teal); }
 .tri__btn--defect { background: #9A2B2B; color: #fff; border-color: #9A2B2B; }
 .tri__btn--na { background: var(--ink-60); color: #fff; border-color: var(--ink-60); }
+
+/* Permits to work. */
+.permit-form__pair { grid-template-columns: 1fr 1fr; }
+.permit .item p .label, .permit-form .item p .label { display: inline; margin-right: 0.35rem; }

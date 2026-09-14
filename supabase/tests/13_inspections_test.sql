@@ -78,6 +78,31 @@ select tests.expect_error($q$
 $q$, 'signed and frozen');
 do $$ begin raise notice 'PASS  a signed inspection is frozen'; end $$;
 
+-- Actions attach only to a signed inspection; an open one belongs to whoever started it.
+reset role;
+select set_config('request.jwt.claims', '{"sub":"11111111-1111-1111-1111-111111111111","role":"authenticated"}', true);
+set local role authenticated;
+insert into public.inspections (id, project_id, template_name, inspection_date, inspector_name, items, conducted_by)
+values ('dddddddd-0000-0000-0000-000000000002', 'bbbbbbbb-0000-0000-0000-000000000001', 'Open walk', current_date, 'Sup',
+        '[{"key":"a","label":"A","result":"issue"}]'::jsonb, '11111111-1111-1111-1111-111111111111');
+select tests.expect_error($q$
+  insert into public.inspection_actions (inspection_id, action, created_by)
+  values ('dddddddd-0000-0000-0000-000000000002', 'Too early', '11111111-1111-1111-1111-111111111111')
+$q$, 'signed inspection');
+select tests.expect_error($q$
+  insert into public.inspections (project_id, template_name, inspection_date, inspector_name, conducted_by)
+  values ('bbbbbbbb-0000-0000-0000-000000000001', 'Future walk', current_date + 30, 'Sup', '11111111-1111-1111-1111-111111111111')
+$q$, 'last two months');
+reset role;
+select set_config('request.jwt.claims', '{"sub":"22222222-2222-2222-2222-222222222222","role":"authenticated"}', true);
+set local role authenticated;
+update public.inspections set summary = 'LH was here' where id = 'dddddddd-0000-0000-0000-000000000002';
+do $$ begin
+  assert (select summary from public.inspections where id = 'dddddddd-0000-0000-0000-000000000002') is null, 'another leading hand edited an open inspection';
+  raise notice 'PASS  an open inspection is its starter''s; actions need a signature; dates are bounded';
+end $$;
+reset role;
+
 -- The leading hand may not add actions; the supervisor may, and done is stamped and kept.
 select set_config('request.jwt.claims', '{"sub":"22222222-2222-2222-2222-222222222222","role":"authenticated"}', true);
 set local role authenticated;
@@ -108,7 +133,7 @@ do $$ begin raise notice 'PASS  actions are stamped by the database and kept onc
 select set_config('request.jwt.claims', '{"sub":"33333333-3333-3333-3333-333333333333","role":"authenticated"}', true);
 set local role authenticated;
 do $$ begin
-  assert (select count(*) from public.inspections) = 1, 'the PM cannot read inspections';
+  assert (select count(*) from public.inspections) = 2, 'the PM cannot read inspections';
 end $$;
 select tests.expect_error($q$
   insert into public.inspections (project_id, template_name, inspection_date, inspector_name, conducted_by)

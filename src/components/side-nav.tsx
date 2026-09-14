@@ -35,6 +35,7 @@ const ITEMS: Array<{ href: string; label: string; screen: Screen }> = [
   { href: '/swms', label: 'SWMS & JSA', screen: 'swms' },
   { href: '/incidents', label: 'Hazards & incidents', screen: 'incidents' },
   { href: '/inspections', label: 'Inspections', screen: 'inspections' },
+  { href: '/permits', label: 'Permits to work', screen: 'permits' },
   { href: '/plant', label: 'Plant', screen: 'plant' },
   { href: '/toolbox', label: 'Toolbox talks', screen: 'toolbox' },
   { href: '/ask', label: 'Ask', screen: 'ask' },
@@ -42,7 +43,7 @@ const ITEMS: Array<{ href: string; label: string; screen: Screen }> = [
 ];
 
 /** Tiles every role has, drawn until the role is known. */
-const BEFORE_ROLE: Screen[] = ['today', 'entries', 'weekly', 'prestart', 'plant', 'toolbox', 'signin', 'swms', 'incidents', 'inspections'];
+const BEFORE_ROLE: Screen[] = ['today', 'entries', 'weekly', 'prestart', 'plant', 'toolbox', 'signin', 'swms', 'incidents', 'inspections', 'permits'];
 
 export function SideNav() {
   const pathname = usePathname();

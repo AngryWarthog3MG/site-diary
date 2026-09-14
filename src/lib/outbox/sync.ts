@@ -81,6 +81,24 @@ async function replay(item: OutboxItem): Promise<void> {
       }
       return;
     }
+    case 'permit_issue': {
+      // The row, then both signatures, then the issue that the database checks.
+      const { error: rowErr } = await supabase.from('permits').insert({ id: item.subjectId, project_id: item.projectId, ...(p.row as Record<string, unknown>) });
+      if (rowErr && !isAlreadyDone(rowErr)) throw rowErr;
+      await uploadIfMissing(p.issuerPath as string, blobs.issuer, 'image/png');
+      await uploadIfMissing(p.holderPath as string, blobs.holder, 'image/png');
+      const { error: issueErr } = await supabase.from('permits')
+        .update({ status: 'issued', issuer_signature_path: p.issuerPath, holder_signature_path: p.holderPath, issued_on_device_at: p.at }).eq('id', item.subjectId);
+      if (issueErr && !isFrozen(issueErr)) throw issueErr;
+      return;
+    }
+    case 'permit_close': {
+      await uploadIfMissing(p.sigPath as string, blobs.signature, 'image/png');
+      const { error } = await supabase.from('permits')
+        .update({ status: 'closed', closeout_checks: p.checks, closeout_note: p.note ?? null, closeout_signature_path: p.sigPath, closed_on_device_at: p.at }).eq('id', item.subjectId);
+      if (error && !isFrozen(error)) throw error;
+      return;
+    }
     case 'inspection_submit': {
       // Photos, then the row with its items, then the signature that completes it.
       const paths = (p.photoPaths as Array<{ key: string; path: string; type: string }> | undefined) ?? [];
@@ -88,9 +106,14 @@ async function replay(item: OutboxItem): Promise<void> {
       const { error: rowErr } = await supabase.from('inspections').insert({ id: item.subjectId, project_id: item.projectId, ...(p.row as Record<string, unknown>) });
       if (rowErr && !isAlreadyDone(rowErr)) throw rowErr;
       await uploadIfMissing(p.sigPath as string, blobs.signature, 'image/png');
-      const { error: doneErr } = await supabase.from('inspections')
-        .update({ signature_path: p.sigPath, completed_on_device_at: p.at }).eq('id', item.subjectId);
+      const { data: signed, error: doneErr } = await supabase.from('inspections')
+        .update({ signature_path: p.sigPath, completed_on_device_at: p.at }).eq('id', item.subjectId).select('id');
       if (doneErr && !isFrozen(doneErr)) throw doneErr;
+      if (!doneErr && (!signed || signed.length === 0)) {
+        const { data: row } = await supabase.from('inspections').select('completed_at').eq('id', item.subjectId).maybeSingle();
+        if (!row) throw Object.assign(new Error('That inspection no longer exists.'), { code: '42501' });
+        if (!row.completed_at) throw Object.assign(new Error('The inspection could not be signed from this account; it is still open.'), { code: '42501' });
+      }
       return;
     }
     case 'incident_report': {
