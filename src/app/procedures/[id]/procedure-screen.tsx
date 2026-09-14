@@ -89,7 +89,7 @@ export function ProcedureScreen({ doc, projectId, crew, canManage, canSign, user
       {current && doc.requires_acknowledgement && (
         <div className="item">
           <p className="label">Read and understood — version {current.version}</p>
-          <h2 className="home-card__title">{cov.read.length} of {crew.length} on this job{cov.unread.length > 0 ? ` · still to read: ${cov.unread.join(', ')}` : ' · everyone has read it'}</h2>
+          <h2 className="home-card__title">{crew.length === 0 ? `${acks.length + pending.length} signed · no crew list on this job to check against` : `${cov.read.length} of ${crew.length} on this job${cov.unread.length > 0 ? ` · still to read: ${cov.unread.join(', ')}` : ' · everyone has read it'}`}</h2>
           {pending.map((p) => <div key={p} className="talk-attendee"><span className="talk-attendee__pending" /><span>{p}<span className="pending-tag">waiting for signal</span></span></div>)}
           {acks.map((a) => <div key={a.id} className="talk-attendee"><span className="talk-attendee__pending" /><span>{a.person_name}<span className="caption"> · {fmtDate(a.acknowledged_on_device_at.slice(0, 10))}</span></span></div>)}
           {canSign && (
