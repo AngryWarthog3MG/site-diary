@@ -81,6 +81,18 @@ async function replay(item: OutboxItem): Promise<void> {
       }
       return;
     }
+    case 'inspection_submit': {
+      // Photos, then the row with its items, then the signature that completes it.
+      const paths = (p.photoPaths as Array<{ key: string; path: string; type: string }> | undefined) ?? [];
+      for (const ph of paths) if (blobs[ph.key]) await uploadIfMissing(ph.path, blobs[ph.key], ph.type);
+      const { error: rowErr } = await supabase.from('inspections').insert({ id: item.subjectId, project_id: item.projectId, ...(p.row as Record<string, unknown>) });
+      if (rowErr && !isAlreadyDone(rowErr)) throw rowErr;
+      await uploadIfMissing(p.sigPath as string, blobs.signature, 'image/png');
+      const { error: doneErr } = await supabase.from('inspections')
+        .update({ signature_path: p.sigPath, completed_on_device_at: p.at }).eq('id', item.subjectId);
+      if (doneErr && !isFrozen(doneErr)) throw doneErr;
+      return;
+    }
     case 'incident_report': {
       // Photos first, each to its own path, then the report that names them;
       // the number is issued by the database. The office is told afterwards.

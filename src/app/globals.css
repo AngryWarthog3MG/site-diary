@@ -3576,3 +3576,10 @@ main.sheet--wide .vr-list { grid-template-columns: repeat(auto-fill, minmax(22re
 .incident__add { margin-top: 0.75rem; padding-top: 0.5rem; border-top: 1px dashed var(--ink-30); }
 .report-form__photos { grid-template-columns: 1fr 1fr 1fr; gap: 0.5rem; margin-top: 0.5rem; }
 .report-form__photos img { width: 100%; height: 6rem; object-fit: cover; border-radius: 8px; border: 1px solid var(--ink-12); }
+
+/* Inspections. */
+.inspection-pick__row { width: 100%; text-align: left; font: inherit; cursor: pointer; }
+.tri__defect { margin-top: 0.5rem; display: grid; gap: 0.5rem; }
+.tri__btn--ok { background: var(--teal); color: #fff; border-color: var(--teal); }
+.tri__btn--defect { background: #9A2B2B; color: #fff; border-color: #9A2B2B; }
+.tri__btn--na { background: var(--ink-60); color: #fff; border-color: var(--ink-60); }

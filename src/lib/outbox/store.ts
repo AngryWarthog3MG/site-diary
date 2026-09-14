@@ -24,7 +24,8 @@ export type OutboxKind =
   | 'signin_in'
   | 'signin_out'
   | 'swms_signon'
-  | 'incident_report';
+  | 'incident_report'
+  | 'inspection_submit';
 
 export type OutboxState = 'queued' | 'syncing' | 'blocked' | 'failed';
 
@@ -57,6 +58,7 @@ export const KIND_LABEL: Record<OutboxKind, string> = {
   signin_out: 'a site sign-out',
   swms_signon: 'a SWMS sign-on',
   incident_report: 'a hazard or incident report',
+  inspection_submit: 'an inspection',
 };
 
 const CHANGED = 'outbox-changed';

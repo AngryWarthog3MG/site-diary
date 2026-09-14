@@ -178,9 +178,15 @@ export function TodayPanel({
           .eq('project_id', projectId)
           .neq('status', 'closed');
         const rows = (inc ?? []) as Array<{ id: string; incident_actions: Array<{ due_on: string | null; done_at: string | null }> }>;
+        const { data: ia } = await supabase
+          .from('inspection_actions')
+          .select('due_on, done_at, inspection:inspections!inner(project_id)')
+          .eq('inspection.project_id', projectId)
+          .is('done_at', null);
+        const lateInspections = ((ia ?? []) as Array<{ due_on: string | null; done_at: string | null }>).filter((a) => a.due_on != null && a.due_on < today).length;
         setSafety({
           open: rows.length,
-          overdue: rows.reduce((n, r) => n + r.incident_actions.filter((a) => a.done_at == null && a.due_on != null && a.due_on < today).length, 0),
+          overdue: rows.reduce((n, r) => n + r.incident_actions.filter((a) => a.done_at == null && a.due_on != null && a.due_on < today).length, 0) + lateInspections,
         });
       }
 
@@ -552,7 +558,7 @@ export function TodayPanel({
           )}
         </div>
       )}
-      {!loading && safety.open > 0 && (
+      {!loading && (safety.open > 0 || safety.overdue > 0) && (
         <div className={`prestart-row ${safety.overdue > 0 ? 'prestart-row--open' : ''}`}>
           <span>{safety.open} safety report{safety.open === 1 ? '' : 's'} open{safety.overdue > 0 ? ` · ${safety.overdue} action${safety.overdue === 1 ? '' : 's'} overdue` : ''}</span>
           <Link href={`/incidents?project=${projectId}`}>Open</Link>
