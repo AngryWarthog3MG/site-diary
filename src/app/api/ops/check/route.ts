@@ -1,3 +1,4 @@
+import { notifyOffice, unnotifiedUrgent } from '@/lib/incidents/notify';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { fetchProduct } from '@/lib/weather/bom';
 import { BOM_PRODUCT_IDS } from '@/lib/weather/derive';
@@ -54,6 +55,7 @@ export async function GET(request: Request) {
     report.exports = await backfillExports();
   }
   if (url.searchParams.get('backup') === '1') report.backup = await snapshotRecord();
+  if (url.searchParams.get('safety') === '1') report.safety = await resendUrgentIncidents();
   if (url.searchParams.get('orphans') === '1') report.orphans = await reconcileStorage();
   if (url.searchParams.get('tickets') === '1') report.tickets = await ticketDigest();
   if (url.searchParams.get('errors') === '1') report.errors = await errorDigest();
@@ -1124,4 +1126,16 @@ async function refreshWeatherDays(): Promise<Record<string, unknown>> {
       : outcome.reason;
   }
   return out;
+}
+
+
+/** Urgent reports the office never heard about (the phone's email call failed): send them now. */
+async function resendUrgentIncidents(): Promise<Record<string, unknown>> {
+  const waiting = await unnotifiedUrgent();
+  const results: Array<Record<string, unknown>> = [];
+  for (const w of waiting) {
+    const outcome = await notifyOffice(w.id);
+    results.push({ project: w.project, ref: `INC-${String(w.seq).padStart(3, '0')}`, ...outcome });
+  }
+  return { waiting: waiting.length, results };
 }

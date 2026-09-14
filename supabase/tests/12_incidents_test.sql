@@ -101,6 +101,24 @@ do $$ declare i public.incidents; begin
   assert i.status = 'closed' and i.closed_at is not null and i.closed_by = '11111111-1111-1111-1111-111111111111', 'close was not stamped';
   raise notice 'PASS  actions gate the close; done and closed are stamped by the database';
 end $$;
+-- A done action is part of the record: nobody removes it.
+reset role;
+select tests.expect_error($q$
+  delete from public.incident_actions where id = 'eeeeeeee-0000-0000-0000-000000000001'
+$q$, 'part of the record');
+-- The phone cannot claim the office was emailed.
+select set_config('request.jwt.claims', '{"sub":"11111111-1111-1111-1111-111111111111","role":"authenticated"}', true);
+set local role authenticated;
+select tests.expect_error($q$
+  update public.incidents set notified_at = now() where id = 'dddddddd-0000-0000-0000-000000000002'
+$q$, 'recorded by the server');
+-- A report from the future is refused, not re-dated.
+select tests.expect_error($q$
+  insert into public.incidents (project_id, kind, occurred_at, description, reported_by)
+  values ('bbbbbbbb-0000-0000-0000-000000000001', 'hazard', now() + interval '2 days', 'Tomorrow', '11111111-1111-1111-1111-111111111111')
+$q$, 'in the future');
+do $$ begin raise notice 'PASS  done actions stay, the phone cannot mark the office emailed, the future is refused'; end $$;
+
 -- Closed: frozen, takes no more.
 select tests.expect_error($q$
   update public.incidents set status = 'open' where id = 'dddddddd-0000-0000-0000-000000000001'

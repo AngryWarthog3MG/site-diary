@@ -45,3 +45,12 @@ test('a photo whose folder is another project is never attached', () => {
   const action = classifyOrphan(f(`other-project/${DRAFT}/abc.jpg`), new Set(), entries);
   assert.equal(action.kind, 'unrecoverable');
 });
+
+test('a report photo whose report never landed is unrecoverable, not ignored', () => {
+  const entries = new Map();
+  const file = { path: 'bbbbbbbb-0000-0000-0000-000000000001/incident/dddddddd-0000-0000-0000-000000000001/x.jpg', createdAt: '2026-09-14T00:00:00Z' };
+  const orphan = classifyOrphan(file, new Set(), entries);
+  assert.equal(orphan.kind, 'unrecoverable');
+  const referenced = classifyOrphan(file, new Set([file.path]), entries);
+  assert.equal(referenced.kind, 'ignore');
+});

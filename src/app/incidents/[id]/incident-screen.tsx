@@ -6,7 +6,7 @@ import { createClient } from '@/lib/supabase/client';
 import { fmtDate } from '@/lib/pdf/dates';
 import { awstClock } from '@/lib/signin/register';
 import {
-  KIND_LABEL, STATUS_LABEL, TREATMENT_LABEL, SEVERITY_LABEL, incidentRef, actionOverdue,
+  KIND_LABEL, STATUS_LABEL, TREATMENT_LABEL, SEVERITY_LABEL, incidentRef, actionOverdue, urgent,
   type IncidentKind, type IncidentStatus, type Treatment, type Severity,
 } from '@/lib/incidents/model';
 
@@ -88,6 +88,13 @@ export function IncidentScreen({ incident: r, crew, canReport, canManage, userId
     if (e) throw new Error(e.message);
     if (!data || data.length === 0) throw new Error('Not allowed from this account.');
   });
+  const isUrgent = urgent({ kind: r.kind, notifiable: r.notifiable, actual_severity: r.actual_severity, potential_severity: r.potential_severity });
+  const notify = () => run('email the office', async () => {
+    const res = await fetch(`/api/incidents/${r.id}/notify`, { method: 'POST' });
+    const body = (await res.json()) as { sent?: boolean; reason?: string; error?: { message?: string } };
+    if (!res.ok) throw new Error(body.error?.message ?? 'The email could not be sent.');
+    if (!body.sent && body.reason === 'no addresses') throw new Error('This job has no report email addresses yet — add them in Settings.');
+  });
   const pdf = () => run('make the PDF', async () => {
     const res = await fetch(`/api/incidents/${r.id}/pdf`, { method: 'POST' });
     const body = (await res.json()) as { url?: string; error?: { message?: string } };
@@ -100,6 +107,12 @@ export function IncidentScreen({ incident: r, crew, canReport, canManage, userId
       <p className="label">{incidentRef(r.seq)} · {KIND_LABEL[r.kind]}{r.notifiable ? ' · NOTIFIABLE' : ''}</p>
       <h1 className="page-title">{r.description.length > 60 ? `${r.description.slice(0, 60)}…` : r.description}</h1>
       <p className={`page-subtitle ${closed ? '' : 'swms__status--active'}`}>{STATUS_LABEL[r.status]}{r.closed_at ? ` · ${fmtDate(r.closed_at.slice(0, 10))}` : ''}</p>
+      {isUrgent && !r.notified_at && !closed && (
+        <p className="notice gap">
+          The office has not been emailed about this report yet.
+          {canReport && <> <button type="button" className="linklike" disabled={busy != null} onClick={() => void notify()}>Email the office now</button></>}
+        </p>
+      )}
       {r.notifiable && !closed && (
         <p className="alert" role="alert">Notifiable: WorkSafe WA must be told immediately by phone, and the site left undisturbed until an inspector says otherwise.</p>
       )}

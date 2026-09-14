@@ -1267,6 +1267,13 @@ land — once, stamped, so a retry from the queue cannot send it twice. Reports 
 through the app, by anyone; the sandbox drill closes its own. Not built: a spoken report turned
 into the form (the prestart's dictation path), photos on updates, and the LTIFR-style statistics a
 tender asks for — the register has the facts for them.
+Codex (pass 16) the same day: a done action, or one on a closed report, cannot be deleted by
+anyone; the office email is *claimed* by the server before it is sent, so two calls cannot send
+twice, a failed send hands the claim back, the screen shows "the office has not been emailed" with
+a button, and the nightly check retries; no signed-in account can mark a report as emailed; a report
+dated in the future is refused rather than re-dated; a report photo whose report never landed is
+reported by the nightly check as unrecoverable rather than ignored; every typed word is escaped
+before it becomes email HTML.
 
 ## Not built, and deliberately so
 
