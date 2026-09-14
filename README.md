@@ -1275,6 +1275,19 @@ dated in the future is refused rather than re-dated; a report photo whose report
 reported by the nightly check as unrecoverable rather than ignored; every typed word is escaped
 before it becomes email HTML.
 
+**R37. An inspection is the checklist as it was that day.** The fourth safety module. A template is
+the company's; an inspection copies its items the moment it starts, so a template reworded next
+month never changes what a record says was asked in September. The phone does the whole thing on one
+screen — pick the checklist, walk it (OK, issue, N/A), note and photograph each issue, sign — and
+sends it as one thing, queued if there is no signal, because a half-walked inspection is not a
+record of anything. The signature is the completion: the database accepts it only over at least one
+answered item and only from the inspection's own storage folder, stamps the time, and freezes the
+row; unanswered items print as "not checked", never as passed. Issues become corrective actions in
+exactly the shape the incident register uses, so the Home screen's "actions overdue" is one number
+across both. Four standard checklists ship (site walk, environmental, quality, plant audit) so the
+first inspection can happen the day the module lands; a company copies and edits them into its own.
+Not built: scoring, scheduled inspections with a reminder, and inspections tied to a permit.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;

@@ -102,6 +102,12 @@ improvising; the register once shipped dead because a live smoke test was skippe
   Reporting/updates = `app.can_run_talks`; managing/closing = `app.can_manage_incidents` (supervisor/admin).
   Outbox kind `incident_report` (photos as blobs). `/api/incidents/[id]/notify` emails `projects.report_emails`
   for urgent reports, once (`notified_at`). Reports are never deleted — a drill closes its own
+- `src/lib/inspections/` — inspections and audits: `model.ts` (kinds, the four built-in templates, `templateFromLines`,
+  `readItems`, `findings`), `pdf.tsx`. Tables `inspection_templates` (org; `app.can_manage_crew`), `inspections`
+  (born open; the signature completes it over ≥1 answered item from its own folder — `app.inspection_answered`;
+  then frozen; items are a snapshot of the template), `inspection_actions` (same shape and rules as incident
+  actions). Inspecting = `app.can_run_talks`; actions = `app.can_manage_incidents`. Outbox kind `inspection_submit`
+  (photos + signature as blobs, one item). The orphan check reads paths inside `items` JSON (addRef recurses)
 - `src/lib/calendar.ts` — `isRestDay`: weekends with nothing recorded are rest days, not holes. One definition for
   the screens, the weekly and the reminder
 - `src/lib/claims/` — the claims register loader and the variation register (`register.ts`:
