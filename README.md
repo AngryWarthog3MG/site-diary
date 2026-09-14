@@ -1253,6 +1253,21 @@ of one version cannot both take over and a revision of archived work cannot beco
 dates on a frozen version are as frozen as its words; a signature is written only under the SWMS's
 own project folder; and archiving asks first, because nothing un-archives.
 
+**R36. A hazard report is the first account, and the first account never changes.** The third
+safety module. The shape comes from what a report is for: months later, in front of an insurer or
+an inspector, the question is "what did you know that afternoon and what did you do about it". So
+the report is frozen the moment it is made — kind, when, where, what happened, who, the photos — and
+everything learned afterwards is an update appended under it, never written over it. Corrective
+actions carry an owner and a due date; the database stamps when each is done and by whom, and
+refuses to close the report while one is open; a closed report is frozen entirely and takes no more.
+Numbers are issued by the database in order of reporting, under a lock, so INC-014 is INC-014 on
+every phone. Two things are deliberately loud: the notifiable tick shows a red banner about WorkSafe
+and the site, and injuries, notifiable and high-severity reports email the office the moment they
+land — once, stamped, so a retry from the queue cannot send it twice. Reports cannot be deleted
+through the app, by anyone; the sandbox drill closes its own. Not built: a spoken report turned
+into the form (the prestart's dictation path), photos on updates, and the LTIFR-style statistics a
+tender asks for — the register has the facts for them.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;

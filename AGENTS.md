@@ -95,6 +95,13 @@ improvising; the register once shipped dead because a live smoke test was skippe
   activation) and `swms_signons` (only on an active version, once per person, never changed or removed —
   by anyone, service role included; the drill archives instead). Authoring = `app.can_write_swms`
   (supervisor/admin); sign-on = `app.can_run_talks`. Outbox kind `swms_signon`
+- `src/lib/incidents/` — hazards, near misses, incidents: `model.ts` (kinds, severities, `incidentRef` INC-001,
+  `actionOverdue`, `summarise`, `urgent`), `pdf.tsx`. Tables `incidents` (numbered per job by the DB under an
+  advisory lock; the first account is frozen; closes only when every action is done; closed = frozen),
+  `incident_updates` (append-only, for everyone), `incident_actions` (done stamped by the DB, then frozen).
+  Reporting/updates = `app.can_run_talks`; managing/closing = `app.can_manage_incidents` (supervisor/admin).
+  Outbox kind `incident_report` (photos as blobs). `/api/incidents/[id]/notify` emails `projects.report_emails`
+  for urgent reports, once (`notified_at`). Reports are never deleted — a drill closes its own
 - `src/lib/calendar.ts` — `isRestDay`: weekends with nothing recorded are rest days, not holes. One definition for
   the screens, the weekly and the reminder
 - `src/lib/claims/` — the claims register loader and the variation register (`register.ts`:
