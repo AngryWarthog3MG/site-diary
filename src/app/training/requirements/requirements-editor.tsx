@@ -53,7 +53,7 @@ export function RequirementsEditor({ orgId, userId, roles, requirements, compete
                 <td className="matrix__person"><strong>{role}</strong></td>
                 {competencies.map((c) => (
                   <td key={c.key} className={`matrix__cell${has(role, c.key) ? ' matrix__cell--required-on' : ''}`}>
-                    <button type="button" className="matrix__mark" disabled={busy} onClick={() => void toggle(role, c.key)}>{has(role, c.key) ? '✓' : '·'}</button>
+                    <button type="button" className="matrix__mark" disabled={busy || (c.retired === true && !has(role, c.key))} title={c.retired ? 'Retired — can be unticked, not required anew' : undefined} onClick={() => void toggle(role, c.key)}>{has(role, c.key) ? '✓' : '·'}</button>
                   </td>
                 ))}
               </tr>

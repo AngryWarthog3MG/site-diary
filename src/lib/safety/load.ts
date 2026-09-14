@@ -34,7 +34,7 @@ export async function loadSafety(supabase: SupabaseClient, projectId: string, or
   const ninety = new Date(Date.parse(`${today}T00:00:00Z`) - 90 * 86_400_000).toISOString().slice(0, 10);
   const weekAgo = new Date(Date.parse(`${today}T00:00:00Z`) - 7 * 86_400_000).toISOString().slice(0, 10);
   const nowIso = new Date().toISOString();
-  const [onSite, week, prestart, plant, permits, incidents, lastInjury, inspections, crew, tickets, subs, swms, docs, labour] = await Promise.all([
+  const [onSite, week, prestart, plant, permits, incidents, lastInjury, inspections, openIncActs, openInspActs, crew, tickets, subs, swms, docs, labour] = await Promise.all([
     supabase.from('site_signins').select('id', { count: 'exact', head: true }).eq('project_id', projectId).eq('signin_date', today).is('signed_out_at', null),
     supabase.from('site_signins').select('id', { count: 'exact', head: true }).eq('project_id', projectId).gte('signin_date', weekAgo),
     supabase.from('prestarts').select('completed_at').eq('project_id', projectId).eq('prestart_date', today).order('created_at', { ascending: false }).limit(1).maybeSingle(),
@@ -43,7 +43,10 @@ export async function loadSafety(supabase: SupabaseClient, projectId: string, or
     supabase.from('incidents').select('id, seq, kind, occurred_at, treatment, status, notifiable, incident_actions(action, owner_name, due_on, done_at)').eq('project_id', projectId).gte('occurred_at', yearAgo),
     // The last injury ever, not the last within the year: "days since" is a lag indicator that keeps counting past 365.
     supabase.from('incidents').select('kind, occurred_at').eq('project_id', projectId).eq('kind', 'injury').order('occurred_at', { ascending: false }).limit(1).maybeSingle(),
-    supabase.from('inspections').select('id, template_name, inspection_date, completed_at, items, inspection_actions(action, owner_name, due_on, done_at)').eq('project_id', projectId).gte('inspection_date', ninety),
+    supabase.from('inspections').select('id, completed_at').eq('project_id', projectId).gte('inspection_date', ninety),
+    // Open corrective actions are open however old their report is: no date window on these two.
+    supabase.from('incident_actions').select('action, owner_name, due_on, done_at, incident:incidents!inner(id, seq, project_id)').eq('incident.project_id', projectId).is('done_at', null),
+    supabase.from('inspection_actions').select('action, owner_name, due_on, done_at, inspection:inspections!inner(id, template_name, inspection_date, project_id)').eq('inspection.project_id', projectId).is('done_at', null),
     supabase.from('crew').select('name').eq('project_id', projectId).eq('active', true),
     supabase.from('crew_tickets').select('person_name, ticket_type, expires_on, active').eq('org_id', orgId),
     supabase.from('project_subcontractors').select('subcontractor:subcontractors!inner(name, active, subcontractor_documents(kind, expires_on, active))').eq('project_id', projectId).is('engaged_to', null),
@@ -53,12 +56,16 @@ export async function loadSafety(supabase: SupabaseClient, projectId: string, or
   ]);
 
   const crewNames = ((crew.data ?? []) as Array<{ name: string }>).map((c) => c.name);
-  const incRows = ((incidents.data ?? []) as Array<IncidentFacts & { id: string; seq: number; incident_actions: Array<ActionFacts & { action: string; owner_name: string | null }> }>);
-  const inspRows = ((inspections.data ?? []) as Array<{ id: string; template_name: string; inspection_date: string; completed_at: string | null; items: unknown; inspection_actions: Array<ActionFacts & { action: string; owner_name: string | null }> }>);
+  const incRows = ((incidents.data ?? []) as Array<IncidentFacts & { id: string; seq: number }>);
+  const inspRows = ((inspections.data ?? []) as Array<{ id: string; completed_at: string | null }>);
+  const one = <T,>(v: T | T[]): T => (Array.isArray(v) ? v[0] : v);
+  type OpenAction = ActionFacts & { action: string; owner_name: string | null };
+  const incActs = ((openIncActs.data ?? []) as Array<OpenAction & { incident: { id: string; seq: number } | Array<{ id: string; seq: number }> }>);
+  const inspActs = ((openInspActs.data ?? []) as Array<OpenAction & { inspection: { id: string; template_name: string; inspection_date: string } | Array<{ id: string; template_name: string; inspection_date: string }> }>);
   const actionList: SafetyData['actions']['list'] = [];
-  for (const i of incRows) for (const a of i.incident_actions) if (!a.done_at) actionList.push({ source: 'incident', ref: `INC-${String(i.seq).padStart(3, '0')}`, href: `/incidents/${i.id}`, action: a.action, owner: a.owner_name, due_on: a.due_on });
-  for (const i of inspRows) for (const a of i.inspection_actions) if (!a.done_at) actionList.push({ source: 'inspection', ref: `${i.template_name} ${i.inspection_date}`, href: `/inspections/${i.id}`, action: a.action, owner: a.owner_name, due_on: a.due_on });
-  const allActions: ActionFacts[] = [...incRows.flatMap((i) => i.incident_actions), ...inspRows.flatMap((i) => i.inspection_actions)];
+  for (const a of incActs) { const i = one(a.incident); actionList.push({ source: 'incident', ref: `INC-${String(i.seq).padStart(3, '0')}`, href: `/incidents/${i.id}`, action: a.action, owner: a.owner_name, due_on: a.due_on }); }
+  for (const a of inspActs) { const i = one(a.inspection); actionList.push({ source: 'inspection', ref: `${i.template_name} ${i.inspection_date}`, href: `/inspections/${i.id}`, action: a.action, owner: a.owner_name, due_on: a.due_on }); }
+  const allActions: ActionFacts[] = [...incActs, ...inspActs];
   actionList.sort((a, b) => (a.due_on ?? '9999').localeCompare(b.due_on ?? '9999'));
 
   const hours = ((labour.data ?? []) as Array<{ hours: number | string | null; overtime_hours: number | string | null }>).reduce((n, r) => n + (Number(r.hours) || 0) + (Number(r.overtime_hours) || 0), 0);
@@ -84,7 +91,7 @@ export async function loadSafety(supabase: SupabaseClient, projectId: string, or
     },
     inspections: {
       last90: inspRows.filter((i) => i.completed_at).length,
-      issuesOpen: inspRows.reduce((n, i) => n + i.inspection_actions.filter((a) => !a.done_at).length, 0),
+      issuesOpen: inspActs.length,
     },
     tickets: {
       expired: expired.map((t) => ({ person: t.person_name, label: label(t.ticket_type), on: t.expires_on as string })),

@@ -80,7 +80,7 @@ export default async function SafetyPage({ searchParams }: { searchParams: Promi
         {tile('Days since last injury (ever)', d.incidents.daysSinceInjury == null ? 'No injury recorded' : d.incidents.daysSinceInjury, d.incidents.daysSinceInjury == null ? 'ok' : undefined)}
         {tile('Medical treatment or worse', d.incidents.year.mti, d.incidents.year.mti > 0 ? 'bad' : 'ok')}
         {tile('First aid', d.incidents.year.fai)}
-        {tile('Injuries, no treatment recorded', d.incidents.year.untreated)}
+        {tile('Injuries, no treatment or not stated', d.incidents.year.untreated)}
         {tile('Near misses', d.incidents.year.nearMiss)}
         {tile('Hazards reported', d.incidents.year.hazards)}
         {tile('Notifiable', d.incidents.year.notifiable, d.incidents.year.notifiable > 0 ? 'bad' : undefined)}

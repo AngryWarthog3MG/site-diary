@@ -33,7 +33,7 @@ export async function GET(request: Request) {
     `<header class="head"><div class="head__left"><p class="lbl"><img class="brandmark" src="${LOGO_DATA_URI}" alt="" /> ${esc(org.name)}</p><h1>Safety summary</h1><p class="mono sub">${esc(project.name)} · ${esc(org.code)}_${esc(project.code)}</p></div><div class="head__right"><p class="lbl">As of</p><p class="mono">${esc(fmtDate(today))}</p></div></header>`,
     '<section class="sect"><p class="lbl">Last 12 months</p><table><tbody>',
     row('Hours worked (labour on signed diaries)', y.hoursWorked.toLocaleString('en-AU')),
-    row('Injuries — medical treatment or worse', y.mti), row('Injuries — first aid', y.fai), row('Injuries — no treatment recorded', y.untreated), row('Near misses reported', y.nearMiss), row('Hazards reported', y.hazards), row('Notifiable incidents', y.notifiable),
+    row('Injuries — medical treatment or worse', y.mti), row('Injuries — first aid', y.fai), row('Injuries — no treatment, or treatment not stated', y.untreated), row('Near misses reported', y.nearMiss), row('Hazards reported', y.hazards), row('Notifiable incidents', y.notifiable),
     row('Injury rate per million hours (medical or worse)', y.ratePerMillionHours == null ? '—' : y.ratePerMillionHours),
     row('Days since last injury (any time)', d.incidents.daysSinceInjury == null ? 'No injury recorded' : d.incidents.daysSinceInjury),
     '</tbody></table><p class="src">The rate divides medical-treatment-or-worse injuries by labour hours on signed diaries. Lost-time days are not recorded, so this is not an LTIFR.</p></section>',
