@@ -1218,6 +1218,21 @@ shared renderer): this week's twenty-five phone photographs weigh 34 MB in stora
 the report. The daily docket carries no such mark, so its bytes are untouched — the determinism
 check says so. Eighty photographs is the cap; the remainder is counted and left in the dockets.
 
+**R34. Site sign-in is the first safety module, and the gate is a phone.** The owner's direction
+(2026-09-14): one place for everything a site runs on, the way the established Australian safety
+platforms do it. Sign-in came first because it feeds everything else — the roll call in an
+emergency, the induction check as someone arrives rather than after, the prestart's attendance,
+the labour a claim stands on. The shape follows the prestart sign-on, which the crew already know:
+tap a name from the crew list, type anyone else with their company and why they are here, one tap
+to sign out, "sign everyone out" at knock-off. Three things are the database's, not the phone's.
+Whether a person was inducted is decided at sign-in from the induction list and kept as a fact
+about that moment, as the prestart does. Arrival times are the server's clock, with the phone's
+clock beside them, so a sign-in queued with no signal still says when it really happened. And a
+signed-out row is frozen; a wrong tap is undone only by whoever tapped it and only while the row is
+open, because the register is evidence from the moment someone leaves. Leading hands have gate
+duty — they are the ones standing there. There is no visitor QR code yet: a self-service gate needs
+a public page with its own token, and that is a second step once the crew's own sign-in is habit.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;

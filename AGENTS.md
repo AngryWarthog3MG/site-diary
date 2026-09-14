@@ -84,6 +84,11 @@ improvising; the register once shipped dead because a live smoke test was skippe
   plant list any more). Tables `plant_register` (org-wide fleet), `project_plant`, `plant_prestarts` (signed =
   frozen), `plant_defects`. `app.entry_warnings`
   raises `plant_without_prestart`; the TS half is `reviewQualityWarnings(payload, { plantPrestarted })`
+- `src/lib/signin/` — site sign-in (the gate): `register.ts` (who is on site / who left, AWST clocks by
+  hand, hours to the quarter), `pdf.tsx` (the day's attendance register). Table `site_signins`: the DB
+  decides `inducted` at sign-in and stamps the arrival clocks; the phone's clocks travel alongside; a
+  signed-out row is frozen; one open sign-in per person per day. Gate duty = `app.can_run_talks`.
+  Offline via outbox kinds `signin_in` / `signin_out`. The diary's labour list offers the day's sign-ins
 - `src/lib/calendar.ts` — `isRestDay`: weekends with nothing recorded are rest days, not holes. One definition for
   the screens, the weekly and the reminder
 - `src/lib/claims/` — the claims register loader and the variation register (`register.ts`:
