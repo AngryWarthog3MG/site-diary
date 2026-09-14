@@ -3564,3 +3564,15 @@ main.sheet--wide .vr-list { grid-template-columns: repeat(auto-fill, minmax(22re
 .swms-step { padding: 0.75rem 0 0.25rem; border-top: 1px dashed var(--ink-30); }
 .swms-step__risks { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
 .swms-form .checkrow--inline { margin-bottom: 0.3rem; }
+
+/* Hazards and incidents. */
+.incident__meta { margin: 0 0 0.5rem; font-size: 0.8125rem; color: var(--ink-60); }
+.incident__text { margin: 0.25rem 0; white-space: pre-wrap; }
+.incident .item p .label { display: inline; margin-right: 0.35rem; }
+.incident__action { display: flex; justify-content: space-between; gap: 0.75rem; padding: 0.5rem 0; border-top: 1px solid var(--ink-12); }
+.incident__action--done { opacity: 0.7; }
+.incident__action--late .caption { color: #9A2B2B; font-weight: 600; }
+.incident__update { padding: 0.5rem 0; border-top: 1px solid var(--ink-12); }
+.incident__add { margin-top: 0.75rem; padding-top: 0.5rem; border-top: 1px dashed var(--ink-30); }
+.report-form__photos { grid-template-columns: 1fr 1fr 1fr; gap: 0.5rem; margin-top: 0.5rem; }
+.report-form__photos img { width: 100%; height: 6rem; object-fit: cover; border-radius: 8px; border: 1px solid var(--ink-12); }

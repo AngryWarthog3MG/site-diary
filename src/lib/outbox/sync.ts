@@ -81,6 +81,21 @@ async function replay(item: OutboxItem): Promise<void> {
       }
       return;
     }
+    case 'incident_report': {
+      // Photos first, each to its own path, then the report that names them;
+      // the number is issued by the database. The office is told afterwards.
+      const paths = (p.photoPaths as string[] | undefined) ?? [];
+      for (let i = 0; i < paths.length; i += 1) {
+        const blob = blobs[`photo-${i}`];
+        if (blob) await uploadIfMissing(paths[i], blob, (p.photoTypes as string[] | undefined)?.[i] ?? 'image/jpeg');
+      }
+      const { error } = await supabase.from('incidents').insert({
+        id: item.subjectId, project_id: item.projectId, ...(p.row as Record<string, unknown>), photo_urls: paths, reported_on_device_at: p.at,
+      });
+      if (error && !isAlreadyDone(error)) throw error;
+      await fetch(`/api/incidents/${item.subjectId}/notify`, { method: 'POST' }).catch(() => undefined);
+      return;
+    }
     case 'swms_signon': {
       await uploadIfMissing(p.path as string, blobs.signature, 'image/png');
       const { error } = await supabase.from('swms_signons').insert({

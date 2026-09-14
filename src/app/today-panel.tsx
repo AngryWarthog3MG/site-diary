@@ -76,6 +76,7 @@ export function TodayPanel({
   const [prestart, setPrestart] = useState<{ id: string; done: boolean; signed: number } | null>(null);
   const [tomorrowPrestart, setTomorrowPrestart] = useState<{ id: string; date: string } | null>(null);
   const [onSite, setOnSite] = useState(0);
+  const [safety, setSafety] = useState({ open: 0, overdue: 0 });
   const [weather, setWeather] = useState<WeatherRow | null>(null);
   const [weatherNote, setWeatherNote] = useState<string | null>(null);
   const [attribution, setAttribution] = useState<string | null>(null);
@@ -167,6 +168,20 @@ export function TodayPanel({
           .eq('signin_date', today)
           .is('signed_out_at', null);
         setOnSite(count ?? 0);
+      }
+
+      {
+        // Safety: what is open, and what is late.
+        const { data: inc } = await supabase
+          .from('incidents')
+          .select('id, incident_actions(due_on, done_at)')
+          .eq('project_id', projectId)
+          .neq('status', 'closed');
+        const rows = (inc ?? []) as Array<{ id: string; incident_actions: Array<{ due_on: string | null; done_at: string | null }> }>;
+        setSafety({
+          open: rows.length,
+          overdue: rows.reduce((n, r) => n + r.incident_actions.filter((a) => a.done_at == null && a.due_on != null && a.due_on < today).length, 0),
+        });
       }
 
       {
@@ -535,6 +550,12 @@ export function TodayPanel({
           ) : (
             <Link href={`/prestart/new?project=${projectId}`}>Start it</Link>
           )}
+        </div>
+      )}
+      {!loading && safety.open > 0 && (
+        <div className={`prestart-row ${safety.overdue > 0 ? 'prestart-row--open' : ''}`}>
+          <span>{safety.open} safety report{safety.open === 1 ? '' : 's'} open{safety.overdue > 0 ? ` · ${safety.overdue} action${safety.overdue === 1 ? '' : 's'} overdue` : ''}</span>
+          <Link href={`/incidents?project=${projectId}`}>Open</Link>
         </div>
       )}
       {!loading && (

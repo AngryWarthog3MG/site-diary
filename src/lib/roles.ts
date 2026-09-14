@@ -51,13 +51,13 @@ export function canExportReports(role: MemberRole): boolean {
 }
 
 export type Screen =
-  | 'today' | 'entries' | 'weekly' | 'prestart' | 'plant' | 'toolbox' | 'signin' | 'swms'
+  | 'today' | 'entries' | 'weekly' | 'prestart' | 'plant' | 'toolbox' | 'signin' | 'swms' | 'incidents'
   | 'claims' | 'variations' | 'progress' | 'ask' | 'documents' | 'settings';
 
 /** Which screens a role gets. Everything not listed for a role is refused, not just hidden. */
 export function canSee(role: MemberRole, screen: Screen): boolean {
   if (role === 'leading_hand') {
-    return screen === 'today' || screen === 'entries' || screen === 'weekly' || screen === 'prestart' || screen === 'plant' || screen === 'toolbox' || screen === 'signin' || screen === 'swms';
+    return screen === 'today' || screen === 'entries' || screen === 'weekly' || screen === 'prestart' || screen === 'plant' || screen === 'toolbox' || screen === 'signin' || screen === 'swms' || screen === 'incidents';
   }
   if (screen === 'settings') return canAuthorEntries(role);
   return true;

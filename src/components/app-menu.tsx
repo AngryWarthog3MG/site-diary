@@ -66,7 +66,7 @@ export function AppMenu({ slotId }: { slotId: string }) {
   // What this role gets to see. Until the role is known only the tiles every
   // role has are drawn, so nobody sees a door that closes a moment later; the
   // pages refuse anything a role should not reach anyway.
-  const EVERYONE: Screen[] = ['today', 'entries', 'weekly', 'prestart', 'toolbox', 'signin', 'swms'];
+  const EVERYONE: Screen[] = ['today', 'entries', 'weekly', 'prestart', 'toolbox', 'signin', 'swms', 'incidents'];
   const see = (screen: Screen) => (me?.role ? canSee(me.role as MemberRole, screen) : EVERYONE.includes(screen));
   const item = (href: string, name: string, what: string, variant?: 'wide') => (
     <Link
@@ -101,6 +101,7 @@ export function AppMenu({ slotId }: { slotId: string }) {
           {see('signin') && item(`/signin${q}`, 'Site sign-in', 'Who is on site now — in and out at the gate')}
           {see('prestart') && item(`/prestart${q}`, 'Prestarts', 'Morning briefing and sign-on')}
           {see('swms') && item(`/swms${q}`, 'SWMS & JSA', 'Method statements and who has signed on')}
+          {see('incidents') && item(`/incidents${q}`, 'Hazards & incidents', 'Report it in a minute; actions until it is closed')}
           {see('plant') && item(`/plant${q}`, 'Plant', 'Machine prestarts, defects and the register')}
           {see('toolbox') && item(`/toolbox${q}`, 'Toolbox talks', 'Weekly talk and sign-on')}
           {see('ask') && item(`/ask${q}`, 'Ask a question', 'From your diary and the job documents')}

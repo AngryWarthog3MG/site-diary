@@ -422,7 +422,7 @@ async function reconcileStorage(): Promise<Record<string, unknown>> {
   const sources: Array<[string, string[]]> = [
     ['photos', ['url']], ['entry_signatures', ['image_path']], ['pours', ['docket_photo_urls']],
     ['variations', ['photo_urls']], ['dayworks', ['photo_urls']], ['daywork_dockets', ['photo_urls']],
-    ['prestart_attendees', ['signature_path']], ['toolbox_attendees', ['signature_path']], ['swms_signons', ['signature_path']],
+    ['prestart_attendees', ['signature_path']], ['toolbox_attendees', ['signature_path']], ['swms_signons', ['signature_path']], ['incidents', ['photo_urls']], ['incident_updates', ['photo_urls']],
     ['plant_prestarts', ['signature_path']], ['plant_defects', ['photo_path']],
   ];
   for (const [table, cols] of sources) {
