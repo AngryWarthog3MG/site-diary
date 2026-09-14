@@ -149,8 +149,13 @@ end $$;
 -- The gate: a self-signed sign-in comes only through the server (no account), and carries no account.
 reset role;
 select set_config('request.jwt.claims', '', true);
-insert into public.site_signins (id, project_id, signin_date, person_name, person_kind, company, contact, self_signed, rules_acknowledged_at)
-values ('dddddddd-0000-0000-0000-000000000010', 'bbbbbbbb-0000-0000-0000-000000000001', date '2026-09-14', 'Jo Visitor', 'visitor', 'ACME', '0400 000 000', true, now());
+select tests.expect_error($q$
+  insert into public.site_signins (project_id, signin_date, person_name, person_kind, self_signed)
+  values ('bbbbbbbb-0000-0000-0000-000000000001', date '2026-09-14', 'Unsigned Visitor', 'visitor', true)
+$q$, 'signs and accepts');
+insert into public.site_signins (id, project_id, signin_date, person_name, person_kind, company, contact, self_signed, rules_acknowledged_at, signature_path)
+values ('dddddddd-0000-0000-0000-000000000010', 'bbbbbbbb-0000-0000-0000-000000000001', date '2026-09-14', 'Jo Visitor', 'visitor', 'ACME', '0400 000 000', true, now(),
+        'bbbbbbbb-0000-0000-0000-000000000001/signin/dddddddd-0000-0000-0000-000000000010/sig.png');
 do $$ begin
   assert (select signed_in_by is null and self_signed from public.site_signins where id = 'dddddddd-0000-0000-0000-000000000010'), 'a gate sign-in was not recorded as self-signed';
 end $$;

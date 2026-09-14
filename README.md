@@ -1315,6 +1315,13 @@ print a new sign, the old one stops working the moment the new code saves — an
 sign in sixty people in ten minutes, which is not a gate, it is a script. Codex's review of permits
 landed with it: a permit issued with no signal is judged by when the phone issued it, not when it
 reached the server hours later.
+Codex read the gate as an attacker would (pass 19) and three things changed the same night: a
+self-signed sign-in must carry a real PNG signature and the moment the rules were accepted, or the
+database refuses it; the rate limit is decided under a per-job lock inside one function, so a flood
+cannot all see "fewer than sixty"; and every failure at the gate reads the same, so probing names
+does not reveal who is on site. One finding was accepted as designed: a permit signed at 08:00 with
+no signal and received at 17:00 is issued at 08:00 — the record prints both times, and that is the
+truth of it.
 
 ## Not built, and deliberately so
 
