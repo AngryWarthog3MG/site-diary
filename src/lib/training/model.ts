@@ -26,8 +26,12 @@ function addDays(today: string, days: number): string {
   const d = new Date(`${today}T00:00:00Z`); d.setUTCDate(d.getUTCDate() + days); return d.toISOString().slice(0, 10);
 }
 
+/** Calendar months on, clamped to the last day of the target month: 31 Jan + 1 month is 28 Feb, never 3 Mar. */
 function addMonths(iso: string, months: number): string {
-  const d = new Date(`${iso}T00:00:00Z`); d.setUTCMonth(d.getUTCMonth() + months); return d.toISOString().slice(0, 10);
+  const [y, m, day] = iso.split('-').map(Number);
+  const first = new Date(Date.UTC(y, m - 1 + months, 1));
+  const lastDay = new Date(Date.UTC(first.getUTCFullYear(), first.getUTCMonth() + 1, 0)).getUTCDate();
+  return new Date(Date.UTC(first.getUTCFullYear(), first.getUTCMonth(), Math.min(day, lastDay))).toISOString().slice(0, 10);
 }
 
 /** A ticket's effective expiry: as recorded, else issued + the competency's validity, else none. */

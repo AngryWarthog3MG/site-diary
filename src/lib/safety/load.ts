@@ -15,6 +15,7 @@ export interface SafetyData {
   prestartToday: 'done' | 'open' | 'none';
   taggedOut: string[];
   permits: { live: number; expired: number };
+  /** `list` is the soonest-due `LISTED_ACTIONS`; `open` counts them all, so `open - list.length` is how many the table leaves out. */
   actions: { open: number; overdue: number; list: Array<{ source: 'incident' | 'inspection'; ref: string; href: string; action: string; owner: string | null; due_on: string | null }> };
   incidents: { open: number; year: ReturnType<typeof injurySummary>; daysSinceInjury: number | null; months: ReturnType<typeof monthBuckets> };
   inspections: { last90: number; issuesOpen: number };
@@ -25,19 +26,23 @@ export interface SafetyData {
 }
 
 const norm = normaliseName;
+/** How many corrective actions the dashboard table lists before it says "and N more". */
+export const LISTED_ACTIONS = 20;
 
 export async function loadSafety(supabase: SupabaseClient, projectId: string, orgId: string, today: string): Promise<SafetyData> {
   const yearAgo = new Date(Date.parse(`${today}T00:00:00Z`) - 365 * 86_400_000).toISOString();
   const ninety = new Date(Date.parse(`${today}T00:00:00Z`) - 90 * 86_400_000).toISOString().slice(0, 10);
   const weekAgo = new Date(Date.parse(`${today}T00:00:00Z`) - 7 * 86_400_000).toISOString().slice(0, 10);
   const nowIso = new Date().toISOString();
-  const [onSite, week, prestart, plant, permits, incidents, inspections, crew, tickets, subs, swms, docs, labour] = await Promise.all([
+  const [onSite, week, prestart, plant, permits, incidents, lastInjury, inspections, crew, tickets, subs, swms, docs, labour] = await Promise.all([
     supabase.from('site_signins').select('id', { count: 'exact', head: true }).eq('project_id', projectId).eq('signin_date', today).is('signed_out_at', null),
     supabase.from('site_signins').select('id', { count: 'exact', head: true }).eq('project_id', projectId).gte('signin_date', weekAgo),
     supabase.from('prestarts').select('completed_at').eq('project_id', projectId).eq('prestart_date', today).order('created_at', { ascending: false }).limit(1).maybeSingle(),
     supabase.from('plant_prestarts').select('fit_for_use, completed_at, plant:plant_register!inner(name)').eq('project_id', projectId).eq('prestart_date', today),
     supabase.from('permits').select('valid_from, valid_to').eq('project_id', projectId).eq('status', 'issued'),
     supabase.from('incidents').select('id, seq, kind, occurred_at, treatment, status, notifiable, incident_actions(action, owner_name, due_on, done_at)').eq('project_id', projectId).gte('occurred_at', yearAgo),
+    // The last injury ever, not the last within the year: "days since" is a lag indicator that keeps counting past 365.
+    supabase.from('incidents').select('kind, occurred_at').eq('project_id', projectId).eq('kind', 'injury').order('occurred_at', { ascending: false }).limit(1).maybeSingle(),
     supabase.from('inspections').select('id, template_name, inspection_date, completed_at, items, inspection_actions(action, owner_name, due_on, done_at)').eq('project_id', projectId).gte('inspection_date', ninety),
     supabase.from('crew').select('name').eq('project_id', projectId).eq('active', true),
     supabase.from('crew_tickets').select('person_name, ticket_type, expires_on, active').eq('org_id', orgId),
@@ -70,11 +75,11 @@ export async function loadSafety(supabase: SupabaseClient, projectId: string, or
     prestartToday: prestart.data ? (prestart.data.completed_at ? 'done' : 'open') : 'none',
     taggedOut: plantRows.filter((p) => p.completed_at && p.fit_for_use === false).map((p) => (Array.isArray(p.plant) ? p.plant[0] : p.plant).name),
     permits: { live: permitRows.filter((p) => p.valid_from <= nowIso && nowIso <= p.valid_to).length, expired: permitRows.filter((p) => p.valid_to < nowIso).length },
-    actions: { open: openActions(allActions), overdue: overdue(allActions, today), list: actionList.slice(0, 20) },
+    actions: { open: openActions(allActions), overdue: overdue(allActions, today), list: actionList.slice(0, LISTED_ACTIONS) },
     incidents: {
       open: incRows.filter((i) => i.status !== 'closed').length,
       year: injurySummary(incRows, hours),
-      daysSinceInjury: daysSinceLastInjury(incRows, today),
+      daysSinceInjury: daysSinceLastInjury(lastInjury.data ? [lastInjury.data as { kind: string; occurred_at: string }] : [], today),
       months: monthBuckets(incRows, today, 6),
     },
     inspections: {

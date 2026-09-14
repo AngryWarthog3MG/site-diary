@@ -32,8 +32,14 @@ export function RequirementsEditor({ orgId, userId, roles, requirements, compete
   });
   const retireCustom = (id: string, active: boolean) => run(async () => {
     const c = custom.find((x) => x.id === id);
-    if (active && c && requirements.some((r) => r.competency === c.key)) throw new Error(`${c.label} is still required by a role — untick it there first.`);
-    const { error: e } = await createClient().from('org_competencies').update({ active: !active }).eq('id', id); if (e) throw new Error(e.message);
+    const supabase = createClient();
+    if (active && c) {
+      // Ask the database now, not the list this page loaded with — another manager may have required it since.
+      const { count, error: e } = await supabase.from('competency_requirements').select('role', { count: 'exact', head: true }).eq('org_id', orgId).eq('competency', c.key);
+      if (e) throw new Error(e.message);
+      if ((count ?? 0) > 0) throw new Error(`${c.label} is still required by a role — untick it there first.`);
+    }
+    const { error: e } = await supabase.from('org_competencies').update({ active: !active }).eq('id', id); if (e) throw new Error(e.message);
   });
   return (
     <div className="requirements">

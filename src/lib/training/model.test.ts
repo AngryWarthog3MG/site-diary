@@ -11,6 +11,10 @@ test('a cell is current, expiring, expired or missing from the best ticket', () 
 });
 test('a custom competency with a validity expires from its issue date; one name with two roles owes both', () => {
   assert.equal(effectiveExpiry({ ticket_type: 'kbs_induction', expires_on: null, active: true, issued_on: '2025-01-01' }, 12), '2026-01-01');
+  // Month-end issue dates clamp to the end of the target month rather than rolling into the next one.
+  assert.equal(effectiveExpiry({ ticket_type: 'kbs_induction', expires_on: null, active: true, issued_on: '2026-01-31' }, 1), '2026-02-28');
+  assert.equal(effectiveExpiry({ ticket_type: 'kbs_induction', expires_on: null, active: true, issued_on: '2024-02-29' }, 12), '2025-02-28');
+  assert.equal(effectiveExpiry({ ticket_type: 'kbs_induction', expires_on: null, active: true, issued_on: '2025-11-30' }, 3), '2026-02-28');
   assert.equal(cellFor([{ ticket_type: 'kbs_induction', expires_on: null, active: true, issued_on: '2025-01-01' }], 'kbs_induction', true, today, 30, 12).state, 'expired');
   const people = mergePeople([{ name: 'Chris Lee', role: 'Labourer' }, { name: 'chris lee', role: 'Operator' }], []);
   assert.equal(people.length, 1);

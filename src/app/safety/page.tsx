@@ -65,18 +65,22 @@ export default async function SafetyPage({ searchParams }: { searchParams: Promi
                 <td className="mono">{a.due_on ? fmtDate(a.due_on) : '—'}</td>
                 <td>{a.action}</td>
                 <td>{a.owner ?? '—'}</td>
-                <td><Link href={a.href}>{a.ref}</Link></td>
+                <td><Link href={`${a.href}${q}`}>{a.ref}</Link></td>
               </tr>
             ))}
           </tbody>
         </table>
       )}
+      {d.actions.open > d.actions.list.length && (
+        <p className="caption">Showing the {d.actions.list.length} due soonest; {d.actions.open - d.actions.list.length} more open under <Link href={`/incidents${q}`}>Incidents</Link> and <Link href={`/inspections${q}`}>Inspections</Link>.</p>
+      )}
 
       <p className="label" style={{ marginTop: '1.25rem' }}>Injuries and reports, last 12 months</p>
       <div className="safety__tiles">
-        {tile('Days since last injury', d.incidents.daysSinceInjury == null ? 'No injury recorded' : d.incidents.daysSinceInjury, d.incidents.daysSinceInjury == null ? 'ok' : undefined)}
+        {tile('Days since last injury (ever)', d.incidents.daysSinceInjury == null ? 'No injury recorded' : d.incidents.daysSinceInjury, d.incidents.daysSinceInjury == null ? 'ok' : undefined)}
         {tile('Medical treatment or worse', d.incidents.year.mti, d.incidents.year.mti > 0 ? 'bad' : 'ok')}
         {tile('First aid', d.incidents.year.fai)}
+        {tile('Injuries, no treatment recorded', d.incidents.year.untreated)}
         {tile('Near misses', d.incidents.year.nearMiss)}
         {tile('Hazards reported', d.incidents.year.hazards)}
         {tile('Notifiable', d.incidents.year.notifiable, d.incidents.year.notifiable > 0 ? 'bad' : undefined)}

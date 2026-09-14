@@ -8,15 +8,21 @@ const inc = [
   { kind: 'injury', occurred_at: '2026-08-20T02:00:00Z', treatment: 'first_aid', status: 'closed', notifiable: false },
   { kind: 'near_miss', occurred_at: '2026-09-10T02:00:00Z', treatment: null, status: 'open', notifiable: false },
   { kind: 'hazard', occurred_at: '2026-07-03T02:00:00Z', treatment: null, status: 'closed', notifiable: true },
+  { kind: 'injury', occurred_at: '2026-06-11T02:00:00Z', treatment: 'none', status: 'closed', notifiable: false },
 ];
 test('injuries split into medical-or-worse and first aid, with a rate that names its hours', () => {
   const s = injurySummary(inc, 20000);
-  assert.deepEqual([s.mti, s.fai, s.nearMiss, s.hazards, s.notifiable], [1, 1, 1, 1, 1]);
+  assert.deepEqual([s.mti, s.fai, s.untreated, s.nearMiss, s.hazards, s.notifiable], [1, 1, 1, 1, 1, 1]);
   assert.equal(s.ratePerMillionHours, 50);
   assert.equal(injurySummary(inc, 0).ratePerMillionHours, null);
 });
-test('days since the last injury, and none ever', () => {
+test('an injury with no treatment recorded is never called first aid', () => {
+  const s = injurySummary([{ kind: 'injury', occurred_at: '2026-09-01T02:00:00Z', treatment: null, status: 'open', notifiable: false }], 1000);
+  assert.deepEqual([s.mti, s.fai, s.untreated], [0, 0, 1]);
+});
+test('days since the last injury keeps counting past a year, and none ever', () => {
   assert.equal(daysSinceLastInjury(inc, today), 13);
+  assert.equal(daysSinceLastInjury([{ kind: 'injury', occurred_at: '2025-08-10T02:00:00Z' }], today), 400);
   assert.equal(daysSinceLastInjury([], today), null);
 });
 test('month buckets are oldest first and never skip an empty month', () => {
