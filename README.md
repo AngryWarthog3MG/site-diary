@@ -1233,6 +1233,21 @@ open, because the register is evidence from the moment someone leaves. Leading h
 duty — they are the ones standing there. There is no visitor QR code yet: a self-service gate needs
 a public page with its own token, and that is a second step once the crew's own sign-in is habit.
 
+**R35. A SWMS is frozen the moment it is worked to, and a change is a new version.** The second
+safety module. The law's shape decides the app's: a Safe Work Method Statement must exist for each
+kind of high-risk construction work, must be followed, and must be revised when it stops matching
+the work — so a draft is written and checked, "put into use" freezes it, every worker signs on to
+*that version* ("I have read and understood this and will work to it"), and a revision is a new
+row that supersedes the old one when it in turn is put into use, taking nothing with it: the old
+sign-ons stay with the old version, because they were made to those words. Completeness is checked
+by the database at activation (every step has a hazard and a control; a SWMS names its high-risk
+categories; someone prepared it) and shown live by the same rule in TypeScript; if they disagree
+the database wins. A sign-on is never edited or deleted, by anyone — the drill archives its test
+SWMS rather than remove it, and that is the right friction. A JSA is the same shape without the
+high-risk requirement. Not built yet: drafting steps from a spoken description (the prestart's
+dictation path would do it), a library of the company's standard SWMS across jobs, and showing the
+SWMS in use on the morning prestart.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;

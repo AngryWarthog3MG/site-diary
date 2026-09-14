@@ -89,6 +89,12 @@ improvising; the register once shipped dead because a live smoke test was skippe
   decides `inducted` at sign-in and stamps the arrival clocks; the phone's clocks travel alongside; a
   signed-out row is frozen; one open sign-in per person per day. Gate duty = `app.can_run_talks`.
   Offline via outbox kinds `signin_in` / `signin_out`. The diary's labour list offers the day's sign-ins
+- `src/lib/swms/` — SWMS and JSA: `model.ts` (the 18 high-risk categories of WHS r.291, the 5×5 risk matrix,
+  `readSteps`, `swmsProblems` — the TS half of `app.swms_problems`, the DB wins), `pdf.tsx`. Tables `swms`
+  (born a draft; `active` only when complete, then frozen; a revision has `supersedes_id` and supersedes on
+  activation) and `swms_signons` (only on an active version, once per person, never changed or removed —
+  by anyone, service role included; the drill archives instead). Authoring = `app.can_write_swms`
+  (supervisor/admin); sign-on = `app.can_run_talks`. Outbox kind `swms_signon`
 - `src/lib/calendar.ts` — `isRestDay`: weekends with nothing recorded are rest days, not holes. One definition for
   the screens, the weekly and the reminder
 - `src/lib/claims/` — the claims register loader and the variation register (`register.ts`:
