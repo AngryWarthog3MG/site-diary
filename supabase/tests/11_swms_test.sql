@@ -121,6 +121,42 @@ do $$ begin
   raise notice 'PASS  a revision supersedes on activation and keeps the old sign-ons with the old version';
 end $$;
 
+-- Lineage is fixed: a draft cannot be re-pointed at another SWMS or job.
+insert into public.swms (id, project_id, title, created_by) values ('dddddddd-0000-0000-0000-000000000004', 'bbbbbbbb-0000-0000-0000-000000000001', 'Loose draft', '11111111-1111-1111-1111-111111111111');
+select tests.expect_error($q$
+  update public.swms set supersedes_id = 'dddddddd-0000-0000-0000-000000000002' where id = 'dddddddd-0000-0000-0000-000000000004'
+$q$, 'lineage');
+-- Two revisions of v2: only one can be put into use; the other is told to revise the current one.
+insert into public.swms (id, project_id, kind, title, prepared_by, hrcw, steps, supersedes_id, created_by)
+values ('dddddddd-0000-0000-0000-000000000005', 'bbbbbbbb-0000-0000-0000-000000000001', 'swms', 'Trench for water main', 'Matty', array['shaft_trench'],
+        '[{"step":"Dig","hazards":"Collapse","controls":"Shore"}]'::jsonb, 'dddddddd-0000-0000-0000-000000000002', '11111111-1111-1111-1111-111111111111');
+insert into public.swms (id, project_id, kind, title, prepared_by, hrcw, steps, supersedes_id, created_by)
+values ('dddddddd-0000-0000-0000-000000000006', 'bbbbbbbb-0000-0000-0000-000000000001', 'swms', 'Trench for water main', 'Matty', array['shaft_trench'],
+        '[{"step":"Dig","hazards":"Collapse","controls":"Shore"}]'::jsonb, 'dddddddd-0000-0000-0000-000000000002', '11111111-1111-1111-1111-111111111111');
+update public.swms set status = 'active' where id = 'dddddddd-0000-0000-0000-000000000005';
+select tests.expect_error($q$
+  update public.swms set status = 'active' where id = 'dddddddd-0000-0000-0000-000000000006'
+$q$, 'no longer in use');
+do $$ begin
+  assert (select count(*) from public.swms where status = 'active') = 1, 'two versions are in use at once';
+  raise notice 'PASS  lineage is fixed and only one revision can take over';
+end $$;
+-- Frozen dates: created_at and archived_at do not move.
+select tests.expect_error($q$
+  update public.swms set created_at = now() - interval '1 year' where id = 'dddddddd-0000-0000-0000-000000000005'
+$q$, 'birth');
+update public.swms set status = 'archived' where id = 'dddddddd-0000-0000-0000-000000000005';
+update public.swms set archived_at = now() - interval '1 year' where id = 'dddddddd-0000-0000-0000-000000000005';
+do $$ begin
+  assert (select archived_at from public.swms where id = 'dddddddd-0000-0000-0000-000000000005') >= now() - interval '1 minute', 'archived_at was moved';
+  raise notice 'PASS  a frozen SWMS keeps its dates';
+end $$;
+-- A revision of archived work cannot become the current SWMS.
+select tests.expect_error($q$
+  update public.swms set status = 'active' where id = 'dddddddd-0000-0000-0000-000000000006'
+$q$, 'no longer in use');
+delete from public.swms where id in ('dddddddd-0000-0000-0000-000000000004', 'dddddddd-0000-0000-0000-000000000006');
+
 -- A draft can be deleted; a version in use cannot.
 insert into public.swms (id, project_id, title, created_by) values ('dddddddd-0000-0000-0000-000000000003', 'bbbbbbbb-0000-0000-0000-000000000001', 'Scrap', '11111111-1111-1111-1111-111111111111');
 delete from public.swms where id = 'dddddddd-0000-0000-0000-000000000003';
@@ -136,7 +172,7 @@ reset role;
 select set_config('request.jwt.claims', '{"sub":"33333333-3333-3333-3333-333333333333","role":"authenticated"}', true);
 set local role authenticated;
 do $$ begin
-  assert (select count(*) from public.swms) = 2, 'the PM cannot read the SWMS list';
+  assert (select count(*) from public.swms) = 3, 'the PM cannot read the SWMS list';
   assert (select count(*) from public.swms_signons) = 1, 'the PM cannot read sign-ons';
 end $$;
 select tests.expect_error($q$

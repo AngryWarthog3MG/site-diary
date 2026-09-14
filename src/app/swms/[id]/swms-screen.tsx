@@ -67,6 +67,7 @@ export function SwmsScreen({ swms, crew, canWrite, canSign, userId }: Props) {
   }, [swms.signons]);
 
   async function setStatus(status: 'active' | 'archived', label: string) {
+    if (status === 'archived' && !window.confirm('Archive this SWMS? It stops taking sign-ons and cannot be put back into use — a new version would be needed.')) return;
     setBusy(status);
     setError(null);
     try {
@@ -87,8 +88,9 @@ export function SwmsScreen({ swms, crew, canWrite, canSign, userId }: Props) {
     setBusy('delete');
     try {
       const supabase = createClient();
-      const { error: delErr } = await supabase.from('swms').delete().eq('id', swms.id);
+      const { data, error: delErr } = await supabase.from('swms').delete().eq('id', swms.id).select('id');
       if (delErr) throw new Error(delErr.message);
+      if (!data || data.length === 0) throw new Error('Nothing was deleted — this is no longer a draft. Refresh.');
       router.push(`/swms?project=${swms.projectId}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not delete the draft.');

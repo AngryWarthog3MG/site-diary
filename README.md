@@ -1247,6 +1247,11 @@ SWMS rather than remove it, and that is the right friction. A JSA is the same sh
 high-risk requirement. Not built yet: drafting steps from a spoken description (the prestart's
 dictation path would do it), a library of the company's standard SWMS across jobs, and showing the
 SWMS in use on the morning prestart.
+Codex (pass 15) tightened the lineage the same day: a draft keeps its job and the version it
+revises; a revision goes into use only if its base is still in use on the same job, so two drafts
+of one version cannot both take over and a revision of archived work cannot become current; the
+dates on a frozen version are as frozen as its words; a signature is written only under the SWMS's
+own project folder; and archiving asks first, because nothing un-archives.
 
 ## Not built, and deliberately so
 
