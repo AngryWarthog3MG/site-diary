@@ -164,6 +164,7 @@ async function replay(item: OutboxItem): Promise<void> {
         id: item.subjectId, project_id: item.projectId, ...(p.row as Record<string, unknown>), photo_urls: paths, raised_on_device_at: p.at,
       });
       if (error && !isAlreadyDone(error)) throw error;
+      if ((p.row as { urgent?: boolean }).urgent) await fetch(`/api/orders/${item.subjectId}/notify`, { method: 'POST' }).catch(() => undefined);
       return;
     }
     case 'order_status': {

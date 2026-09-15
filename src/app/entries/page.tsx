@@ -55,9 +55,6 @@ export default async function EntriesPage({
               Every day on the job. Signed days carry the docket and its PDF; drafts are still being worked on.
             </p>
           </div>
-          <Link className="entries-back" href={`/?project=${current.project_id}`}>
-            Today
-          </Link>
         </header>
 
         <section className="entries-summary" aria-label="Register summary">
@@ -94,9 +91,6 @@ export default async function EntriesPage({
           })}
         />
 
-        <Link className="button button--quiet entries-footer-action" href="/">
-          Home
-        </Link>
       </section>
     </main>
   );

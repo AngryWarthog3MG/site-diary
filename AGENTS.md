@@ -124,6 +124,7 @@ improvising; the register once shipped dead because a live smoke test was skippe
   removes their own open one) and `order_updates` (append-only). Raising = `app.can_run_talks`; ordering,
   receiving, fixing, cancelling = `app.can_progress_orders` (crew + PM). Photos `{project}/order/{id}/`. Screens
   `/orders` (raise form inline), `/orders/[id]`. Outbox kinds `order_raise` (photos as blobs), `order_status`.
+  An urgent request emails `projects.report_emails` once via `notify.ts` (`notified_at` server-only; nightly retry).
   A plant issue is NOT a prestart defect and never becomes one — Mitchell's decision; see README R46
 - `src/lib/gate/` — the visitor gate: `model.ts` (`newGateToken`, `gateUrl`, `DEFAULT_RULES`, `validateGateSignIn`).
   Table `gate_tokens` (one active per job; rotate = revoke + new). Public routes `/gate/[token]` and

@@ -1482,6 +1482,17 @@ the heading holding the current screen opens on its own and is marked, a tap on 
 closes it, and that choice is kept for the session so a desk that likes everything open keeps it. Home
 stays a single line at the top; Settings stays in the foot.
 
+**R51. One look for every head, and the office hears about urgent orders.** Mitchell picked two from the
+list: "Notify the office when it matters, unify the older screens." The Daily Diary list, the weekly
+and the review screen grew dark gradient bands before the sheet style settled; the desk already drew
+them as a plain line, and now the phone does too, from the same rules at every width, so the app reads
+as one thing. The list also loses its Today pill and its own Home button, which the top bar and the foot
+made redundant. On the office side, an urgent order or plant issue emails the job's report addresses the
+moment it is raised — the same shape as the incident email: the server claims `notified_at` before
+sending, hands it back on failure, and the nightly `safety=1` check retries; a phone cannot set the mark.
+The notifiable-incident banner now carries the WorkSafe WA incident line, 1800 678 198, as a number you
+can tap, in the report form, on the report, and in the office email.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;

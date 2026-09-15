@@ -93,6 +93,9 @@ do $$ begin
   assert (select cancelled_at from public.orders where id = 'dddddddd-0000-0000-0000-000000000002') is not null, 'cancel not stamped';
   raise notice 'PASS  done and cancelled are stamped and frozen; a cancel needs a reason';
 end $$;
+select tests.expect_error($q$
+  update public.orders set notified_at = now() where id = 'dddddddd-0000-0000-0000-000000000001'
+$q$, 'recorded by the server');
 reset role;
 -- Nothing that has moved is ever deleted, by anyone.
 select tests.expect_error($q$

@@ -69,6 +69,10 @@ export function RaiseOrder({ projectId, userId, plant }: Props) {
         }
         const { error: insErr } = await supabase.from('orders').insert({ id, project_id: projectId, ...row, photo_urls: photoPaths, raised_on_device_at: at });
         if (insErr) throw new Error(insErr.message);
+        if (row.urgent) {
+          const n = await fetch(`/api/orders/${id}/notify`, { method: 'POST' }).catch(() => null);
+          if (n && !n.ok) window.alert('It is on the list. The office email did not go through — ring them. The app will retry tonight.');
+        }
       };
       const queue = () => outbox.enqueue({
         kind: 'order_raise', projectId, subjectId: id,

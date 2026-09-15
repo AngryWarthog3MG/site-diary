@@ -197,8 +197,8 @@ export function ReportForm({ projectId, userId, crew, plant }: Props) {
       </label>
       {notifiable && (
         <p className="alert" role="alert">
-          Notify WorkSafe WA immediately by phone, and do not disturb the site until an inspector says so. Keep this report
-          for at least two years.
+          Notify WorkSafe WA immediately by phone on <a href="tel:1800678198"><strong>1800 678 198</strong></a> (24 hours), and do not
+          disturb the site until an inspector says so. Keep this report for at least two years.
         </p>
       )}
 

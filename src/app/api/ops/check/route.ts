@@ -3,6 +3,7 @@ import { buildMatrix, competencies, mergePeople } from '@/lib/training/model';
 import { perthToday } from '@/lib/push/decide';
 import { compliance, DOC_LABEL, VERDICT_LABEL, type DocFacts } from '@/lib/subcontractors/model';
 import { notifyOffice, unnotifiedUrgent } from '@/lib/incidents/notify';
+import { notifyOfficeOrder, unnotifiedUrgentOrders } from '@/lib/orders/notify';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { fetchProduct } from '@/lib/weather/bom';
 import { BOM_PRODUCT_IDS } from '@/lib/weather/derive';
@@ -59,7 +60,10 @@ export async function GET(request: Request) {
     report.exports = await backfillExports();
   }
   if (url.searchParams.get('backup') === '1') report.backup = await snapshotRecord();
-  if (url.searchParams.get('safety') === '1') report.safety = await resendUrgentIncidents();
+  if (url.searchParams.get('safety') === '1') {
+    report.safety = await resendUrgentIncidents();
+    report.orders = await resendUrgentOrders();
+  }
   if (url.searchParams.get('orphans') === '1') report.orphans = await reconcileStorage();
   if (url.searchParams.get('tickets') === '1') report.tickets = await ticketDigest();
   if (url.searchParams.get('tickets') === '1') report.subcontractors = await subcontractorDigest();
@@ -1167,6 +1171,17 @@ async function refreshWeatherDays(): Promise<Record<string, unknown>> {
 
 
 /** Urgent reports the office never heard about (the phone's email call failed): send them now. */
+/** Urgent orders and plant issues the office has not heard about, emailed now. */
+async function resendUrgentOrders(): Promise<Record<string, unknown>> {
+  const waiting = await unnotifiedUrgentOrders();
+  const results: Array<Record<string, unknown>> = [];
+  for (const w of waiting) {
+    const outcome = await notifyOfficeOrder(w.id);
+    results.push({ project: w.project, ref: `ORD-${String(w.seq).padStart(3, '0')}`, ...outcome });
+  }
+  return { waiting: waiting.length, results };
+}
+
 async function resendUrgentIncidents(): Promise<Record<string, unknown>> {
   const waiting = await unnotifiedUrgent();
   const results: Array<Record<string, unknown>> = [];

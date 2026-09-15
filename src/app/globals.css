@@ -3846,3 +3846,46 @@ a.dash-row:hover { background: var(--teal-tint); }
   /* Where the rail carries Home the foot steps aside; a screen without the rail (the crew's sign-in) keeps it. */
   body:has(> .rail) .homefoot { display: none; }
 }
+
+/* ==========================================================================
+   One look for every head. The Daily Diary list, the weekly and the review
+   screen grew dark gradient bands before the sheet style settled; the desk
+   already drew them as a plain line. Now the phone does too — the rules the
+   desk used, at every width — so the app reads as one thing (README R51).
+   ========================================================================== */
+.entries-hero, .weekly-hero, .review-hero {
+  background: var(--paper, #fdfdfc) !important;
+  color: var(--ink) !important;
+  border-bottom: 1px solid var(--ink-08);
+  border-radius: 0;
+  padding: clamp(1rem, 3vw, 1.5rem) clamp(1rem, 3vw, 1.5rem) 1rem;
+  margin-bottom: 0.9rem;
+}
+.entries-hero h1, .weekly-hero h1, .review-hero h1 { font-size: 1.6rem; line-height: 1.15; letter-spacing: -0.01em; color: var(--ink); max-width: none; margin-top: 0.25rem; }
+.entries-hero *, .weekly-hero *, .review-hero * { color: var(--ink); }
+.entries-hero .label, .entries-kicker, .entries-hero .page-subtitle,
+.weekly-hero .label, .weekly-hero .page-subtitle,
+.review-hero .label, .review-hero .page-subtitle { color: var(--ink-40); }
+.entries-hero p, .weekly-hero p, .review-hero p { color: var(--ink-60); }
+.entries-subtitle { margin-top: 0.5rem; font-size: 0.9375rem; }
+.entries-hero .status-pill, .weekly-hero .status-pill, .entries-hero .chip, .weekly-hero .chip { background: rgba(22, 33, 31, 0.05); border-color: var(--ink-08); color: var(--ink-60); }
+.entries-hero .chip--on, .weekly-hero .chip--on { background: var(--teal, #0e4f52); border-color: var(--teal, #0e4f52); color: #fff; }
+.entries-back { background: var(--paper); border-color: var(--ink-12); color: var(--teal) !important; }
+.review-hero .page-title { color: var(--ink) !important; }
+.review-hero .label, .review-hero .page-subtitle { color: var(--ink-40) !important; }
+.review-state { background: var(--paper-dim); border-color: var(--ink-12); }
+.review-state strong { color: var(--teal) !important; }
+.review-state span { color: var(--ink-60) !important; }
+.review-state--ready { background: var(--teal-tint); border-color: rgba(31, 92, 51, 0.35); }
+.review-state--ready span { color: var(--teal-deep) !important; }
+.review-state--gaps { background: var(--amber-tint); border-color: rgba(154, 106, 9, 0.4); }
+.review-state--gaps strong, .review-state--gaps span { color: #6B4A06 !important; }
+/* The list's board wears the sheet's paper, not its own gradient and long shadow. */
+.entries-board { background: var(--paper); box-shadow: var(--shadow-ui); border-color: var(--ink-12); }
+/* The weekly screen carries its own inline stylesheet, which loads after this one; these say so louder. */
+.weekly-hero { box-shadow: var(--shadow-ui) !important; border: 1px solid var(--ink-12); border-radius: 12px !important; }
+.weekly-hero .weekly-kicker, .weekly-hero .weekly-range { color: var(--ink-40) !important; }
+.weekly-hero h1 { color: var(--ink) !important; font-size: 1.6rem !important; line-height: 1.15 !important; max-width: none !important; }
+.weekly-hero a, .weekly-hero .chip { color: var(--teal) !important; }
+.weekly-hero .chip { background: rgba(22, 33, 31, 0.05) !important; border-color: var(--ink-12) !important; }
+.weekly-hero .chip--on { background: var(--teal) !important; color: #fff !important; }

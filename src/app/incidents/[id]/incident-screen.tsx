@@ -114,7 +114,7 @@ export function IncidentScreen({ incident: r, crew, canReport, canManage, userId
         </p>
       )}
       {r.notifiable && !closed && (
-        <p className="alert" role="alert">Notifiable: WorkSafe WA must be told immediately by phone, and the site left undisturbed until an inspector says otherwise.</p>
+        <p className="alert" role="alert">Notifiable: WorkSafe WA must be told immediately by phone on <a href="tel:1800678198"><strong>1800 678 198</strong></a> (24 hours), and the site left undisturbed until an inspector says otherwise.</p>
       )}
 
       <div className="item">

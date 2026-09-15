@@ -13,7 +13,7 @@ export interface OrderView {
   id: string; projectId: string; seq: number; kind: OrderKind; status: OrderStatus; item: string; quantity: string | null; plant: string | null;
   needed_by: string | null; urgent: boolean; notes: string | null; photo_urls: string[]; raised_by: string; raised_by_name: string; raised_on_device_at: string;
   ordered_at: string | null; supplier: string | null; order_ref: string | null; done_at: string | null; done_note: string | null;
-  cancelled_at: string | null; cancel_reason: string | null;
+  cancelled_at: string | null; cancel_reason: string | null; notified_at: string | null;
   updates: Array<{ id: string; body: string; created_at: string; by: string }>;
 }
 
@@ -72,6 +72,12 @@ export function OrderScreen({ order: r, canProgress, userId, today }: Props) {
     if (e) throw new Error(e.message);
     setNote('');
   });
+  const notify = () => run('email the office', async () => {
+    const res = await fetch(`/api/orders/${r.id}/notify`, { method: 'POST' });
+    const body = (await res.json()) as { sent?: boolean; reason?: string; error?: { message?: string } };
+    if (!res.ok) throw new Error(body.error?.message ?? 'The email could not be sent.');
+    if (!body.sent && body.reason === 'no addresses') throw new Error('This job has no report email addresses yet — add them in Settings.');
+  });
   const remove = () => run('remove it', async () => {
     if (!window.confirm('Remove this request? It has not been ordered, so nothing else refers to it.')) return;
     const { data, error: e } = await createClient().from('orders').delete().eq('id', r.id).select('id');
@@ -89,7 +95,14 @@ export function OrderScreen({ order: r, canProgress, userId, today }: Props) {
         {r.status === 'ordered' && r.ordered_at ? ` · ${fmtDate(r.ordered_at.slice(0, 10))}` : ''}
         {r.done_at ? ` · ${fmtDate(r.done_at.slice(0, 10))}` : ''}{r.cancelled_at ? ` · ${fmtDate(r.cancelled_at.slice(0, 10))}` : ''}
         {late ? ' · LATE' : ''}
+        {r.urgent && r.notified_at ? ' · office emailed' : ''}
       </p>
+      {r.urgent && !r.notified_at && !finished && (
+        <p className="notice gap">
+          Urgent, and the office has not been emailed yet.
+          {canProgress && <> <button type="button" className="linklike" disabled={busy != null} onClick={() => void notify()}>Email the office now</button></>}
+        </p>
+      )}
 
       <div className="item">
         <p className="label">What was asked for</p>

@@ -30,7 +30,7 @@ export default async function OrderPage({ params }: { params: Promise<{ id: stri
     id: r.id, projectId: r.project_id, seq: r.seq, kind: r.kind, status: r.status, item: r.item, quantity: r.quantity, plant: r.plant,
     needed_by: r.needed_by, urgent: r.urgent, notes: r.notes, photo_urls: r.photo_urls ?? [], raised_by: r.raised_by, raised_by_name: who(r.raiser),
     raised_on_device_at: r.raised_on_device_at, ordered_at: r.ordered_at, supplier: r.supplier, order_ref: r.order_ref,
-    done_at: r.done_at, done_note: r.done_note, cancelled_at: r.cancelled_at, cancel_reason: r.cancel_reason,
+    done_at: r.done_at, done_note: r.done_note, cancelled_at: r.cancelled_at, cancel_reason: r.cancel_reason, notified_at: r.notified_at ?? null,
     updates: ((r.order_updates ?? []) as Array<{ id: string; body: string; created_at: string; author: unknown }>)
       .map((u) => ({ id: u.id, body: u.body, created_at: u.created_at, by: who(u.author) }))
       .sort((a, b) => a.created_at.localeCompare(b.created_at)),

@@ -1,0 +1,19 @@
+import { fail, ok, requireApiUser, isUuid } from '@/lib/api';
+import { notifyOfficeOrder } from '@/lib/orders/notify';
+
+/**
+ * Tell the office about this urgent request. Any member of the project may
+ * ask; the sending is claimed once by the service role (notify.ts), so a
+ * retry or a second tab cannot email everyone twice.
+ */
+export async function POST(_request: Request, context: { params: Promise<{ id: string }> }) {
+  const { supabase, response } = await requireApiUser();
+  if (response) return response;
+  const { id } = await context.params;
+  if (!isUuid(id)) return fail('bad_request', 'Bad request id.', 400);
+  const { data: r } = await supabase.from('orders').select('id').eq('id', id).maybeSingle();
+  if (!r) return fail('not_found', 'Not your request.', 404);
+  const outcome = await notifyOfficeOrder(id);
+  if (!outcome.sent && outcome.reason === 'send failed') return fail('server_error', 'The email could not be sent. Tell the office by phone; the app will retry tonight.', 502);
+  return ok(outcome);
+}
