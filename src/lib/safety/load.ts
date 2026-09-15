@@ -3,6 +3,7 @@ import { compliance, type DocFacts } from '@/lib/subcontractors/model';
 import { expiring, normaliseName, type TicketFacts } from '@/lib/crew/tickets';
 import { coverage } from '@/lib/documents-control/model';
 import { injurySummary, daysSinceLastInjury, monthBuckets, overdue, openActions, type IncidentFacts, type ActionFacts } from './stats';
+import { perthWindowDate, perthWindowStart } from './window';
 
 /**
  * Everything the dashboard shows, gathered once under the caller's RLS.
@@ -34,9 +35,12 @@ const norm = normaliseName;
 export const LISTED_ACTIONS = 20;
 
 export async function loadSafety(supabase: SupabaseClient, projectId: string, orgId: string, today: string): Promise<SafetyData> {
-  const yearAgo = new Date(Date.parse(`${today}T00:00:00Z`) - 365 * 86_400_000).toISOString();
-  const ninety = new Date(Date.parse(`${today}T00:00:00Z`) - 90 * 86_400_000).toISOString().slice(0, 10);
-  const weekAgo = new Date(Date.parse(`${today}T00:00:00Z`) - 7 * 86_400_000).toISOString().slice(0, 10);
+  // Every window counts today as its last day and opens at Perth midnight, so the
+  // injuries (timestamps) and the labour hours (dates) under a rate cover the same days.
+  const yearAgo = perthWindowStart(today, 365);
+  const yearAgoDate = perthWindowDate(today, 365);
+  const ninety = perthWindowDate(today, 90);
+  const weekAgo = perthWindowDate(today, 7);
   const nowIso = new Date().toISOString();
   const [onSite, week, prestart, plant, permits, incidents, lastInjury, inspections, openIncActs, openInspActs, crew, tickets, subs, swms, docs, labour] = await Promise.all([
     supabase.from('site_signins').select('id', { count: 'exact', head: true }).eq('project_id', projectId).eq('signin_date', today).is('signed_out_at', null),
@@ -56,7 +60,7 @@ export async function loadSafety(supabase: SupabaseClient, projectId: string, or
     supabase.from('project_subcontractors').select('subcontractor:subcontractors!inner(name, active, subcontractor_documents(kind, expires_on, active))').eq('project_id', projectId).is('engaged_to', null),
     supabase.from('swms').select('title, version, swms_signons(attendee_name)').eq('project_id', projectId).eq('status', 'active'),
     supabase.from('controlled_documents').select('title, requires_acknowledgement, document_versions(version, status, document_acknowledgements(person_name))').eq('org_id', orgId).eq('active', true).eq('requires_acknowledgement', true),
-    supabase.from('labour').select('hours, overtime_hours, entry:entries!inner(project_id, status, entry_date)').eq('entry.project_id', projectId).eq('entry.status', 'signed').gte('entry.entry_date', yearAgo.slice(0, 10)),
+    supabase.from('labour').select('hours, overtime_hours, entry:entries!inner(project_id, status, entry_date)').eq('entry.project_id', projectId).eq('entry.status', 'signed').gte('entry.entry_date', yearAgoDate),
   ]);
 
   const crewNames = ((crew.data ?? []) as Array<{ name: string }>).map((c) => c.name);

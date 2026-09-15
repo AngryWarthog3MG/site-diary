@@ -1,6 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { loadSafety, type SafetyData } from '@/lib/safety/load';
-import { perthWindowStart } from './window';
+import { perthWindowStart } from '@/lib/safety/window';
 
 /**
  * What the home page's cards show. The safety figures are the dashboard's own
