@@ -244,7 +244,9 @@ Change four of them and the app silently stops capturing what supervisors say. I
   `app.can_run_talks()`, `app.can_sign_in()`, `app.can_report()` and `app.can_manage_registers()` mirror it in
   SQL. A new role goes in both, plus the `member_role` enum, `MemberRole` in `src/types/database.ts` and the
   members API's `ROLES` set. The labourer has two doors — the gate and hazard reporting — and `canSee` lists
-  exactly those; reads of other tables are still member-wide in RLS (see README R49).
+  exactly those. Reads: RESTRICTIVE select policies (`*_reads_record`, migration 20260915140000) keep the
+  labourer out of every record table; a NEW table that belongs to the record gets one too
+  (`app.reads_record(project_id)` / `app.reads_org_record(org_id)`), or a labourer can read it by API.
   Pages refuse a screen with a redirect; hiding the tile is not enough — every RPC and export API
   checks the role itself, because a session can call them without the page. The role gate has two
   halves and a new page needs both: the request middleware (`SCREEN_OF_PATH` in

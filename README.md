@@ -1493,6 +1493,22 @@ sending, hands it back on failure, and the nightly `safety=1` check retries; a p
 The notifiable-incident banner now carries the WorkSafe WA incident line, 1800 678 198, as a number you
 can tap, in the report form, on the report, and in the office email.
 
+**R52. Twenty people on a Monday, and the record kept from the labourer.** Mitchell picked the two
+that go with the crew arriving. Onboarding: the Members screen takes a pasted list — a name and an
+email per line, one role for the lot — and seats them in one go, creating an account for anyone who
+has none (confirmed, no mail sent) and leaving anyone already on the job as they are, with a line
+saying which was which. Then Sign-in cards: one printable card per person with a QR code carrying the
+same single-use sign-in link a magic-link email would, minted by the admin on the spot instead of
+mailed, because a mail provider's hourly limit must not decide who gets into a toolbox meeting. The
+codes expire in about an hour, and the page says so. A labourer's first Home shows three lines on what
+their two buttons do, until Got it. Reads: every read policy said "a member may read", and a labourer
+is a member. A restrictive policy — one that must also pass — now sits on every table that belongs to
+the record, saying "and not as a labourer" (`app.reads_record`, `app.reads_org_record`), so the API
+gives a labourer nothing the screens do not: they keep the gate, the reports, the crew list, plant
+names and the weather line. Everyone else reads exactly what they read yesterday; suite 19 says so
+from both sides. Sign-in by email is still there for anyone who prefers it, and depends on the
+project's mail provider (Supabase Auth's SMTP), which this repo does not configure.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;

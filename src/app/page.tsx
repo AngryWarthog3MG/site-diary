@@ -13,6 +13,7 @@ import { navFor, viewerFor } from '@/lib/nav';
 import { SignOutButton } from '@/components/sign-out-button';
 import { TodayPanel } from './today-panel';
 import { DashboardCards, DashboardSkeleton } from './dashboard-cards';
+import { FirstRun } from '@/components/first-run';
 
 export const dynamic = 'force-dynamic';
 
@@ -83,6 +84,7 @@ export default async function TodayPage({
       <ProjectSwitcher memberships={memberships} currentId={current.project_id} />
 
       <SectionBar groups={groups} q={q} />
+      <FirstRun role={current.role} />
 
       {(talks || authors || reports) && (
         <div className="dash-actions">

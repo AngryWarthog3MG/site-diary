@@ -3889,3 +3889,27 @@ a.dash-row:hover { background: var(--teal-tint); }
 .weekly-hero a, .weekly-hero .chip { color: var(--teal) !important; }
 .weekly-hero .chip { background: rgba(22, 33, 31, 0.05) !important; border-color: var(--ink-12) !important; }
 .weekly-hero .chip--on { background: var(--teal) !important; color: #fff !important; }
+
+/* First run: three lines for a new labourer, until Got it. */
+.firstrun { margin-top: 0.9rem; padding: 0.9rem 1rem; border: 1px solid rgba(31, 92, 51, 0.35); border-radius: 12px; background: var(--teal-tint); }
+.firstrun ul { margin: 0.4rem 0 0.6rem; padding-left: 1.1rem; display: grid; gap: 0.3rem; font-size: 0.9375rem; }
+.firstrun .button { width: auto; margin: 0; min-height: 40px; padding: 0 1rem; }
+
+/* Sign-in cards: a printable grid, three across on A4. */
+.cards__head { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; }
+.cards__tools .button { width: auto; margin: 0; }
+.cards__grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr)); gap: 0.75rem; margin-top: 1rem; }
+.card { display: grid; justify-items: center; gap: 0.2rem; padding: 0.9rem; border: 1px solid var(--ink-12); border-radius: 12px; background: var(--paper); text-align: center; break-inside: avoid; }
+.card__org { margin: 0; }
+.card__name { margin: 0.2rem 0 0; font-size: 1.125rem; font-weight: 700; }
+.card__role { margin: 0; }
+.card__qr { margin-top: 0.5rem; width: 100%; max-width: 220px; }
+.card__qr svg { width: 100%; height: auto; display: block; }
+.card__hint { margin: 0.35rem 0 0; }
+@media print {
+  .topbar, .rail, .homefoot, .cards__tools, .cards .page-subtitle { display: none !important; }
+  body { background: #fff; padding: 0 !important; }
+  .cards { box-shadow: none; border: 0; width: 100%; max-width: none; padding: 0; }
+  .cards__grid { grid-template-columns: repeat(3, 1fr); gap: 6mm; }
+  .card { border: 1px solid #999; border-radius: 4mm; }
+}

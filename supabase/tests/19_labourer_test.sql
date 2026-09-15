@@ -51,6 +51,31 @@ do $$ begin
   assert (select status from public.incidents where id = 'dddddddd-0000-0000-0000-000000000001') = 'open', 'a labourer closed a report';
   raise notice 'PASS  prestarts, orders, inspections and managing reports are refused';
 end $$;
+-- The record is not theirs to read: a signed day exists, and the labourer sees none of it.
+reset role;
+insert into auth.users (id, email) values ('11111111-1111-1111-1111-111111111111', 'sup@example.com');
+insert into public.project_members (project_id, user_id, role) values ('bbbbbbbb-0000-0000-0000-000000000001', '11111111-1111-1111-1111-111111111111', 'supervisor');
+insert into public.entries (id, project_id, author_id, entry_date, status) values ('eeeeeeee-0000-0000-0000-000000000001', 'bbbbbbbb-0000-0000-0000-000000000001', '11111111-1111-1111-1111-111111111111', current_date - 1, 'draft');
+insert into public.labour (entry_id, person_name, hours) values ('eeeeeeee-0000-0000-0000-000000000001', 'Marcus', 8);
+insert into public.orders (project_id, kind, item, raised_by) values ('bbbbbbbb-0000-0000-0000-000000000001', 'material', 'Diesel', '11111111-1111-1111-1111-111111111111');
+select set_config('request.jwt.claims', '{"sub":"55555555-5555-5555-5555-555555555555","role":"authenticated"}', true);
+set local role authenticated;
+do $$ begin
+  assert (select count(*) from public.entries) = 0, 'a labourer read the diary';
+  assert (select count(*) from public.labour) = 0, 'a labourer read labour rows';
+  assert (select count(*) from public.orders) = 0, 'a labourer read the orders';
+  assert (select count(*) from public.site_signins) = 1, 'a labourer lost the gate';
+  assert (select count(*) from public.incidents) = 1, 'a labourer lost the reports';
+  assert (select count(*) from public.projects) = 1, 'a labourer lost their job';
+  raise notice 'PASS  a labourer reads the gate and the reports, and none of the record';
+end $$;
+reset role;
+select set_config('request.jwt.claims', '{"sub":"11111111-1111-1111-1111-111111111111","role":"authenticated"}', true);
+set local role authenticated;
+do $$ begin
+  assert (select count(*) from public.entries) = 1 and (select count(*) from public.labour) = 1 and (select count(*) from public.orders) = 1, 'the supervisor lost a read';
+  raise notice 'PASS  everyone else reads what they read yesterday';
+end $$;
 reset role;
 select set_config('request.jwt.claims', '', true);
 do $$ begin raise notice 'ALL LABOURER TESTS PASSED'; end $$;
