@@ -21,7 +21,7 @@ export const ROLE_LABEL: Record<MemberRole, string> = {
 
 export const ROLE_HINT: Record<MemberRole, string> = {
   supervisor: 'Records and signs their own diary; runs prestarts and toolbox talks',
-  leading_hand: 'Runs prestarts, plant prestarts, toolbox talks and the site sign-in; sees past days, the weekly and Today',
+  leading_hand: 'Runs prestarts, plant prestarts, toolbox talks and the site sign-in; sees the daily diary, the weekly and Today',
   pm: 'Reads everything — diary, claims, variations, reports — and writes nothing',
   admin: 'Everything a supervisor can, plus who is on the job and its settings',
 };

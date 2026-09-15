@@ -19,7 +19,7 @@ export interface DayNeighbours {
  * open. Each day is represented by its current version: a signed day that
  * has been corrected shows the correction, never the superseded original.
  * RLS decides what the caller sees, so a PM and a supervisor get the same
- * neighbours they would find on the Past days list.
+ * neighbours they would find on the Daily Diary list.
  */
 export async function loadDayNeighbours(
   supabase: SupabaseClient,

@@ -7,7 +7,7 @@ import { RegisterList, type RegisterRow } from './register-list';
 import { canAuthorEntries } from '@/lib/roles';
 
 export const dynamic = 'force-dynamic';
-export const metadata = { title: 'Entries · Site Diary' };
+export const metadata = { title: 'Daily Diary · KBS Daily Diary' };
 
 /**
  * The register: every entry on the project, newest first.
@@ -48,10 +48,10 @@ export default async function EntriesPage({
       <section className="entries-board">
         <header className="entries-hero">
           <div>
-            <p className="entries-kicker"><BrandMark size={18} /> {current.project.org.name}</p>
-            <h1>{current.project.name}</h1>
+            <p className="entries-kicker"><BrandMark size={18} /> {current.project.name}</p>
+            <h1>Daily Diary</h1>
             <p className="entries-subtitle">
-              Signed entries carry the docket and its PDF. Drafts are still being worked on.
+              Every day on the job. Signed days carry the docket and its PDF; drafts are still being worked on.
             </p>
           </div>
           <Link className="entries-back" href={`/?project=${current.project_id}`}>

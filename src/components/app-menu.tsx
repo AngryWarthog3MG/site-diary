@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import Link from 'next/link';
-import { canSee, type Screen } from '@/lib/roles';
+import { HOME_ITEM, NAV_GROUPS, showNav, type NavItem } from '@/lib/nav';
 import type { MemberRole } from '@/types/database';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { SignOutButton } from '@/components/sign-out-button';
@@ -63,67 +63,35 @@ export function AppMenu({ slotId }: { slotId: string }) {
   if (/^\/(signin|login|auth|verify|offline)/.test(pathname)) return null;
 
   const q = me?.project ? `?project=${me.project.id}` : projectParam ? `?project=${projectParam}` : '';
-  // What this role gets to see. Until the role is known only the tiles every
-  // role has are drawn, so nobody sees a door that closes a moment later; the
-  // pages refuse anything a role should not reach anyway.
-  const EVERYONE: Screen[] = ['today', 'entries', 'weekly', 'prestart', 'toolbox', 'signin', 'swms', 'incidents', 'inspections', 'permits', 'procedures'];
-  const see = (screen: Screen) => (me?.role ? canSee(me.role as MemberRole, screen) : EVERYONE.includes(screen));
-  const item = (href: string, name: string, what: string, variant?: 'wide') => (
+  // The same list the home page and the rail draw. Until the role is known
+  // only the doors every role has are drawn, so nobody sees one close on them.
+  const viewer = { role: (me?.role as MemberRole | null) ?? null, canRecord: Boolean(me?.canRecord), multiJob: (me?.projects.length ?? 0) > 1 };
+  const item = (it: NavItem, variant?: 'wide') => (
     <Link
-      key={href}
+      key={it.href}
       className={`navitem${variant === 'wide' ? ' navitem--wide' : ''}`}
-      href={href}
+      href={it.href === '/portfolio' ? it.href : `${it.href}${q}`}
       onClick={() => setOpen(false)}
     >
-      <span className="navitem__name">{name}</span>
-      <span className="navitem__what">{what}</span>
+      <span className="navitem__name">{it.name}</span>
+      <span className="navitem__what">{it.what}</span>
     </Link>
   );
 
   const drawer = (
     <nav id="app-menu" className="menu-drawer" aria-label="Everything else">
-      {item(`/${q}`, 'Home', 'Today’s diary — record it, or type it in', 'wide')}
+      {item(HOME_ITEM, 'wide')}
 
-      <section className="navgroup">
-        <p className="label">The record</p>
-        <div className="navgrid">
-          {see('entries') && item(`/entries${q}`, 'Past days', 'Signed days and their PDFs')}
-          {see('weekly') && item(`/reports/weekly${q}`, 'Weekly report', 'The week, rolled up')}
-          {see('claims') && item(`/claims${q}`, 'Claims', 'Delays, variations, dayworks')}
-          {see('variations') && item(`/variations${q}`, 'Variation register', 'V-001 to V-050 — each one from raised to paid')}
-          {see('progress') && item(`/progress${q}`, 'Progress', 'How far along each area is')}
-          {see('safety') && item(`/safety${q}`, 'Safety', 'Open actions, expiring tickets, injuries and rates — read from the record')}
-        </div>
-      </section>
-
-      <section className="navgroup">
-        <p className="label">On site</p>
-        <div className="navgrid">
-          {see('signin') && item(`/signin${q}`, 'Site sign-in', 'Who is on site now — in and out at the gate')}
-          {see('prestart') && item(`/prestart${q}`, 'Prestarts', 'Morning briefing and sign-on')}
-          {see('swms') && item(`/swms${q}`, 'SWMS & JSA', 'Method statements and who has signed on')}
-          {see('incidents') && item(`/incidents${q}`, 'Hazards & incidents', 'Report it in a minute; actions until it is closed')}
-          {see('inspections') && item(`/inspections${q}`, 'Inspections', 'Site walks, environmental and quality checks')}
-          {see('permits') && item(`/permits${q}`, 'Permits to work', 'Hot work, excavation, confined space, heights, electrical')}
-          {see('procedures') && item(`/procedures${q}`, 'Policies & procedures', 'The company documents, versioned; who has read the current one')}
-          {see('plant') && item(`/plant${q}`, 'Plant', 'Machine prestarts, defects and the register')}
-          {see('toolbox') && item(`/toolbox${q}`, 'Toolbox talks', 'Weekly talk and sign-on')}
-          {see('ask') && item(`/ask${q}`, 'Ask a question', 'From your diary and the job documents')}
-          {see('documents') && item(`/documents${q}`, 'Job documents', 'Spec, scope, contract, drawings')}
-          {(me?.projects.length ?? 0) > 1 && item('/portfolio', 'All jobs', 'Every active site at once')}
-        </div>
-      </section>
-
-      <section className="navgroup">
-        <p className="label">Setup</p>
-        <div className="navgrid">
-          {see('subcontractors') && item(`/subcontractors${q}`, 'Subcontractors', 'Insurances, SWMS and licences, chased before they lapse')}
-          {see('training') && item(`/training${q}`, 'Training matrix', 'Who holds what, what each role needs, what is expiring')}
-          {see('settings') && item(`/settings${q}`, 'Settings', 'Hours, emails, crew and plant lists')}
-          {me?.canRecord && item(`/settings/members${q}`, 'Who is on this job', 'Crew and PM access')}
-          {me?.canRecord && item(`/settings/vocabulary${q}`, 'Words and names', 'Names and site terms')}
-        </div>
-      </section>
+      {NAV_GROUPS.map((group) => {
+        const items = group.items.filter((it) => showNav(it, viewer));
+        if (items.length === 0) return null;
+        return (
+          <section key={group.label} className="navgroup">
+            <p className="label">{group.label}</p>
+            <div className="navgrid">{items.map((it) => item(it))}</div>
+          </section>
+        );
+      })}
 
       <div className="menu-drawer__foot">
         {me?.name && <p className="menu-drawer__who mono">{me.name}</p>}

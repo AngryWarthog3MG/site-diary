@@ -5,7 +5,8 @@ import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { BrandMark } from '@/components/brand-mark';
 import { RefreshButton } from '@/components/refresh-button';
-import { canSee, ROLE_LABEL, type Screen } from '@/lib/roles';
+import { ROLE_LABEL } from '@/lib/roles';
+import { HOME_ITEM, NAV_GROUPS, showNav } from '@/lib/nav';
 import type { MemberRole } from '@/types/database';
 
 /**
@@ -21,33 +22,12 @@ interface Me {
   name: string | null;
   project: { id: string; name: string; code: string } | null;
   role: MemberRole | null;
+  canRecord?: boolean;
+  projects?: Array<{ id: string }>;
 }
 
-const ITEMS: Array<{ href: string; label: string; screen: Screen }> = [
-  { href: '/', label: 'Home', screen: 'today' },
-  { href: '/entries', label: 'Past days', screen: 'entries' },
-  { href: '/reports/weekly', label: 'Weekly report', screen: 'weekly' },
-  { href: '/claims', label: 'Claims', screen: 'claims' },
-  { href: '/variations', label: 'Variation register', screen: 'variations' },
-  { href: '/progress', label: 'Progress', screen: 'progress' },
-  { href: '/safety', label: 'Safety', screen: 'safety' },
-  { href: '/signin', label: 'Site sign-in', screen: 'signin' },
-  { href: '/prestart', label: 'Prestarts', screen: 'prestart' },
-  { href: '/swms', label: 'SWMS & JSA', screen: 'swms' },
-  { href: '/incidents', label: 'Hazards & incidents', screen: 'incidents' },
-  { href: '/inspections', label: 'Inspections', screen: 'inspections' },
-  { href: '/permits', label: 'Permits to work', screen: 'permits' },
-  { href: '/procedures', label: 'Policies & procedures', screen: 'procedures' },
-  { href: '/plant', label: 'Plant', screen: 'plant' },
-  { href: '/toolbox', label: 'Toolbox talks', screen: 'toolbox' },
-  { href: '/ask', label: 'Ask', screen: 'ask' },
-  { href: '/documents', label: 'Job documents', screen: 'documents' },
-  { href: '/subcontractors', label: 'Subcontractors', screen: 'subcontractors' },
-  { href: '/training', label: 'Training matrix', screen: 'training' },
-];
-
-/** Tiles every role has, drawn until the role is known. */
-const BEFORE_ROLE: Screen[] = ['today', 'entries', 'weekly', 'prestart', 'plant', 'toolbox', 'signin', 'swms', 'incidents', 'inspections', 'permits', 'procedures'];
+/** The rail lists every section; Settings sits in its foot, and the crew pages live under it. */
+const ITEMS = [HOME_ITEM, ...NAV_GROUPS.flatMap((g) => g.items)].filter((it) => it.href !== '/settings' && it.when !== 'canRecord');
 
 export function SideNav() {
   const pathname = usePathname();
@@ -71,7 +51,8 @@ export function SideNav() {
   if (/^\/(signin|login|auth|verify|offline)/.test(pathname)) return null;
 
   const q = me?.project ? `?project=${me.project.id}` : projectParam ? `?project=${projectParam}` : '';
-  const see = (screen: Screen) => (me?.role ? canSee(me.role, screen) : BEFORE_ROLE.includes(screen));
+  const viewer = { role: me?.role ?? null, canRecord: Boolean(me?.canRecord), multiJob: (me?.projects?.length ?? 0) > 1 };
+  const see = (screen: 'settings') => showNav({ href: '/settings', name: '', what: '', screen }, viewer);
   const here = (href: string) => (href === '/' ? pathname === '/' : pathname.startsWith(href));
 
   return (
@@ -90,10 +71,10 @@ export function SideNav() {
       )}
 
       <ul className="rail__list">
-        {ITEMS.filter((item) => see(item.screen)).map((item) => (
+        {ITEMS.filter((item) => showNav(item, viewer)).map((item) => (
           <li key={item.href}>
-            <Link className={`rail__item${here(item.href) ? ' rail__item--here' : ''}`} href={`${item.href}${q}`}>
-              {item.label}
+            <Link className={`rail__item${here(item.href) ? ' rail__item--here' : ''}`} href={item.href === '/portfolio' ? item.href : `${item.href}${q}`}>
+              {item.short ?? item.name}
             </Link>
           </li>
         ))}

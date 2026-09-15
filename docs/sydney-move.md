@@ -99,7 +99,7 @@ Tell Matty the day before: sign the day by 7 pm, do not open the app between 7:3
 5. **Pause the Tokyo project** immediately after the smoke test passes. Paused, not
    deleted: a stale phone that still holds the Tokyo URL then fails loudly and reloads,
    rather than writing a day into a database nobody reads.
-6. **Smoke test as yourself** (magic link): Today, Past days, open a draft and see its
+6. **Smoke test as yourself** (magic link): Today, Daily Diary, open a draft and see its
    rows, a signed day's stored PDF opens (the stored file, not a re-render), the weekly
    generates, prestarts, plant, Ask, one photo upload on the sandbox T001. Then run
    `/api/ops/check?resume=1&backup=1&errors=1&orphans=1&tickets=1` and read the email.
