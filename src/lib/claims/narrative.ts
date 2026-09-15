@@ -44,9 +44,12 @@ export function narrativeInput(data: ClaimsData): string {
   const { project, delays, variations, dayworks } = data;
   return JSON.stringify({
     project: project.name,
-    delays: delays.rows,
+    // Rows and the register's own totals: the office reads hours and man-hours lost off the
+    // register, and the numeral check refuses any figure the model works out for itself.
+    delays: { rows: delays.rows, total_minutes: delays.totalMinutes, total_hours: delays.totalHours, man_hours_lost: delays.manHoursLost, by_category: delays.byCategory },
     variations: {
       rows: variations.rows,
+      total_estimated_cost: variations.totalCost,
       register: variations.register.map((r) => ({
         number: r.seq, title: r.title, vr_ref: r.vr_ref, status: r.status, raised_on: r.raised_on,
         estimated_cost: r.estimated_cost, agreed_cost: r.agreed_cost, submitted_on: r.submitted_on, decided_on: r.decided_on, paid_on: r.paid_on,
@@ -54,7 +57,7 @@ export function narrativeInput(data: ClaimsData): string {
       })),
       unreferenced: variations.unreferenced,
     },
-    dayworks: dayworks.rows,
+    dayworks: { rows: dayworks.rows, total_hours: dayworks.totalHours, missing_dockets: dayworks.missingDockets },
   });
 }
 

@@ -251,7 +251,9 @@ Change four of them and the app silently stops capturing what supervisors say. I
   members API's `ROLES` set. The labourer has two doors — the gate and hazard reporting — and `canSee` lists
   exactly those. Reads: RESTRICTIVE select policies (`*_reads_record`, migration 20260915140000) keep the
   labourer out of every record table; a NEW table that belongs to the record gets one too
-  (`app.reads_record(project_id)` / `app.reads_org_record(org_id)`), or a labourer can read it by API.
+  (`app.reads_record(project_id)` / `app.reads_org_record(org_id)`), or a labourer can read it by API. The
+  buckets follow the tables (`"record media reads by role"` on storage.objects, migration 20260916120000): a new
+  bucket or folder that holds the record's media joins that policy, or a labourer can download it by Storage.
   Pages refuse a screen with a redirect; hiding the tile is not enough — every RPC and export API
   checks the role itself, because a session can call them without the page. The role gate has two
   halves and a new page needs both: the request middleware (`SCREEN_OF_PATH` in

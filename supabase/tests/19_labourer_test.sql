@@ -20,6 +20,9 @@ insert into public.organisations (id, name, code) values ('aaaaaaaa-0000-0000-00
 insert into public.projects (id, org_id, name, code) values ('bbbbbbbb-0000-0000-0000-000000000001', 'aaaaaaaa-0000-0000-0000-000000000001', 'Northern', 'C001');
 insert into public.project_members (project_id, user_id, role) values
   ('bbbbbbbb-0000-0000-0000-000000000001', '55555555-5555-5555-5555-555555555555', 'labourer');
+-- The labourer's own name, as the gate judges "their own row" (migration 20260916110000).
+insert into public.profiles (id, email, full_name) values ('55555555-5555-5555-5555-555555555555', 'lab@example.com', 'Sam Labourer')
+  on conflict (id) do update set full_name = excluded.full_name, email = excluded.email;
 
 select set_config('request.jwt.claims', '{"sub":"55555555-5555-5555-5555-555555555555","role":"authenticated"}', true);
 set local role authenticated;
@@ -51,10 +54,35 @@ do $$ begin
   assert (select status from public.incidents where id = 'dddddddd-0000-0000-0000-000000000001') = 'open', 'a labourer closed a report';
   raise notice 'PASS  prestarts, orders, inspections and managing reports are refused';
 end $$;
--- The record is not theirs to read: a signed day exists, and the labourer sees none of it.
+-- A labourer's sign-in is their own: no one else's name in, no one else's row out.
+select tests.expect_error($q$
+  insert into public.site_signins (project_id, signin_date, person_name, person_kind, signed_in_by)
+  values ('bbbbbbbb-0000-0000-0000-000000000001', current_date, 'Marcus Hayden', 'crew', '55555555-5555-5555-5555-555555555555')
+$q$, 'row-level security');
 reset role;
 insert into auth.users (id, email) values ('11111111-1111-1111-1111-111111111111', 'sup@example.com');
 insert into public.project_members (project_id, user_id, role) values ('bbbbbbbb-0000-0000-0000-000000000001', '11111111-1111-1111-1111-111111111111', 'supervisor');
+-- The supervisor signs Marcus in, and signs the labourer in by name at the gate.
+insert into public.site_signins (id, project_id, signin_date, person_name, person_kind, signed_in_by)
+values ('cccccccc-0000-0000-0000-000000000002', 'bbbbbbbb-0000-0000-0000-000000000001', current_date, 'Marcus Hayden', 'crew', '11111111-1111-1111-1111-111111111111'),
+       ('cccccccc-0000-0000-0000-000000000003', 'bbbbbbbb-0000-0000-0000-000000000001', current_date, 'sam labourer', 'crew', '11111111-1111-1111-1111-111111111111');
+select set_config('request.jwt.claims', '{"sub":"55555555-5555-5555-5555-555555555555","role":"authenticated"}', true);
+set local role authenticated;
+update public.site_signins set signed_out_at = now() where id = 'cccccccc-0000-0000-0000-000000000002';
+update public.site_signins set signed_out_at = now() where id = 'cccccccc-0000-0000-0000-000000000003';
+do $$ begin
+  assert (select signed_out_at from public.site_signins where id = 'cccccccc-0000-0000-0000-000000000002') is null, 'a labourer signed a workmate out';
+  assert (select signed_out_at from public.site_signins where id = 'cccccccc-0000-0000-0000-000000000003') is not null, 'a labourer could not sign out the row the supervisor opened for them';
+  raise notice 'PASS  a labourer signs only their own name in, and only their own row out';
+end $$;
+-- The record is not theirs to read: a signed day exists, and the labourer sees none of it.
+reset role;
+insert into storage.buckets (id, name, public) values ('entry-audio', 'entry-audio', false), ('entry-photos', 'entry-photos', false), ('exports', 'exports', false) on conflict (id) do nothing;
+insert into storage.objects (bucket_id, name) values
+  ('entry-audio',  'bbbbbbbb-0000-0000-0000-000000000001/eeeeeeee-0000-0000-0000-000000000001/take1.webm'),
+  ('entry-photos', 'bbbbbbbb-0000-0000-0000-000000000001/eeeeeeee-0000-0000-0000-000000000001/photo1.jpg'),
+  ('entry-photos', 'bbbbbbbb-0000-0000-0000-000000000001/incident/dddddddd-0000-0000-0000-000000000001/grate.jpg'),
+  ('exports',      'bbbbbbbb-0000-0000-0000-000000000001/KBS-2026-09-15.pdf');
 insert into public.entries (id, project_id, author_id, entry_date, status) values ('eeeeeeee-0000-0000-0000-000000000001', 'bbbbbbbb-0000-0000-0000-000000000001', '11111111-1111-1111-1111-111111111111', current_date - 1, 'draft');
 insert into public.labour (entry_id, person_name, hours) values ('eeeeeeee-0000-0000-0000-000000000001', 'Marcus', 8);
 insert into public.orders (project_id, kind, item, raised_by) values ('bbbbbbbb-0000-0000-0000-000000000001', 'material', 'Diesel', '11111111-1111-1111-1111-111111111111');
@@ -64,16 +92,20 @@ do $$ begin
   assert (select count(*) from public.entries) = 0, 'a labourer read the diary';
   assert (select count(*) from public.labour) = 0, 'a labourer read labour rows';
   assert (select count(*) from public.orders) = 0, 'a labourer read the orders';
-  assert (select count(*) from public.site_signins) = 1, 'a labourer lost the gate';
+  assert (select count(*) from public.site_signins) = 3, 'a labourer lost the gate';
   assert (select count(*) from public.incidents) = 1, 'a labourer lost the reports';
   assert (select count(*) from public.projects) = 1, 'a labourer lost their job';
-  raise notice 'PASS  a labourer reads the gate and the reports, and none of the record';
+  assert (select count(*) from storage.objects where bucket_id = 'entry-audio') = 0, 'a labourer read the day''s audio from storage';
+  assert (select count(*) from storage.objects where bucket_id = 'exports') = 0, 'a labourer read a signed PDF from storage';
+  assert (select count(*) from storage.objects where bucket_id = 'entry-photos') = 1, 'a labourer read the day''s photos, or lost the incident photo';
+  raise notice 'PASS  a labourer reads the gate and the reports, and none of the record — tables and buckets alike';
 end $$;
 reset role;
 select set_config('request.jwt.claims', '{"sub":"11111111-1111-1111-1111-111111111111","role":"authenticated"}', true);
 set local role authenticated;
 do $$ begin
   assert (select count(*) from public.entries) = 1 and (select count(*) from public.labour) = 1 and (select count(*) from public.orders) = 1, 'the supervisor lost a read';
+  assert (select count(*) from storage.objects where bucket_id in ('entry-audio', 'entry-photos', 'exports')) = 4, 'the supervisor lost a file';
   raise notice 'PASS  everyone else reads what they read yesterday';
 end $$;
 reset role;

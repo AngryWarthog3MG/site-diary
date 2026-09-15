@@ -1,3 +1,5 @@
+import { sees } from '@/lib/roles';
+import type { MemberRole } from '@/types/database';
 import { fail, ok, requireApiUser, isUuid } from '@/lib/api';
 import { createAdminClient } from '@/lib/supabase/admin';
 
@@ -34,12 +36,16 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
 
   const { data: membership } = await supabase
     .from('project_members')
-    .select('role')
+    .select('role, screens')
     .eq('project_id', entry.project_id)
     .eq('user_id', user.id)
     .maybeSingle();
   if (!membership || (membership.role !== 'supervisor' && membership.role !== 'admin')) {
     return fail('forbidden', 'Only a supervisor or admin on this project can record a correction.', 403);
+  }
+  // The role may correct; the person must also hold the Daily Diary screen on this job (README R57).
+  if (!sees({ role: membership.role as MemberRole, screens: (membership.screens as string[] | null) ?? null }, 'entries')) {
+    return fail('forbidden', 'Your access on this job does not include the diary.', 403);
   }
 
   // Corrections chain forward: if this entry is already superseded by a

@@ -1,5 +1,5 @@
 import { fail, requireApiUser, isUuid, isDate } from '@/lib/api';
-import { canExportReports } from '@/lib/roles';
+import { sees, canExportReports } from '@/lib/roles';
 import type { MemberRole } from '@/types/database';
 
 /**
@@ -16,9 +16,10 @@ export async function GET(request: Request) {
   const to = url.searchParams.get('to');
   if (!isUuid(projectId) || !isDate(from) || !isDate(to)) return fail('bad_request', 'project, from and to are required.', 400);
 
-  const { data: membership } = await supabase.from('project_members').select('role').eq('project_id', projectId).eq('user_id', user.id).maybeSingle();
+  const { data: membership } = await supabase.from('project_members').select('role, screens').eq('project_id', projectId).eq('user_id', user.id).maybeSingle();
   if (!membership) return fail('not_found', 'That project is not one of yours.', 404);
   if (!canExportReports(membership.role as MemberRole)) return fail('forbidden', 'Exports are for supervisors, admins and the PM.', 403);
+  if (!sees({ role: membership.role as MemberRole, screens: (membership.screens as string[] | null) ?? null }, 'plant')) return fail('forbidden', 'Your access on this job does not include Plant.', 403);
 
   const { data: rows, error } = await supabase
     .from('plant_prestarts')

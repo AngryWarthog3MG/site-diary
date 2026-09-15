@@ -1590,6 +1590,42 @@ writes one "- hazard: control" line per hazard, invents neither, and fills that 
 whatever else was said. The transcript joins `prestarts.dictation` as before. Nothing is ticked
 from speech, as ever.
 
+**R59. The 16 September review.** Mitchell: "please do a full review and see if there are any
+issues." Two Codex passes over everything since pass 44 (the rail, notify, onboarding, the read
+lock, the timesheet, CI, prompt v14, the claims draft, the home, access by tick box, the labourer's
+screens, the hazards mic). Eight findings, six fixed the same morning:
+
+- **Buckets follow the tables.** The labourer read lock closed the record's tables but not its
+  media: a labourer's login could still download a day's audio, photos and signed PDF straight
+  from Storage. One restrictive select policy (migration 20260916120000) closes entry-audio,
+  exports and entry-photos to anyone who does not read the record, with the incident folder
+  left open because a labourer's own report photos live there. Suite 19 now inserts objects and
+  counts what each role can see.
+- **A labourer's sign-in is their own, in the table too.** The screen showed one button and no one
+  else's row; the policy let any labourer sign any open row out. `app.signin_name_mine` (migration
+  20260916110000): gate duty signs anyone, a labourer only a row carrying their own name — profile
+  name or email — which is also how a supervisor's gate sign-in of that labourer stays theirs to
+  sign out.
+- **Three routes asked the role and not the ticks.** Corrections, plant export and prestart
+  dictation loaded `role` alone and so ignored a person's screens when the middleware could not
+  judge the job from the address (a mixed-role account, a project id in the body). Each now asks
+  `sees` for its screen. The rule in AGENTS.md: load `screens` with `role` wherever a membership is
+  read for a gate.
+- **The PATCH refuses a stray name** instead of quietly dropping it and storing fewer screens than
+  the admin meant.
+- **A Resend call that hangs** used to leave `notified_at` claimed with nothing sent, and the nightly
+  would skip the order as done. Both notify helpers now abort after 20 s, which is the failure
+  branch that hands the claim back.
+- **The narrative's input had lost the totals.** R55 cut the input down to the rows; the office reads
+  hours and man-hours lost off the register, and the numeral check refuses a figure the model works
+  out for itself. The totals travel with the rows again.
+
+Two findings stand as design, stated rather than fixed: the tick boxes are enforced by the app
+(middleware, pages, APIs, menus) and not by the table policies, which stay by role — a person
+with a role's rights and a hand-written database call reaches what the role reaches, ticks or no
+ticks; and a retired drill subcontractor document on the sandbox organisation whose file was
+removed with the drill, which the nightly storage check will keep naming until the row is gone.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;

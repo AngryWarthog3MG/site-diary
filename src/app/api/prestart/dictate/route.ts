@@ -1,5 +1,5 @@
 import { fail, ok, requireApiUser, isUuid } from '@/lib/api';
-import { canRunTalks } from '@/lib/roles';
+import { canRunTalks, sees } from '@/lib/roles';
 import type { MemberRole } from '@/types/database';
 import { buildKeyterms } from '@/lib/transcription/glossary';
 import { explainModelError } from '@/lib/model-error';
@@ -38,13 +38,16 @@ export async function POST(request: Request) {
 
   const { data: membership } = await supabase
     .from('project_members')
-    .select('role')
+    .select('role, screens')
     .eq('project_id', projectId)
     .eq('user_id', user.id)
     .maybeSingle();
   if (!membership) return fail('not_found', 'That project is not one of yours.', 404);
   if (!canRunTalks(membership.role as MemberRole)) {
     return fail('forbidden', 'Prestarts are run by the supervisor or leading hand.', 403);
+  }
+  if (!sees({ role: membership.role as MemberRole, screens: (membership.screens as string[] | null) ?? null }, 'prestart')) {
+    return fail('forbidden', 'Your access on this job does not include prestarts.', 403);
   }
 
   const { data: terms } = await supabase.rpc('project_keyterms', { p_project_id: projectId });

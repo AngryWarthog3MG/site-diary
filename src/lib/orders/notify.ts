@@ -32,8 +32,11 @@ export async function notifyOfficeOrder(orderId: string): Promise<NotifyOutcome>
   const raiser = (Array.isArray(r.raiser) ? r.raiser[0] : r.raiser) as { full_name?: string | null; email?: string | null } | null;
   const ref = orderRef(r.seq);
   const kind = KIND_LABEL[r.kind as OrderKind];
+  // Bounded: a call that hangs until the platform kills the function would leave the claim
+  // (notified_at) set with nothing sent, and the nightly retry would skip it as done.
   const send = await fetch('https://api.resend.com/emails', {
     method: 'POST',
+    signal: AbortSignal.timeout(20_000),
     headers: { Authorization: `Bearer ${process.env.SMTP_PASS?.trim()}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({
       from: `Site Diary <${process.env.SMTP_SENDER ?? 'diary@kbsdailydiary.me'}>`,

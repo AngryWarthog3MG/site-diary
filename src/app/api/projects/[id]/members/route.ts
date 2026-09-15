@@ -128,7 +128,13 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
     if (mErr) return fail('server_error', mErr.message, 500);
     if (!member) return fail('not_found', 'That person is not on this job.', 404);
     const allowed = new Set<string>(grantableScreens(member.role as MemberRole));
-    const screens = raw === null ? null : Array.from(new Set((raw as string[]).filter((s) => SCREENS.includes(s as Screen) && allowed.has(s))));
+    if (raw !== null) {
+      const unknown = (raw as string[]).filter((s) => !SCREENS.includes(s as Screen));
+      if (unknown.length > 0) return fail('bad_request', `Not a screen: ${unknown.join(', ')}.`, 400);
+      const over = (raw as string[]).filter((s) => !allowed.has(s));
+      if (over.length > 0) return fail('bad_request', `A ${member.role} cannot hold: ${over.join(', ')}.`, 400);
+    }
+    const screens = raw === null ? null : Array.from(new Set(raw as string[]));
     const { error } = await auth.supabase.from('project_members').update({ screens }).eq('project_id', projectId).eq('user_id', userId);
     if (error) return fail('server_error', error.message, 500);
     return ok({ message: screens === null ? 'Back to the role’s own access.' : `Access set: ${screens.length} screen${screens.length === 1 ? '' : 's'}.`, screens });
