@@ -143,7 +143,7 @@ export function VariationTracker({ data, userId, canManage, today }: { data: Cla
 
                   <p className="label" style={{ marginTop: '0.9rem' }}>History</p>
                   <ol className="vt-history">
-                    <li><span className="mono">{fmtDate(item.raised_on)}</span> Raised — first recorded in the diary</li>
+                    {!item.events.some((e) => e.status === 'raised') && <li><span className="mono">{fmtDate(item.raised_on)}</span> Raised — first recorded in the diary</li>}
                     {item.events.map((e, i) => (
                       <li key={i}><span className="mono">{fmtDate(e.at.slice(0, 10))}</span> {STATUS_LABEL[e.status]}{e.by ? ` — ${e.by}` : ''}{e.note ? <em> “{e.note}”</em> : null}</li>
                     ))}
