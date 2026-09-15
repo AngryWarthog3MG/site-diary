@@ -104,9 +104,10 @@ export function navFor(viewer: NavViewer): NavGroup[] {
 
 /** Whether this viewer gets this door. A null role means "not known yet". */
 export function showNav(item: NavItem, viewer: NavViewer): boolean {
-  if (item.when === 'canRecord') return viewer.canRecord;
-  // All jobs is the owner's screen: several jobs, and a role that reads the record on them.
   const member: Access | null = viewer.role ? { role: viewer.role, screens: viewer.screens ?? null } : null;
+  // The crew pages live under Settings: an authoring role gets them, unless Settings is unticked for this person.
+  if (item.when === 'canRecord') return viewer.canRecord && (member ? sees(member, 'settings') : true);
+  // All jobs is the owner's screen: several jobs, and a role that reads the record on them.
   if (item.when === 'multiJob') return viewer.multiJob && (member ? sees(member, 'weekly') : false);
   if (!item.screen) return true;
   return member ? sees(member, item.screen) : EVERY_ROLE.includes(item.screen);

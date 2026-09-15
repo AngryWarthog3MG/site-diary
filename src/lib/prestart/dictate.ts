@@ -46,15 +46,40 @@ Rules that matter more than tidiness:
 - Anything not mentioned is null, not an empty string and not a guess.
 - Names of people, places and materials stay exactly as spoken.`;
 
+/** The one field a supervisor may talk in on its own. */
+export type DictatedField = 'hazards';
+
+const HazardsOnly = z.object({ hazards: z.string().nullable() });
+
+const HAZARDS_SYSTEM = `A construction supervisor has spoken the hazards for today's prestart, and how each is being controlled. Write them as the form's "Hazards and controls" field: one line per hazard, each starting with "- ", the control on the same line after a colon when one was said for it ("- Live comms pit near gate 2: hand dig only, spotter on the vac"). Use their own words, tidied only for punctuation.
+
+Rules that matter more than tidiness:
+- Only what was said. Never add a hazard or a control the supervisor did not say, however obvious or usual it is.
+- A hazard said without a control stays without one — do not supply one.
+- If nothing they said is a hazard or a control, hazards is null.
+- Names of people, places and materials stay exactly as spoken.`;
+
+const EMPTY: DictatedFields = { work_planned: null, hazards: null, plant: null, permits: null, notes: null };
+
 export async function dictatePrestart(
   audio: ArrayBuffer,
   mimeType: string | null,
   keyterms: readonly string[],
+  field?: DictatedField,
 ): Promise<{ transcript: string; fields: DictatedFields }> {
   const heard = await transcribeAudio(audio, mimeType, keyterms);
   const transcript = heard.transcript.trim();
-  if (!transcript) {
-    return { transcript: '', fields: { work_planned: null, hazards: null, plant: null, permits: null, notes: null } };
+  if (!transcript) return { transcript: '', fields: EMPTY };
+  if (field === 'hazards') {
+    // Talked in on its own: only the hazards box fills, whatever else was said.
+    const response = await client().messages.parse({
+      model: MODEL,
+      max_tokens: 1000,
+      system: [{ type: 'text', text: HAZARDS_SYSTEM, cache_control: { type: 'ephemeral' } }],
+      messages: [{ role: 'user', content: transcript }],
+      output_config: { format: zodOutputFormat(HazardsOnly) },
+    });
+    return { transcript, fields: { ...EMPTY, hazards: response.parsed_output?.hazards ?? null } };
   }
   const response = await client().messages.parse({
     model: MODEL,
@@ -63,6 +88,6 @@ export async function dictatePrestart(
     messages: [{ role: 'user', content: transcript }],
     output_config: { format: zodOutputFormat(Fields) },
   });
-  const fields = response.parsed_output ?? { work_planned: null, hazards: null, plant: null, permits: null, notes: null };
+  const fields = response.parsed_output ?? EMPTY;
   return { transcript, fields };
 }

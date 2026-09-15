@@ -3388,6 +3388,10 @@ main.sheet--wide .vr-list { grid-template-columns: repeat(auto-fill, minmax(22re
 
 /* Talk a prestart through. */
 .dictate { margin: 0 0 1rem; }
+/* The mic under one box: smaller, and pulled up against the box it fills. */
+.dictate--field { margin: -0.35rem 0 1rem; }
+.dictate--field .dictate__button { min-height: 40px; font-size: 0.875rem; }
+.dictate--field .way-hint { margin-top: 0.3rem; font-size: 0.8125rem; }
 .dictate__button { display: flex; align-items: center; justify-content: center; gap: 0.5rem; }
 .dictate__dot { width: 0.6rem; height: 0.6rem; border-radius: 50%; background: #ff5d4d; animation: dictate-pulse 1.1s ease-in-out infinite; }
 @keyframes dictate-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }

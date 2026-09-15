@@ -240,6 +240,10 @@ export function NewPrestartForm({
           placeholder={'- Live comms pit near gate 2: hand dig only, spotter on the vac\n- Public footpath next to Busport: barricade and signage before starting'}
           onChange={(e) => setHazards(e.target.value)} />
       </label>
+      <DictateButton projectId={projectId} disabled={busy} field="hazards" onResult={(fields: DictatedFields, transcript) => {
+        setHazards((v) => mergeField(v, fields.hazards));
+        setDictation((v) => appendDictation(v, transcript));
+      }} />
 
       <label className="fieldcell">
         <span className="label">Plant on site</span>

@@ -330,6 +330,8 @@ export function PrestartScreen(props: {
             <textarea className="field" rows={5} value={draft.hazards}
               onChange={(e) => setDraft({ ...draft, hazards: e.target.value })} />
           </label>
+          <DictateButton projectId={prestart.projectId} disabled={saving} field="hazards" onResult={(fields: DictatedFields, transcript) =>
+            setDraft((d) => ({ ...d, hazards: mergeField(d.hazards, fields.hazards), dictation: appendDictation(d.dictation, transcript) }))} />
           <label className="fieldcell">
             <span className="label">Plant on site</span>
             <textarea className="field" rows={2} value={draft.plant}

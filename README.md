@@ -1580,6 +1580,16 @@ and severity, witnesses, plant and the WorkSafe line are the supervisor's to add
 same one-tap button sits at the top of the gate for every role, since a supervisor signs themself
 in too.
 
+**R58. A mic on the hazards box.** Mitchell: "add a talk it in for the prestart hazards." The
+prestart already had Talk it through at the top, which sorts a whole briefing into the five
+fields; on the day the supervisor often has the work typed and wants to walk the hazards out
+loud. The Hazards and controls box now has its own Talk the hazards in, on the new form and
+when editing an open one. It goes through the same route (`POST /api/prestart/dictate` with
+`field=hazards`), the same role check and the same Deepgram pass, and a hazards-only prompt
+writes one "- hazard: control" line per hazard, invents neither, and fills that box alone,
+whatever else was said. The transcript joins `prestarts.dictation` as before. Nothing is ticked
+from speech, as ever.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;

@@ -31,6 +31,10 @@ export async function POST(request: Request) {
   if (!isUuid(projectId)) return fail('bad_request', 'Bad project id.', 400);
   if (!(audio instanceof Blob) || audio.size === 0) return fail('bad_request', 'No recording was sent.', 400);
   if (audio.size > MAX_BYTES) return fail('bad_request', 'That recording is too long for a prestart.', 400);
+  // One field talked in on its own, or the whole briefing.
+  const fieldRaw = form.get('field');
+  if (fieldRaw != null && fieldRaw !== 'hazards') return fail('bad_request', 'Only the hazards can be talked in on their own.', 400);
+  const field = fieldRaw === 'hazards' ? ('hazards' as const) : undefined;
 
   const { data: membership } = await supabase
     .from('project_members')
@@ -47,7 +51,7 @@ export async function POST(request: Request) {
   const keyterms = buildKeyterms((terms as string[] | null) ?? []);
 
   try {
-    const result = await dictatePrestart(await audio.arrayBuffer(), audio.type || null, keyterms);
+    const result = await dictatePrestart(await audio.arrayBuffer(), audio.type || null, keyterms, field);
     if (!result.transcript) {
       return fail('bad_request', 'Nothing was heard in that recording. Try again a little closer to the phone.', 422);
     }

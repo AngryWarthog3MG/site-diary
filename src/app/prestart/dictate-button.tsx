@@ -13,10 +13,13 @@ export function DictateButton({
   projectId,
   onResult,
   disabled,
+  field,
 }: {
   projectId: string;
   onResult: (fields: DictatedFields, transcript: string) => void;
   disabled?: boolean;
+  /** Talk one field in on its own — the hazards box has its own mic (README R58). */
+  field?: 'hazards';
 }) {
   const recorderRef = useRef<Recorder | null>(null);
   const [state, setState] = useState<'idle' | 'recording' | 'working'>('idle');
@@ -60,6 +63,7 @@ export function DictateButton({
       const form = new FormData();
       form.set('projectId', projectId);
       form.set('audio', recording.blob, `prestart.${recording.mimeType.includes('mp4') ? 'm4a' : 'webm'}`);
+      if (field) form.set('field', field);
       const res = await fetch('/api/prestart/dictate', { method: 'POST', body: form });
       const json = (await res.json().catch(() => null)) as
         | { transcript?: string; fields?: DictatedFields; error?: { message?: string }; message?: string }
@@ -80,23 +84,23 @@ export function DictateButton({
 
   const clock = `${Math.floor(elapsed / 60000)}:${String(Math.floor((elapsed % 60000) / 1000)).padStart(2, '0')}`;
 
+  const words = field === 'hazards'
+    ? { idle: 'Talk the hazards in', working: 'Writing them up…', stop: 'Stop and write them up', recording: 'Say each hazard and how you are controlling it, one after the other.', hint: 'Only this box fills. Read it back before you save.' }
+    : { idle: 'Talk it through', working: 'Writing it up…', stop: 'Stop and write it up', recording: 'Say what is on, what could hurt someone and how you are controlling it, what plant is here, any permits.', hint: 'Say the briefing out loud. It fills the fields below for you to check — nothing is ticked for you.' };
+
   return (
-    <div className="dictate">
+    <div className={`dictate${field ? ' dictate--field' : ''}`}>
       {state === 'recording' ? (
         <button className="button button--record dictate__button" type="button" onClick={stop}>
-          <span className="dictate__dot" aria-hidden /> Stop and write it up · {clock}
+          <span className="dictate__dot" aria-hidden /> {words.stop} · {clock}
         </button>
       ) : (
         <button className="button button--record dictate__button" type="button" onClick={start}
           disabled={disabled || state === 'working'}>
-          {state === 'working' ? 'Writing it up…' : 'Talk it through'}
+          {state === 'working' ? words.working : words.idle}
         </button>
       )}
-      <p className="way-hint">
-        {state === 'recording'
-          ? 'Say what is on, what could hurt someone and how you are controlling it, what plant is here, any permits.'
-          : 'Say the briefing out loud. It fills the fields below for you to check — nothing is ticked for you.'}
-      </p>
+      <p className="way-hint">{state === 'recording' ? words.recording : words.hint}</p>
       {error && <p className="alert">{error}</p>}
       {lastHeard && (
         <details className="dictate__heard">
