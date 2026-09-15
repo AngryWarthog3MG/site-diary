@@ -2,7 +2,7 @@ import { fail, ok, requireApiUser, isUuid } from '@/lib/api';
 import { loadClaimsData, ClaimsLoadError } from '@/lib/claims/load';
 import { draftClaimNarrative } from '@/lib/claims/narrative';
 
-export const maxDuration = 120;
+export const maxDuration = 240;
 export const runtime = 'nodejs';
 
 /**
@@ -49,7 +49,9 @@ export async function POST(request: Request) {
       'server_error',
       rejected
         ? 'The draft referenced figures not on the register and was withheld. Try again.'
-        : 'The draft could not be generated. Try again.',
+        : /timed out|timeout|ETIMEDOUT/i.test(failure ?? '')
+          ? 'The model took too long to answer. Try again in a minute.'
+          : 'The draft could not be generated. Try again.',
       502,
     );
   }

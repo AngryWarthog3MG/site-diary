@@ -28,13 +28,43 @@ Hard rules:
 - No pleading, no adjectives, no legal posturing. State, cite, stop.
 - Open with one line: "DRAFT for review — prepared from the signed site diary record. Not a contractual notice until reviewed and issued."`;
 
+/** How long the whole draft may take before we stop and say so, well inside the route's own limit. */
+const BUDGET_MS = 150_000;
+/** One model call may take this long; the SDK then gives up rather than the platform cutting us off. */
+const CALL_TIMEOUT_MS = 80_000;
+
+/**
+ * What the model is given: the claims register and only the claims register.
+ * The variation tracker's ledger (who moved what, when) and each day's
+ * description ride on ClaimsData for the screen; they are not claim figures,
+ * they carry timestamps full of numerals, and they made the input several
+ * times longer — which is how the draft came to outrun the route's limit.
+ */
+export function narrativeInput(data: ClaimsData): string {
+  const { project, delays, variations, dayworks } = data;
+  return JSON.stringify({
+    project: project.name,
+    delays: delays.rows,
+    variations: {
+      rows: variations.rows,
+      register: variations.register.map((r) => ({
+        number: r.seq, title: r.title, vr_ref: r.vr_ref, status: r.status, raised_on: r.raised_on,
+        estimated_cost: r.estimated_cost, agreed_cost: r.agreed_cost, submitted_on: r.submitted_on, decided_on: r.decided_on, paid_on: r.paid_on,
+        hours: r.hours, crew: r.crew, days: r.mentions.map((m) => ({ date: m.date, entry_no: m.entry_no, signed: m.signed, hours: m.hours })),
+      })),
+      unreferenced: variations.unreferenced,
+    },
+    dayworks: dayworks.rows,
+  });
+}
+
 export async function draftClaimNarrative(
   data: ClaimsData,
 ): Promise<{ draft: string | null; rejected?: string[]; failure?: string }> {
   if (!process.env.ANTHROPIC_API_KEY) return { draft: null, failure: 'ANTHROPIC_API_KEY is not set.' };
-  const client = new Anthropic();
-  const { project, ...register } = data;
-  const input = JSON.stringify({ project: project.name, ...register });
+  const client = new Anthropic({ timeout: CALL_TIMEOUT_MS, maxRetries: 1 });
+  const started = Date.now();
+  const input = narrativeInput(data);
   const allowed = allowedNumbers(input);
 
   const call = async (correction?: string) => {
@@ -60,6 +90,9 @@ export async function draftClaimNarrative(
     let draft = await call();
     let offending = unaccountedNumbers(draft, allowed);
     if (offending.length === 0) return { draft };
+    // One corrective retry — but not if it would run us past the budget; a
+    // withheld draft with a clear message beats a platform timeout with none.
+    if (Date.now() - started > BUDGET_MS - CALL_TIMEOUT_MS) return { draft: null, rejected: offending };
     draft = await call(
       `Your draft used figures not present in the register: ${offending.join(', ')}. ` +
         `Rewrite using only figures from the register, or make the point without numerals.`,
