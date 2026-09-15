@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { fmtDate } from '@/lib/pdf/dates';
 import { notFound, redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
-import { requireUser, canAuthorEntries } from '@/lib/auth';
+import { requireUser, canAuthorEntries, guardScreen } from '@/lib/auth';
 import { ReviewPayload } from '@/lib/review/schema';
 import type { SectionKey } from '@/lib/extraction/schema';
 import { ReviewScreen } from './review-screen';
@@ -221,6 +221,7 @@ export default async function ReviewPage({ params }: { params: Promise<{ id: str
   const orgCode =
     (Array.isArray(project?.org) ? project?.org[0]?.code : project?.org?.code) ?? '';
 
+  guardScreen(memberships.find((m) => m.project_id === entry.project_id), 'entries');
   const neighbours = await loadDayNeighbours(supabase, entry.project_id, entry.entry_date);
 
   return (

@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
-import { requireUser } from '@/lib/auth';
+import { requireUser, guardScreen } from '@/lib/auth';
 import { canAuthorEntries } from '@/lib/roles';
 import { BrandMark } from '@/components/brand-mark';
 import { readControls, type PermitKind, type PermitStatus } from '@/lib/permits/model';
@@ -16,6 +16,7 @@ export default async function PermitPage({ params }: { params: Promise<{ id: str
   const { data: r } = await supabase.from('permits').select('*, project:projects!inner(name), swms:swms(title, version, kind)').eq('id', id).maybeSingle();
   if (!r) notFound();
   const membership = memberships.find((m) => m.project_id === r.project_id);
+  guardScreen(membership, 'permits');
   const role = membership?.role ?? 'pm';
   const project = Array.isArray(r.project) ? r.project[0] : r.project;
   const swms = (Array.isArray(r.swms) ? r.swms[0] : r.swms) as { title: string; version: number; kind: string } | null;

@@ -18,7 +18,8 @@ const SELF_AUTHENTICATING = ['/api/ops'];
  */
 const SCREEN_OF_PATH: Array<[prefix: string, screen: Screen]> = [
   ['/signin/gate', 'settings'], ['/api/gate/sign', 'settings'],
-  ['/entries', 'entries'], ['/record', 'entries'], ['/api/entries', 'entries'],
+  ['/entries', 'entries'], ['/record', 'entries'], ['/api/entries', 'entries'], ['/api/deepgram', 'entries'],
+  ['/portfolio', 'weekly'],
   ['/reports', 'weekly'], ['/api/reports', 'weekly'],
   ['/prestart', 'prestart'], ['/api/prestart', 'prestart'],
   ['/toolbox', 'toolbox'], ['/api/toolbox', 'toolbox'],
@@ -123,15 +124,19 @@ export async function updateSession(request: NextRequest) {
    * screen, so a role that cannot see a screen cannot reach its pages or the
    * APIs behind them by typing the address — including the detail pages and
    * PDF routes that never had a guard of their own because, until the
-   * labourer, every role could see every screen. Judged across the account's
-   * memberships: a person allowed on any of their jobs passes here, and the
-   * page decides for the job in hand.
+   * labourer, every role could see every screen. Judged for the job in hand
+   * when the address names one (`?project=`) and the account is on it; across
+   * every membership otherwise — a person allowed on any of their jobs passes,
+   * and the page's own guard decides for the job it resolves.
    */
   if (user) {
     const screen = screenOf(pathname);
     if (screen) {
-      const { data } = await supabase.from('project_members').select('role').eq('user_id', user.id);
-      const roles = ((data ?? []) as Array<{ role: MemberRole }>).map((m) => m.role);
+      const { data } = await supabase.from('project_members').select('project_id, role').eq('user_id', user.id);
+      const memberships = (data ?? []) as Array<{ project_id: string; role: MemberRole }>;
+      const named = request.nextUrl.searchParams.get('project');
+      const onNamed = named ? memberships.find((m) => m.project_id === named) : undefined;
+      const roles = onNamed ? [onNamed.role] : memberships.map((m) => m.role);
       if (roles.length > 0 && !roles.some((r) => canSee(r, screen))) {
         if (pathname.startsWith('/api/')) {
           return NextResponse.json(

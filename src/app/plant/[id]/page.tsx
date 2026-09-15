@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
-import { requireUser } from '@/lib/auth';
+import { requireUser, guardScreen } from '@/lib/auth';
 import { BrandMark } from '@/components/brand-mark';
 import { fmtDate } from '@/lib/pdf/dates';
 import { readChecks, PLANT_KIND_LABEL, isPlantKind } from '@/lib/plant/checklist';
@@ -12,7 +12,7 @@ export const metadata = { title: 'Plant prestart · KBS Daily Diary' };
 
 export default async function PlantPrestartPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  await requireUser();
+  const { memberships } = await requireUser();
   const supabase = await createClient();
   const { data: row } = await supabase
     .from('plant_prestarts')
@@ -20,6 +20,7 @@ export default async function PlantPrestartPage({ params }: { params: Promise<{ 
              plant:plant_register!inner(name, kind, plant_no, make_model), project:projects!inner(name)`)
     .eq('id', id).maybeSingle();
   if (!row) notFound();
+  guardScreen(memberships.find((m) => m.project_id === row.project_id), 'plant');
   const first = <T,>(v: T | T[]): T => (Array.isArray(v) ? v[0] : v);
   const plant = first(row.plant) as { name: string; kind: string; plant_no: string | null; make_model: string | null };
   const project = first(row.project) as { name: string };

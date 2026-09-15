@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
-import { requireUser, canRunTalks } from '@/lib/auth';
+import { requireUser, canRunTalks, guardScreen } from '@/lib/auth';
 import { canAuthorEntries } from '@/lib/roles';
 import { BrandMark } from '@/components/brand-mark';
 import { OutboxStatus } from '@/components/outbox-status';
@@ -22,6 +22,7 @@ export default async function SwmsPage({ params }: { params: Promise<{ id: strin
     .maybeSingle();
   if (!s) notFound();
   const membership = memberships.find((m) => m.project_id === s.project_id);
+  guardScreen(membership, 'swms');
   const role = membership?.role ?? 'pm';
   const [{ data: crew }, { data: newer }] = await Promise.all([
     supabase.from('crew').select('name').eq('project_id', s.project_id).eq('active', true).order('sort_order').order('name'),

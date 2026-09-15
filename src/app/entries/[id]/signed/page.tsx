@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
-import { requireUser, canAuthorEntries } from '@/lib/auth';
+import { requireUser, canAuthorEntries, guardScreen } from '@/lib/auth';
 import { PdfButton } from './pdf-button';
 import { CorrectButton } from './correct-button';
 import { EmailPdfButton } from './email-button';
@@ -56,6 +56,7 @@ export default async function SignedPage({ params }: { params: Promise<{ id: str
   const clientItems = dayworkCount + variationCount;
   const project = first(entry.project) as { name: string; code: string; org: unknown } | null;
   const org = first(project?.org) as { name: string; code: string } | null;
+  guardScreen(memberships.find((m) => m.project_id === (entry.project_id as string)), 'entries');
   const neighbours = await loadDayNeighbours(supabase, entry.project_id as string, entry.entry_date as string);
 
   if (entry.status !== 'signed') {

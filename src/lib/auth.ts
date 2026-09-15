@@ -1,6 +1,7 @@
 import 'server-only';
 
 import { redirect } from 'next/navigation';
+import { canSee, type Screen } from '@/lib/roles';
 import { createClient } from '@/lib/supabase/server';
 import type { MemberRole, Profile } from '@/types/database';
 
@@ -75,6 +76,18 @@ export function provisionalEntryNo(membership: Membership, localDate: string): s
 }
 
 export { canAuthorEntries, canRunTalks, canSignIn, canReport, canSee } from '@/lib/roles';
+
+/**
+ * The page-level half of the role gate: a screen refused to this role on this
+ * job goes Home. The middleware judges by the job the address names; this
+ * judges by the job the page actually resolved, so a mixed-role account (a
+ * labourer on one job, a supervisor on another) cannot reach a screen for the
+ * job where their role does not have it. A null membership is left to the
+ * page, which already says "not on a project".
+ */
+export function guardScreen(membership: Pick<Membership, 'role'> | null | undefined, screen: Screen): void {
+  if (membership && !canSee(membership.role, screen)) redirect('/');
+}
 
 /**
  * Resolves the project the caller is acting in, enforcing membership.

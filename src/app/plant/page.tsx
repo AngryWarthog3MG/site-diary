@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
-import { requireUser, resolveProject, canRunTalks } from '@/lib/auth';
+import { requireUser, resolveProject, canRunTalks, guardScreen } from '@/lib/auth';
 import { canExportReports } from '@/lib/roles';
 import { BrandMark } from '@/components/brand-mark';
 import { fmtDate } from '@/lib/pdf/dates';
@@ -21,6 +21,7 @@ export default async function PlantPage({ searchParams }: { searchParams: Promis
   const { memberships } = await requireUser();
   const { project, kept } = await searchParams;
   const current = resolveProject(memberships, project);
+  guardScreen(current, 'plant');
   if (!current) return <main className="sheet"><p className="notice gap">You are not on an active project.</p></main>;
 
   const supabase = await createClient();

@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
-import { requireUser } from '@/lib/auth';
+import { requireUser, guardScreen } from '@/lib/auth';
 import { canAuthorEntries } from '@/lib/roles';
 import { BrandMark } from '@/components/brand-mark';
 import { perthToday } from '@/lib/push/decide';
@@ -21,6 +21,7 @@ export default async function InspectionPage({ params }: { params: Promise<{ id:
     .maybeSingle();
   if (!r) notFound();
   const membership = memberships.find((m) => m.project_id === r.project_id);
+  guardScreen(membership, 'inspections');
   const role = membership?.role ?? 'pm';
   const { data: crew } = await supabase.from('crew').select('name').eq('project_id', r.project_id).eq('active', true).order('sort_order').order('name');
   const project = Array.isArray(r.project) ? r.project[0] : r.project;

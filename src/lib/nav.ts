@@ -105,7 +105,8 @@ export function navFor(viewer: NavViewer): NavGroup[] {
 /** Whether this viewer gets this door. A null role means "not known yet". */
 export function showNav(item: NavItem, viewer: NavViewer): boolean {
   if (item.when === 'canRecord') return viewer.canRecord;
-  if (item.when === 'multiJob') return viewer.multiJob;
+  // All jobs is the owner's screen: several jobs, and a role that reads the record on them.
+  if (item.when === 'multiJob') return viewer.multiJob && (viewer.role ? canSee(viewer.role, 'weekly') : false);
   if (!item.screen) return true;
   return viewer.role ? canSee(viewer.role, item.screen) : EVERY_ROLE.includes(item.screen);
 }

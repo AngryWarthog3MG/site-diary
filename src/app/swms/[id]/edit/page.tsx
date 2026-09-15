@@ -1,6 +1,6 @@
 import { notFound, redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
-import { requireUser } from '@/lib/auth';
+import { requireUser, guardScreen } from '@/lib/auth';
 import { canAuthorEntries } from '@/lib/roles';
 import { BrandMark } from '@/components/brand-mark';
 import { readSteps, type SwmsKind } from '@/lib/swms/model';
@@ -17,6 +17,7 @@ export default async function EditSwmsPage({ params }: { params: Promise<{ id: s
   const { data: s } = await supabase.from('swms').select('*, project:projects!inner(name)').eq('id', id).maybeSingle();
   if (!s) notFound();
   const membership = memberships.find((m) => m.project_id === s.project_id);
+  guardScreen(membership, 'swms');
   if (!membership || !canAuthorEntries(membership.role)) redirect(`/swms/${id}`);
   if (s.status !== 'draft') redirect(`/swms/${id}`);
   const { data: crew } = await supabase.from('crew').select('name').eq('project_id', s.project_id).eq('active', true).order('sort_order').order('name');

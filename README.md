@@ -1470,8 +1470,10 @@ hole from two sides: until the labourer, every role could see every screen, so m
 every PDF route had no role guard at all — a labourer could open the prestart list or pull the safety
 PDF by typing the address. Rather than add a guard to forty files and miss the forty-first, the gate is
 one place: the request middleware maps each path to its screen and refuses (pages go Home, APIs answer
-403) any account none of whose memberships can see it. The page guards stay for the job-in-hand
-precision the middleware cannot have.
+403) any account none of whose memberships can see it — judged for the job the address names when it
+names one. Codex then pointed at the mixed-role account, a labourer on one job and a supervisor on
+another, who passes a gate judged across memberships; so every list and detail page also runs
+`guardScreen` against the job it actually resolved, and the two halves cover each other.
 
 ## Not built, and deliberately so
 

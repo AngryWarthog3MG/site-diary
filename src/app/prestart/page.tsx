@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
-import { requireUser, resolveProject, canRunTalks } from '@/lib/auth';
+import { requireUser, resolveProject, canRunTalks, guardScreen } from '@/lib/auth';
 import { BrandMark } from '@/components/brand-mark';
 import { fmtDate } from '@/lib/pdf/dates';
 import { perthToday } from '@/lib/push/decide';
@@ -19,6 +19,7 @@ export default async function PrestartListPage({
   const { memberships } = await requireUser();
   const { project, ready, kept } = await searchParams;
   const current = resolveProject(memberships, project);
+  guardScreen(current, 'prestart');
   if (!current) {
     return (
       <main className="sheet">

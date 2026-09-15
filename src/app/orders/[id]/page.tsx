@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
-import { requireUser, canRunTalks } from '@/lib/auth';
+import { requireUser, canRunTalks, guardScreen } from '@/lib/auth';
 import { canManageRegisters } from '@/lib/roles';
 import { BrandMark } from '@/components/brand-mark';
 import { perthToday } from '@/lib/push/decide';
@@ -22,6 +22,7 @@ export default async function OrderPage({ params }: { params: Promise<{ id: stri
     .maybeSingle();
   if (!r) notFound();
   const membership = memberships.find((m) => m.project_id === r.project_id);
+  guardScreen(membership, 'orders');
   const role = membership?.role ?? 'pm';
   const project = Array.isArray(r.project) ? r.project[0] : r.project;
   const who = (p: unknown) => { const x = (Array.isArray(p) ? p[0] : p) as { full_name?: string | null; email?: string | null } | null; return x?.full_name ?? x?.email ?? '—'; };

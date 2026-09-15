@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation';
-import { requireUser, resolveProject, canAuthorEntries } from '@/lib/auth';
+import { requireUser, resolveProject, canAuthorEntries, guardScreen } from '@/lib/auth';
 import { RecordScreen } from './record-screen';
 
 export const dynamic = 'force-dynamic';
@@ -13,6 +13,7 @@ export default async function RecordPage({
   const { memberships } = await requireUser();
   const { project, date } = await searchParams;
   const current = resolveProject(memberships, project);
+  guardScreen(current, 'entries');
 
   // A requested past date must look like a date; the client rejects future
   // ones against the device's own calendar, which the server cannot know.

@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
-import { requireUser, resolveProject } from '@/lib/auth';
+import { requireUser, resolveProject, guardScreen } from '@/lib/auth';
 import { MembersForm, type MemberRow } from './members-form';
 
 export const dynamic = 'force-dynamic';
@@ -15,6 +15,7 @@ export default async function MembersPage({
   const { userId, memberships } = await requireUser();
   const { project } = await searchParams;
   const current = resolveProject(memberships, project);
+  guardScreen(current, 'settings');
   if (!current) redirect('/');
 
   const canEdit = current.role === 'admin';

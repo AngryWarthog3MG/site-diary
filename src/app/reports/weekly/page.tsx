@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { BrandMark } from '@/components/brand-mark';
 import { createClient } from '@/lib/supabase/server';
-import { requireUser, resolveProject } from '@/lib/auth';
+import { requireUser, resolveProject, guardScreen } from '@/lib/auth';
 import { canExportReports } from '@/lib/roles';
 import { loadWeeklyData, type WeeklyData } from '@/lib/weekly/load';
 import { WeeklyReport, WEEKLY_CSS } from '@/lib/weekly/report';
@@ -45,6 +45,7 @@ export default async function WeeklyReportPage({
   const { memberships } = await requireUser();
   const params = await searchParams;
   const current = resolveProject(memberships, params.project);
+  guardScreen(current, 'weekly');
 
   if (!current) {
     return (

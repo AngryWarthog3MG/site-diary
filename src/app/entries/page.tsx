@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { BrandMark } from '@/components/brand-mark';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
-import { requireUser, resolveProject } from '@/lib/auth';
+import { requireUser, resolveProject, guardScreen } from '@/lib/auth';
 import { RegisterList, type RegisterRow } from './register-list';
 import { canAuthorEntries } from '@/lib/roles';
 
@@ -27,6 +27,7 @@ export default async function EntriesPage({
   const { userId, memberships } = await requireUser();
   const { project } = await searchParams;
   const current = resolveProject(memberships, project);
+  guardScreen(current, 'entries');
   if (!current) redirect('/');
 
   const supabase = await createClient();

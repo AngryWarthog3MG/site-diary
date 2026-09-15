@@ -1,7 +1,7 @@
 import { canRunTalks } from '@/lib/roles';
 import { notFound } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
-import { requireUser } from '@/lib/auth';
+import { requireUser, guardScreen } from '@/lib/auth';
 import { TalkScreen } from './talk-screen';
 
 export const dynamic = 'force-dynamic';
@@ -20,6 +20,7 @@ export default async function TalkPage({ params }: { params: Promise<{ id: strin
   if (!talk) notFound();
 
   const membership = memberships.find((m) => m.project_id === talk.project_id);
+  guardScreen(membership, 'toolbox');
   const canRun = membership ? canRunTalks(membership.role) : false;
 
   return (

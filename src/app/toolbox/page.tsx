@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
-import { requireUser, resolveProject, canRunTalks } from '@/lib/auth';
+import { requireUser, resolveProject, canRunTalks, guardScreen } from '@/lib/auth';
 import { BrandMark } from '@/components/brand-mark';
 import { fmtDate } from '@/lib/pdf/dates';
 import { OutboxStatus } from '@/components/outbox-status';
@@ -17,6 +17,7 @@ export default async function ToolboxPage({
   const { memberships } = await requireUser();
   const { project } = await searchParams;
   const current = resolveProject(memberships, project);
+  guardScreen(current, 'toolbox');
   if (!current) {
     return (
       <main className="sheet">

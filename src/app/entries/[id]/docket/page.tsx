@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
-import { requireUser } from '@/lib/auth';
+import { requireUser, guardScreen } from '@/lib/auth';
 import { loadDocketEntry } from '@/lib/pdf/load';
 import { DailyDocket, type PhotoImage } from '@/lib/pdf/docket';
 import { collectPhotoPaths } from '@/lib/pdf/photos';
@@ -23,7 +23,7 @@ export const metadata = { title: 'Docket · Site Diary' };
  */
 export default async function DocketPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  await requireUser();
+  const { memberships } = await requireUser();
   const supabase = await createClient();
 
   const entry = await loadDocketEntry(supabase, id);
@@ -40,6 +40,7 @@ export default async function DocketPage({ params }: { params: Promise<{ id: str
   }
 
   // Screen only — the PDF is rendered from DailyDocket alone, never from this page.
+  guardScreen(memberships.find((m) => m.project_id === entry.project_id), 'entries');
   const neighbours = await loadDayNeighbours(supabase, entry.project_id, entry.entry_date);
 
   return (

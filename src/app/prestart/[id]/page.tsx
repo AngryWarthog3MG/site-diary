@@ -1,7 +1,7 @@
 import { canRunTalks } from '@/lib/roles';
 import { notFound } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
-import { requireUser } from '@/lib/auth';
+import { requireUser, guardScreen } from '@/lib/auth';
 import { readChecklist } from '@/lib/prestart/checklist';
 import { readSpecNotes } from '@/lib/prestart/spec-notes';
 import { PrestartScreen } from './prestart-screen';
@@ -26,6 +26,7 @@ export default async function PrestartPage({ params }: { params: Promise<{ id: s
   if (!row) notFound();
 
   const membership = memberships.find((m) => m.project_id === row.project_id);
+  guardScreen(membership, 'prestart');
   const canRun = membership ? canRunTalks(membership.role) : false;
 
   // The people this job already knows, most recent first, so sign-on is a
