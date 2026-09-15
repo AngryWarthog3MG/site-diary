@@ -3252,6 +3252,19 @@ main.sheet--wide .vr-list { grid-template-columns: repeat(auto-fill, minmax(22re
   .rail__foot .refresh-button { justify-content: center; }
   .rail__item--quiet { color: var(--ink-60); }
   .rail__who { margin: 0; padding: 0 0.6rem; font-size: 0.72rem; color: var(--ink-40); }
+  /* Headings as dropdowns: the one holding the current screen is marked; its list sits indented beneath. */
+  .rail__group { margin-top: 0.15rem; }
+  .rail__head {
+    display: flex; align-items: center; justify-content: space-between; width: 100%;
+    padding: 0.5rem 0.6rem; border: 0; border-radius: 0.45rem; background: none; cursor: pointer;
+    font: inherit; font-size: 0.8rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--ink-60);
+  }
+  .rail__head:hover { background: rgba(22, 33, 31, 0.04); }
+  .rail__head--here { color: var(--teal, #0e4f52); }
+  .rail__caret { font-size: 0.7rem; transition: transform 0.15s; }
+  .rail__group--open .rail__caret { transform: rotate(180deg); }
+  .rail__sub { list-style: none; margin: 0.1rem 0 0.35rem; padding: 0 0 0 0.5rem; display: grid; gap: 0.1rem; border-left: 2px solid var(--ink-08); margin-left: 0.6rem; }
+  .rail__sub .rail__item { font-size: 0.875rem; padding: 0.4rem 0.6rem; }
 
   /* The rail carries the navigation, so the bar and the in-hero tools go.
      The gutter exists only where the rail does: sign-in, verify and offline

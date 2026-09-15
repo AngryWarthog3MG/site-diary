@@ -1475,6 +1475,13 @@ names one. Codex then pointed at the mixed-role account, a labourer on one job a
 another, who passes a gate judged across memberships; so every list and detail page also runs
 `guardScreen` against the job it actually resolved, and the two halves cover each other.
 
+**R50. The rail's headings are dropdowns.** Mitchell: "on the left menu, make it a dropdown." Twenty
+links in a column read as a wall once the tenth module landed. The desk rail now draws the same seven
+headings as the home page's bar and the phone's drawer (`src/lib/nav.ts`, one list), each a dropdown:
+the heading holding the current screen opens on its own and is marked, a tap on any heading opens or
+closes it, and that choice is kept for the session so a desk that likes everything open keeps it. Home
+stays a single line at the top; Settings stays in the foot.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;

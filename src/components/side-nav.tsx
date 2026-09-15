@@ -6,7 +6,7 @@ import { usePathname, useSearchParams } from 'next/navigation';
 import { BrandMark } from '@/components/brand-mark';
 import { RefreshButton } from '@/components/refresh-button';
 import { ROLE_LABEL } from '@/lib/roles';
-import { HOME_ITEM, NAV_GROUPS, showNav } from '@/lib/nav';
+import { HOME_ITEM, NAV_GROUPS, showNav, type NavGroup } from '@/lib/nav';
 import type { MemberRole } from '@/types/database';
 
 /**
@@ -26,14 +26,27 @@ interface Me {
   projects?: Array<{ id: string }>;
 }
 
-/** The rail lists every section; Settings sits in its foot, and the crew pages live under it. */
-const ITEMS = [HOME_ITEM, ...NAV_GROUPS.flatMap((g) => g.items)].filter((it) => it.href !== '/settings' && it.when !== 'canRecord');
+/** The rail draws every heading as a dropdown; Settings sits in its foot, and the crew pages live under it. */
+const GROUPS: NavGroup[] = NAV_GROUPS.map((g) => ({ label: g.label, items: g.items.filter((it) => it.href !== '/settings' && it.when !== 'canRecord') })).filter((g) => g.items.length > 0);
 
 export function SideNav() {
   const pathname = usePathname();
   const params = useSearchParams();
   const projectParam = params.get('project');
   const [me, setMe] = useState<Me | null>(null);
+  // Which headings are open. The one holding the current screen opens on its
+  // own; a tap on any heading opens or closes it, and that is remembered for
+  // the session so a desk that likes everything open keeps it that way.
+  const [open, setOpen] = useState<Record<string, boolean>>({});
+  const isHereGroup = (label: string) => GROUPS.find((g) => g.label === label)?.items.some((it) => (it.href === '/' ? pathname === '/' : pathname.startsWith(it.href))) ?? false;
+  useEffect(() => {
+    try { const saved = window.sessionStorage.getItem('site-diary-rail'); if (saved) setOpen(JSON.parse(saved) as Record<string, boolean>); } catch { /* no storage */ }
+  }, []);
+  const toggle = (label: string) => setOpen((prev) => {
+    const next = { ...prev, [label]: !(prev[label] ?? isHereGroup(label)) };
+    try { window.sessionStorage.setItem('site-diary-rail', JSON.stringify(next)); } catch { /* no storage */ }
+    return next;
+  });
 
   useEffect(() => {
     let cancelled = false;
@@ -54,6 +67,7 @@ export function SideNav() {
   const viewer = { role: me?.role ?? null, canRecord: Boolean(me?.canRecord), multiJob: (me?.projects?.length ?? 0) > 1 };
   const see = (screen: 'settings') => showNav({ href: '/settings', name: '', what: '', screen }, viewer);
   const here = (href: string) => (href === '/' ? pathname === '/' : pathname.startsWith(href));
+  const isOpen = (label: string) => open[label] ?? isHereGroup(label);
 
   return (
     <nav className="rail" aria-label="Sections">
@@ -71,13 +85,40 @@ export function SideNav() {
       )}
 
       <ul className="rail__list">
-        {ITEMS.filter((item) => showNav(item, viewer)).map((item) => (
-          <li key={item.href}>
-            <Link className={`rail__item${here(item.href) ? ' rail__item--here' : ''}`} href={item.href === '/portfolio' ? item.href : `${item.href}${q}`}>
-              {item.short ?? item.name}
-            </Link>
-          </li>
-        ))}
+        <li>
+          <Link className={`rail__item${here('/') ? ' rail__item--here' : ''}`} href={`/${q}`}>{HOME_ITEM.name}</Link>
+        </li>
+        {GROUPS.map((group) => {
+          const items = group.items.filter((item) => showNav(item, viewer));
+          if (items.length === 0) return null;
+          const opened = isOpen(group.label);
+          const holdsHere = isHereGroup(group.label);
+          return (
+            <li key={group.label} className={`rail__group${opened ? ' rail__group--open' : ''}`}>
+              <button
+                type="button"
+                className={`rail__head${holdsHere ? ' rail__head--here' : ''}`}
+                aria-expanded={opened}
+                aria-controls={`rail-${group.label}`}
+                onClick={() => toggle(group.label)}
+              >
+                <span>{group.label}</span>
+                <span className="rail__caret" aria-hidden>▾</span>
+              </button>
+              {opened && (
+                <ul id={`rail-${group.label}`} className="rail__sub">
+                  {items.map((item) => (
+                    <li key={item.href}>
+                      <Link className={`rail__item${here(item.href) ? ' rail__item--here' : ''}`} href={item.href === '/portfolio' ? item.href : `${item.href}${q}`}>
+                        {item.short ?? item.name}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </li>
+          );
+        })}
       </ul>
 
       <div className="rail__foot">
