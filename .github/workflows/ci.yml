@@ -24,3 +24,29 @@ jobs:
         run: npx playwright install chromium --with-deps
       - name: PDF byte-identity
         run: npm run pdf:check
+
+  sql-suites:
+    name: SQL suites against a fresh database
+    runs-on: ubuntu-latest
+    # Every migration applied to an empty Postgres 17, then every suite. The
+    # suites are what gate signing, immutability and row security — the checks
+    # nothing in the unit path touches — and until now they ran only by hand
+    # from one machine, or nightly against the hosted database for suites 01–09.
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 26
+          cache: npm
+      - run: npm ci
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+      - name: Start a local database and apply every migration
+        run: |
+          supabase db start
+          supabase db reset --local --no-seed
+      - name: Run every suite
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:54322/postgres
+        run: npm run db:test
