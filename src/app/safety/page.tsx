@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { requireUser, resolveProject } from '@/lib/auth';
-import { canSee } from '@/lib/roles';
+import { sees } from '@/lib/roles';
 import { BrandMark } from '@/components/brand-mark';
 import { fmtDate } from '@/lib/pdf/dates';
 import { perthToday } from '@/lib/push/decide';
@@ -20,7 +20,7 @@ export default async function SafetyPage({ searchParams }: { searchParams: Promi
   const { project } = await searchParams;
   const current = resolveProject(memberships, project);
   if (!current) return <main className="sheet"><p className="notice gap">You are not on an active project.</p></main>;
-  if (!canSee(current.role, 'safety')) redirect(`/?project=${current.project_id}`);
+  if (!sees(current, 'safety')) redirect(`/?project=${current.project_id}`);
   const supabase = await createClient();
   const d = await loadSafety(supabase, current.project_id, current.project.org.id, perthToday());
   const q = `?project=${current.project_id}`;

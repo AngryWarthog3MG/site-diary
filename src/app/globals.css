@@ -3937,3 +3937,46 @@ a.dash-row:hover { background: var(--teal-tint); }
   .cards__grid { grid-template-columns: repeat(3, 1fr); gap: 6mm; }
   .card { border: 1px solid #999; border-radius: 4mm; }
 }
+
+/* ==========================================================================
+   The labourer's home: are you signed in, and the two buttons.
+   ========================================================================== */
+.labhome { max-width: 40rem; }
+.labhome__status { margin-top: 0.9rem; padding: 0.9rem 1.1rem; background: var(--paper); border: 1px solid var(--ink-12); border-radius: 12px; box-shadow: var(--shadow-ui); }
+.labhome__status--in { border-color: rgba(31, 92, 51, 0.45); background: var(--teal-tint); }
+.labhome__line { margin: 0.25rem 0 0; font-size: 1.125rem; line-height: 1.4; }
+.labhome__btns { display: grid; gap: 0.75rem; margin-top: 0.9rem; }
+.labhome__btn {
+  display: grid; justify-items: center; gap: 0.15rem; padding: 1.4rem 1rem 1.2rem; text-align: center;
+  background: var(--teal); color: #fff; border-radius: 14px; box-shadow: var(--shadow-ui); text-decoration: none;
+  font-size: 1.375rem; font-weight: 600; letter-spacing: 0.01em;
+}
+.labhome__btn--warn { background: #9A2B2B; }
+.labhome__btn:hover { filter: brightness(1.06); }
+.labhome__icon { font-size: 1.75rem; line-height: 1; }
+.labhome__hint { font-size: 0.8125rem; font-weight: 400; opacity: 0.85; }
+.labhome__more { margin: 1rem 0 0; text-align: center; font-size: 0.875rem; }
+@media (min-width: 700px) { .labhome__btns { grid-template-columns: 1fr 1fr; } }
+
+/* The one-tap own sign-in at the top of the gate. */
+.selfbtn {
+  display: grid; gap: 0.15rem; width: 100%; margin: 0 0 1rem; padding: 1.1rem 1rem; border: 0; border-radius: 14px; cursor: pointer;
+  background: var(--teal); color: #fff; box-shadow: var(--shadow-ui); font: inherit; text-align: center;
+}
+.selfbtn--out { background: #9A2B2B; }
+.selfbtn:disabled { opacity: 0.6; cursor: default; }
+.selfbtn__what { font-size: 1.375rem; font-weight: 600; letter-spacing: 0.01em; }
+.selfbtn__who { font-size: 0.875rem; opacity: 0.9; }
+
+/* Access by tick box, under each member. */
+.access { grid-column: 1 / -1; margin-top: 0.6rem; border-top: 1px solid var(--ink-12); padding-top: 0.5rem; }
+.access__head { display: flex; align-items: center; gap: 0.6rem; width: 100%; padding: 0.3rem 0; border: 0; background: none; font: inherit; cursor: pointer; color: var(--ink); text-align: left; }
+.access__title { font-weight: 600; font-size: 0.875rem; }
+.access__sum { flex: 1; font-size: 0.8125rem; color: var(--ink-60); }
+.access__caret { font-size: 0.8rem; color: var(--ink-40); }
+.access__body { display: grid; grid-template-columns: 1fr; gap: 0.6rem; padding: 0.5rem 0 0.25rem; }
+.access__group { display: grid; gap: 0.3rem; }
+.access__group .label { margin: 0 0 0.15rem; }
+@media (min-width: 700px) { .access__body { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.access .checkrow--inline { margin: 0; align-items: center; min-height: 2.6rem; }
+

@@ -1,6 +1,7 @@
 import { fail, ok, readJson, requireApiUser, isUuid } from '@/lib/api';
 import { createAdminClient } from '@/lib/supabase/admin';
 import type { MemberRole } from '@/types/database';
+import { SCREENS, grantableScreens, type Screen } from '@/lib/roles';
 
 const ROLES = new Set<MemberRole>(['supervisor', 'leading_hand', 'labourer', 'pm', 'admin']);
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -114,6 +115,25 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
   const userId = body?.userId;
   const role = body?.role;
   if (!isUuid(userId)) return fail('bad_request', 'Bad user id.', 400);
+
+  // Access by tick box: exactly these screens, or null for the role's own list. Checked
+  // against the list of screens there are and this role's ceiling, so a stray name can
+  // never be stored. An admin may set their own — `sees` keeps Settings open for them.
+  if (body && typeof body === 'object' && 'screens' in body) {
+    const raw = (body as { screens: unknown }).screens;
+    if (raw !== null && !(Array.isArray(raw) && raw.every((s: unknown) => typeof s === 'string'))) {
+      return fail('bad_request', 'Screens must be a list of screen names, or null for the role default.', 400);
+    }
+    const { data: member, error: mErr } = await auth.supabase.from('project_members').select('role').eq('project_id', projectId).eq('user_id', userId).maybeSingle();
+    if (mErr) return fail('server_error', mErr.message, 500);
+    if (!member) return fail('not_found', 'That person is not on this job.', 404);
+    const allowed = new Set<string>(grantableScreens(member.role as MemberRole));
+    const screens = raw === null ? null : Array.from(new Set((raw as string[]).filter((s) => SCREENS.includes(s as Screen) && allowed.has(s))));
+    const { error } = await auth.supabase.from('project_members').update({ screens }).eq('project_id', projectId).eq('user_id', userId);
+    if (error) return fail('server_error', error.message, 500);
+    return ok({ message: screens === null ? 'Back to the role’s own access.' : `Access set: ${screens.length} screen${screens.length === 1 ? '' : 's'}.`, screens });
+  }
+
   if (typeof role !== 'string' || !ROLES.has(role as MemberRole)) {
     return fail('bad_request', 'Role must be supervisor, pm, or admin.', 400);
   }
@@ -138,9 +158,10 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
     return fail('server_error', error instanceof Error ? error.message : 'Could not check admins.', 500);
   }
 
+  // The ticks were made against the old role; a new role starts from its own list.
   const { error } = await auth.supabase
     .from('project_members')
-    .update({ role: role as MemberRole })
+    .update({ role: role as MemberRole, screens: null })
     .eq('project_id', projectId)
     .eq('user_id', userId);
   if (error) return fail('server_error', error.message, 500);

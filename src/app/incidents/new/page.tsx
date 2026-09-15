@@ -23,8 +23,12 @@ export default async function NewIncidentPage({ searchParams }: { searchParams: 
     <main className="sheet">
       <p className="label"><BrandMark size={18} /> {current.project.name}</p>
       <h1 className="page-title">Report a hazard or incident</h1>
-      <p className="page-subtitle">What happened, where, who. Photos if you can. It saves the moment you tap Report, with or without signal.</p>
-      <ReportForm projectId={current.project_id} userId={userId} crew={(crew ?? []).map((c) => String(c.name))} plant={plantNames} />
+      {current.role === 'labourer' ? (
+        <p className="page-subtitle">Say what you saw and where. A photo helps. It saves the moment you tap Report, with or without signal.</p>
+      ) : (
+        <p className="page-subtitle">What happened, where, who. Photos if you can. It saves the moment you tap Report, with or without signal.</p>
+      )}
+      <ReportForm projectId={current.project_id} userId={userId} crew={(crew ?? []).map((c) => String(c.name))} plant={plantNames} simple={current.role === 'labourer'} />
     </main>
   );
 }

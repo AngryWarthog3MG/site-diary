@@ -7,12 +7,66 @@ import type { MemberRole } from '@/types/database';
 export interface MemberRow {
   userId: string;
   role: MemberRole;
+  /** Exactly the screens ticked for this person; null = the role's own list. */
+  screens: string[] | null;
   name: string | null;
   email: string | null;
   isCurrentUser: boolean;
 }
 
-import { ROLES, ROLE_HINT as ROLE_TEXT, ROLE_LABEL } from '@/lib/roles';
+import { ROLES, ROLE_HINT as ROLE_TEXT, ROLE_LABEL, defaultScreens, grantableScreens, type Screen } from '@/lib/roles';
+import { NAV_GROUPS } from '@/lib/nav';
+
+/**
+ * One tick box per screen, under the headings the menu uses. Unticked is
+ * refused, not hidden — the middleware, the page and the APIs all read the
+ * same list. Each tick saves at once; "Back to the role's list" clears them.
+ */
+function AccessGrid({ member, canEdit, busy, onSave }: { member: MemberRow; canEdit: boolean; busy: boolean; onSave: (screens: string[] | null) => Promise<boolean> }) {
+  const [open, setOpen] = useState(false);
+  const grantable = grantableScreens(member.role);
+  const ticked = new Set(member.screens ?? defaultScreens(member.role));
+  const custom = member.screens !== null;
+  const groups = NAV_GROUPS.map((g) => ({ label: g.label, items: g.items.filter((it) => it.screen && grantable.includes(it.screen)) })).filter((g) => g.items.length > 0);
+  const toggle = (screen: Screen) => {
+    const next = new Set(ticked);
+    if (next.has(screen)) next.delete(screen); else next.add(screen);
+    void onSave(grantable.filter((s) => next.has(s)));
+  };
+  const count = grantable.filter((s) => ticked.has(s)).length;
+  return (
+    <div className="access">
+      <button type="button" className="access__head" aria-expanded={open} onClick={() => setOpen((o) => !o)}>
+        <span className="access__title">Access</span>
+        <span className="access__sum">{count} of {grantable.length} screens{custom ? ' · set by hand' : ' · the role’s list'}</span>
+        <span className="access__caret" aria-hidden>{open ? '▴' : '▾'}</span>
+      </button>
+      {open && (
+        <div className="access__body">
+          {groups.map((g) => (
+            <div key={g.label} className="access__group">
+              <p className="label">{g.label}</p>
+              {g.items.map((it) => {
+                const screen = it.screen as Screen;
+                const forced = member.role === 'admin' && screen === 'settings';
+                return (
+                  <label key={screen} className={`checkrow checkrow--inline${ticked.has(screen) ? ' checkrow--on' : ''}`}>
+                    <input type="checkbox" checked={ticked.has(screen) || forced} disabled={!canEdit || busy || forced} onChange={() => toggle(screen)} />
+                    <span>{it.name}{forced ? ' — an admin always keeps this' : ''}</span>
+                  </label>
+                );
+              })}
+            </div>
+          ))}
+          {canEdit && custom && (
+            <button type="button" className="linklike" disabled={busy} onClick={() => void onSave(null)}>Back to the {ROLE_LABEL[member.role].toLowerCase()}’s own list</button>
+          )}
+          {member.role === 'labourer' && <p className="caption">A labourer can hold these two and nothing more — the record is closed to them whatever is ticked.</p>}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export function MembersForm({
   projectId,
@@ -153,6 +207,12 @@ export function MembersForm({
                     </button>
                   )}
                 </div>
+                <AccessGrid
+                  member={member}
+                  canEdit={canEdit}
+                  busy={busy !== null}
+                  onSave={(screens) => request('PATCH', { userId: member.userId, screens }, `access:${member.userId}`)}
+                />
               </article>
             );
           })}

@@ -1,13 +1,15 @@
 import 'server-only';
 
 import { redirect } from 'next/navigation';
-import { canSee, type Screen } from '@/lib/roles';
+import { sees, type Screen } from '@/lib/roles';
 import { createClient } from '@/lib/supabase/server';
 import type { MemberRole, Profile } from '@/types/database';
 
 export interface Membership {
   project_id: string;
   role: MemberRole;
+  /** Exactly the screens ticked for this person on this job; null = the role's list. */
+  screens: string[] | null;
   project: {
     id: string;
     name: string;
@@ -45,7 +47,7 @@ export async function requireUser(): Promise<SessionContext> {
     supabase
       .from('project_members')
       .select(
-        'project_id, role, project:projects!inner(id, name, code, active, next_entry_seq, org:organisations!inner(id, name, code))',
+        'project_id, role, screens, project:projects!inner(id, name, code, active, next_entry_seq, org:organisations!inner(id, name, code))',
       )
       .eq('user_id', user.id)
       .order('project_id'),
@@ -75,7 +77,7 @@ export function provisionalEntryNo(membership: Membership, localDate: string): s
   return `${membership.project.org.code}-${localDate}`;
 }
 
-export { canAuthorEntries, canRunTalks, canSignIn, canReport, canSee } from '@/lib/roles';
+export { canAuthorEntries, canRunTalks, canSignIn, canReport, canSee, sees } from '@/lib/roles';
 
 /**
  * The page-level half of the role gate: a screen refused to this role on this
@@ -85,8 +87,8 @@ export { canAuthorEntries, canRunTalks, canSignIn, canReport, canSee } from '@/l
  * job where their role does not have it. A null membership is left to the
  * page, which already says "not on a project".
  */
-export function guardScreen(membership: Pick<Membership, 'role'> | null | undefined, screen: Screen): void {
-  if (membership && !canSee(membership.role, screen)) redirect('/');
+export function guardScreen(membership: Pick<Membership, 'role' | 'screens'> | null | undefined, screen: Screen): void {
+  if (membership && !sees(membership, screen)) redirect('/');
 }
 
 /**

@@ -1,7 +1,7 @@
 import { notFound, redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { requireUser, resolveProject, canRunTalks } from '@/lib/auth';
-import { canSee, canAuthorEntries } from '@/lib/roles';
+import { sees, canAuthorEntries } from '@/lib/roles';
 import { BrandMark } from '@/components/brand-mark';
 import { OutboxStatus } from '@/components/outbox-status';
 import { type ControlledKind } from '@/lib/documents-control/model';
@@ -16,7 +16,7 @@ export default async function ProcedurePage({ params, searchParams }: { params: 
   const { project } = await searchParams;
   const current = resolveProject(memberships, project);
   if (!current) redirect('/');
-  if (!canSee(current.role, 'procedures')) redirect(`/?project=${current.project_id}`);
+  if (!sees(current, 'procedures')) redirect(`/?project=${current.project_id}`);
   const supabase = await createClient();
   const [{ data: d }, { data: crew }] = await Promise.all([
     supabase.from('controlled_documents').select('*, document_versions(id, version, file_path, summary, status, issued_at, superseded_at, document_acknowledgements(id, person_name, signature_path, acknowledged_on_device_at, project_id))').eq('id', id).maybeSingle(),

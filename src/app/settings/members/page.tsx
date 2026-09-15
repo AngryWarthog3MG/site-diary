@@ -22,7 +22,7 @@ export default async function MembersPage({
   const supabase = await createClient();
   const { data: members, error } = await supabase
     .from('project_members')
-    .select('user_id, role, created_at')
+    .select('user_id, role, screens, created_at')
     .eq('project_id', current.project_id)
     .order('role')
     .order('created_at');
@@ -42,6 +42,7 @@ export default async function MembersPage({
     return {
       userId: member.user_id as string,
       role: member.role as MemberRow['role'],
+      screens: (member.screens as string[] | null) ?? null,
       name: (profile?.full_name as string | null) ?? null,
       email: (profile?.email as string | null) ?? null,
       isCurrentUser: member.user_id === userId,
@@ -58,7 +59,8 @@ export default async function MembersPage({
             <p className="label">{current.project.name}</p>
             <h1 className="page-title">Members</h1>
             <p className="page-subtitle">
-              Supervisors and admins can record. PMs read the signed record.
+              Who is on this job and what each person may open. The role says what they can do; the tick boxes under
+              Access say which screens they see.
             </p>
           </div>
         </header>

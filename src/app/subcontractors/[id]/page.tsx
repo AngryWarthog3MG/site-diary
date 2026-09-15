@@ -1,7 +1,7 @@
 import { notFound, redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { requireUser, resolveProject } from '@/lib/auth';
-import { canSee, canAuthorEntries } from '@/lib/roles';
+import { sees, canAuthorEntries } from '@/lib/roles';
 import { BrandMark } from '@/components/brand-mark';
 import { perthToday } from '@/lib/push/decide';
 import { compliance, type DocKind } from '@/lib/subcontractors/model';
@@ -16,7 +16,7 @@ export default async function SubcontractorPage({ params, searchParams }: { para
   const { project } = await searchParams;
   const current = resolveProject(memberships, project);
   if (!current) redirect('/');
-  if (!canSee(current.role, 'subcontractors')) redirect(`/?project=${current.project_id}`);
+  if (!sees(current, 'subcontractors')) redirect(`/?project=${current.project_id}`);
   const supabase = await createClient();
   const { data: r } = await supabase
     .from('subcontractors')

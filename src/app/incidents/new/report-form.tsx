@@ -12,7 +12,7 @@ import {
   type IncidentKind, type Treatment, type Severity,
 } from '@/lib/incidents/model';
 
-interface Props { projectId: string; userId: string; crew: string[]; plant: string[] }
+interface Props { projectId: string; userId: string; crew: string[]; plant: string[]; /** A labourer's form: kind, where, what, a photo — the supervisor fills in the rest as updates. */ simple?: boolean }
 
 function localNow(): string {
   const d = new Date();
@@ -25,7 +25,7 @@ function localNow(): string {
  * signal — and frozen from then on; the office is emailed for anything
  * urgent. Nothing here is a guess: unanswered stays blank.
  */
-export function ReportForm({ projectId, userId, crew, plant }: Props) {
+export function ReportForm({ projectId, userId, crew, plant, simple = false }: Props) {
   const router = useRouter();
   const [kind, setKind] = useState<IncidentKind>('hazard');
   const [occurred, setOccurred] = useState(localNow());
@@ -139,9 +139,11 @@ export function ReportForm({ projectId, userId, crew, plant }: Props) {
           ))}
         </div>
       </div>
-      <div className="signin__grid">
-        <label className="fieldcell"><span className="label">When</span>
-          <input className="field field--sm" type="datetime-local" value={occurred} max={localNow()} onChange={(e) => setOccurred(e.target.value)} /></label>
+      <div className={simple ? undefined : 'signin__grid'}>
+        {!simple && (
+          <label className="fieldcell"><span className="label">When</span>
+            <input className="field field--sm" type="datetime-local" value={occurred} max={localNow()} onChange={(e) => setOccurred(e.target.value)} /></label>
+        )}
         <label className="fieldcell"><span className="label">Where</span>
           <input className="field field--sm" value={location} placeholder="Chainage, area, gate…" onChange={(e) => setLocation(e.target.value)} /></label>
       </div>
@@ -169,6 +171,7 @@ export function ReportForm({ projectId, userId, crew, plant }: Props) {
         </div>
       )}
 
+      {!simple && (
       <div className="item">
         <p className="label">People involved</p>
         {chips(people, setPeople, typed, setTyped, 'Someone else — type a name')}
@@ -176,7 +179,9 @@ export function ReportForm({ projectId, userId, crew, plant }: Props) {
         {chips(witnesses, setWitnesses, typedWitness, setTypedWitness, 'Type a name')}
         <datalist id="incident-crew">{crew.map((c) => <option key={c} value={c} />)}</datalist>
       </div>
+      )}
 
+      {!simple && (<>
       <div className="signin__grid">
         <label className="fieldcell"><span className="label">How bad was it</span>
           <select className="field field--sm" value={actual} onChange={(e) => setActual(e.target.value as Severity | '')}>
@@ -201,6 +206,7 @@ export function ReportForm({ projectId, userId, crew, plant }: Props) {
           disturb the site until an inspector says so. Keep this report for at least two years.
         </p>
       )}
+      </>)}
 
       <div className="item">
         <p className="label">Photos</p>

@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { requireUser, resolveProject } from '@/lib/auth';
-import { canSee, canAuthorEntries } from '@/lib/roles';
+import { sees, canAuthorEntries } from '@/lib/roles';
 import { BrandMark } from '@/components/brand-mark';
 import { perthToday } from '@/lib/push/decide';
 import { buildMatrix, competencies, mergePeople } from '@/lib/training/model';
@@ -18,7 +18,7 @@ export default async function TrainingPage({ searchParams }: { searchParams: Pro
   const { project, scope } = await searchParams;
   const current = resolveProject(memberships, project);
   if (!current) return <main className="sheet"><p className="notice gap">You are not on an active project.</p></main>;
-  if (!canSee(current.role, 'training')) redirect(`/?project=${current.project_id}`);
+  if (!sees(current, 'training')) redirect(`/?project=${current.project_id}`);
   const supabase = await createClient();
   const orgId = current.project.org.id;
   const wholeCompany = scope === 'company';

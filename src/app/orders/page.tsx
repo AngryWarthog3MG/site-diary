@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { requireUser, resolveProject, canRunTalks } from '@/lib/auth';
-import { canSee } from '@/lib/roles';
+import { sees } from '@/lib/roles';
 import { BrandMark } from '@/components/brand-mark';
 import { OutboxStatus } from '@/components/outbox-status';
 import { fmtDate } from '@/lib/pdf/dates';
@@ -24,7 +24,7 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
   const { project } = await searchParams;
   const current = resolveProject(memberships, project);
   if (!current) return <main className="sheet"><p className="notice gap">You are not on an active project.</p></main>;
-  if (!canSee(current.role, 'orders')) redirect(`/?project=${current.project_id}`);
+  if (!sees(current, 'orders')) redirect(`/?project=${current.project_id}`);
   const supabase = await createClient();
   const [{ data }, { data: plant }] = await Promise.all([
     supabase.from('orders')

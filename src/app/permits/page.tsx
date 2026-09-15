@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { requireUser, resolveProject } from '@/lib/auth';
-import { canSee, canAuthorEntries } from '@/lib/roles';
+import { sees, canAuthorEntries } from '@/lib/roles';
 import { BrandMark } from '@/components/brand-mark';
 import { OutboxStatus } from '@/components/outbox-status';
 import { fmtDate } from '@/lib/pdf/dates';
@@ -19,7 +19,7 @@ export default async function PermitsPage({ searchParams }: { searchParams: Prom
   const { project } = await searchParams;
   const current = resolveProject(memberships, project);
   if (!current) return <main className="sheet"><p className="notice gap">You are not on an active project.</p></main>;
-  if (!canSee(current.role, 'permits')) redirect(`/?project=${current.project_id}`);
+  if (!sees(current, 'permits')) redirect(`/?project=${current.project_id}`);
   const supabase = await createClient();
   const { data } = await supabase.from('permits').select('id, seq, kind, title, location, valid_from, valid_to, status, holder_name')
     .eq('project_id', current.project_id).order('valid_from', { ascending: false }).limit(200);

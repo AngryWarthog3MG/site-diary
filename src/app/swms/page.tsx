@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { requireUser, resolveProject } from '@/lib/auth';
-import { canSee, canAuthorEntries } from '@/lib/roles';
+import { sees, canAuthorEntries } from '@/lib/roles';
 import { BrandMark } from '@/components/brand-mark';
 import { fmtDate } from '@/lib/pdf/dates';
 import { OutboxStatus } from '@/components/outbox-status';
@@ -34,7 +34,7 @@ export default async function SwmsListPage({ searchParams }: { searchParams: Pro
       </main>
     );
   }
-  if (!canSee(current.role, 'swms')) redirect(`/?project=${current.project_id}`);
+  if (!sees(current, 'swms')) redirect(`/?project=${current.project_id}`);
   const supabase = await createClient();
   const { data } = await supabase
     .from('swms')

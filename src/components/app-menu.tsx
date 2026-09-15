@@ -12,6 +12,7 @@ interface Me {
   name: string | null;
   project: { id: string; name: string; code: string } | null;
   role: string | null;
+  screens?: string[] | null;
   canRecord: boolean;
   projects: Array<{ id: string; name: string; code: string }>;
 }
@@ -65,7 +66,7 @@ export function AppMenu({ slotId }: { slotId: string }) {
   const q = me?.project ? `?project=${me.project.id}` : projectParam ? `?project=${projectParam}` : '';
   // The same list the home page and the rail draw. Until the role is known
   // only the doors every role has are drawn, so nobody sees one close on them.
-  const viewer = { role: (me?.role as MemberRole | null) ?? null, canRecord: Boolean(me?.canRecord), multiJob: (me?.projects.length ?? 0) > 1 };
+  const viewer = { role: (me?.role as MemberRole | null) ?? null, screens: me?.screens ?? null, canRecord: Boolean(me?.canRecord), multiJob: (me?.projects.length ?? 0) > 1 };
   const item = (it: NavItem, variant?: 'wide') => (
     <Link
       key={it.href}

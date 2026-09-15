@@ -1,8 +1,7 @@
 import Link from 'next/link';
 import { Fragment } from 'react';
 import { createClient } from '@/lib/supabase/server';
-import { canSee, type Screen } from '@/lib/roles';
-import type { MemberRole } from '@/types/database';
+import { sees, type Access, type Screen } from '@/lib/roles';
 import { perthToday } from '@/lib/push/decide';
 import { fmtDate } from '@/lib/pdf/dates';
 import { KIND_LABEL, incidentRef, type IncidentKind } from '@/lib/incidents/model';
@@ -45,13 +44,13 @@ interface Card { key: string; name: string; attention: boolean; node: React.Reac
  * with nothing to act on fold into one line naming them, so a supervisor
  * still sees what was checked. The Safety screen keeps every figure.
  */
-export async function DashboardCards({ projectId, orgId, role }: { projectId: string; orgId: string; role: MemberRole }) {
+export async function DashboardCards({ projectId, orgId, member }: { projectId: string; orgId: string; member: Access }) {
   const supabase = await createClient();
   const today = perthToday();
   const d = await loadDashboard(supabase, projectId, orgId, today);
   const s = d.safety;
   const q = `?project=${projectId}`;
-  const see = (screen: Screen) => canSee(role, screen);
+  const see = (screen: Screen) => sees(member, screen);
   const trunc = (t: string, n = 70) => (t.length > n ? `${t.slice(0, n - 1).trimEnd()}…` : t);
   const maxMonth = Math.max(1, ...s.incidents.months.map((m) => m.total));
   const swmsUnsigned = s.swms.length;

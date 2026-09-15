@@ -26,6 +26,10 @@ interface Props {
   userId: string;
   /** The organisation's subcontractors and their paperwork verdict today. */
   companies?: Array<{ name: string; key: string; verdict: Verdict }>;
+  /** The signed-in person's own name, for the one-tap "Sign in, {name}" button. */
+  self?: string | null;
+  /** A labourer: their own sign-in and sign-out only — nobody else's, and no register tools. */
+  selfOnly?: boolean;
 }
 
 /**
@@ -47,6 +51,11 @@ export function SignInScreen(props: Props) {
   const { onSite, left } = useMemo(() => splitDay(rows), [rows]);
   const onSiteNames = useMemo(() => new Set(onSite.map((r) => normaliseName(r.person_name))), [onSite]);
   const crewOff = props.crew.filter((c) => !onSiteNames.has(normaliseName(c)));
+  const selfKey = props.self ? normaliseName(props.self) : null;
+  const isSelf = (row: Row) => selfKey != null && normaliseName(row.person_name) === selfKey;
+  const selfOpen = selfKey ? onSite.find(isSelf) ?? null : null;
+  /** Whether this person may act on this row: everyone they can, or only their own when selfOnly. */
+  const mayAct = (row: Row) => props.canRun && (!props.selfOnly || isSelf(row));
 
   async function signIn(personName: string, personKind: PersonKind, personCompany: string | null) {
     const trimmed = personName.trim();
@@ -182,9 +191,21 @@ export function SignInScreen(props: Props) {
     <section className="signin">
       {error && <p className="alert" role="alert">{error}</p>}
 
+      {props.canRun && props.self && props.isToday && (
+        <button
+          type="button"
+          className={`selfbtn${selfOpen ? ' selfbtn--out' : ''}`}
+          disabled={busy != null}
+          onClick={() => void (selfOpen ? signOut(selfOpen) : signIn(props.self!, 'crew', null))}
+        >
+          <span className="selfbtn__what">{busy != null ? '…' : selfOpen ? 'Sign out' : 'Sign in'}</span>
+          <span className="selfbtn__who">{props.self}{selfOpen ? ` · in since ${eventClock(selfOpen.signed_in_on_device_at, selfOpen.signed_in_at)}` : ''}</span>
+        </button>
+      )}
+
       <div className="signin__head">
         <h2 className="signin__title">On site now <span className="count">{onSite.length}</span></h2>
-        {props.canRun && onSite.length > 0 && (
+        {props.canRun && !props.selfOnly && onSite.length > 0 && (
           <button type="button" className="linklike" disabled={busy != null} onClick={() => void signOutEveryone()}>Sign everyone out</button>
         )}
       </div>
@@ -207,13 +228,13 @@ export function SignInScreen(props: Props) {
                 {row.inducted === false && !inductedNow(row) ? (
                   <span className="signin__flag">
                     NOT INDUCTED
-                    {props.canRun && <button type="button" className="linklike" onClick={() => void inductNow(row.person_name)}>Inducted now</button>}
+                    {props.canRun && !props.selfOnly && <button type="button" className="linklike" onClick={() => void inductNow(row.person_name)}>Inducted now</button>}
                   </span>
                 ) : row.inducted === false ? (
                   <span className="signin__ok">Inducted since sign-in</span>
                 ) : null}
               </div>
-              {props.canRun && (
+              {mayAct(row) && (
                 <div className="signin__actions">
                   <button type="button" className="button button--quiet signin__out" disabled={busy != null} onClick={() => void signOut(row)}>
                     {busy === row.id ? '…' : 'Sign out'}
@@ -228,7 +249,7 @@ export function SignInScreen(props: Props) {
         </ul>
       )}
 
-      {props.canRun && (
+      {props.canRun && !props.selfOnly && (
         <div className="item signin__add">
           <p className="label">Sign someone in</p>
           {crewOff.length > 0 && (
@@ -284,7 +305,7 @@ export function SignInScreen(props: Props) {
         </>
       )}
 
-      {rows.length > 0 && (
+      {rows.length > 0 && !props.selfOnly && (
         <button type="button" className="button button--quiet" style={{ marginTop: '1rem' }} disabled={pdfBusy} onClick={() => void registerPdf()}>
           {pdfBusy ? 'Making the register…' : 'Register PDF for the day'}
         </button>

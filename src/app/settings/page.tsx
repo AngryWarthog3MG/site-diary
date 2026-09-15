@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { requireUser, resolveProject } from '@/lib/auth';
-import { canSee } from '@/lib/roles';
+import { sees } from '@/lib/roles';
 import { SettingsForm, type SettingsData } from './settings-form';
 import { CrewList, type CrewRow } from './crew-list';
 import Link from 'next/link';
@@ -20,7 +20,7 @@ export default async function SettingsPage({
   const { project } = await searchParams;
   const current = resolveProject(memberships, project);
   if (!current) redirect('/');
-  if (!canSee(current.role, 'settings')) redirect(`/?project=${current.project_id}`);
+  if (!sees(current, 'settings')) redirect(`/?project=${current.project_id}`);
 
   const supabase = await createClient();
 

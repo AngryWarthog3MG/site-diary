@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { requireUser, resolveProject } from '@/lib/auth';
-import { canSee, canAuthorEntries } from '@/lib/roles';
+import { sees, canAuthorEntries } from '@/lib/roles';
 import { BrandMark } from '@/components/brand-mark';
 import { OutboxStatus } from '@/components/outbox-status';
 import { fmtDate } from '@/lib/pdf/dates';
@@ -21,7 +21,7 @@ export default async function ProceduresPage({ searchParams }: { searchParams: P
   const { project } = await searchParams;
   const current = resolveProject(memberships, project);
   if (!current) return <main className="sheet"><p className="notice gap">You are not on an active project.</p></main>;
-  if (!canSee(current.role, 'procedures')) redirect(`/?project=${current.project_id}`);
+  if (!sees(current, 'procedures')) redirect(`/?project=${current.project_id}`);
   const supabase = await createClient();
   const [{ data }, { data: crew }] = await Promise.all([
     supabase.from('controlled_documents').select('id, title, kind, doc_number, requires_acknowledgement, active, document_versions(id, version, status, issued_at, document_acknowledgements(person_name))').eq('org_id', current.project.org.id).eq('active', true).order('title'),

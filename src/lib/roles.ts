@@ -67,6 +67,39 @@ export type Screen =
   | 'today' | 'entries' | 'weekly' | 'prestart' | 'plant' | 'toolbox' | 'signin' | 'swms' | 'incidents' | 'inspections' | 'permits' | 'subcontractors' | 'procedures' | 'training' | 'safety' | 'orders'
   | 'claims' | 'variations' | 'progress' | 'ask' | 'documents' | 'settings';
 
+/** Every screen there is, in the order the Members screen lists them. */
+export const SCREENS: Screen[] = ['today', 'entries', 'weekly', 'signin', 'claims', 'variations', 'progress', 'safety', 'incidents', 'inspections', 'permits', 'swms', 'prestart', 'toolbox', 'plant', 'orders', 'training', 'subcontractors', 'procedures', 'documents', 'ask', 'settings'];
+
+/** A membership as the gates read it: the role, and the screens ticked for this person (null = the role's list). */
+export interface Access { role: MemberRole; screens?: readonly string[] | null }
+
+/**
+ * Whether this member opens this screen on this job — the one question every
+ * menu, page guard and API asks. With no ticks set, the role's table answers;
+ * with ticks set, exactly those screens open. Two things no tick changes: Home
+ * is always there, and a labourer never gets past their two doors — the
+ * database keeps them out of the record whatever is ticked (migration
+ * 20260915140000), so a tick there would only show a door that does not open.
+ * An admin keeps Settings, because that is the screen the ticks are set from.
+ */
+export function sees(member: Access, screen: Screen): boolean {
+  if (screen === 'today') return true;
+  if (member.role === 'labourer' && !canSee('labourer', screen)) return false;
+  if (member.role === 'admin' && screen === 'settings') return true;
+  if (member.screens == null) return canSee(member.role, screen);
+  return member.screens.includes(screen);
+}
+
+/** The role's own list — what the tick boxes show before anyone touches them. */
+export function defaultScreens(role: MemberRole): Screen[] {
+  return SCREENS.filter((s) => s !== 'today' && canSee(role, s));
+}
+
+/** The screens an admin may tick for this role: everything, but a labourer's ceiling is their two doors. */
+export function grantableScreens(role: MemberRole): Screen[] {
+  return SCREENS.filter((s) => s !== 'today' && (role !== 'labourer' || canSee('labourer', s)));
+}
+
 /** Which screens a role gets. Everything not listed for a role is refused, not just hidden. */
 export function canSee(role: MemberRole, screen: Screen): boolean {
   if (role === 'labourer') return screen === 'today' || screen === 'signin' || screen === 'incidents';

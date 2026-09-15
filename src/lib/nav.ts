@@ -1,4 +1,4 @@
-import { canAuthorEntries, canSee, type Screen } from './roles';
+import { canAuthorEntries, sees, type Access, type Screen } from './roles';
 import type { MemberRole } from '@/types/database';
 
 /**
@@ -95,7 +95,7 @@ export const NAV_GROUPS: NavGroup[] = [
  */
 export const EVERY_ROLE: Screen[] = ['today', 'entries', 'weekly', 'prestart', 'plant', 'toolbox', 'signin', 'swms', 'incidents', 'inspections', 'permits', 'procedures', 'safety', 'orders'];
 
-export interface NavViewer { role: MemberRole | null; canRecord: boolean; multiJob: boolean }
+export interface NavViewer { role: MemberRole | null; screens?: readonly string[] | null; canRecord: boolean; multiJob: boolean }
 
 /** The groups this viewer gets, each holding only the doors they get; empty groups dropped. */
 export function navFor(viewer: NavViewer): NavGroup[] {
@@ -106,12 +106,13 @@ export function navFor(viewer: NavViewer): NavGroup[] {
 export function showNav(item: NavItem, viewer: NavViewer): boolean {
   if (item.when === 'canRecord') return viewer.canRecord;
   // All jobs is the owner's screen: several jobs, and a role that reads the record on them.
-  if (item.when === 'multiJob') return viewer.multiJob && (viewer.role ? canSee(viewer.role, 'weekly') : false);
+  const member: Access | null = viewer.role ? { role: viewer.role, screens: viewer.screens ?? null } : null;
+  if (item.when === 'multiJob') return viewer.multiJob && (member ? sees(member, 'weekly') : false);
   if (!item.screen) return true;
-  return viewer.role ? canSee(viewer.role, item.screen) : EVERY_ROLE.includes(item.screen);
+  return member ? sees(member, item.screen) : EVERY_ROLE.includes(item.screen);
 }
 
-/** The viewer a role implies, for a server page that already knows it. */
-export function viewerFor(role: MemberRole, activeJobs: number): NavViewer {
-  return { role, canRecord: canAuthorEntries(role), multiJob: activeJobs > 1 };
+/** The viewer a membership implies, for a server page that already knows it. */
+export function viewerFor(member: Access, activeJobs: number): NavViewer {
+  return { role: member.role, screens: member.screens ?? null, canRecord: canAuthorEntries(member.role), multiJob: activeJobs > 1 };
 }

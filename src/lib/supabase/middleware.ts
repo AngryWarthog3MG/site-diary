@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
-import { canSee, type Screen } from '@/lib/roles';
+import { sees, type Screen } from '@/lib/roles';
 import type { MemberRole } from '@/types/database';
 
 // Reachable without a session. Everything else requires a signed-in user.
@@ -132,12 +132,12 @@ export async function updateSession(request: NextRequest) {
   if (user) {
     const screen = screenOf(pathname);
     if (screen) {
-      const { data } = await supabase.from('project_members').select('project_id, role').eq('user_id', user.id);
-      const memberships = (data ?? []) as Array<{ project_id: string; role: MemberRole }>;
+      const { data } = await supabase.from('project_members').select('project_id, role, screens').eq('user_id', user.id);
+      const memberships = (data ?? []) as Array<{ project_id: string; role: MemberRole; screens: string[] | null }>;
       const named = request.nextUrl.searchParams.get('project');
       const onNamed = named ? memberships.find((m) => m.project_id === named) : undefined;
-      const roles = onNamed ? [onNamed.role] : memberships.map((m) => m.role);
-      if (roles.length > 0 && !roles.some((r) => canSee(r, screen))) {
+      const judged = onNamed ? [onNamed] : memberships;
+      if (judged.length > 0 && !judged.some((m) => sees(m, screen))) {
         if (pathname.startsWith('/api/')) {
           return NextResponse.json(
             { error: { code: 'forbidden', message: 'Your role on this job does not include that.' } },

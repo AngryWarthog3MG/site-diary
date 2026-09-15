@@ -14,6 +14,7 @@ import { SignOutButton } from '@/components/sign-out-button';
 import { TodayPanel } from './today-panel';
 import { DashboardCards, DashboardSkeleton } from './dashboard-cards';
 import { FirstRun } from '@/components/first-run';
+import { LabourerHome } from './labourer-home';
 
 export const dynamic = 'force-dynamic';
 
@@ -55,9 +56,11 @@ export default async function TodayPage({
     );
   }
 
+  if (current.role === 'labourer') return <LabourerHome current={current} name={profile?.full_name ?? email ?? 'You'} />;
+
   const activeJobs = memberships.filter((m) => m.project.active).length;
   const q = `?project=${current.project_id}`;
-  const groups = navFor(viewerFor(current.role, activeJobs));
+  const groups = navFor(viewerFor(current, activeJobs));
   const talks = canRunTalks(current.role);
   const reports = canReport(current.role);
   const authors = canAuthorEntries(current.role);
@@ -108,7 +111,7 @@ export default async function TodayPage({
         </section>
         <div className="dash-grid">
           <Suspense fallback={<DashboardSkeleton />}>
-            <DashboardCards projectId={current.project_id} orgId={current.project.org.id} role={current.role} />
+            <DashboardCards projectId={current.project_id} orgId={current.project.org.id} member={current} />
           </Suspense>
         </div>
       </div>

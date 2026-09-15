@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
-import { requireUser, canSee } from '@/lib/auth';
+import { requireUser, sees } from '@/lib/auth';
 import { redirect } from 'next/navigation';
 import { BrandMark } from '@/components/brand-mark';
 import { fmtDate } from '@/lib/pdf/dates';
@@ -17,7 +17,7 @@ export const metadata = { title: 'All jobs · KBS Daily Diary' };
  */
 export default async function PortfolioPage() {
   const { memberships } = await requireUser();
-  if (!memberships.some((m) => canSee(m.role, 'weekly'))) redirect('/');
+  if (!memberships.some((m) => sees(m, 'weekly'))) redirect('/');
   const projects = memberships.filter((m) => m.project.active);
   const supabase = await createClient();
 

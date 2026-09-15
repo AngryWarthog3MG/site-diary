@@ -22,6 +22,7 @@ interface Me {
   name: string | null;
   project: { id: string; name: string; code: string } | null;
   role: MemberRole | null;
+  screens?: string[] | null;
   canRecord?: boolean;
   projects?: Array<{ id: string }>;
 }
@@ -64,7 +65,7 @@ export function SideNav() {
   if (/^\/(signin|login|auth|verify|offline)/.test(pathname)) return null;
 
   const q = me?.project ? `?project=${me.project.id}` : projectParam ? `?project=${projectParam}` : '';
-  const viewer = { role: me?.role ?? null, canRecord: Boolean(me?.canRecord), multiJob: (me?.projects?.length ?? 0) > 1 };
+  const viewer = { role: me?.role ?? null, screens: me?.screens ?? null, canRecord: Boolean(me?.canRecord), multiJob: (me?.projects?.length ?? 0) > 1 };
   const see = (screen: 'settings') => showNav({ href: '/settings', name: '', what: '', screen }, viewer);
   const here = (href: string) => (href === '/' ? pathname === '/' : pathname.startsWith(href));
   const isOpen = (label: string) => open[label] ?? isHereGroup(label);

@@ -242,7 +242,10 @@ Change four of them and the app silently stops capturing what supervisors say. I
   (SQL) and `canEditEntry` (`src/lib/entries/access.ts`) are the two halves; the signature names the
   signer (`signed_by := auth.uid()`), `author_id` names who started the day. Deleting a draft stays author-only.
 - **Roles live in one table.** `src/lib/roles.ts` (`canAuthorEntries`, `canRunTalks`, `canSignIn`, `canReport`,
-  `canSee`, `canManageRegisters`, `canExportReports`) is what the menu, the page guards and the APIs read;
+  `canSee`, `canManageRegisters`, `canExportReports`) is what the menu, the page guards and the APIs read.
+  **Which screens open is asked through `sees(member, screen)`, never `canSee(role, …)` directly**: a project
+  admin ticks screens per person (`project_members.screens`, null = the role's list, README R57), and only
+  `sees` honours the ticks. Load `screens` alongside `role` wherever a membership is read for a gate;
   `app.can_run_talks()`, `app.can_sign_in()`, `app.can_report()` and `app.can_manage_registers()` mirror it in
   SQL. A new role goes in both, plus the `member_role` enum, `MemberRole` in `src/types/database.ts` and the
   members API's `ROLES` set. The labourer has two doors — the gate and hazard reporting — and `canSee` lists

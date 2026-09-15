@@ -1556,6 +1556,30 @@ figure read as a broken screen. Site sign-in moved under the Diary heading, beca
 feeds the day's labour. Nothing was removed from the record or the Safety screen; the home
 simply stopped repeating it.
 
+**R57. Access by tick box, and the labourer's three screens.** Mitchell: "allow me to select who
+can see what … supervisor — I need to be able to change what he has access to at all times using a
+tick box to each task." `project_members.screens` (migration 20260916100000) names exactly the
+screens a person may open on a job; null means the role's own list. `sees(member, screen)` in
+`src/lib/roles.ts` is now the one question every gate asks — the middleware, `guardScreen`,
+`forbidUnlessSees`, the menu, the rail, the home cards and every page and API that used to ask
+`canSee(role, …)` — so an unticked box is refused, not hidden. Three rules no tick moves: Home is
+always open; a labourer never gets past their two doors (the database keeps them out of the record
+whatever is ticked, migration 20260915140000, so a tick there would only show a door that does not
+open); an admin keeps Settings, the screen the ticks are set from. Changing a role clears the ticks,
+because they were made against the old role. The role still decides what a person may DO — write
+the diary, run a talk, progress an order — and the table policies stay by role: the ticks decide
+which doors open, in the app and its APIs. The Members screen shows one Access panel per person,
+grouped under the menu's headings, each tick saved at once.
+
+The labourer's screens, after seeing them live: the home is now the state of their own sign-in
+("signed in since 6:52") and two big buttons, no diary panel, no figures, no heading bar; the gate
+opens with one button — "Sign in, Sam Labourer", then "Sign out … in since 6:52" — and a labourer
+sees no form to sign anyone else in, no register PDF and nobody else's Sign out; the hazard form
+for a labourer is kind, where, what happened, what was done, photos, Report — when defaults to now,
+and severity, witnesses, plant and the WorkSafe line are the supervisor's to add as updates. The
+same one-tap button sits at the top of the gate for every role, since a supervisor signs themself
+in too.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;

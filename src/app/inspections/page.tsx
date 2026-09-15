@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { requireUser, resolveProject, canRunTalks } from '@/lib/auth';
-import { canSee, canAuthorEntries } from '@/lib/roles';
+import { sees, canAuthorEntries } from '@/lib/roles';
 import { BrandMark } from '@/components/brand-mark';
 import { OutboxStatus } from '@/components/outbox-status';
 import { fmtDate } from '@/lib/pdf/dates';
@@ -23,7 +23,7 @@ export default async function InspectionsPage({ searchParams }: { searchParams: 
   const { project } = await searchParams;
   const current = resolveProject(memberships, project);
   if (!current) return <main className="sheet"><p className="notice gap">You are not on an active project.</p></main>;
-  if (!canSee(current.role, 'inspections')) redirect(`/?project=${current.project_id}`);
+  if (!sees(current, 'inspections')) redirect(`/?project=${current.project_id}`);
   const supabase = await createClient();
   const { data } = await supabase
     .from('inspections')

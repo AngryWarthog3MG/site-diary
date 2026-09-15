@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
 import { requireUser, resolveProject, canRunTalks, canSignIn } from '@/lib/auth';
-import { canSee } from '@/lib/roles';
+import { sees } from '@/lib/roles';
 import { redirect } from 'next/navigation';
 import { BrandMark } from '@/components/brand-mark';
 import { fmtDate } from '@/lib/pdf/dates';
@@ -32,7 +32,7 @@ export default async function SignInPage({
 }: {
   searchParams: Promise<{ project?: string; date?: string }>;
 }) {
-  const { userId, memberships } = await requireUser();
+  const { userId, email, profile, memberships } = await requireUser();
   const { project, date } = await searchParams;
   const current = resolveProject(memberships, project);
   if (!current) {
@@ -42,7 +42,7 @@ export default async function SignInPage({
       </main>
     );
   }
-  if (!canSee(current.role, 'signin')) redirect(`/?project=${current.project_id}`);
+  if (!sees(current, 'signin')) redirect(`/?project=${current.project_id}`);
 
   const today = perthToday();
   const day = date && DATE_RE.test(date) ? date : today;
@@ -68,10 +68,14 @@ export default async function SignInPage({
         <BrandMark size={18} /> {current.project.name}
       </p>
       <h1 className="page-title">Site sign-in</h1>
-      <p className="page-subtitle">
-        Everyone on site, in and out at the gate. The list of who is here is the roll call; the
-        day&rsquo;s register is the attendance record.
-      </p>
+      {current.role === 'labourer' ? (
+        <p className="page-subtitle">Tap when you arrive and when you leave. That is your time for the day.</p>
+      ) : (
+        <p className="page-subtitle">
+          Everyone on site, in and out at the gate. The list of who is here is the roll call; the
+          day&rsquo;s register is the attendance record.
+        </p>
+      )}
       {canRunTalks(current.role) && current.role !== 'leading_hand' && (
         <Link className="button button--quiet" href={`/signin/gate${q}`}>Gate code and sign</Link>
       )}
@@ -99,6 +103,8 @@ export default async function SignInPage({
         canRun={canSignIn(current.role)}
         userId={userId}
         companies={companies}
+        self={profile?.full_name ?? email ?? null}
+        selfOnly={current.role === 'labourer'}
       />
     </main>
   );

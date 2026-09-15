@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { requireUser, resolveProject, canReport } from '@/lib/auth';
-import { canSee } from '@/lib/roles';
+import { sees } from '@/lib/roles';
 import { BrandMark } from '@/components/brand-mark';
 import { OutboxStatus } from '@/components/outbox-status';
 import { fmtDate } from '@/lib/pdf/dates';
@@ -26,7 +26,7 @@ export default async function IncidentsPage({ searchParams }: { searchParams: Pr
   if (!current) {
     return <main className="sheet"><p className="notice gap">You are not on an active project.</p></main>;
   }
-  if (!canSee(current.role, 'incidents')) redirect(`/?project=${current.project_id}`);
+  if (!sees(current, 'incidents')) redirect(`/?project=${current.project_id}`);
   const supabase = await createClient();
   const { data } = await supabase
     .from('incidents')

@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { requireUser, resolveProject } from '@/lib/auth';
-import { canSee, canAuthorEntries } from '@/lib/roles';
+import { sees, canAuthorEntries } from '@/lib/roles';
 import { BrandMark } from '@/components/brand-mark';
 import { perthToday } from '@/lib/push/decide';
 import { compliance, VERDICT_LABEL, DOC_LABEL, type DocFacts } from '@/lib/subcontractors/model';
@@ -18,7 +18,7 @@ export default async function SubcontractorsPage({ searchParams }: { searchParam
   const { project } = await searchParams;
   const current = resolveProject(memberships, project);
   if (!current) return <main className="sheet"><p className="notice gap">You are not on an active project.</p></main>;
-  if (!canSee(current.role, 'subcontractors')) redirect(`/?project=${current.project_id}`);
+  if (!sees(current, 'subcontractors')) redirect(`/?project=${current.project_id}`);
   const supabase = await createClient();
   const { data } = await supabase
     .from('subcontractors')

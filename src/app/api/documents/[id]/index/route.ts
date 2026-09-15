@@ -1,4 +1,4 @@
-import { canSee } from '@/lib/roles';
+import { sees } from '@/lib/roles';
 import type { MemberRole } from '@/types/database';
 import { fail, ok, requireApiUser, isUuid } from '@/lib/api';
 import { indexDocument } from '@/lib/documents/index';
@@ -17,8 +17,8 @@ export async function POST(_request: Request, context: { params: Promise<{ id: s
   // Under the caller's RLS: a document they cannot see does not exist.
   const { data: doc } = await supabase.from('project_documents').select('id, project_id').eq('id', id).maybeSingle();
   if (!doc) return fail('not_found', 'That document is not on one of your projects.', 404);
-  const { data: membership } = await supabase.from('project_members').select('role').eq('project_id', (doc as { project_id?: string }).project_id ?? '').eq('user_id', user.id).maybeSingle();
-  if (!membership || !canSee(membership.role as MemberRole, 'documents')) return fail('forbidden', 'Your role on this job does not include documents.', 403);
+  const { data: membership } = await supabase.from('project_members').select('role, screens').eq('project_id', (doc as { project_id?: string }).project_id ?? '').eq('user_id', user.id).maybeSingle();
+  if (!membership || !sees({ role: membership.role as MemberRole, screens: (membership.screens as string[] | null) ?? null }, 'documents')) return fail('forbidden', 'Your role on this job does not include documents.', 403);
 
   const outcome = await indexDocument(id);
   if (!outcome.ok) return fail('bad_request', outcome.reason, 422);

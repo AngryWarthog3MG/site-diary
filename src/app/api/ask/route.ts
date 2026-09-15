@@ -1,6 +1,6 @@
 import { fail, ok, readJson, requireApiUser, isUuid } from '@/lib/api';
 import { ask, AskError } from '@/lib/query/ask';
-import { canSee } from '@/lib/roles';
+import { sees } from '@/lib/roles';
 import { explainModelError } from '@/lib/model-error';
 import type { MemberRole } from '@/types/database';
 
@@ -42,11 +42,11 @@ export async function POST(request: Request) {
     projectName = data.name as string;
     const { data: membership } = await supabase
       .from('project_members')
-      .select('role')
+      .select('role, screens')
       .eq('project_id', projectId)
       .eq('user_id', user.id)
       .maybeSingle();
-    if (!membership || !canSee(membership.role as MemberRole, 'ask')) {
+    if (!membership || !sees({ role: membership.role as MemberRole, screens: (membership.screens as string[] | null) ?? null }, 'ask')) {
       return fail('forbidden', 'Your role on this job does not include Ask.', 403);
     }
   }
