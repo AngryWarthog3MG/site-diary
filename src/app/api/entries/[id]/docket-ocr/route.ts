@@ -1,4 +1,4 @@
-import { fail, ok, requireApiUser, isUuid, readJson } from '@/lib/api';
+import { fail, ok, requireApiUser, isUuid, readJson, forbidUnlessSees } from '@/lib/api';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { readDocketImage, DocketOcrError, type DocketImageMediaType } from '@/lib/docket/ocr';
 
@@ -27,7 +27,7 @@ const MEDIA_TYPES: Record<string, DocketImageMediaType> = {
  * can see what the docket overruled.
  */
 export async function POST(request: Request, context: { params: Promise<{ id: string }> }) {
-  const { supabase, response } = await requireApiUser();
+  const { supabase, user, response } = await requireApiUser();
   if (response) return response;
 
   const { id } = await context.params;
@@ -44,6 +44,8 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
     .eq('id', id)
     .maybeSingle();
   if (!entry) return fail('not_found', 'That entry is not on any of your projects.', 404);
+  const forbidden = await forbidUnlessSees(supabase, user.id, entry.project_id as string, 'entries');
+  if (forbidden) return forbidden;
   if (entry.status === 'signed') {
     return fail('bad_request', 'This entry is signed. A docket cannot change it now.', 409);
   }

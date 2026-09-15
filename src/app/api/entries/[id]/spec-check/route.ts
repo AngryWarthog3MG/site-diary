@@ -1,4 +1,4 @@
-import { fail, ok, readJson, requireApiUser, isUuid } from '@/lib/api';
+import { fail, ok, readJson, requireApiUser, isUuid, forbidUnlessSees } from '@/lib/api';
 import { explainModelError } from '@/lib/model-error';
 import { specCheck, type SpecCheckItem } from '@/lib/documents/spec-check';
 
@@ -9,13 +9,15 @@ export const maxDuration = 90;
  * only — nothing is stored; the supervisor looks, then confirms what they did.
  */
 export async function POST(request: Request, context: { params: Promise<{ id: string }> }) {
-  const { supabase, response } = await requireApiUser();
+  const { supabase, user, response } = await requireApiUser();
   if (response) return response;
   const { id: entryId } = await context.params;
   if (!isUuid(entryId)) return fail('bad_request', 'Bad entry id.', 400);
 
   const { data: entry } = await supabase.from('entries').select('id, project_id').eq('id', entryId).maybeSingle();
   if (!entry) return fail('not_found', 'That entry is not on any of your projects.', 404);
+  const forbidden = await forbidUnlessSees(supabase, user.id, entry.project_id as string, 'entries');
+  if (forbidden) return forbidden;
 
   const body = await readJson(request);
   const raw = Array.isArray(body?.items) ? (body.items as unknown[]) : [];

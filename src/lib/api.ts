@@ -38,9 +38,11 @@ export async function forbidUnlessSees(
   projectId: string,
   screen: Screen,
 ): Promise<NextResponse | null> {
-  const { data } = await supabase.from('project_members').select('role').eq('project_id', projectId).eq('user_id', userId).maybeSingle();
+  // Fail closed: a lookup that errors, or finds no role on this job, refuses (Codex pass 42).
+  const { data, error } = await supabase.from('project_members').select('role').eq('project_id', projectId).eq('user_id', userId).maybeSingle();
+  if (error) return fail('server_error', `Could not check your role on this job: ${error.message}`, 500);
   const role = (data?.role as MemberRole | undefined) ?? null;
-  if (role && !canSee(role, screen)) return fail('forbidden', 'Your role on this job does not include that.', 403);
+  if (!role || !canSee(role, screen)) return fail('forbidden', 'Your role on this job does not include that.', 403);
   return null;
 }
 
