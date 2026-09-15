@@ -253,7 +253,8 @@ async function loadRegister(supabase: SupabaseClient, projectId: string): Promis
     const names = new Map<string, string>();
     const whoList = [...who];
     for (let i = 0; i < whoList.length; i += 100) {
-      const { data: people } = await supabase.from('profiles').select('id, full_name, email').in('id', whoList.slice(i, i + 100));
+      const { data: people, error } = await supabase.from('profiles').select('id, full_name, email').in('id', whoList.slice(i, i + 100));
+      if (error) throw new Error(`Could not load who moved the variations: ${error.message}`);
       for (const p of people ?? []) names.set(String(p.id), String(p.full_name ?? p.email ?? ''));
     }
     for (const e of events) {
