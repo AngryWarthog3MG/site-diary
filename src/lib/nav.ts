@@ -38,7 +38,7 @@ export const NAV_GROUPS: NavGroup[] = [
     label: 'Claims',
     items: [
       { href: '/claims', name: 'Claims', what: 'Delays, variations, dayworks', screen: 'claims' },
-      { href: '/variations', name: 'Variation register', what: 'V-001 to V-050 — each one from raised to paid', screen: 'variations' },
+      { href: '/variations', name: 'Variation tracker', what: 'Each one walked from raised to paid — where it is, what it waits on', screen: 'variations' },
       { href: '/progress', name: 'Progress', what: 'How far along each area is', screen: 'progress' },
     ],
   },

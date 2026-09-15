@@ -42,7 +42,9 @@ export interface RegisterItem {
   paid_on: string | null;
   notes: string | null;
   /** The diary days that mention it, earliest first. A draft has no serial yet. */
-  mentions: Array<{ date: string; entry_no: string | null; entry_id: string; signed: boolean }>;
+  mentions: Array<{ date: string; entry_no: string | null; entry_id: string; signed: boolean; hours: number | null; description: string | null; crew: string[] }>;
+  /** Every status change, oldest first: who moved it, when, and what they noted. */
+  events: Array<{ status: VariationStatus; note: string | null; at: string; by: string | null }>;
   /** Whether any signed diary records it. Until then it is provisional. */
   signed: boolean;
   /** Everyone named on it across its days. */
@@ -85,4 +87,74 @@ export function summariseRegister(items: readonly Pick<RegisterItem, 'status' | 
     approvedUnpaid: pick(['approved']),
     total: items.length,
   };
+}
+
+/** The path a variation walks. Rejected is the step off it. */
+export const STAGES: readonly VariationStatus[] = ['raised', 'priced', 'submitted', 'approved', 'paid'];
+
+export function stageIndex(status: VariationStatus): number {
+  const i = STAGES.indexOf(status);
+  return i === -1 ? 2 : i; // rejected sits where submitted was: it was with the client
+}
+
+/** Whole days from one ISO date (or timestamp) to another. */
+export function daysBetween(from: string, to: string): number {
+  return Math.max(0, Math.round((Date.parse(`${to.slice(0, 10)}T00:00:00Z`) - Date.parse(`${from.slice(0, 10)}T00:00:00Z`)) / 86_400_000));
+}
+
+/**
+ * The date each stage was reached, from the ledger where it has one and the
+ * item's own dates otherwise; null for a stage not reached. Raised is the day
+ * the diary first recorded it.
+ */
+export function stageDates(item: Pick<RegisterItem, 'raised_on' | 'submitted_on' | 'decided_on' | 'paid_on' | 'status' | 'events'>): Record<VariationStatus, string | null> {
+  const first = (status: VariationStatus) => item.events.find((e) => e.status === status)?.at.slice(0, 10) ?? null;
+  const reached = stageIndex(item.status);
+  return {
+    raised: item.raised_on,
+    priced: reached >= 1 && item.status !== 'rejected' ? first('priced') ?? (reached > 1 ? item.submitted_on : null) : first('priced'),
+    submitted: reached >= 2 ? first('submitted') ?? item.submitted_on : null,
+    approved: item.status === 'approved' || item.status === 'paid' ? first('approved') ?? item.decided_on : null,
+    rejected: item.status === 'rejected' ? first('rejected') ?? item.decided_on : null,
+    paid: item.status === 'paid' ? first('paid') ?? item.paid_on : null,
+  };
+}
+
+export type Waiting = { text: string; tone: 'act' | 'wait' | 'ok' | 'stop' };
+
+/** What this variation is waiting on right now — the one line a PM reads. */
+export function waitingOn(item: Pick<RegisterItem, 'status' | 'signed' | 'vr_ref' | 'estimated_cost' | 'agreed_cost' | 'submitted_on' | 'decided_on' | 'paid_on' | 'events' | 'raised_on' | 'mentions'>, today: string): Waiting {
+  const dates = stageDates({ ...item, events: item.events });
+  const since = (d: string | null) => (d ? ` · ${daysBetween(d, today)} day${daysBetween(d, today) === 1 ? '' : 's'}` : '');
+  if (item.status === 'paid') return { text: `Paid${dates.paid ? ` ${fmtShort(dates.paid)}` : ''}`, tone: 'ok' };
+  if (item.status === 'rejected') return { text: `Rejected${dates.rejected ? ` ${fmtShort(dates.rejected)}` : ''} — dispute it or let it go`, tone: 'stop' };
+  if (item.mentions.length === 0) return { text: 'No diary day records it any more', tone: 'stop' };
+  if (!item.signed) return { text: 'Sign the day that records it', tone: 'act' };
+  if (item.status === 'approved') return { text: `Approved${dates.approved ? ` ${fmtShort(dates.approved)}` : ''} — invoice it${since(dates.approved)}`, tone: 'act' };
+  if (item.status === 'submitted') {
+    const days = dates.submitted ? daysBetween(dates.submitted, today) : 0;
+    return { text: `With the client${dates.submitted ? ` since ${fmtShort(dates.submitted)}` : ''}${since(dates.submitted)}`, tone: days > 14 ? 'act' : 'wait' };
+  }
+  if (itemValue(item) == null) return { text: 'Put a value on it', tone: 'act' };
+  if (item.status === 'raised') return { text: `Price it${since(item.raised_on)}`, tone: 'act' };
+  return { text: `Send it to the client${item.vr_ref ? '' : ' — it has no client ref yet'}`, tone: 'act' };
+}
+
+function fmtShort(iso: string): string {
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);
+  return m ? `${m[3]}/${m[2]}` : iso;
+}
+
+/** The lowest register number not yet used on this job. */
+export function nextFreeNumber(items: readonly Pick<RegisterItem, 'seq'>[]): number {
+  const used = new Set(items.map((i) => i.seq));
+  let n = 1;
+  while (used.has(n)) n += 1;
+  return n;
+}
+
+/** Action needed first, then waiting, then done; within a group by number. */
+export function trackerOrder<T extends Parameters<typeof waitingOn>[0] & { seq: number }>(items: readonly T[], today: string): T[] {
+  const rank: Record<Waiting['tone'], number> = { act: 0, wait: 1, stop: 2, ok: 3 };
+  return items.slice().sort((a, b) => rank[waitingOn(a, today).tone] - rank[waitingOn(b, today).tone] || a.seq - b.seq);
 }

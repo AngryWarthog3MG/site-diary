@@ -217,29 +217,54 @@ async function loadRegister(supabase: SupabaseClient, projectId: string): Promis
       .eq('project_id', projectId),
     supabase
       .from('variation_register_links')
-      .select('register_id, variation:variations(id, crew, hours, entry:entries!inner(id, entry_no, entry_date, status, project_id))')
+      .select('register_id, variation:variations(id, crew, hours, description, entry:entries!inner(id, entry_no, entry_date, status, project_id))')
       .eq('variation.entry.project_id', projectId),
   ]);
   const out = new Map<string, RegisterItem>();
-  for (const row of (items ?? []) as Array<Omit<RegisterItem, 'mentions' | 'signed'>>) {
+  for (const row of (items ?? []) as Array<Omit<RegisterItem, 'mentions' | 'signed' | 'events' | 'crew' | 'hours'>>) {
     out.set(row.id, {
       ...row,
       estimated_cost: row.estimated_cost == null ? null : num(row.estimated_cost),
       agreed_cost: row.agreed_cost == null ? null : num(row.agreed_cost),
       mentions: [],
+      events: [],
       crew: [],
       hours: 0,
       signed: false,
     });
   }
-  type LinkRow = { register_id: string; variation: { id: string; crew: string[] | null; hours: number | string | null; entry: { id: string; entry_no: string | null; entry_date: string; status: string } | Array<{ id: string; entry_no: string | null; entry_date: string; status: string }> } | null };
+  // The ledger: every move, who made it and what they noted — the tracker's history.
+  const ids = [...out.keys()];
+  if (ids.length > 0) {
+    const { data: events } = await supabase
+      .from('variation_status_events')
+      .select('register_id, status, note, changed_at, changed_by')
+      .in('register_id', ids)
+      .order('changed_at', { ascending: true });
+    const who = new Set<string>();
+    for (const e of events ?? []) if (e.changed_by) who.add(String(e.changed_by));
+    const names = new Map<string, string>();
+    if (who.size > 0) {
+      const { data: people } = await supabase.from('profiles').select('id, full_name, email').in('id', [...who]);
+      for (const p of people ?? []) names.set(String(p.id), String(p.full_name ?? p.email ?? ''));
+    }
+    for (const e of events ?? []) {
+      const item = out.get(String(e.register_id));
+      if (!item) continue;
+      item.events.push({ status: e.status as RegisterItem['status'], note: (e.note as string | null) ?? null, at: String(e.changed_at), by: e.changed_by ? names.get(String(e.changed_by)) ?? null : null });
+    }
+  }
+  type LinkRow = { register_id: string; variation: { id: string; crew: string[] | null; hours: number | string | null; description: string | null; entry: { id: string; entry_no: string | null; entry_date: string; status: string } | Array<{ id: string; entry_no: string | null; entry_date: string; status: string }> } | null };
   for (const link of (links ?? []) as unknown as LinkRow[]) {
     const item = out.get(link.register_id);
     const variation = Array.isArray(link.variation) ? link.variation[0] : link.variation;
     const entry = variation ? (Array.isArray(variation.entry) ? variation.entry[0] : variation.entry) : null;
     if (!item || !entry) continue;
     const signed = entry.status === 'signed';
-    item.mentions.push({ date: entry.entry_date, entry_no: signed ? entry.entry_no : null, entry_id: entry.id, signed });
+    item.mentions.push({
+      date: entry.entry_date, entry_no: signed ? entry.entry_no : null, entry_id: entry.id, signed,
+      hours: variation.hours == null ? null : num(variation.hours), description: variation.description ?? null, crew: variation.crew ?? [],
+    });
     for (const n of variation.crew ?? []) if (!item.crew.some((c) => c.toLowerCase() === n.toLowerCase())) item.crew.push(n);
     if (variation.hours != null) item.hours = Math.round((item.hours + num(variation.hours)) * 100) / 100;
     if (signed) item.signed = true;

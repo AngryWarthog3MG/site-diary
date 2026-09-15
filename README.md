@@ -1430,6 +1430,20 @@ home dashboard as a card and under Site in the headings; the nightly orphan chec
 Not built: a plant issue does not yet become a prestart defect, and nobody is emailed — the office sees
 the card.
 
+**R47. The variation register is a tracker.** Mitchell: "update the variations tab to something like a
+tracker, we need to be able to understand it better." What was hard to read was fifty dashed number
+slots and a dropdown per card — the mechanics of picking a number on a day, shown to the person chasing
+the money. The tracker leads with the path every variation walks — Raised, Priced, Submitted, Approved,
+Paid, with Rejected the step off it — as a row of stages with a count and a value at each, tap one to
+see only those; then the four figures the office asks for (all, not yet sent, with the client, approved
+and unpaid); then one card per variation, action needed first: where it is on the path with the date
+each stage was reached (from the status ledger, never typed), one line saying what it is waiting on
+("Send it to the client", "With the client since 20/08 · 26 days", "Approved 14/09 — invoice it"), and
+the days, hours and crew behind it. The card opens to the day-by-day table with each day's diary
+serial, the history of who moved it and when, and the same controls as before. The next free number is
+one line of text, because the day's dropdown is where numbers are picked. The Claims screen keeps its
+plainer section; both read the same loader.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;

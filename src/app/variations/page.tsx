@@ -4,15 +4,17 @@ import { requireUser, resolveProject } from '@/lib/auth';
 import { canSee, canManageRegisters } from '@/lib/roles';
 import { loadClaimsData, type ClaimsData } from '@/lib/claims/load';
 import { BrandMark } from '@/components/brand-mark';
-import { RegisterSection } from '@/app/claims/register-section';
+import { perthToday } from '@/lib/push/decide';
+import { VariationTracker } from './variation-tracker';
 
 export const dynamic = 'force-dynamic';
-export const metadata = { title: 'Variation register · KBS Daily Diary' };
+export const metadata = { title: 'Variation tracker · KBS Daily Diary' };
 
 /**
- * The variation register on its own: every variation the diary has signed,
- * tracked from raised to paid. The same section sits on the Claims screen;
- * this is the door for the person whose job is chasing them.
+ * The variation register as a tracker: the pipeline up top, then one card per
+ * variation saying where it is, what it is waiting on and the days behind it.
+ * The Claims screen keeps the plainer section; this is the door for the
+ * person whose job is chasing them.
  */
 export default async function VariationsPage({
   searchParams,
@@ -49,15 +51,14 @@ export default async function VariationsPage({
       <p className="label">
         <BrandMark size={18} /> {current.project.name}
       </p>
-      <h1 className="page-title">Variation register</h1>
+      <h1 className="page-title">Variation tracker</h1>
       <p className="page-subtitle">
-        Every variation you have signed off, tracked from raised to paid. A variation joins
-        this list the day you sign the diary that records it; from there you move it along as
-        it is priced, sent, decided and paid, and each move is kept with who made it and when.
+        Every variation the diary has recorded, walked from raised to paid. Tap a stage to see what sits there;
+        tap a variation for the days behind it, its history, and to move it along.
       </p>
       <hr className="rule" />
       {loadError && <p className="notice gap">{loadError}</p>}
-      {data && <RegisterSection data={data} userId={userId} canManage={canManageRegisters(current.role)} />}
+      {data && <VariationTracker data={data} userId={userId} canManage={canManageRegisters(current.role)} today={perthToday()} />}
     </main>
   );
 }
