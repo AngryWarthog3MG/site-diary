@@ -160,8 +160,8 @@ if (args['qr-pack'] !== undefined) {
   }
 
   const role = typeof args.role === 'string' ? args.role : null;
-  if (role && !['supervisor', 'pm', 'admin'].includes(role)) {
-    console.error('--role must be supervisor, pm, or admin.');
+  if (role && !['supervisor', 'leading_hand', 'labourer', 'pm', 'admin'].includes(role)) {
+    console.error('--role must be supervisor, leading_hand, labourer, pm, or admin.');
     process.exit(1);
   }
 

@@ -1465,7 +1465,13 @@ was: a labourer is not on prestart duty. Suite 19 opens the two doors and tries 
 tightened yet: row security on the rest of the record is member-wide for reads, as it always was, so a
 labourer who called the API directly could read a diary the screens never show them. The screens and
 every write are gated; if the crew grows to people who should not read the record at all, that is the
-next migration, and it is a broader one.
+next migration, and it is a broader one. The drill on the sandbox and Codex's review found the same
+hole from two sides: until the labourer, every role could see every screen, so most detail pages and
+every PDF route had no role guard at all — a labourer could open the prestart list or pull the safety
+PDF by typing the address. Rather than add a guard to forty files and miss the forty-first, the gate is
+one place: the request middleware maps each path to its screen and refuses (pages go Home, APIs answer
+403) any account none of whose memberships can see it. The page guards stay for the job-in-hand
+precision the middleware cannot have.
 
 ## Not built, and deliberately so
 
