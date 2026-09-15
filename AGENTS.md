@@ -245,7 +245,11 @@ Change four of them and the app silently stops capturing what supervisors say. I
   members API's `ROLES` set. The labourer has two doors — the gate and hazard reporting — and `canSee` lists
   exactly those; reads of other tables are still member-wide in RLS (see README R49).
   Pages refuse a screen with a redirect; hiding the tile is not enough — every RPC and export API
-  checks the role itself, because a session can call them without the page.
+  checks the role itself, because a session can call them without the page. The role gate has two
+  halves and a new page needs both: the request middleware (`SCREEN_OF_PATH` in
+  `src/lib/supabase/middleware.ts`) maps every screen-owned path prefix to its screen and refuses by
+  the job the address names; every list and detail page calls `guardScreen(membership, screen)`
+  (`src/lib/auth.ts`) for the job it actually resolved, which is what catches a mixed-role account.
 - **Serials are issued at signing** and follow signing order, not entry date. Sort any
   register by `entry_date`.
 - **Bump `VERSION` in `public/sw.js`** when the service worker changes, or phones keep the
