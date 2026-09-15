@@ -32,7 +32,9 @@ export default async function TodayPage({
 }) {
   const { email, profile, memberships } = await requireUser();
   const { project: projectParam } = await searchParams;
-  const current = resolveProject(memberships, projectParam);
+  // A job named in the URL that is no longer this account's (a remembered id after access
+  // changed, an old link) falls back to the account's own default rather than a dead end.
+  const current = resolveProject(memberships, projectParam) ?? (projectParam ? resolveProject(memberships, undefined) : null);
 
   if (!current) {
     return (
