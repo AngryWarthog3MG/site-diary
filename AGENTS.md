@@ -238,9 +238,12 @@ Change four of them and the app silently stops capturing what supervisors say. I
 - **A draft is writable by any authoring role on the job, not only its author** — `app.can_write_entry`
   (SQL) and `canEditEntry` (`src/lib/entries/access.ts`) are the two halves; the signature names the
   signer (`signed_by := auth.uid()`), `author_id` names who started the day. Deleting a draft stays author-only.
-- **Roles live in one table.** `src/lib/roles.ts` (`canAuthorEntries`, `canRunTalks`, `canSee`,
-  `canManageRegisters`, `canExportReports`) is what the menu, the page guards and the APIs read;
-  `app.can_run_talks()` and `app.can_manage_registers()` mirror it in SQL. A new role goes in both.
+- **Roles live in one table.** `src/lib/roles.ts` (`canAuthorEntries`, `canRunTalks`, `canSignIn`, `canReport`,
+  `canSee`, `canManageRegisters`, `canExportReports`) is what the menu, the page guards and the APIs read;
+  `app.can_run_talks()`, `app.can_sign_in()`, `app.can_report()` and `app.can_manage_registers()` mirror it in
+  SQL. A new role goes in both, plus the `member_role` enum, `MemberRole` in `src/types/database.ts` and the
+  members API's `ROLES` set. The labourer has two doors — the gate and hazard reporting — and `canSee` lists
+  exactly those; reads of other tables are still member-wide in RLS (see README R49).
   Pages refuse a screen with a redirect; hiding the tile is not enough — every RPC and export API
   checks the role itself, because a session can call them without the page.
 - **Serials are issued at signing** and follow signing order, not entry date. Sort any

@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
-import { requireUser, canRunTalks } from '@/lib/auth';
+import { requireUser, canReport } from '@/lib/auth';
 import { canAuthorEntries } from '@/lib/roles';
 import { BrandMark } from '@/components/brand-mark';
 import { perthToday } from '@/lib/push/decide';
@@ -42,7 +42,7 @@ export default async function IncidentPage({ params }: { params: Promise<{ id: s
   return (
     <main className="sheet">
       <p className="label"><BrandMark size={18} /> {project.name}</p>
-      <IncidentScreen incident={view} crew={(crew ?? []).map((c) => String(c.name))} canReport={canRunTalks(role)} canManage={canAuthorEntries(role)} userId={userId} today={perthToday()} />
+      <IncidentScreen incident={view} crew={(crew ?? []).map((c) => String(c.name))} canReport={canReport(role)} canManage={canAuthorEntries(role)} userId={userId} today={perthToday()} />
     </main>
   );
 }

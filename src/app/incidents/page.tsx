@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
-import { requireUser, resolveProject, canRunTalks } from '@/lib/auth';
+import { requireUser, resolveProject, canReport } from '@/lib/auth';
 import { canSee } from '@/lib/roles';
 import { BrandMark } from '@/components/brand-mark';
 import { OutboxStatus } from '@/components/outbox-status';
@@ -69,7 +69,7 @@ export default async function IncidentsPage({ searchParams }: { searchParams: Pr
         Report it in a minute, on the phone, with photos. The report is frozen as the first account; what is
         learned goes on as updates, and corrective actions stay open until they are done.
       </p>
-      {canRunTalks(current.role) && <Link className="button" href={`/incidents/new${q}`}>Report a hazard or incident</Link>}
+      {canReport(current.role) && <Link className="button" href={`/incidents/new${q}`}>Report a hazard or incident</Link>}
       <OutboxStatus />
       <section className="entries-summary" aria-label="Register summary" style={{ marginTop: '1rem' }}>
         <div><p className="label">Open</p><p className="entries-summary__value mono">{s.open + s.investigating}</p></div>

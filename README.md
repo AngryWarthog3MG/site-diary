@@ -1455,6 +1455,18 @@ puts a solid Home button at the foot of every screen but Home itself and the pub
 the job so Home opens on the same project. Three screens had grown their own Home button, each of which
 dropped the job; they use the foot now. On a desk the rail carries Home and the foot steps aside.
 
+**R49. The labourer: two doors.** Mitchell: "add a worker with the label labourer, and they will have
+access to sign in and sign out only. They can also report any hazards or incidents." The whole crew is
+coming onto the app, and most of them need exactly that. So a fourth crew role, beside the leading hand:
+the labourer sees Home, Site sign-in and Hazards & incidents and nothing else — no diary, no prestarts or
+talks, no plant, no orders, no registers. Two new permissions carry it (`app.can_sign_in`,
+`app.can_report`, mirrored as `canSignIn`/`canReport`) so the wider gate-duty permission stays what it
+was: a labourer is not on prestart duty. Suite 19 opens the two doors and tries the others. What is not
+tightened yet: row security on the rest of the record is member-wide for reads, as it always was, so a
+labourer who called the API directly could read a diary the screens never show them. The screens and
+every write are gated; if the crew grows to people who should not read the record at all, that is the
+next migration, and it is a broader one.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;

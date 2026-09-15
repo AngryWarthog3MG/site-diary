@@ -534,7 +534,7 @@ export function TodayPanel({
         ) : (
           <p className="notice">
             You are on this job as {roleLabel}. Recording the diary is the site supervisor&rsquo;s;
-            {canPrestart ? ' your prestarts and toolbox talks are in the menu.' : ' the record and reports are in the menu.'}
+            {canPrestart ? ' your prestarts and toolbox talks are in the menu.' : roleLabel === 'the labourer' ? ' sign in and out at the gate and report a hazard from the buttons above.' : ' the record and reports are in the menu.'}
           </p>
         )}
       </div>

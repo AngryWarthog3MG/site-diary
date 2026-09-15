@@ -8,7 +8,7 @@ import {
   resolveProject,
   canAuthorEntries,
 } from '@/lib/auth';
-import { canRunTalks, ROLE_LABEL } from '@/lib/roles';
+import { canRunTalks, canReport, ROLE_LABEL } from '@/lib/roles';
 import { navFor, viewerFor } from '@/lib/nav';
 import { SignOutButton } from '@/components/sign-out-button';
 import { TodayPanel } from './today-panel';
@@ -58,6 +58,7 @@ export default async function TodayPage({
   const q = `?project=${current.project_id}`;
   const groups = navFor(viewerFor(current.role, activeJobs));
   const talks = canRunTalks(current.role);
+  const reports = canReport(current.role);
   const authors = canAuthorEntries(current.role);
 
   return (
@@ -83,9 +84,10 @@ export default async function TodayPage({
 
       <SectionBar groups={groups} q={q} />
 
-      {(talks || authors) && (
+      {(talks || authors || reports) && (
         <div className="dash-actions">
-          {talks && <Link className="dash-action" href={`/incidents/new${q}`}><span aria-hidden>⚠</span> New hazard</Link>}
+          {reports && <Link className="dash-action" href={`/incidents/new${q}`}><span aria-hidden>⚠</span> New hazard</Link>}
+          {!talks && reports && <Link className="dash-action" href={`/signin${q}`}><span aria-hidden>⇥</span> Sign in / out</Link>}
           {talks && <Link className="dash-action" href={`/inspections/new${q}`}><span aria-hidden>☑</span> New inspection</Link>}
           {authors && <Link className="dash-action" href={`/permits/new${q}`}><span aria-hidden>▤</span> New permit</Link>}
           {talks && <Link className="dash-action" href={`/prestart/new${q}`}><span aria-hidden>☀</span> New prestart</Link>}

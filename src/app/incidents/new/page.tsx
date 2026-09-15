@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
-import { requireUser, resolveProject, canRunTalks } from '@/lib/auth';
+import { requireUser, resolveProject, canReport } from '@/lib/auth';
 import { BrandMark } from '@/components/brand-mark';
 import { ReportForm } from './report-form';
 
@@ -12,7 +12,7 @@ export default async function NewIncidentPage({ searchParams }: { searchParams: 
   const { project } = await searchParams;
   const current = resolveProject(memberships, project);
   if (!current) redirect('/');
-  if (!canRunTalks(current.role)) redirect(`/incidents?project=${current.project_id}`);
+  if (!canReport(current.role)) redirect(`/incidents?project=${current.project_id}`);
   const supabase = await createClient();
   const [{ data: crew }, { data: plant }] = await Promise.all([
     supabase.from('crew').select('name').eq('project_id', current.project_id).eq('active', true).order('sort_order').order('name'),

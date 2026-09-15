@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
-import { requireUser, resolveProject, canRunTalks } from '@/lib/auth';
+import { requireUser, resolveProject, canRunTalks, canSignIn } from '@/lib/auth';
 import { canSee } from '@/lib/roles';
 import { redirect } from 'next/navigation';
 import { BrandMark } from '@/components/brand-mark';
@@ -96,7 +96,7 @@ export default async function SignInPage({
         rows={(rows ?? []) as Array<SignInRow & { signed_in_by: string | null; self_signed: boolean; contact: string | null }>}
         crew={(crewRows ?? []).map((c) => String(c.name))}
         inducted={(inductionRows ?? []).map((r) => normaliseName(String(r.person_name)))}
-        canRun={canRunTalks(current.role)}
+        canRun={canSignIn(current.role)}
         userId={userId}
         companies={companies}
       />
