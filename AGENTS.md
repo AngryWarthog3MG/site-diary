@@ -123,7 +123,8 @@ improvising; the register once shipped dead because a live smoke test was skippe
   open; ordered/done/cancelled stamped by the DB; finished = frozen; a moved request is never deleted, the raiser
   removes their own open one) and `order_updates` (append-only). Raising = `app.can_run_talks`; ordering,
   receiving, fixing, cancelling = `app.can_progress_orders` (crew + PM). Photos `{project}/order/{id}/`. Screens
-  `/orders` (raise form inline), `/orders/[id]`. Outbox kinds `order_raise` (photos as blobs), `order_status`
+  `/orders` (raise form inline), `/orders/[id]`. Outbox kinds `order_raise` (photos as blobs), `order_status`.
+  A plant issue is NOT a prestart defect and never becomes one — Mitchell's decision; see README R46
 - `src/lib/gate/` — the visitor gate: `model.ts` (`newGateToken`, `gateUrl`, `DEFAULT_RULES`, `validateGateSignIn`).
   Table `gate_tokens` (one active per job; rotate = revoke + new). Public routes `/gate/[token]` and
   `/api/gate/[token]/{signin,signout}` (listed in `PUBLIC_PATHS`; service role; rate limit 60/10 min per job) write

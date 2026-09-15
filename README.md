@@ -1427,8 +1427,12 @@ or cancelled with a reason, the request is frozen and the lifecycle stamps are t
 did we order the diesel" has one answer. Updates are append-only. A request that has moved is never
 deleted; the raiser may remove their own while still open, for a slip of the thumb. It appears on the
 home dashboard as a card and under Site in the headings; the nightly orphan check knows the photo folder.
-Not built: a plant issue does not yet become a prestart defect, and nobody is emailed — the office sees
-the card.
+A plant issue stays a plant issue: Mitchell's call ("don't make issues part of prestart"). The prestart
+defect is what an operator finds walking around a machine before starting it and is part of that
+inspection's record; an issue raised here is a note to the office that something needs fixing or
+ordering. They are different questions with different owners, and folding one into the other would
+put office chasing into the operator's inspection. Nobody is emailed when an issue is raised — the
+office sees the card.
 
 **R47. The variation register is a tracker.** Mitchell: "update the variations tab to something like a
 tracker, we need to be able to understand it better." What was hard to read was fifty dashed number
