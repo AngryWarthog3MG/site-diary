@@ -1,4 +1,4 @@
-import { fail, ok, requireApiUser, isUuid } from '@/lib/api';
+import { fail, ok, requireApiUser, isUuid, forbidUnlessSees } from '@/lib/api';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { renderPdfDocument, BrowserUnavailableError } from '@/lib/pdf/render';
 import { DOCKET_CSS } from '@/lib/pdf/styles';
@@ -16,7 +16,7 @@ export const runtime = 'nodejs';
  * finished prestart is immutable, so its document is too.
  */
 export async function POST(request: Request, context: { params: Promise<{ id: string }> }) {
-  const { supabase, response } = await requireApiUser();
+  const { supabase, user, response } = await requireApiUser();
   if (response) return response;
 
   const { id } = await context.params;
@@ -33,6 +33,8 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
     .eq('id', id)
     .maybeSingle();
   if (!row) return fail('not_found', 'That prestart is not on any of your projects.', 404);
+  const forbidden = await forbidUnlessSees(supabase, user.id, row.project_id as string, 'prestart');
+  if (forbidden) return forbidden;
   if (!row.completed_at) {
     return fail('bad_request', 'Finish the prestart first — the PDF is the frozen record.', 409);
   }

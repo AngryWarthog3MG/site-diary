@@ -1,4 +1,4 @@
-import { fail, ok, readJson, requireApiUser, isUuid } from '@/lib/api';
+import { fail, ok, readJson, requireApiUser, isUuid, forbidUnlessSees } from '@/lib/api';
 import { canEditEntry } from '@/lib/entries/access';
 
 /**
@@ -44,6 +44,8 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
 
   if (entryError) return fail('server_error', entryError.message, 500);
   if (!entry) return fail('not_found', 'That entry is not on any of your projects.', 404);
+  const forbidden = await forbidUnlessSees(supabase, user.id, entry.project_id as string, 'entries');
+  if (forbidden) return forbidden;
   if (entry.status === 'signed') {
     return fail('entry_signed', 'That entry is signed. Recordings cannot be added to it.', 409);
   }

@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { fail, ok, requireApiUser, isUuid } from '@/lib/api';
+import { fail, ok, requireApiUser, isUuid, forbidUnlessSees } from '@/lib/api';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { renderPdfDocument, BrowserUnavailableError } from '@/lib/pdf/render';
 import { DOCKET_CSS } from '@/lib/pdf/styles';
@@ -17,7 +17,7 @@ export const runtime = 'nodejs';
  * stored under the state it captured and an identical state reuses its file.
  */
 export async function POST(_request: Request, context: { params: Promise<{ id: string }> }) {
-  const { supabase, response } = await requireApiUser();
+  const { supabase, user, response } = await requireApiUser();
   if (response) return response;
   const { id } = await context.params;
   if (!isUuid(id)) return fail('bad_request', 'Bad SWMS id.', 400);
@@ -28,6 +28,8 @@ export async function POST(_request: Request, context: { params: Promise<{ id: s
     .eq('id', id)
     .maybeSingle();
   if (!row) return fail('not_found', 'That SWMS is not on any of your projects.', 404);
+  const forbidden = await forbidUnlessSees(supabase, user.id, row.project_id as string, 'swms');
+  if (forbidden) return forbidden;
   if (row.status === 'draft') return fail('bad_request', 'Put it into use first — a draft is not a document yet.', 409);
 
   const project = Array.isArray(row.project) ? row.project[0] : row.project;

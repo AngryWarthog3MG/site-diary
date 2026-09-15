@@ -1,4 +1,4 @@
-import { fail, ok, requireApiUser, isUuid } from '@/lib/api';
+import { fail, ok, requireApiUser, isUuid, forbidUnlessSees } from '@/lib/api';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { renderPdfDocument, BrowserUnavailableError } from '@/lib/pdf/render';
 import { DOCKET_CSS } from '@/lib/pdf/styles';
@@ -13,7 +13,7 @@ export const runtime = 'nodejs';
 
 /** The signed plant prestart as one branded PDF; the stored copy is reused. */
 export async function POST(_request: Request, context: { params: Promise<{ id: string }> }) {
-  const { supabase, response } = await requireApiUser();
+  const { supabase, user, response } = await requireApiUser();
   if (response) return response;
   const { id } = await context.params;
   if (!isUuid(id)) return fail('bad_request', 'Bad plant prestart id.', 400);
@@ -28,6 +28,8 @@ export async function POST(_request: Request, context: { params: Promise<{ id: s
     .eq('id', id)
     .maybeSingle();
   if (!row) return fail('not_found', 'That plant prestart is not on any of your projects.', 404);
+  const forbidden = await forbidUnlessSees(supabase, user.id, row.project_id as string, 'plant');
+  if (forbidden) return forbidden;
   if (!row.completed_at) return fail('bad_request', 'Sign the prestart first — the PDF is the frozen record.', 409);
 
   const admin = createAdminClient();

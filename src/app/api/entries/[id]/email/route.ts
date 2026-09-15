@@ -1,4 +1,4 @@
-import { fail, ok, requireApiUser, isUuid, readJson } from '@/lib/api';
+import { fail, ok, requireApiUser, isUuid, readJson, forbidUnlessSees } from '@/lib/api';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { loadDocketEntry } from '@/lib/pdf/load';
 import { collectPhotos } from '@/lib/pdf/photos';
@@ -46,6 +46,8 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
 
   const entry = await loadDocketEntry(supabase, id);
   if (!entry) return fail('not_found', 'That entry is not on any of your projects.', 404);
+  const forbidden = await forbidUnlessSees(supabase, user.id, entry.project_id as string, 'entries');
+  if (forbidden) return forbidden;
   if (entry.status !== 'signed') {
     return fail('bad_request', 'Only a signed entry can be sent. Sign it first.', 409);
   }

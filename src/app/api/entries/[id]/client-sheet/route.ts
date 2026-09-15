@@ -1,4 +1,4 @@
-import { fail, ok, requireApiUser, isUuid } from '@/lib/api';
+import { fail, ok, requireApiUser, isUuid, forbidUnlessSees } from '@/lib/api';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { loadDocketEntry } from '@/lib/pdf/load';
 import { collectPhotos, collectSignatures } from '@/lib/pdf/photos';
@@ -15,7 +15,7 @@ const LINK_TTL_SECONDS = 3600;
  * client. Byte-identical on every render, so a stored copy is reused.
  */
 export async function POST(request: Request, context: { params: Promise<{ id: string }> }) {
-  const { supabase, response } = await requireApiUser();
+  const { supabase, user, response } = await requireApiUser();
   if (response) return response;
 
   const { id } = await context.params;
@@ -23,6 +23,8 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
 
   const entry = await loadDocketEntry(supabase, id);
   if (!entry) return fail('not_found', 'That entry is not on any of your projects.', 404);
+  const forbidden = await forbidUnlessSees(supabase, user.id, entry.project_id as string, 'entries');
+  if (forbidden) return forbidden;
   if (entry.status !== 'signed') {
     return fail('bad_request', 'Only a signed entry can go to the client. Sign it first.', 409);
   }

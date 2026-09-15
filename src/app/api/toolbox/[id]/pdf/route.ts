@@ -1,4 +1,4 @@
-import { fail, ok, requireApiUser, isUuid } from '@/lib/api';
+import { fail, ok, requireApiUser, isUuid, forbidUnlessSees } from '@/lib/api';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { renderPdfDocument, BrowserUnavailableError } from '@/lib/pdf/render';
 import { DOCKET_CSS } from '@/lib/pdf/styles';
@@ -14,7 +14,7 @@ export const runtime = 'nodejs';
  * completed talk is immutable, so its document is too.
  */
 export async function POST(request: Request, context: { params: Promise<{ id: string }> }) {
-  const { supabase, response } = await requireApiUser();
+  const { supabase, user, response } = await requireApiUser();
   if (response) return response;
 
   const { id } = await context.params;
@@ -30,6 +30,8 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
     .eq('id', id)
     .maybeSingle();
   if (!talk) return fail('not_found', 'That talk is not on any of your projects.', 404);
+  const forbidden = await forbidUnlessSees(supabase, user.id, talk.project_id as string, 'toolbox');
+  if (forbidden) return forbidden;
   if (!talk.completed_at) {
     return fail('bad_request', 'Complete the talk first — the PDF is the frozen record.', 409);
   }

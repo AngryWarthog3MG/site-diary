@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { fail, ok, requireApiUser, isUuid } from '@/lib/api';
+import { fail, ok, requireApiUser, isUuid, forbidUnlessSees } from '@/lib/api';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { renderPdfDocument, BrowserUnavailableError } from '@/lib/pdf/render';
 import { DOCKET_CSS } from '@/lib/pdf/styles';
@@ -12,12 +12,14 @@ export const maxDuration = 300;
 export const runtime = 'nodejs';
 
 export async function POST(_request: Request, context: { params: Promise<{ id: string }> }) {
-  const { supabase, response } = await requireApiUser();
+  const { supabase, user, response } = await requireApiUser();
   if (response) return response;
   const { id } = await context.params;
   if (!isUuid(id)) return fail('bad_request', 'Bad permit id.', 400);
   const { data: r } = await supabase.from('permits').select('*, project:projects!inner(name, code, org:organisations!inner(name, code)), swms:swms(title, version, kind)').eq('id', id).maybeSingle();
   if (!r) return fail('not_found', 'That permit is not on any of your projects.', 404);
+  const forbidden = await forbidUnlessSees(supabase, user.id, r.project_id as string, 'permits');
+  if (forbidden) return forbidden;
   if (r.status === 'open') return fail('bad_request', 'The permit is not issued yet.', 409);
   const project = Array.isArray(r.project) ? r.project[0] : r.project;
   const org = Array.isArray(project.org) ? project.org[0] : project.org;

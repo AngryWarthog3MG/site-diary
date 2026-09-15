@@ -1,4 +1,4 @@
-import { fail, ok, requireApiUser, isUuid } from '@/lib/api';
+import { fail, ok, requireApiUser, isUuid, forbidUnlessSees } from '@/lib/api';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { loadDocketEntry } from '@/lib/pdf/load';
 import { collectPhotos } from '@/lib/pdf/photos';
@@ -24,7 +24,7 @@ const LINK_TTL_SECONDS = 60 * 60;
  * is reused rather than regenerated. Pass `?force=1` after a template change.
  */
 export async function POST(request: Request, context: { params: Promise<{ id: string }> }) {
-  const { supabase, response } = await requireApiUser();
+  const { supabase, user, response } = await requireApiUser();
   if (response) return response;
 
   const { id } = await context.params;
@@ -32,6 +32,8 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
 
   const entry = await loadDocketEntry(supabase, id);
   if (!entry) return fail('not_found', 'That entry is not on any of your projects.', 404);
+  const forbidden = await forbidUnlessSees(supabase, user.id, entry.project_id as string, 'entries');
+  if (forbidden) return forbidden;
 
   if (entry.status !== 'signed') {
     return fail(

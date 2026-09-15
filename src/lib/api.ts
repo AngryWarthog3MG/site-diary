@@ -1,3 +1,6 @@
+import type { SupabaseClient } from '@supabase/supabase-js';
+import { canSee, type Screen } from '@/lib/roles';
+import type { MemberRole } from '@/types/database';
 import 'server-only';
 
 import { NextResponse } from 'next/server';
@@ -20,6 +23,25 @@ export function fail(code: ApiErrorCode, message: string, status: number, extra?
 
 export function ok<T extends object>(body: T, status = 200) {
   return NextResponse.json(body, { status });
+}
+
+/**
+ * The API half of the role gate, for routes addressed by a record id rather
+ * than a job: the row has proven membership under RLS; this asks whether the
+ * caller's role ON THAT JOB may see the screen the route belongs to. A
+ * mixed-role account — labourer here, supervisor elsewhere — is judged here,
+ * not by its best role. Returns the 403 to hand straight back, or null.
+ */
+export async function forbidUnlessSees(
+  supabase: SupabaseClient,
+  userId: string,
+  projectId: string,
+  screen: Screen,
+): Promise<NextResponse | null> {
+  const { data } = await supabase.from('project_members').select('role').eq('project_id', projectId).eq('user_id', userId).maybeSingle();
+  const role = (data?.role as MemberRole | undefined) ?? null;
+  if (role && !canSee(role, screen)) return fail('forbidden', 'Your role on this job does not include that.', 403);
+  return null;
 }
 
 /** Resolves the caller, or returns the 401 to hand straight back. */

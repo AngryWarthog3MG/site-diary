@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { fail, ok, requireApiUser, isUuid } from '@/lib/api';
+import { fail, ok, requireApiUser, isUuid, forbidUnlessSees } from '@/lib/api';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { renderPdfDocument, BrowserUnavailableError } from '@/lib/pdf/render';
 import { DOCKET_CSS } from '@/lib/pdf/styles';
@@ -13,7 +13,7 @@ export const runtime = 'nodejs';
 
 /** A signed inspection with its actions and photos, stored per state. */
 export async function POST(_request: Request, context: { params: Promise<{ id: string }> }) {
-  const { supabase, response } = await requireApiUser();
+  const { supabase, user, response } = await requireApiUser();
   if (response) return response;
   const { id } = await context.params;
   if (!isUuid(id)) return fail('bad_request', 'Bad inspection id.', 400);
@@ -23,6 +23,8 @@ export async function POST(_request: Request, context: { params: Promise<{ id: s
     .eq('id', id)
     .maybeSingle();
   if (!r) return fail('not_found', 'That inspection is not on any of your projects.', 404);
+  const forbidden = await forbidUnlessSees(supabase, user.id, r.project_id as string, 'inspections');
+  if (forbidden) return forbidden;
   if (!r.completed_at) return fail('bad_request', 'Sign the inspection first — the PDF is the frozen record.', 409);
   const project = Array.isArray(r.project) ? r.project[0] : r.project;
   const org = Array.isArray(project.org) ? project.org[0] : project.org;
