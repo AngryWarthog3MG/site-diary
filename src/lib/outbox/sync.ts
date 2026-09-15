@@ -153,6 +153,30 @@ async function replay(item: OutboxItem): Promise<void> {
       await fetch(`/api/incidents/${item.subjectId}/notify`, { method: 'POST' }).catch(() => undefined);
       return;
     }
+    case 'order_raise': {
+      // Photos first, then the request that names them; the number is the database's.
+      const paths = (p.photoPaths as string[] | undefined) ?? [];
+      for (let i = 0; i < paths.length; i += 1) {
+        const blob = blobs[`photo-${i}`];
+        if (blob) await uploadIfMissing(paths[i], blob, (p.photoTypes as string[] | undefined)?.[i] ?? 'image/jpeg');
+      }
+      const { error } = await supabase.from('orders').insert({
+        id: item.subjectId, project_id: item.projectId, ...(p.row as Record<string, unknown>), photo_urls: paths, raised_on_device_at: p.at,
+      });
+      if (error && !isAlreadyDone(error)) throw error;
+      return;
+    }
+    case 'order_status': {
+      // Ordered, received, fixed or cancelled from the phone with no signal. A
+      // request finished by someone else in the meantime is frozen: done is done.
+      const { data, error } = await supabase.from('orders').update(p.patch as Record<string, unknown>).eq('id', item.subjectId).select('id');
+      if (error && !isFrozen(error)) throw error;
+      if (!error && (!data || data.length === 0)) {
+        const { data: row } = await supabase.from('orders').select('status').eq('id', item.subjectId).maybeSingle();
+        if (row && row.status === 'open') throw Object.assign(new Error('The change could not be recorded from this account.'), { code: '42501' });
+      }
+      return;
+    }
     case 'swms_signon': {
       await uploadIfMissing(p.path as string, blobs.signature, 'image/png');
       const { error } = await supabase.from('swms_signons').insert({

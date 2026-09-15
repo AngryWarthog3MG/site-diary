@@ -3742,3 +3742,8 @@ a.dash-row:hover { background: var(--teal-tint); }
 
 /* A value that is arithmetic over its neighbours: shown, not typed. */
 .field--locked { background: var(--paper-dim); color: var(--ink-60); cursor: not-allowed; }
+
+/* Orders: the raise form sits under the summary; the list reuses the register rows. */
+.raise-order { margin-top: 1rem; padding: 0.9rem; border: 1px solid var(--ink-12); border-radius: 12px; background: var(--paper); }
+.raise-order .field { margin-top: 0.25rem; }
+.order .item p .label { display: inline; margin-right: 0.35rem; }

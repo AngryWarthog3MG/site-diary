@@ -66,6 +66,14 @@ export async function DashboardCards({ projectId, orgId, role }: { projectId: st
           <Foot href={`/safety${q}`} />
         </section>
       )}
+      {see('orders') && (
+        <section className="dash-card">
+          <p className="dash-card__title">Orders &amp; plant issues</p>
+          <Big n={d.orders.toOrder + d.orders.issues} tone={d.orders.urgent > 0 ? 'bad' : undefined} />
+          <p className="dash-card__sub">{d.orders.toOrder} to order · {d.orders.ordered} ordered · {d.orders.issues} plant issue{d.orders.issues === 1 ? '' : 's'}{d.orders.urgent > 0 ? ` · ${d.orders.urgent} urgent` : ''}</p>
+          <Foot href={`/orders${q}`} />
+        </section>
+      )}
       {see('permits') && (
         <section className="dash-card">
           <p className="dash-card__title">Permits to work</p>

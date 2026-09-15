@@ -118,6 +118,12 @@ improvising; the register once shipped dead because a live smoke test was skippe
   `app.permit_path_ok`); then frozen but for close-out (every check + signature) or cancel (with a reason); then
   frozen entirely. A permit past `valid_to` still counts until closed. Raising/closing = `app.can_manage_incidents`.
   Outbox kinds `permit_issue` (two signature blobs) and `permit_close`
+- `src/lib/orders/` — orders and plant issues: `model.ts` (kinds material/plant_issue, per-kind status words,
+  `orderRef` ORD-001, `summarise`). Tables `orders` (numbered per job by the DB; the request editable only while
+  open; ordered/done/cancelled stamped by the DB; finished = frozen; a moved request is never deleted, the raiser
+  removes their own open one) and `order_updates` (append-only). Raising = `app.can_run_talks`; ordering,
+  receiving, fixing, cancelling = `app.can_progress_orders` (crew + PM). Photos `{project}/order/{id}/`. Screens
+  `/orders` (raise form inline), `/orders/[id]`. Outbox kinds `order_raise` (photos as blobs), `order_status`
 - `src/lib/gate/` — the visitor gate: `model.ts` (`newGateToken`, `gateUrl`, `DEFAULT_RULES`, `validateGateSignIn`).
   Table `gate_tokens` (one active per job; rotate = revoke + new). Public routes `/gate/[token]` and
   `/api/gate/[token]/{signin,signout}` (listed in `PUBLIC_PATHS`; service role; rate limit 60/10 min per job) write

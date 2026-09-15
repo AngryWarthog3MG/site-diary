@@ -87,6 +87,7 @@ export default async function TodayPage({
           {talks && <Link className="dash-action" href={`/inspections/new${q}`}><span aria-hidden>☑</span> New inspection</Link>}
           {authors && <Link className="dash-action" href={`/permits/new${q}`}><span aria-hidden>▤</span> New permit</Link>}
           {talks && <Link className="dash-action" href={`/prestart/new${q}`}><span aria-hidden>☀</span> New prestart</Link>}
+          {talks && <Link className="dash-action" href={`/orders${q}#raise`}><span aria-hidden>▣</span> Order / plant issue</Link>}
         </div>
       )}
 

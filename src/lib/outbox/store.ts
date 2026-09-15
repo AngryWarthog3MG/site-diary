@@ -28,7 +28,9 @@ export type OutboxKind =
   | 'inspection_submit'
   | 'permit_issue'
   | 'permit_close'
-  | 'doc_ack';
+  | 'doc_ack'
+  | 'order_raise'
+  | 'order_status';
 
 export type OutboxState = 'queued' | 'syncing' | 'blocked' | 'failed';
 
@@ -65,6 +67,8 @@ export const KIND_LABEL: Record<OutboxKind, string> = {
   permit_issue: 'a permit to work',
   permit_close: 'a permit close-out',
   doc_ack: 'a read-and-understood signature',
+  order_raise: 'an order or plant issue',
+  order_status: 'an order update',
 };
 
 const CHANGED = 'outbox-changed';

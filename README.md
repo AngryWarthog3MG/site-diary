@@ -1416,6 +1416,20 @@ looked like it worked and had not; change the start, the finish or the break —
 is a name *and* a company, so two John Smiths from two subbies are two rows, and a typed name the gate
 cannot tell apart is left alone rather than guessed at.
 
+**R46. Orders and plant issues: think of it, add it.** Mitchell: "if Matty thinks of something that needs
+ordering he adds it — diesel, consumables, anything — and a section for issues with plant, a light not
+working." The shape is a register the phone writes to in seconds and the office works from: one list per
+job, two kinds (an order, a plant issue), a free-text what and how-much (no units invented), the machine
+from the plant list when it is a fault, a needed-by date, an urgent flag, a photo. It saves the moment
+it is tapped, queued without signal, numbered ORD-001 by the database. The request may be corrected only
+while it is still open; once the office marks it ordered (supplier and reference), or received, or fixed,
+or cancelled with a reason, the request is frozen and the lifecycle stamps are the database's — so "when
+did we order the diesel" has one answer. Updates are append-only. A request that has moved is never
+deleted; the raiser may remove their own while still open, for a slip of the thumb. It appears on the
+home dashboard as a card and under Site in the headings; the nightly orphan check knows the photo folder.
+Not built: a plant issue does not yet become a prestart defect, and nobody is emailed — the office sees
+the card.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;
