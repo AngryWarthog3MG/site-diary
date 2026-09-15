@@ -1410,7 +1410,11 @@ figure. Still on site means no finish and no hours — the amber "hours missing"
 app guessing knock-off. The review screen looks at the gate when it opens, when it comes back to the
 front, and every minute; and as with everything on that screen, nothing reaches the record until the
 supervisor saves or signs. Signed days are untouched; a sign-out after signing is a correction, as it
-always was.
+always was. Codex's review of it landed two more rules: the hours box is locked whenever both clocks
+are present — the record has always recomputed hours from the clocks at save, so typing over the box
+looked like it worked and had not; change the start, the finish or the break — and a person at the gate
+is a name *and* a company, so two John Smiths from two subbies are two rows, and a typed name the gate
+cannot tell apart is left alone rather than guessed at.
 
 ## Not built, and deliberately so
 

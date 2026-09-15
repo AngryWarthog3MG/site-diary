@@ -1332,6 +1332,9 @@ function ItemCard({
             value={item[field.key]}
             projectId={projectId}
             entryId={entryId}
+            // Both clocks present: hours are arithmetic, and the record recomputes them at save
+            // (apply_entry_review). Typing over the box would look like it worked and not have.
+            lockedBecause={section.group === 'labour' && field.key === 'hours' && item.start_time && item.finish_time ? 'From the start, finish and break — change one of those' : undefined}
             onChange={(value) => {
               onChange(section.group, index, field.key, value);
               // A clock touched by hand hands the row over from the gate; it stops following sign-outs.
@@ -1424,6 +1427,7 @@ function Field({
   projectId,
   entryId,
   onChange,
+  lockedBecause,
 }: {
   field: FieldDef;
   fieldId: string;
@@ -1431,6 +1435,8 @@ function Field({
   projectId: string;
   entryId: string;
   onChange: (value: unknown) => void;
+  /** Set when the value is arithmetic over other fields and cannot be typed over; says which. */
+  lockedBecause?: string;
 }) {
   const id = fieldId;
 
@@ -1457,8 +1463,10 @@ function Field({
 
   const common = {
     id,
-    className: 'field field--sm',
+    className: `field field--sm${lockedBecause ? ' field--locked' : ''}`,
     value: value == null ? '' : String(value),
+    readOnly: Boolean(lockedBecause),
+    title: lockedBecause,
   };
 
   return (

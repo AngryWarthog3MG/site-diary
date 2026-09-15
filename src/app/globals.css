@@ -3739,3 +3739,6 @@ a.dash-row:hover { background: var(--teal-tint); }
 .safety__months { display: grid; grid-template-columns: repeat(6, 1fr); gap: 0.5rem; align-items: end; height: 7rem; margin-top: 0.75rem; padding: 0.5rem; border: 1px solid var(--ink-12); border-radius: 10px; }
 .safety__month { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; gap: 0.15rem; }
 .safety__bar { width: 60%; min-height: 2px; background: var(--teal); border-radius: 3px 3px 0 0; }
+
+/* A value that is arithmetic over its neighbours: shown, not typed. */
+.field--locked { background: var(--paper-dim); color: var(--ink-60); cursor: not-allowed; }

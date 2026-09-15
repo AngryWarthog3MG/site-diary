@@ -49,35 +49,54 @@ export function fromGate(item: { source_quote?: unknown }): boolean {
 /** The fields the gate owns. Touching one of these by hand hands the row over. */
 export const GATE_CLOCK_FIELDS = new Set(['start_time', 'finish_time', 'hours']);
 
-interface GateDay { name: string; role: string | null; start: string; finish: string | null; quote: string }
+interface GateDay { name: string; company: string | null; role: string | null; start: string; finish: string | null; quote: string }
+
+const companyKey = (company: string | null | undefined) => (company ? normaliseName(company) : '');
+
+/** The company a gate quote names, if any — how two people who share a name stay two rows. */
+export function gateQuoteCompany(quote: unknown): string {
+  if (typeof quote !== 'string') return '';
+  const m = /^Gate: (?:(.+?) · )?in /.exec(quote);
+  return m ? companyKey(m[1] ?? null) : '';
+}
 
 /**
  * One person may pass the gate more than once in a day. Their labour is the
  * first arrival to the last departure; still on site if any pass is open.
+ * A person is a name AND a company: two John Smiths from two subbies are two
+ * people, two rows, never one continuous day (Codex pass 30).
  */
 export function gateDays(signins: readonly GateSignIn[], roles: ReadonlyMap<string, string | null>): GateDay[] {
-  const byName = new Map<string, { name: string; company: string | null; ins: string[]; outs: string[]; open: boolean }>();
+  const byPerson = new Map<string, { name: string; company: string | null; ins: string[]; outs: string[]; open: boolean }>();
   for (const s of signins) {
     if (s.person_kind !== 'crew' && s.person_kind !== 'subcontractor') continue;
-    const key = normaliseName(s.person_name);
-    const cur = byName.get(key) ?? { name: s.person_name.trim(), company: s.company, ins: [], outs: [], open: false };
+    const key = `${normaliseName(s.person_name)}|${companyKey(s.company)}`;
+    const cur = byPerson.get(key) ?? { name: s.person_name.trim(), company: s.company?.trim() || null, ins: [], outs: [], open: false };
     cur.ins.push(s.signed_in_on_device_at ?? s.signed_in_at);
     const out = s.signed_out_on_device_at ?? s.signed_out_at;
     if (out) cur.outs.push(out); else cur.open = true;
-    byName.set(key, cur);
+    byPerson.set(key, cur);
   }
-  return [...byName.entries()].map(([key, p]) => {
+  return [...byPerson.values()].map((p) => {
     const start = awstClock(p.ins.sort()[0]);
     const finish = p.open || p.outs.length === 0 ? null : awstClock(p.outs.sort().at(-1));
-    const role = roles.get(key) ?? (p.company ? `${p.company} · signed in` : null);
-    const quote = `${GATE_PREFIX} in ${start}${finish ? ` · out ${finish}` : ' · still on site'}`;
-    return { name: p.name, role, start, finish, quote };
+    const role = roles.get(normaliseName(p.name)) ?? (p.company ? `${p.company} · signed in` : null);
+    const quote = `${GATE_PREFIX} ${p.company ? `${p.company} · ` : ''}in ${start}${finish ? ` · out ${finish}` : ' · still on site'}`;
+    return { name: p.name, company: p.company, role, start, finish, quote };
   }).sort((a, b) => a.start.localeCompare(b.start) || a.name.localeCompare(b.name));
 }
 
 /**
  * Fold the gate's day into the labour list. Returns the same array when
  * nothing would change, so the caller can tell and the autosave stays quiet.
+ *
+ * Matching: a gate row is found by name and the company its quote names. A row
+ * typed or heard is matched by name alone, and only when that name is
+ * unambiguous — one such row on the list, one such person at the gate. Two
+ * typed rows with that name and one person at the gate: both are left alone,
+ * because one of them is that person and the gate cannot tell which. Two
+ * people at the gate with that name: each gets its own row, kept apart by
+ * company.
  */
 export function mergeGateIntoLabour<T extends LabourItem>(
   items: readonly T[],
@@ -88,43 +107,57 @@ export function mergeGateIntoLabour<T extends LabourItem>(
   if (days.length === 0) return { items: items as T[], changed: false };
   const out = items.slice() as T[];
   let changed = false;
-  const index = new Map<string, number>();
-  out.forEach((it, i) => { if (typeof it.person_name === 'string' && it.person_name.trim()) index.set(normaliseName(it.person_name), i); });
+
+  const gateRows = new Map<string, number>();          // name|company → index of the gate's own row
+  const otherRows = new Map<string, number[]>();       // name → indexes of rows that are not the gate's
+  out.forEach((it, i) => {
+    if (typeof it.person_name !== 'string' || !it.person_name.trim()) return;
+    const name = normaliseName(it.person_name);
+    if (fromGate(it)) gateRows.set(`${name}|${gateQuoteCompany(it.source_quote)}`, i);
+    else otherRows.set(name, [...(otherRows.get(name) ?? []), i]);
+  });
+  const namesAtGate = new Map<string, number>();
+  for (const d of days) namesAtGate.set(normaliseName(d.name), (namesAtGate.get(normaliseName(d.name)) ?? 0) + 1);
 
   for (const d of days) {
-    const key = normaliseName(d.name);
-    const at = index.get(key);
-    if (at == null) {
-      out.push({
-        person_name: d.name, role: d.role, area: null,
-        start_time: d.start, finish_time: d.finish, break_mins: null,
-        hours: workedHours(d.start, d.finish, null),
-        overtime_hours: null, source_quote: d.quote, confidence: null,
-      } as unknown as T);
-      index.set(key, out.length - 1);
-      changed = true;
-      continue;
-    }
-    const row = out[at];
-    if (fromGate(row)) {
+    const name = normaliseName(d.name);
+    const gateKey = `${name}|${companyKey(d.company)}`;
+    const mine = gateRows.get(gateKey);
+    if (mine != null) {
       // The gate's row: the clocks follow the gate; the break is the supervisor's.
+      const row = out[mine];
       const hours = workedHours(d.start, d.finish, row.break_mins ?? null);
       const next = { ...row, start_time: d.start, finish_time: d.finish, hours, source_quote: d.quote, role: row.role ?? d.role };
       if (next.start_time !== row.start_time || next.finish_time !== row.finish_time || next.hours !== row.hours || next.source_quote !== row.source_quote || next.role !== row.role) {
-        out[at] = next; changed = true;
+        out[mine] = next; changed = true;
       }
       continue;
     }
-    // Someone else's row: fill only what is blank, and only with what the gate has.
-    const patch: Partial<LabourItem> = {};
-    if (row.start_time == null) patch.start_time = d.start;
-    if (row.finish_time == null && row.hours == null && d.finish) patch.finish_time = d.finish;
-    if (Object.keys(patch).length === 0) continue;
-    const merged = { ...row, ...patch };
-    const hours = workedHours(merged.start_time, merged.finish_time, merged.break_mins ?? null);
-    if (row.hours == null && hours != null) merged.hours = hours;
-    if (row.role == null && d.role) merged.role = d.role;
-    out[at] = merged as T; changed = true;
+    const others = otherRows.get(name) ?? [];
+    if (others.length === 1 && namesAtGate.get(name) === 1) {
+      // Someone else's row, unambiguous: fill only what is blank, and only with what the gate has.
+      const at = others[0];
+      const row = out[at];
+      const patch: Partial<LabourItem> = {};
+      if (row.start_time == null) patch.start_time = d.start;
+      if (row.finish_time == null && row.hours == null && d.finish) patch.finish_time = d.finish;
+      if (Object.keys(patch).length === 0) continue;
+      const merged = { ...row, ...patch };
+      const hours = workedHours(merged.start_time, merged.finish_time, merged.break_mins ?? null);
+      if (row.hours == null && hours != null) merged.hours = hours;
+      if (row.role == null && d.role) merged.role = d.role;
+      out[at] = merged as T; changed = true;
+      continue;
+    }
+    if (others.length > 0 && namesAtGate.get(name) === 1) continue; // two typed rows, one person: whose? Leave both.
+    out.push({
+      person_name: d.name, role: d.role, area: null,
+      start_time: d.start, finish_time: d.finish, break_mins: null,
+      hours: workedHours(d.start, d.finish, null),
+      overtime_hours: null, source_quote: d.quote, confidence: null,
+    } as unknown as T);
+    gateRows.set(gateKey, out.length - 1);
+    changed = true;
   }
   return changed ? { items: out, changed } : { items: items as T[], changed: false };
 }

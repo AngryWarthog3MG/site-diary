@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { gateDays, mergeGateIntoLabour, fromGate, GATE_PREFIX, type GateSignIn, type LabourItem } from './labour.ts';
+import { gateDays, mergeGateIntoLabour, fromGate, gateQuoteCompany, GATE_PREFIX, type GateSignIn, type LabourItem } from './labour.ts';
 
 const none: LabourItem[] = [];
 
@@ -70,4 +70,33 @@ test('two passes through the gate are one day: first in, last out, open if any p
   assert.equal(d.finish, '17:00');
   const [open] = gateDays([marcusOut, { ...back, signed_out_at: null, signed_out_on_device_at: null }], roles);
   assert.equal(open.finish, null);
+});
+
+test('two people who share a name are two rows, kept apart by company, each following its own sign-out', () => {
+  const abcIn: GateSignIn = { person_name: 'John Smith', company: 'ABC Civil', person_kind: 'subcontractor', signed_in_at: '2026-09-14T23:00:00Z', signed_in_on_device_at: '2026-09-14T23:00:00Z', signed_out_at: '2026-09-15T04:00:00Z', signed_out_on_device_at: '2026-09-15T04:00:00Z' };
+  const xyzIn: GateSignIn = { ...abcIn, company: 'XYZ Plumbing', signed_in_at: '2026-09-15T05:00:00Z', signed_in_on_device_at: '2026-09-15T05:00:00Z', signed_out_at: null, signed_out_on_device_at: null };
+  const r = mergeGateIntoLabour(none, [abcIn, xyzIn], new Map());
+  assert.equal(r.items.length, 2);
+  const abc = r.items.find((i) => gateQuoteCompany(i.source_quote) === 'abc civil')!;
+  const xyz = r.items.find((i) => gateQuoteCompany(i.source_quote) === 'xyz plumbing')!;
+  assert.deepEqual([abc.start_time, abc.finish_time, abc.hours], ['07:00', '12:00', 5]);
+  assert.deepEqual([xyz.start_time, xyz.finish_time, xyz.hours], ['13:00', null, null]);
+  assert.equal(abc.source_quote, `${GATE_PREFIX} ABC Civil · in 07:00 · out 12:00`);
+  // XYZ's John signs out: only his row moves.
+  const r2 = mergeGateIntoLabour(r.items, [abcIn, { ...xyzIn, signed_out_at: '2026-09-15T09:00:00Z', signed_out_on_device_at: '2026-09-15T09:00:00Z' }], new Map());
+  assert.equal(r2.items.find((i) => gateQuoteCompany(i.source_quote) === 'xyz plumbing')!.finish_time, '17:00');
+  assert.equal(r2.items.find((i) => gateQuoteCompany(i.source_quote) === 'abc civil')!.finish_time, '12:00');
+});
+
+test('when a typed name is ambiguous the gate leaves both rows alone rather than guess whose it is', () => {
+  const typed = [
+    { person_name: 'John Smith', role: 'ABC', start_time: null, finish_time: null, hours: null, source_quote: null },
+    { person_name: 'John Smith', role: 'XYZ', start_time: null, finish_time: null, hours: null, source_quote: null },
+  ];
+  const one: GateSignIn = { person_name: 'John Smith', company: 'ABC', person_kind: 'subcontractor', signed_in_at: '2026-09-14T23:00:00Z', signed_in_on_device_at: '2026-09-14T23:00:00Z', signed_out_at: null, signed_out_on_device_at: null };
+  const r = mergeGateIntoLabour(typed, [one], new Map());
+  assert.equal(r.changed, false, 'neither typed row is touched, and no third John is invented');
+  assert.equal(r.items.length, 2);
+  assert.equal(r.items[0].start_time, null);
+  assert.equal(r.items[1].start_time, null);
 });
