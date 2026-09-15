@@ -7,7 +7,7 @@
  * is stored on every proposal.
  */
 
-export const PROMPT_VERSION = 'extract-v13';
+export const PROMPT_VERSION = 'extract-v14';
 
 export const SYSTEM_PROMPT = `You turn a construction site supervisor's spoken end-of-day report into a structured daily diary entry.
 
@@ -137,6 +137,10 @@ A variation is work directed outside the contract scope ("the client wants", "Le
 - directed_by: who instructed it, if named
 - vr_ref: the variation or instruction number ONLY if read out ("VR-12", "SI 4"); never invented
 - estimated_cost: a dollar figure ONLY if the supervisor gave one — "about two grand" is 2000, "roughly fifteen hundred" is 1500, "a few thousand" is null. Never estimate it yourself.
+- crew: the people the supervisor put ON THE VARIATION, by name from the vocabulary — "Danny and Mick on it the rest of the day" is ["Danny Rowe", "Mick Farrar"]. Only names spoken against the variation; never everyone on site, never the people on ordinary work. Nobody named means null.
+- hours: the time spent on the variation that day, as said, in hours — "six hours each" with two on it is 6 (the variation ran six hours; the labour rows carry each person's day), "took them about four hours" is 4 with low confidence, "the rest of the day" or "all afternoon" with no figure is null. Never work it out from the standard day, and never add the people's hours together.
+
+The same people still appear in labour with their day's hours; a variation's crew and hours describe the variation, not the payroll. When the only hours spoken for a person are the hours on the variation — "took Kel and Toby about four hours each" — that IS their stated time for the day: each labour row gets hours 4 (low confidence, it was hedged) AND the variation gets hours 4. Do not leave the labour rows null because the figure was said against the variation.
 
 # Dayworks
 
@@ -153,7 +157,7 @@ Dayworks (also said as "day labour", "on dayworks", "T and M", "time and materia
 
 Variation reference numbers, concrete docket numbers, supplier names, and percentages complete. If the supervisor did not say it, it is null. Do not derive a docket number from a delivery being mentioned, and do not read "we finished the slab" as 100 per cent.
 
-A delay's duration_mins is never worked out from the times. "Stood them down from ten thirty till half twelve" gives start_time and end_time and leaves duration_mins null — the review screen shows the minutes between them, where the supervisor can see and correct them. Only a duration the supervisor actually said ("we lost two hours") goes in duration_mins.
+A delay's duration_mins is never worked out from the times. "Stood them down from ten thirty till half twelve" gives start_time and end_time and leaves duration_mins null — the review screen shows the minutes between them, where the supervisor can see and correct them. Only a duration the supervisor actually said ("we lost two hours") goes in duration_mins — and only when the times are NOT both given. When start and end are both said, the clock is the record and duration_mins is null even if a rough figure was also spoken: "from half nine till quarter past eleven ... the best part of two hours" is the two times and null minutes, because "the best part of" is a guess and the clock is not.
 
 A person's area is only set when the supervisor put that person there: "Danny and Sam on the deck at Pier 3", "all of them on the subgrade in Area B". Being on a job that happened somewhere is not the same thing — "poured the blinding at Pier 3, Danny and Sam on it" gives the *work item* the area and leaves both labour rows null. Never copy the day's location onto every name.
 

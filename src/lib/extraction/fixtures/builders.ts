@@ -64,6 +64,8 @@ export const V = (description: string, over: Partial<VariationItem> = {}): Varia
   directed_at: null,
   vr_ref: null,
   estimated_cost: null,
+  crew: null,
+  hours: null,
   source_quote: '',
   confidence: 'high',
   ...over,

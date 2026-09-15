@@ -154,6 +154,8 @@ export const FIXTURES: Fixture[] = [
           directed_at: '2026-08-25T10:00',
           vr_ref: 'VR-014',
           estimated_cost: 12000,
+          crew: ['Danny Rowe', 'Mick Farrar'],
+          hours: 6,
           confidence: 'low',
         }),
       ],
@@ -170,7 +172,7 @@ export const FIXTURES: Fixture[] = [
     transcript: `Client asked us to shift the site fence twenty metres back along the frontage. No paperwork on it yet, he just said do it. Took Kel and Toby about four hours each.`,
     expected: proposal({
       labour: [L('Kel Brady', { hours: 4, confidence: 'low' }), L('Toby Nguyen', { hours: 4, confidence: 'low' })],
-      variations: [V('Shift the site fence twenty metres back along the frontage', { directed_by: 'Client' })],
+      variations: [V('Shift the site fence twenty metres back along the frontage', { directed_by: 'Client', crew: ['Kel Brady', 'Toby Nguyen'], hours: 4, confidence: 'low' })],
       work_items: [W('Shifted site fence along the frontage')],
       quantities: [Q('site fence', { quantity: 20, unit: 'm' })],
       sections: { plant: S.gap, delays: S.gap, weather: S.gap },

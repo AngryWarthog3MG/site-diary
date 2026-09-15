@@ -95,6 +95,10 @@ const VariationItem = z.object({
     .catch(null),
   vr_ref: nullableText,
   estimated_cost: nullableNumber,
+  /** The people the supervisor put on the variation, by name — never everyone on site. Null when nobody was named. */
+  crew: z.array(z.string().min(1)).nullable().default(null).catch(null),
+  /** Time spent on it that day as said, in hours; "six hours each" with two on it is 6, not 12. */
+  hours: nullableNumber,
   source_quote: sourceQuote,
   confidence,
 });

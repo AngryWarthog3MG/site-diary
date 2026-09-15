@@ -1518,6 +1518,18 @@ days only as before, and a day with no hours is not a line — nothing is invent
 Xero itself stays out: pushing timesheets into Payroll needs the company's own Xero app, employees,
 pay calendars and earnings rates, and the connector in this workspace is another business's books.
 
+**R54. Prompt v14: the variation's crew and hours.** The day's variation had carried `crew` and
+`hours` since 11 September, but extraction had not been taught them, so a spoken variation landed
+without either and the supervisor typed them. v14 teaches both: crew is only the names spoken against
+the variation, never everyone on site; hours is how long the variation ran that day as said — "six
+hours each" with two on it is 6, not 12 — and "all afternoon" stays null. The paid eval ran once, as
+the rule says. The new fields scored clean on both variation fixtures. The run also caught the model
+recording "the best part of two hours" as 120 minutes on a delay whose two clock times were given;
+that is a spoken figure, not an invention, but the design is that the clock is the record whenever
+both times are said, so the rule was tightened to say so and the three affected fixtures re-checked
+(a fraction of a run) before shipping. The eval's `invented` line counts extra items too; those are
+fixture-design disagreements of the same kind v13 shipped with, and are judged one by one, not summed.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;
