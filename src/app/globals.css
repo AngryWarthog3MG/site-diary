@@ -3830,6 +3830,6 @@ a.dash-row:hover { background: var(--teal-tint); }
 }
 .homefoot__button:active { background: var(--teal-deep); }
 @media (min-width: 1100px) {
-  /* The rail carries Home on a desk; the foot is the phone's. */
-  .homefoot { display: none; }
+  /* Where the rail carries Home the foot steps aside; a screen without the rail (the crew's sign-in) keeps it. */
+  body:has(> .rail) .homefoot { display: none; }
 }
