@@ -109,3 +109,16 @@ test('a gate row written before the company travelled in the quote is still that
   assert.equal(r.items[0].finish_time, '17:00');
   assert.equal(r.items[0].source_quote, `${GATE_PREFIX} ABC Civil · in 07:00 · out 17:00`);
 });
+
+test('two old-format gate rows for one name: the fallback declines, and the gate keeps its own row', () => {
+  const twoOld = [
+    { person_name: 'John Smith', role: 'ABC Civil · signed in', start_time: '07:00', finish_time: null, hours: null, source_quote: 'Gate: in 07:00 · still on site' },
+    { person_name: 'John Smith', role: 'XYZ Plumbing · signed in', start_time: '08:00', finish_time: null, hours: null, source_quote: 'Gate: in 08:00 · still on site' },
+  ];
+  const abc: GateSignIn = { person_name: 'John Smith', company: 'ABC Civil', person_kind: 'subcontractor', signed_in_at: '2026-09-14T23:00:00Z', signed_in_on_device_at: '2026-09-14T23:00:00Z', signed_out_at: '2026-09-15T09:00:00Z', signed_out_on_device_at: '2026-09-15T09:00:00Z' };
+  const r = mergeGateIntoLabour(twoOld, [abc], new Map());
+  assert.equal(r.items[0].source_quote, 'Gate: in 07:00 · still on site', 'neither old row is rewritten');
+  assert.equal(r.items[1].source_quote, 'Gate: in 08:00 · still on site');
+  assert.equal(r.items.length, 3);
+  assert.equal(r.items[2].source_quote, `${GATE_PREFIX} ABC Civil · in 07:00 · out 17:00`);
+});

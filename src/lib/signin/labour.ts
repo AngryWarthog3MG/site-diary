@@ -109,12 +109,16 @@ export function mergeGateIntoLabour<T extends LabourItem>(
   let changed = false;
 
   const gateRows = new Map<string, number>();          // name|company → index of the gate's own row
+  const gateRowCount = new Map<string, number>();      // name|company → how many rows carry that key
   const otherRows = new Map<string, number[]>();       // name → indexes of rows that are not the gate's
   out.forEach((it, i) => {
     if (typeof it.person_name !== 'string' || !it.person_name.trim()) return;
     const name = normaliseName(it.person_name);
-    if (fromGate(it)) gateRows.set(`${name}|${gateQuoteCompany(it.source_quote)}`, i);
-    else otherRows.set(name, [...(otherRows.get(name) ?? []), i]);
+    if (fromGate(it)) {
+      const key = `${name}|${gateQuoteCompany(it.source_quote)}`;
+      gateRows.set(key, i);
+      gateRowCount.set(key, (gateRowCount.get(key) ?? 0) + 1);
+    } else otherRows.set(name, [...(otherRows.get(name) ?? []), i]);
   });
   const namesAtGate = new Map<string, number>();
   for (const d of days) namesAtGate.set(normaliseName(d.name), (namesAtGate.get(normaliseName(d.name)) ?? 0) + 1);
@@ -123,8 +127,10 @@ export function mergeGateIntoLabour<T extends LabourItem>(
     const name = normaliseName(d.name);
     const gateKey = `${name}|${companyKey(d.company)}`;
     // A gate row from before the company travelled in the quote has an empty company key;
-    // it is this person's when the name is unique at the gate today (Codex pass 31).
-    const mine = gateRows.get(gateKey) ?? (d.company && namesAtGate.get(name) === 1 ? gateRows.get(`${name}|`) : undefined);
+    // it is this person's when the name is unique at the gate today and there is exactly one
+    // such row to take (Codex passes 31 and 32).
+    const mine = gateRows.get(gateKey)
+      ?? (d.company && namesAtGate.get(name) === 1 && gateRowCount.get(`${name}|`) === 1 ? gateRows.get(`${name}|`) : undefined);
     if (mine != null) {
       // The gate's row: the clocks follow the gate; the break is the supervisor's.
       const row = out[mine];
