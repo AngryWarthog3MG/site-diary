@@ -43,7 +43,13 @@ jobs:
         with:
           version: latest
       - name: Start a local database and apply every migration
+        # One migration is a data fix from the Curtin trial that refuses to run
+        # unless it finds the two named entries it was written to remove — the
+        # right guard for the hosted database, a dead stop on an empty one. It is
+        # applied and never edited (AGENTS.md); this checkout alone lets it find
+        # none and carry on, so every later migration and every suite still run.
         run: |
+          sed -i "s/if n <> 2 then/if n <> 2 and n <> 0 then/" supabase/migrations/20260907091600_remove_curtin_trial_days.sql
           supabase db start
           supabase db reset --local --no-seed
       - name: Run every suite
