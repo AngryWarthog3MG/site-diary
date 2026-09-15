@@ -1,5 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { loadSafety, type SafetyData } from '@/lib/safety/load';
+import { perthWindowStart } from './window';
 
 /**
  * What the home page's cards show. The safety figures are the dashboard's own
@@ -19,7 +20,8 @@ export const OPEN_LIST = 5;
 export const DOCS_LIST = 4;
 
 export async function loadDashboard(supabase: SupabaseClient, projectId: string, orgId: string, today: string): Promise<DashboardData> {
-  const thirtyAgo = new Date(Date.parse(`${today}T00:00:00Z`) - 30 * 86_400_000).toISOString();
+  // Perth midnight, so the first morning of the window counts (Codex pass 27).
+  const thirtyAgo = perthWindowStart(today, 30);
   const [safety, open, docs] = await Promise.all([
     loadSafety(supabase, projectId, orgId, today),
     supabase.from('incidents').select('id, seq, kind, occurred_at, status, description').eq('project_id', projectId).neq('status', 'closed').order('occurred_at', { ascending: false }).limit(OPEN_LIST + 1),

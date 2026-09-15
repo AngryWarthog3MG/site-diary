@@ -1,0 +1,12 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { perthWindowStart } from './window.ts';
+
+test('a 30-day Perth window opens at Perth midnight 29 days back, so today is the 30th day', () => {
+  // Perth midnight on 17 Aug is 16:00 UTC on 16 Aug.
+  assert.equal(perthWindowStart('2026-09-15', 30), '2026-08-16T16:00:00.000Z');
+  // 06:30 AWST on the first morning of the window is inside it; 23:00 AWST the night before is not.
+  assert.ok('2026-08-16T22:30:00Z' >= perthWindowStart('2026-09-15', 30));
+  assert.ok('2026-08-16T15:00:00Z' < perthWindowStart('2026-09-15', 30));
+  assert.equal(perthWindowStart('2026-09-15', 1), '2026-09-14T16:00:00.000Z');
+});
