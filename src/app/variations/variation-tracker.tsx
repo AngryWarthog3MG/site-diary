@@ -5,12 +5,13 @@ import Link from 'next/link';
 import type { ClaimsData } from '@/lib/claims/load';
 import { fmtDate } from '@/lib/pdf/dates';
 import {
-  STAGES, STATUS_LABEL, STATUS_HINT, itemValue, registerNumber, stageIndex, stageDates, waitingOn, nextFreeNumber, trackerOrder,
+  STAGES, STATUS_LABEL, STATUS_HINT, itemValue, registerNumber, stageIndex, stageDates, waitingOn, nextFreeNumber, trackerOrder, perthDate,
   type RegisterItem, type VariationStatus,
 } from '@/lib/claims/register';
 import { RecordOnDay, RemoveVariationButton, VariationStatusControl } from '@/app/claims/variation-status';
 
-const money = (n: number | null) => (n == null ? '—' : `$${n.toLocaleString('en-AU', { maximumFractionDigits: 0 })}`);
+/** Whole dollars when the figure is whole; cents when it has them — never rounded away. */
+const money = (n: number | null) => (n == null ? '—' : `$${n.toLocaleString('en-AU', { minimumFractionDigits: Number.isInteger(n) ? 0 : 2, maximumFractionDigits: 2 })}`);
 const short = (iso: string | null) => (iso ? fmtDate(iso).slice(0, 5) : '');
 
 /**
@@ -145,7 +146,7 @@ export function VariationTracker({ data, userId, canManage, today }: { data: Cla
                   <ol className="vt-history">
                     {!item.events.some((e) => e.status === 'raised') && <li><span className="mono">{fmtDate(item.raised_on)}</span> Raised — first recorded in the diary</li>}
                     {item.events.map((e, i) => (
-                      <li key={i}><span className="mono">{fmtDate(e.at.slice(0, 10))}</span> {STATUS_LABEL[e.status]}{e.by ? ` — ${e.by}` : ''}{e.note ? <em> “{e.note}”</em> : null}</li>
+                      <li key={i}><span className="mono">{fmtDate(perthDate(e.at))}</span> {STATUS_LABEL[e.status]}{e.by ? ` — ${e.by}` : ''}{e.note ? <em> “{e.note}”</em> : null}</li>
                     ))}
                     {item.events.length === 0 && <li className="caption">No moves yet.</li>}
                   </ol>

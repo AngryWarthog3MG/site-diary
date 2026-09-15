@@ -97,22 +97,30 @@ export function stageIndex(status: VariationStatus): number {
   return i === -1 ? 2 : i; // rejected sits where submitted was: it was with the client
 }
 
-/** Whole days from one ISO date (or timestamp) to another. */
+/** The Perth calendar date of an instant, or a plain date as it is. Perth has no daylight saving; +8 is fixed. */
+export function perthDate(iso: string): string {
+  if (/^\d{4}-\d{2}-\d{2}$/.test(iso)) return iso;
+  const t = Date.parse(iso);
+  return Number.isFinite(t) ? new Date(t + 8 * 3_600_000).toISOString().slice(0, 10) : iso.slice(0, 10);
+}
+
+/** Whole days from one date (or instant, read in Perth) to another. */
 export function daysBetween(from: string, to: string): number {
-  return Math.max(0, Math.round((Date.parse(`${to.slice(0, 10)}T00:00:00Z`) - Date.parse(`${from.slice(0, 10)}T00:00:00Z`)) / 86_400_000));
+  return Math.max(0, Math.round((Date.parse(`${perthDate(to)}T00:00:00Z`) - Date.parse(`${perthDate(from)}T00:00:00Z`)) / 86_400_000));
 }
 
 /**
  * The date each stage was reached, from the ledger where it has one and the
- * item's own dates otherwise; null for a stage not reached. Raised is the day
- * the diary first recorded it.
+ * item's own dates otherwise; null for a stage not reached, and null for a
+ * stage nobody recorded passing through — a date is printed only where one
+ * was recorded, never inferred. Ledger instants are read as Perth days.
  */
 export function stageDates(item: Pick<RegisterItem, 'raised_on' | 'submitted_on' | 'decided_on' | 'paid_on' | 'status' | 'events'>): Record<VariationStatus, string | null> {
-  const first = (status: VariationStatus) => item.events.find((e) => e.status === status)?.at.slice(0, 10) ?? null;
+  const first = (status: VariationStatus) => { const e = item.events.find((x) => x.status === status); return e ? perthDate(e.at) : null; };
   const reached = stageIndex(item.status);
   return {
     raised: item.raised_on,
-    priced: reached >= 1 && item.status !== 'rejected' ? first('priced') ?? (reached > 1 ? item.submitted_on : null) : first('priced'),
+    priced: first('priced'),
     submitted: reached >= 2 ? first('submitted') ?? item.submitted_on : null,
     approved: item.status === 'approved' || item.status === 'paid' ? first('approved') ?? item.decided_on : null,
     rejected: item.status === 'rejected' ? first('rejected') ?? item.decided_on : null,

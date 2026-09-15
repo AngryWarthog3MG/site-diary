@@ -52,6 +52,12 @@ test('stage dates come from the ledger first, the item dates second, and stop at
   assert.equal(d.submitted, '2026-09-09', 'the ledger beats the date column');
   assert.equal(d.approved, null);
   assert.equal(d.paid, null);
+  // Straight from raised to submitted: nobody recorded a pricing, so no pricing date is printed.
+  const skipped = stageDates({ ...base, status: 'submitted', submitted_on: '2026-09-10', events: [{ status: 'submitted', note: null, at: '2026-09-10T02:00:00Z', by: null }] });
+  assert.equal(skipped.priced, null);
+  // A move at 00:30 AWST is that Perth day, not the UTC day before.
+  const late = stageDates({ ...base, status: 'submitted', submitted_on: null, events: [{ status: 'submitted', note: null, at: '2026-09-15T16:30:00Z', by: null }] });
+  assert.equal(late.submitted, '2026-09-16');
 });
 test('next free number and the tracker order', () => {
   assert.equal(nextFreeNumber([{ seq: 1 }, { seq: 2 }, { seq: 4 }]), 3);

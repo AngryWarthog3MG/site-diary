@@ -234,21 +234,29 @@ async function loadRegister(supabase: SupabaseClient, projectId: string): Promis
     });
   }
   // The ledger: every move, who made it and what they noted — the tracker's history.
+  // In batches: a long job has hundreds of items and the ids travel in the URL.
+  // An error here is an error — the history is part of what the screen says.
   const ids = [...out.keys()];
   if (ids.length > 0) {
-    const { data: events } = await supabase
-      .from('variation_status_events')
-      .select('register_id, status, note, changed_at, changed_by')
-      .in('register_id', ids)
-      .order('changed_at', { ascending: true });
+    const events: Array<{ register_id: string; status: string; note: string | null; changed_at: string; changed_by: string | null }> = [];
+    for (let i = 0; i < ids.length; i += 100) {
+      const { data, error } = await supabase
+        .from('variation_status_events')
+        .select('register_id, status, note, changed_at, changed_by')
+        .in('register_id', ids.slice(i, i + 100))
+        .order('changed_at', { ascending: true });
+      if (error) throw new Error(`Could not load the variation history: ${error.message}`);
+      events.push(...((data ?? []) as typeof events));
+    }
     const who = new Set<string>();
     for (const e of events ?? []) if (e.changed_by) who.add(String(e.changed_by));
     const names = new Map<string, string>();
-    if (who.size > 0) {
-      const { data: people } = await supabase.from('profiles').select('id, full_name, email').in('id', [...who]);
+    const whoList = [...who];
+    for (let i = 0; i < whoList.length; i += 100) {
+      const { data: people } = await supabase.from('profiles').select('id, full_name, email').in('id', whoList.slice(i, i + 100));
       for (const p of people ?? []) names.set(String(p.id), String(p.full_name ?? p.email ?? ''));
     }
-    for (const e of events ?? []) {
+    for (const e of events) {
       const item = out.get(String(e.register_id));
       if (!item) continue;
       item.events.push({ status: e.status as RegisterItem['status'], note: (e.note as string | null) ?? null, at: String(e.changed_at), by: e.changed_by ? names.get(String(e.changed_by)) ?? null : null });
