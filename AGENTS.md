@@ -249,7 +249,9 @@ Change four of them and the app silently stops capturing what supervisors say. I
   halves and a new page needs both: the request middleware (`SCREEN_OF_PATH` in
   `src/lib/supabase/middleware.ts`) maps every screen-owned path prefix to its screen and refuses by
   the job the address names; every list and detail page calls `guardScreen(membership, screen)`
-  (`src/lib/auth.ts`) for the job it actually resolved, which is what catches a mixed-role account.
+  (`src/lib/auth.ts`) for the job it actually resolved, which is what catches a mixed-role account; and an
+  API route addressed by a record id (a PDF, an export) calls `forbidUnlessSees` (`src/lib/api.ts`) after
+  its RLS row load, for the same reason.
 - **Serials are issued at signing** and follow signing order, not entry date. Sort any
   register by `entry_date`.
 - **Bump `VERSION` in `public/sw.js`** when the service worker changes, or phones keep the
