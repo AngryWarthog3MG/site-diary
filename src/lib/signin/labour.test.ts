@@ -100,3 +100,12 @@ test('when a typed name is ambiguous the gate leaves both rows alone rather than
   assert.equal(r.items[0].start_time, null);
   assert.equal(r.items[1].start_time, null);
 });
+
+test('a gate row written before the company travelled in the quote is still that person’s row, not a duplicate', () => {
+  const old = [{ person_name: 'John Smith', role: 'ABC Civil · signed in', start_time: '07:00', finish_time: null, break_mins: null, hours: null, source_quote: 'Gate: in 07:00 · still on site', confidence: null }];
+  const abc: GateSignIn = { person_name: 'John Smith', company: 'ABC Civil', person_kind: 'subcontractor', signed_in_at: '2026-09-14T23:00:00Z', signed_in_on_device_at: '2026-09-14T23:00:00Z', signed_out_at: '2026-09-15T09:00:00Z', signed_out_on_device_at: '2026-09-15T09:00:00Z' };
+  const r = mergeGateIntoLabour(old, [abc], new Map());
+  assert.equal(r.items.length, 1);
+  assert.equal(r.items[0].finish_time, '17:00');
+  assert.equal(r.items[0].source_quote, `${GATE_PREFIX} ABC Civil · in 07:00 · out 17:00`);
+});

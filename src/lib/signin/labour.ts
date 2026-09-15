@@ -122,7 +122,9 @@ export function mergeGateIntoLabour<T extends LabourItem>(
   for (const d of days) {
     const name = normaliseName(d.name);
     const gateKey = `${name}|${companyKey(d.company)}`;
-    const mine = gateRows.get(gateKey);
+    // A gate row from before the company travelled in the quote has an empty company key;
+    // it is this person's when the name is unique at the gate today (Codex pass 31).
+    const mine = gateRows.get(gateKey) ?? (d.company && namesAtGate.get(name) === 1 ? gateRows.get(`${name}|`) : undefined);
     if (mine != null) {
       // The gate's row: the clocks follow the gate; the break is the supervisor's.
       const row = out[mine];
