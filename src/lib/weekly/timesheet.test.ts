@@ -46,8 +46,9 @@ test('the payroll CSV is one line per person per day, ordinary and overtime apar
   const csv = buildTimesheetLongCsv(data);
   const lines = csv.split('\r\n').filter(Boolean);
   assert.equal(lines[0], 'Job,Employee,Role,Date,Day,Start,Finish,Ordinary hours,Overtime hours,Total hours,Diary');
-  assert.equal(lines[1], 'KBL_C001,Hamish,labourer,2026-08-25,Tue,,,8,,8,KBL-2026-08-25');
-  assert.equal(lines[2], 'KBL_C001,"Smith, Matty",supervisor,2026-08-24,Mon,06:30,16:00,8,1,9,KBL-2026-08-24');
+  // People come in the loader's order (sorted by name there); the builder keeps it.
+  assert.equal(lines[1], 'KBL_C001,"Smith, Matty",supervisor,2026-08-24,Mon,06:30,16:00,8,1,9,KBL-2026-08-24');
+  assert.equal(lines[2], 'KBL_C001,Hamish,labourer,2026-08-25,Tue,,,8,,8,KBL-2026-08-25');
   assert.equal(lines.length, 3, 'a day with no hours is not a line');
   assert.equal(timesheetLongFilename(data), 'payroll_C001_2026-08-24_2026-08-25.csv');
 });
