@@ -2,7 +2,7 @@ import { roleOn } from '@/lib/api-role';
 import { canExportReports } from '@/lib/roles';
 import { fail, requireApiUser, isUuid, isDate } from '@/lib/api';
 import { loadWeeklyData, WeeklyLoadError } from '@/lib/weekly/load';
-import { buildTimesheetCsv, timesheetFilename } from '@/lib/weekly/timesheet';
+import { buildTimesheetCsv, timesheetFilename, buildTimesheetLongCsv, timesheetLongFilename } from '@/lib/weekly/timesheet';
 
 export const runtime = 'nodejs';
 
@@ -22,6 +22,8 @@ export async function GET(request: Request) {
   const projectId = url.searchParams.get('project');
   const start = url.searchParams.get('start');
   const end = url.searchParams.get('end');
+  // `format=long` is the payroll shape: one line per person per day, ordinary and overtime apart.
+  const long = url.searchParams.get('format') === 'long';
 
   if (!isUuid(projectId)) return fail('bad_request', 'Bad project id.', 400);
   if (!isDate(start) || !isDate(end)) {
@@ -63,11 +65,11 @@ export async function GET(request: Request) {
     );
   }
 
-  return new Response(buildTimesheetCsv(data), {
+  return new Response(long ? buildTimesheetLongCsv(data) : buildTimesheetCsv(data), {
     status: 200,
     headers: {
       'Content-Type': 'text/csv; charset=utf-8',
-      'Content-Disposition': `attachment; filename="${timesheetFilename(data)}"`,
+      'Content-Disposition': `attachment; filename="${long ? timesheetLongFilename(data) : timesheetFilename(data)}"`,
       'Cache-Control': 'no-store',
     },
   });

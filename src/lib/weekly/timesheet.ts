@@ -59,3 +59,38 @@ export function buildTimesheetCsv(data: WeeklyData): string {
 export function timesheetFilename(data: WeeklyData): string {
   return `timesheet_${data.project.code}_${data.start}_${data.end}.csv`;
 }
+
+const DOW = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+function dayName(iso: string): string {
+  const [y, m, d] = iso.split('-').map(Number);
+  return DOW[new Date(Date.UTC(y, m - 1, d)).getUTCDay()];
+}
+
+/**
+ * The payroll timesheet: one line per person per day worked, ordinary and
+ * overtime hours in their own columns, the clocks the diary recorded, and the
+ * diary serial the line stands on — the shape a bookkeeper imports or keys
+ * into payroll without re-reading the matrix. Signed entries only, like the
+ * matrix. Days with no hours are not lines: nothing is invented, not even a
+ * zero. Sorted by person, then date.
+ */
+export function buildTimesheetLongCsv(data: WeeklyData): string {
+  const lines: string[] = [];
+  lines.push(row(['Job', 'Employee', 'Role', 'Date', 'Day', 'Start', 'Finish', 'Ordinary hours', 'Overtime hours', 'Total hours', 'Diary']));
+  const job = `${data.project.orgCode}_${data.project.code}`;
+  for (const person of data.labour.people) {
+    for (const date of data.days) {
+      const d = person.days[date];
+      if (!d || d.ordinary + d.overtime <= 0) continue;
+      lines.push(row([
+        job, person.name, person.role, date, dayName(date), d.start, d.finish,
+        d.ordinary > 0 ? d.ordinary : null, d.overtime > 0 ? d.overtime : null, Math.round((d.ordinary + d.overtime) * 100) / 100, d.ref,
+      ]));
+    }
+  }
+  return lines.join('\r\n') + '\r\n';
+}
+
+export function timesheetLongFilename(data: WeeklyData): string {
+  return `payroll_${data.project.code}_${data.start}_${data.end}.csv`;
+}

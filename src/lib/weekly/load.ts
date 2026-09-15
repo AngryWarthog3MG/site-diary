@@ -27,6 +27,8 @@ export interface LabourPerson {
   name: string;
   role: string | null;
   byDay: Record<string, number>;
+  /** The payroll shape of each day: ordinary and overtime apart, the clocks, and the diary that stands behind it. */
+  days: Record<string, { ordinary: number; overtime: number; start: string | null; finish: string | null; ref: string | null }>;
   hours: number;
   overtime: number;
   total: number;
@@ -211,6 +213,7 @@ export function aggregateLabour(
       name,
       role: (row.role as string | null) ?? null,
       byDay: {},
+      days: {},
       hours: 0,
       overtime: 0,
       total: 0,
@@ -219,6 +222,13 @@ export function aggregateLabour(
     const hours = num(row.hours);
     const overtime = num(row.overtime_hours);
     person.byDay[date] = round2((person.byDay[date] ?? 0) + hours + overtime);
+    const day = person.days[date] ?? { ordinary: 0, overtime: 0, start: null, finish: null, ref: null };
+    day.ordinary = round2(day.ordinary + hours);
+    day.overtime = round2(day.overtime + overtime);
+    day.start ??= (row.start_time as string | null)?.slice(0, 5) ?? null;
+    day.finish = (row.finish_time as string | null)?.slice(0, 5) ?? day.finish;
+    day.ref ??= (row.entry_no as string | null) ?? null;
+    person.days[date] = day;
     person.hours = round2(person.hours + hours);
     person.overtime = round2(person.overtime + overtime);
     person.total = round2(person.total + hours + overtime);
@@ -590,7 +600,7 @@ export async function loadWeeklyData(
   const [entries, labour, plant, pours, quantities, delays, weather, variations, workItems, dayworks] =
     await Promise.all([
       diaryQuery(supabase, scope('entries', 'entry_no, entry_date, author_name, signed_at, notes')),
-      diaryQuery(supabase, scope('labour', 'entry_date, person_name, role, hours, overtime_hours')),
+      diaryQuery(supabase, scope('labour', 'entry_no, entry_date, person_name, role, hours, overtime_hours, start_time, finish_time')),
       diaryQuery(supabase, scope('plant', 'entry_date, item, hire_type, hours, idle_hours, supplier')),
       diaryQuery(
         supabase,

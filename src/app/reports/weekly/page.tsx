@@ -184,11 +184,27 @@ export default async function WeeklyReportPage({
             >
               Hours as a spreadsheet
             </a>
+            <a
+              className="button button--outline"
+              href={`/api/reports/timesheet?project=${current.project_id}&start=${start}&end=${end}&format=long`}
+              download
+            >
+              Timesheet for payroll — this week
+            </a>
+            <a
+              className="button button--outline"
+              href={`/api/reports/timesheet?project=${current.project_id}&start=${addDays(start, -7)}&end=${end}&format=long`}
+              download
+            >
+              Timesheet for payroll — fortnight to {fmtDate(end)}
+            </a>
             <GenerateWeeklyPdf projectId={current.project_id} start={start} end={end} />
             <MonthlyBundleButton projectId={current.project_id} start={start} />
             <p className="weekly-actions__hint">
               Download PDF is this page as a document, for wages and progress. The spreadsheet is
-              the labour matrix for payroll. The client report adds AI commentary, marks every
+              the labour matrix; the timesheet for payroll is one line per person per day with
+              ordinary and overtime hours apart, the clocks, and the diary each line stands on —
+              the shape the office imports or keys in. The client report adds AI commentary, marks every
               figure from a day not yet signed, and stores a shareable copy. The month bundle
               binds every signed docket of the month into one document.
             </p>

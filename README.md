@@ -1509,6 +1509,15 @@ names and the weather line. Everyone else reads exactly what they read yesterday
 from both sides. Sign-in by email is still there for anyone who prefers it, and depends on the
 project's mail provider (Supabase Auth's SMTP), which this repo does not configure.
 
+**R53. The timesheet the office imports.** Mitchell: "just build the timesheet export for the office to
+import" — not a Xero connection ("don't use my Xero"). The weekly screen already exported the labour
+matrix; payroll wants the other shape: one line per person per day, ordinary and overtime hours in
+their own columns, the start and finish the diary recorded, and the diary serial each line stands on.
+That is `format=long` on the same timesheet route, for the week or the fortnight ending with it, signed
+days only as before, and a day with no hours is not a line — nothing is invented, not even a zero.
+Xero itself stays out: pushing timesheets into Payroll needs the company's own Xero app, employees,
+pay calendars and earnings rates, and the connector in this workspace is another business's books.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;
