@@ -160,7 +160,9 @@ improvising; the register once shipped dead because a live smoke test was skippe
   filters it by role through `canSee`
 - `src/lib/home/dashboard.ts` — the home page's cards (`src/app/dashboard-cards.tsx`, streamed in under Suspense):
   `loadDashboard` = `loadSafety` plus the open reports and the latest issued documents. No number on the home
-  is computed anywhere the Safety screen does not also compute it
+  is computed anywhere the Safety screen does not also compute it. A card is drawn only when it has something
+  in it; the rest fold into one "Nothing needs attention" line naming what was checked (README R56). A new card
+  declares its own `attention` test
 - `src/lib/calendar.ts` — `isRestDay`: weekends with nothing recorded are rest days, not holes. One definition for
   the screens, the weekly and the reminder
 - `src/lib/claims/` — the claims register loader and the variation register (`register.ts`:

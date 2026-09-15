@@ -3504,6 +3504,12 @@ main.sheet--wide .vr-list { grid-template-columns: repeat(auto-fill, minmax(22re
 .dash-card--skeleton .dash-card__title, .dash-card--skeleton .dash-card__big { background: var(--paper-dim); border-radius: 6px; }
 .dash-asof { grid-column: 1 / -1; margin: 0.25rem 0 0; text-align: right; }
 
+/* The figures with nothing in them, folded into one line naming what was checked. */
+.dash-clear { grid-column: 1 / -1; padding: 0.9rem 1.1rem; background: var(--paper); border: 1px solid var(--ink-12); border-radius: 12px; box-shadow: var(--shadow-ui); }
+.dash-clear__head { margin: 0; display: flex; align-items: center; gap: 0.5rem; font-weight: 600; color: var(--teal); }
+.dash-clear__list { margin: 0.35rem 0 0; font-size: 0.8125rem; color: var(--ink-60); line-height: 1.4; }
+.dash-clear .dash-card__foot { margin-top: 0.6rem; text-align: left; }
+
 /* List cards: a date badge and two lines, like a notice board. */
 .dash-list { list-style: none; margin: 0.6rem 0 0; padding: 0; display: grid; gap: 0.4rem; }
 .dash-row { display: flex; align-items: center; gap: 0.6rem; padding: 0.4rem 0.5rem 0.4rem 0.4rem; border-radius: 8px; background: var(--paper-dim); color: inherit; text-decoration: none; }
@@ -3527,8 +3533,26 @@ a.dash-row:hover { background: var(--teal-tint); }
   .dash-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .dash-card { min-height: 11rem; }
 }
+@media (max-width: 699px) {
+  /* A phone shows who is signed in and the two buttons; the role and company are a tap away in Settings. */
+  .dash-head { padding-bottom: 0.6rem; }
+  .dash-head__who .caption { display: none; }
+  .dash-head__tools { margin-top: 0.35rem; }
+  .dash-head__job .mono { display: none; }
+  /* The quick actions as two tidy columns rather than a ragged wrap. */
+  .dash-actions { display: grid; grid-template-columns: 1fr 1fr; }
+  .dash-action { justify-content: center; padding: 0.65rem 0.6rem; }
+}
 @media (min-width: 1100px) {
   .dash-head .refresh-button { display: none; }
+  /* With the rail beside the page there is one navigation: the heading bar and the
+     brand it repeats go, the person and Sign out stay. */
+  body:has(> .rail) .dash .secbar, body:has(> .rail) .dash-head__brand { display: none; }
+  body:has(> .rail) .dash-head { justify-content: flex-end; padding-top: 0; padding-bottom: 0.6rem; }
+  body:has(> .rail) .dash-head__who { display: flex; align-items: center; gap: 0.75rem; text-align: left; }
+  body:has(> .rail) .dash-head__who .caption { margin: 0; }
+  body:has(> .rail) .dash-head__tools { margin-top: 0; }
+  body:has(> .rail) .dash-actions { margin-top: 0; }
   .dash-body { grid-template-columns: minmax(0, 27rem) minmax(0, 1fr); gap: 0.9rem; }
   .dash-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.9rem; }
 }

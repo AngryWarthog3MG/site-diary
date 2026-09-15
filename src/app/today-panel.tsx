@@ -40,6 +40,22 @@ interface TodayEntry {
 const n = (value: number | null, unit: string, digits = 1) =>
   value == null ? '—' : `${value.toFixed(digits)}${unit}`;
 
+/**
+ * The weather in one line, saying only what was read. A dash for a missing
+ * figure read as a broken screen; a reading the Bureau has not given yet is
+ * simply not mentioned.
+ */
+function weatherLine(w: WeatherRow): string {
+  const parts: string[] = [];
+  if (w.temp_max != null) parts.push(n(w.temp_max, '°'));
+  if (w.rainfall_mm != null) parts.push(w.rainfall_mm === 0 ? 'no rain since 9am' : `${n(w.rainfall_mm, '')} mm since 9am`);
+  if (w.wind_kmh != null) parts.push(`${w.wind_dir ? `${w.wind_dir} ` : ''}${n(w.wind_kmh, '', 0)} km/h`);
+  if (parts.length === 0) parts.push('No reading yet today');
+  if (w.source === 'manual') parts.push('entered by hand');
+  else if (w.station_name) parts.push(w.station_name);
+  return parts.join(' · ');
+}
+
 function firstOrNull<T>(value: unknown): T | null {
   if (Array.isArray(value)) return (value[0] as T | undefined) ?? null;
   return (value as T | null) ?? null;
@@ -668,11 +684,7 @@ export function TodayPanel({
 
       {!loading && (
         <p className="home-wx mono">
-          {weather
-            ? `${n(weather.temp_max, '°')} · ${n(weather.rainfall_mm, '')} mm since 9am · ${weather.wind_dir ?? '—'} ${n(weather.wind_kmh, '', 0)} km/h${
-                weather.source === 'manual' ? ' · entered by hand' : weather.station_name ? ` · ${weather.station_name}` : ''
-              }`
-            : 'No weather reading yet today'}
+          {weather ? weatherLine(weather) : 'No weather reading yet today'}
           {' · '}
           <Link className="linklike" href={`/reports/weekly?project=${projectId}`}>this week</Link>
         </p>

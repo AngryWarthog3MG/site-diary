@@ -1541,6 +1541,21 @@ retry when it would breach the budget, and the route allows 240. A slow answer i
 screen, never a blank platform error. Lesson for the record: whatever rides on `ClaimsData` for a
 screen reaches the narrative unless the narrative's input is built on purpose.
 
+**R56. The home shows what needs attention, not every figure.** Mitchell: "improve the app
+interface, its very convoluted, i need it simple and easy to understand." The opening page had
+twelve cards, and on a job going well all twelve said 0 — a phone scrolled three screens of zeros
+to reach the bottom, and on a laptop the rail, the heading bar and the quick actions were three
+navigations on one screen. Now a card is drawn only when it has something in it (an expired
+ticket, an open action, a live permit, a report, an order still to come); the rest fold into one
+line — "Nothing needs attention · Checked today: tickets & licences, corrective actions, …" — so
+the supervisor still sees what was checked, with one link to the Safety dashboard, which keeps
+every figure. On a laptop the rail is the navigation: the heading bar and the repeated brand go,
+the person and Sign out stay. On a phone the quick actions sit in two tidy columns and the header
+drops the role line. The weather line names only what the Bureau gave — a dash for a missing
+figure read as a broken screen. Site sign-in moved under the Diary heading, because the gate
+feeds the day's labour. Nothing was removed from the record or the Safety screen; the home
+simply stopped repeating it.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;
