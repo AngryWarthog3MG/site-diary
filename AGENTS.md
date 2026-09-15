@@ -142,9 +142,13 @@ improvising; the register once shipped dead because a live smoke test was skippe
   caller's RLS across sign-ins, prestarts, plant, permits, incidents, inspections, tickets, subcontractors, SWMS,
   documents, labour hours). Screen `/safety`; GET `/api/safety/pdf?project`. No tables of its own — every number
   is read from the modules, never typed
-- `src/lib/nav.ts` — the ONE list of the app's sections (`NAV_GROUPS`, `showNav`). The home page draws it as
-  tiles, the phone's Menu drawer as a list, the desktop rail as links. A section is added, renamed or moved
-  there and nowhere else; each drawing filters it by role through `canSee`
+- `src/lib/nav.ts` — the ONE list of the app's sections (`NAV_GROUPS` under seven headings, `showNav`, `navFor`).
+  The home page draws it as the heading bar (`src/components/section-bar.tsx`), the phone's Menu drawer as a
+  list, the desktop rail as links. A section is added, renamed or moved there and nowhere else; each drawing
+  filters it by role through `canSee`
+- `src/lib/home/dashboard.ts` — the home page's cards (`src/app/dashboard-cards.tsx`, streamed in under Suspense):
+  `loadDashboard` = `loadSafety` plus the open reports and the latest issued documents. No number on the home
+  is computed anywhere the Safety screen does not also compute it
 - `src/lib/calendar.ts` — `isRestDay`: weekends with nothing recorded are rest days, not holes. One definition for
   the screens, the weekly and the reminder
 - `src/lib/claims/` — the claims register loader and the variation register (`register.ts`:

@@ -1383,14 +1383,19 @@ The pass after that caught the window the action count still lived in: an open c
 on an inspection from 120 days ago is still open, so the actions are now read from the action
 tables themselves with no date on them, and only the injury figures keep the twelve-month window.
 
-**R44. The home page is the opening page.** With ten modules the Menu drawer had become the only way
-into most of the app, and a menu is a place to go looking. The home page now carries every section as a
-tile under the day — the record, on site, setup, grouped as the drawer groups them — so nothing on the
-job is more than one tap from opening the app. The tiles, the drawer and the desktop rail draw one list
-(`src/lib/nav.ts`) filtered by the role the server already knows, so a door never appears a moment late
-or closes on the person who tapped it. The section that lists the days is called **Daily Diary**, not
-"Past days": it is the diary itself, the thing the app is named for, and it holds today as well as the
-days before.
+**R44. The home page is the opening page, laid out like the office's systems.** With ten modules the
+Menu drawer had become the only way into most of the app, and a menu is a place to go looking. Mitchell
+put a StemsOne dashboard beside it and asked for the same shape, so the home now is: the company and
+the person across the top; a bar of seven section headings (Diary, Claims, Safety, Site, People,
+Library, Setup), each opening a panel of what is in it; the things you raise most as buttons under
+that; then the cards — today's diary first, and beside it expired tickets, actions overdue, permits
+live, the open hazards with their dates, the latest documents issued, hazards reported and injuries in
+the last 30 days, the 12-month frequency rate with six months of bars, inspections, SWMS not signed by
+everyone, subcontractors not compliant. Every card reads through the Safety screen's own loader, so
+the two can never disagree, and the cards stream in after the diary so a phone with one bar of signal
+gets the day first. The headings, the drawer and the desktop rail draw one list (`src/lib/nav.ts`)
+filtered by the role the server already knows. The section that lists the days is called **Daily
+Diary**, not "Past days": it is the diary itself, the thing the app is named for.
 
 ## Not built, and deliberately so
 

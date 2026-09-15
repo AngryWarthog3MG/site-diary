@@ -1,25 +1,29 @@
 import Link from 'next/link';
+import { Suspense } from 'react';
 import { BrandMark } from '@/components/brand-mark';
 import { RefreshButton } from '@/components/refresh-button';
+import { SectionBar } from '@/components/section-bar';
 import {
   requireUser,
   resolveProject,
   canAuthorEntries,
 } from '@/lib/auth';
 import { canRunTalks, ROLE_LABEL } from '@/lib/roles';
-import { NAV_GROUPS, showNav, viewerFor } from '@/lib/nav';
+import { navFor, viewerFor } from '@/lib/nav';
 import { SignOutButton } from '@/components/sign-out-button';
 import { TodayPanel } from './today-panel';
+import { DashboardCards, DashboardSkeleton } from './dashboard-cards';
 
 export const dynamic = 'force-dynamic';
 
 /**
- * The opening page. The job and the day at the top — today's diary, the
- * prestart, who is on site, the week, anything not signed — and under it
- * every section of the app as a tile, grouped the way the menu groups them,
- * so nothing on the job is more than one tap from here. The tiles are the
- * same list the drawer and the rail draw (`src/lib/nav.ts`), filtered by the
- * role the server already knows.
+ * The opening page, laid out the way the office's compliance systems lay
+ * theirs out: the company and the person across the top, a bar of section
+ * headings under that (each opens a panel of what is in it), a row of the
+ * things you raise most, then the cards — today's diary first, and beside it
+ * every figure the office looks for, read from the record. The headings are
+ * the same list the drawer and the rail draw (`src/lib/nav.ts`), filtered by
+ * the role the server already knows.
  */
 export default async function TodayPage({
   searchParams,
@@ -50,65 +54,58 @@ export default async function TodayPage({
 
   const activeJobs = memberships.filter((m) => m.project.active).length;
   const q = `?project=${current.project_id}`;
+  const groups = navFor(viewerFor(current.role, activeJobs));
+  const talks = canRunTalks(current.role);
+  const authors = canAuthorEntries(current.role);
 
   return (
-    <main className="app-shell home-shell">
-      <section className="sheet home-sheet">
-        <div className="home-top">
-          <p className="label home-top__job">
-            <BrandMark size={18} /> {current.project.name}
-            <span className="mono home-top__code">{current.project.org.code}_{current.project.code}</span>
-          </p>
-          <RefreshButton />
+    <main className="app-shell home-shell dash">
+      <header className="dash-head">
+        <div className="dash-head__brand">
+          <BrandMark size={34} />
+          <div>
+            <p className="dash-head__app">KBS Daily Diary</p>
+            <p className="dash-head__job">{current.project.name} <span className="mono">{current.project.org.code}_{current.project.code}</span></p>
+          </div>
         </div>
-        <ProjectSwitcher memberships={memberships} currentId={current.project_id} />
+        <div className="dash-head__who">
+          <p className="dash-head__name">{profile?.full_name ?? email}</p>
+          <p className="caption">{ROLE_LABEL[current.role]} · {current.project.org.name}</p>
+          <div className="dash-head__tools">
+            <RefreshButton />
+            <SignOutButton />
+          </div>
+        </div>
+      </header>
+      <ProjectSwitcher memberships={memberships} currentId={current.project_id} />
 
-        <div className="home-body">
+      <SectionBar groups={groups} q={q} />
+
+      {(talks || authors) && (
+        <div className="dash-actions">
+          {talks && <Link className="dash-action" href={`/incidents/new${q}`}><span aria-hidden>⚠</span> New hazard</Link>}
+          {talks && <Link className="dash-action" href={`/inspections/new${q}`}><span aria-hidden>☑</span> New inspection</Link>}
+          {authors && <Link className="dash-action" href={`/permits/new${q}`}><span aria-hidden>▤</span> New permit</Link>}
+          {talks && <Link className="dash-action" href={`/prestart/new${q}`}><span aria-hidden>☀</span> New prestart</Link>}
+        </div>
+      )}
+
+      <div className="dash-body">
+        <section className="dash-card dash-card--diary">
           <TodayPanel
             projectId={current.project_id}
-            canRecord={canAuthorEntries(current.role)}
-            canPrestart={canRunTalks(current.role)}
+            canRecord={authors}
+            canPrestart={talks}
             roleLabel={ROLE_LABEL[current.role].toLowerCase() === 'project manager' ? 'the project manager' : `the ${ROLE_LABEL[current.role].toLowerCase()}`}
           />
-          <HomeSections role={current.role} activeJobs={activeJobs} q={q} />
+        </section>
+        <div className="dash-grid">
+          <Suspense fallback={<DashboardSkeleton />}>
+            <DashboardCards projectId={current.project_id} orgId={current.project.org.id} role={current.role} />
+          </Suspense>
         </div>
-
-        <footer className="home-foot">
-          <span className="home-foot__who">{profile?.full_name ?? email} · {ROLE_LABEL[current.role]}</span>
-          <SignOutButton />
-        </footer>
-      </section>
+      </div>
     </main>
-  );
-}
-
-/**
- * Every section of the app, as tiles, grouped as the menu groups them. Drawn
- * on the server from the role, so the page arrives complete — no tile appears
- * a moment late or closes on the person who tapped it.
- */
-function HomeSections({ role, activeJobs, q }: { role: Parameters<typeof viewerFor>[0]; activeJobs: number; q: string }) {
-  const viewer = viewerFor(role, activeJobs);
-  return (
-    <nav className="home-sections" aria-label="Everything on this job">
-      {NAV_GROUPS.map((group) => {
-        const items = group.items.filter((it) => showNav(it, viewer));
-        if (items.length === 0) return null;
-        return (
-          <section key={group.label} className="home-group">
-            <p className="label">{group.label}</p>
-            <div className="home-tiles">
-              {items.map((it) => (
-                <Link key={it.href} className="navitem" href={it.href === '/portfolio' ? it.href : `${it.href}${q}`}>
-                  <span className="navitem__name">{it.name}</span>
-                  <span className="navitem__what">{it.what}</span>
-                </Link>
-              ))}
-            </div>
-          </section>
-        );
-      })}
-    </nav>
   );
 }
 

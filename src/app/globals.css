@@ -3417,29 +3417,110 @@ main.sheet--wide .vr-list { grid-template-columns: repeat(auto-fill, minmax(22re
   .home-top > :not(.home-top__job) { display: none; }
 }
 
-/* The opening page: the day on the left, every section as a tile beside it.
-   One column on a phone, two on a desk. */
-.home-body { display: grid; gap: 1.75rem; align-items: start; }
-.home-sections { margin: 0; }
-.home-group { margin-top: 1.1rem; }
-.home-group:first-child { margin-top: 0; }
-.home-group .label { margin-bottom: 0.45rem; }
-.home-tiles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.5rem; }
-.home-tiles .navitem { padding: 0.65rem 0.75rem; border-radius: 10px; }
-.home-tiles .navitem__name { font-size: 0.9rem; line-height: 1.2; color: var(--teal, #0e4f52); }
-.home-tiles .navitem__what {
-  margin-top: 0.2rem; font-size: 0.75rem; line-height: 1.3;
-  /* Two lines at most, so a long description never makes one tile taller than its row. */
-  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden;
+/* ==========================================================================
+   The opening page as a dashboard: company and person across the top, the
+   heading bar, the quick actions, then the cards — the diary first.
+   ========================================================================== */
+.dash { width: min(100%, 90rem); }
+.dash-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; padding: 0.25rem 0.25rem 0.9rem; }
+.dash-head__brand { display: flex; align-items: center; gap: 0.75rem; min-width: 0; }
+.dash-head__app { margin: 0; font-weight: 700; color: var(--teal); letter-spacing: 0.02em; }
+.dash-head__job { margin: 0.1rem 0 0; font-size: 0.9375rem; color: var(--ink-60); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dash-head__job .mono { margin-left: 0.4rem; font-size: 0.75rem; color: var(--ink-40); }
+.dash-head__who { text-align: right; flex: 0 0 auto; }
+.dash-head__who .caption { margin: 0.1rem 0 0; }
+.dash-head__name { margin: 0; font-weight: 600; }
+.dash-head__tools { display: flex; justify-content: flex-end; align-items: center; gap: 0.5rem; margin-top: 0.5rem; }
+.dash-head__tools .button { width: auto; margin: 0; min-height: 34px; padding: 0 0.8rem; font-size: 0.8125rem; }
+.dash .home-switcher { margin: 0 0 0.75rem; }
+
+/* The heading bar: one row, scrolls sideways on a phone, the open panel below it. */
+.secbar { background: var(--teal); border-radius: 10px; box-shadow: var(--shadow-ui); }
+.secbar__row { display: flex; gap: 0; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+.secbar__row::-webkit-scrollbar { display: none; }
+.secbar__item {
+  flex: 0 0 auto; display: inline-flex; align-items: center; gap: 0.3rem;
+  padding: 0.75rem 0.95rem; border: 0; background: none; color: #fff;
+  font: inherit; font-size: 0.9375rem; font-weight: 600; text-decoration: none; cursor: pointer; white-space: nowrap;
 }
-.home-sections { padding-top: 1.25rem; border-top: 1px solid var(--ink-08); }
+.secbar__item:hover, .secbar__item--open { background: rgba(255, 255, 255, 0.14); }
+.secbar__item--here { background: rgba(0, 0, 0, 0.18); }
+.secbar__caret { font-size: 0.7rem; opacity: 0.8; }
+.secbar__item--open .secbar__caret { transform: rotate(180deg); }
+.secbar__panel { padding: 0.75rem; background: var(--paper); border: 1px solid var(--ink-12); border-top: 0; border-radius: 0 0 10px 10px; }
+.secbar__panel .navitem { padding: 0.6rem 0.7rem; border-radius: 10px; }
+.secbar__panel .navitem__name { font-size: 0.9rem; line-height: 1.2; color: var(--teal); }
+.secbar__panel .navitem__what { margin-top: 0.2rem; font-size: 0.75rem; line-height: 1.3; }
+.secbar:has(.secbar__panel) { border-radius: 10px 10px 0 0; }
+
+/* The things you raise most, in a row under the bar. */
+.dash-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0.9rem 0 0; }
+.dash-action {
+  display: inline-flex; align-items: center; gap: 0.45rem; padding: 0.55rem 0.9rem;
+  background: var(--paper); border: 1px solid rgba(31, 92, 51, 0.35); border-radius: 8px; box-shadow: var(--shadow-ui);
+  color: var(--teal); font-weight: 600; font-size: 0.875rem; text-decoration: none;
+}
+.dash-action:hover { background: var(--teal-tint); }
+.dash-action span { font-size: 1rem; line-height: 1; }
+
+/* The cards. The diary is one of them, and the widest. */
+.dash-body { display: grid; grid-template-columns: 1fr; gap: 0.75rem; margin-top: 0.9rem; align-items: start; }
+.dash-grid { display: grid; grid-template-columns: 1fr; gap: 0.75rem; align-items: stretch; }
+.dash-card {
+  padding: 1rem 1.1rem; background: var(--paper); border: 1px solid var(--ink-12); border-radius: 12px; box-shadow: var(--shadow-ui);
+  display: flex; flex-direction: column; min-height: 9rem;
+}
+.dash-card--diary { min-height: 0; }
+.dash-card--diary .home-date { margin-top: 0; }
+.dash-card__title { margin: 0; font-weight: 600; color: var(--ink-60); font-size: 0.9375rem; line-height: 1.3; }
+.dash-card__when { display: block; margin-top: 0.15rem; font-weight: 500; font-size: 0.75rem; color: var(--ink-40); }
+.dash-card__big { margin: auto 0; padding: 0.5rem 0; text-align: center; font-family: var(--font-plex-sans), system-ui, sans-serif; font-size: 3.25rem; line-height: 1; font-weight: 500; font-variant-numeric: tabular-nums; color: var(--teal); }
+.dash-card__big--bad { color: #9A2B2B; }
+.dash-card__big--ok { color: var(--teal); }
+.dash-card__sub { margin: 0; text-align: center; font-size: 0.8125rem; color: var(--ink-60); line-height: 1.35; }
+.dash-card__nil { margin: 0.75rem 0 auto; font-size: 0.875rem; color: var(--ink-60); }
+.dash-card__foot { margin: 0.9rem 0 0; text-align: right; font-size: 0.8125rem; }
+.dash-card__foot a { display: inline-flex; align-items: center; gap: 0.35rem; font-weight: 600; color: var(--ink); text-decoration: none; }
+.dash-card__foot a:hover { color: var(--teal); }
+.dash-card--list .dash-card__foot { margin-top: auto; padding-top: 0.75rem; }
+.dash-card--chart .dash-card__big { margin: 0.25rem 0 0; font-size: 2.25rem; }
+.dash-months { height: 5.5rem; margin-top: 0.75rem; gap: 0.25rem; padding: 0.4rem 0.3rem; }
+.dash-months .safety__month { min-width: 0; }
+.dash-months .caption { font-size: 0.625rem; }
+.dash-card--skeleton { opacity: 0.45; }
+.dash-card--skeleton .dash-card__title, .dash-card--skeleton .dash-card__big { background: var(--paper-dim); border-radius: 6px; }
+.dash-asof { grid-column: 1 / -1; margin: 0.25rem 0 0; text-align: right; }
+
+/* List cards: a date badge and two lines, like a notice board. */
+.dash-list { list-style: none; margin: 0.6rem 0 0; padding: 0; display: grid; gap: 0.4rem; }
+.dash-row { display: flex; align-items: center; gap: 0.6rem; padding: 0.4rem 0.5rem 0.4rem 0.4rem; border-radius: 8px; background: var(--paper-dim); color: inherit; text-decoration: none; }
+a.dash-row:hover { background: var(--teal-tint); }
+.dash-date { flex: 0 0 3rem; display: grid; place-items: center; padding: 0.3rem 0; border-radius: 6px; background: var(--teal-tint); color: var(--teal); line-height: 1; }
+.dash-date__day { font-size: 1.125rem; font-weight: 600; }
+.dash-date__mon { font-size: 0.625rem; font-weight: 600; letter-spacing: 0.06em; margin-top: 0.15rem; }
+.dash-row__text { min-width: 0; display: grid; gap: 0.1rem; }
+.dash-row__name { font-weight: 600; font-size: 0.875rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dash-row__what { font-size: 0.75rem; color: var(--ink-60); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* Two figures side by side with a coloured dot each. */
+.dash-split { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-top: 0.5rem; text-align: center; font-size: 0.8125rem; }
+.dash-split span { display: grid; justify-items: center; gap: 0.15rem; }
+.dash-split strong { font-size: 1.125rem; }
+.dash-dot { display: inline-block; width: 0.7rem; height: 0.7rem; border-radius: 50%; }
+.dash-dot--ok { background: #3aa66a; }
+.dash-dot--bad { background: #e0506f; }
+
 @media (min-width: 700px) {
-  .home-tiles { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .dash-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .dash-card { min-height: 11rem; }
 }
 @media (min-width: 1100px) {
-  .home-body { grid-template-columns: minmax(0, 26rem) minmax(0, 1fr); gap: 2.5rem; }
-  .home-sections { padding-top: 0; border-top: 0; padding-left: 2.5rem; border-left: 1px solid var(--ink-08); }
-  .home-foot { margin-top: 2.25rem; }
+  .dash-head .refresh-button { display: none; }
+  .dash-body { grid-template-columns: minmax(0, 27rem) minmax(0, 1fr); gap: 0.9rem; }
+  .dash-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.9rem; }
+}
+@media (min-width: 1500px) {
+  .dash-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 }
 
 /* ==========================================================================

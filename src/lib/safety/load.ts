@@ -17,7 +17,11 @@ export interface SafetyData {
   permits: { live: number; expired: number };
   /** `list` is the soonest-due `LISTED_ACTIONS`; `open` counts them all, so `open - list.length` is how many the table leaves out. */
   actions: { open: number; overdue: number; list: Array<{ source: 'incident' | 'inspection'; ref: string; href: string; action: string; owner: string | null; due_on: string | null }> };
-  incidents: { open: number; year: ReturnType<typeof injurySummary>; daysSinceInjury: number | null; months: ReturnType<typeof monthBuckets> };
+  incidents: {
+    open: number; year: ReturnType<typeof injurySummary>; daysSinceInjury: number | null; months: ReturnType<typeof monthBuckets>;
+    /** Every report in the last twelve months, newest first — the home cards count the last 30 days from it. */
+    recent: Array<IncidentFacts & { id: string; seq: number; description: string }>;
+  };
   inspections: { last90: number; issuesOpen: number };
   tickets: { expired: Array<{ person: string; label: string; on: string }>; soon: Array<{ person: string; label: string; on: string }> };
   subcontractors: Array<{ name: string; verdict: string }>;
@@ -40,7 +44,7 @@ export async function loadSafety(supabase: SupabaseClient, projectId: string, or
     supabase.from('prestarts').select('completed_at').eq('project_id', projectId).eq('prestart_date', today).order('created_at', { ascending: false }).limit(1).maybeSingle(),
     supabase.from('plant_prestarts').select('fit_for_use, completed_at, plant:plant_register!inner(name)').eq('project_id', projectId).eq('prestart_date', today),
     supabase.from('permits').select('valid_from, valid_to').eq('project_id', projectId).eq('status', 'issued'),
-    supabase.from('incidents').select('id, seq, kind, occurred_at, treatment, status, notifiable, incident_actions(action, owner_name, due_on, done_at)').eq('project_id', projectId).gte('occurred_at', yearAgo),
+    supabase.from('incidents').select('id, seq, kind, occurred_at, treatment, status, notifiable, description').eq('project_id', projectId).gte('occurred_at', yearAgo).order('occurred_at', { ascending: false }),
     // The last injury ever, not the last within the year: "days since" is a lag indicator that keeps counting past 365.
     supabase.from('incidents').select('kind, occurred_at').eq('project_id', projectId).eq('kind', 'injury').order('occurred_at', { ascending: false }).limit(1).maybeSingle(),
     supabase.from('inspections').select('id, completed_at').eq('project_id', projectId).gte('inspection_date', ninety),
@@ -56,7 +60,7 @@ export async function loadSafety(supabase: SupabaseClient, projectId: string, or
   ]);
 
   const crewNames = ((crew.data ?? []) as Array<{ name: string }>).map((c) => c.name);
-  const incRows = ((incidents.data ?? []) as Array<IncidentFacts & { id: string; seq: number }>);
+  const incRows = ((incidents.data ?? []) as Array<IncidentFacts & { id: string; seq: number; description: string }>);
   const inspRows = ((inspections.data ?? []) as Array<{ id: string; completed_at: string | null }>);
   const one = <T,>(v: T | T[]): T => (Array.isArray(v) ? v[0] : v);
   type OpenAction = ActionFacts & { action: string; owner_name: string | null };
@@ -88,6 +92,7 @@ export async function loadSafety(supabase: SupabaseClient, projectId: string, or
       year: injurySummary(incRows, hours),
       daysSinceInjury: daysSinceLastInjury(lastInjury.data ? [lastInjury.data as { kind: string; occurred_at: string }] : [], today),
       months: monthBuckets(incRows, today, 6),
+      recent: incRows,
     },
     inspections: {
       last90: inspRows.filter((i) => i.completed_at).length,
