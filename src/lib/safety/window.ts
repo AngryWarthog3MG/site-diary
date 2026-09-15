@@ -11,6 +11,11 @@ export function perthWindowDate(today: string, days: number): string {
   return new Date(Date.parse(`${today}T00:00:00Z`) - (days - 1) * 86_400_000).toISOString().slice(0, 10);
 }
 
+/** The instant the window closes — Perth midnight at the end of today — for a `< end` bound on `timestamptz` columns. */
+export function perthWindowEnd(today: string): string {
+  return new Date(Date.parse(`${today}T00:00:00+08:00`) + 86_400_000).toISOString();
+}
+
 /** The instant the window opens, as an ISO timestamp, for comparing against `timestamptz` columns. */
 export function perthWindowStart(today: string, days: number): string {
   return new Date(Date.parse(`${perthWindowDate(today, days)}T00:00:00+08:00`)).toISOString();

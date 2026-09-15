@@ -3,7 +3,7 @@ import { compliance, type DocFacts } from '@/lib/subcontractors/model';
 import { expiring, normaliseName, type TicketFacts } from '@/lib/crew/tickets';
 import { coverage } from '@/lib/documents-control/model';
 import { injurySummary, daysSinceLastInjury, monthBuckets, overdue, openActions, type IncidentFacts, type ActionFacts } from './stats';
-import { perthWindowDate, perthWindowStart } from './window';
+import { perthWindowDate, perthWindowEnd, perthWindowStart } from './window';
 
 /**
  * Everything the dashboard shows, gathered once under the caller's RLS.
@@ -38,20 +38,21 @@ export async function loadSafety(supabase: SupabaseClient, projectId: string, or
   // Every window counts today as its last day and opens at Perth midnight, so the
   // injuries (timestamps) and the labour hours (dates) under a rate cover the same days.
   const yearAgo = perthWindowStart(today, 365);
+  const endOfToday = perthWindowEnd(today); // and nothing dated after today, however it got there
   const yearAgoDate = perthWindowDate(today, 365);
   const ninety = perthWindowDate(today, 90);
   const weekAgo = perthWindowDate(today, 7);
   const nowIso = new Date().toISOString();
   const [onSite, week, prestart, plant, permits, incidents, lastInjury, inspections, openIncActs, openInspActs, crew, tickets, subs, swms, docs, labour] = await Promise.all([
     supabase.from('site_signins').select('id', { count: 'exact', head: true }).eq('project_id', projectId).eq('signin_date', today).is('signed_out_at', null),
-    supabase.from('site_signins').select('id', { count: 'exact', head: true }).eq('project_id', projectId).gte('signin_date', weekAgo),
+    supabase.from('site_signins').select('id', { count: 'exact', head: true }).eq('project_id', projectId).gte('signin_date', weekAgo).lte('signin_date', today),
     supabase.from('prestarts').select('completed_at').eq('project_id', projectId).eq('prestart_date', today).order('created_at', { ascending: false }).limit(1).maybeSingle(),
     supabase.from('plant_prestarts').select('fit_for_use, completed_at, plant:plant_register!inner(name)').eq('project_id', projectId).eq('prestart_date', today),
     supabase.from('permits').select('valid_from, valid_to').eq('project_id', projectId).eq('status', 'issued'),
-    supabase.from('incidents').select('id, seq, kind, occurred_at, treatment, status, notifiable, description').eq('project_id', projectId).gte('occurred_at', yearAgo).order('occurred_at', { ascending: false }),
+    supabase.from('incidents').select('id, seq, kind, occurred_at, treatment, status, notifiable, description').eq('project_id', projectId).gte('occurred_at', yearAgo).lt('occurred_at', endOfToday).order('occurred_at', { ascending: false }),
     // The last injury ever, not the last within the year: "days since" is a lag indicator that keeps counting past 365.
     supabase.from('incidents').select('kind, occurred_at').eq('project_id', projectId).eq('kind', 'injury').order('occurred_at', { ascending: false }).limit(1).maybeSingle(),
-    supabase.from('inspections').select('id, completed_at').eq('project_id', projectId).gte('inspection_date', ninety),
+    supabase.from('inspections').select('id, completed_at').eq('project_id', projectId).gte('inspection_date', ninety).lte('inspection_date', today),
     // Open corrective actions are open however old their report is: no date window on these two.
     supabase.from('incident_actions').select('action, owner_name, due_on, done_at, incident:incidents!inner(id, seq, project_id)').eq('incident.project_id', projectId).is('done_at', null),
     supabase.from('inspection_actions').select('action, owner_name, due_on, done_at, inspection:inspections!inner(id, template_name, inspection_date, project_id)').eq('inspection.project_id', projectId).is('done_at', null),
@@ -60,7 +61,7 @@ export async function loadSafety(supabase: SupabaseClient, projectId: string, or
     supabase.from('project_subcontractors').select('subcontractor:subcontractors!inner(name, active, subcontractor_documents(kind, expires_on, active))').eq('project_id', projectId).is('engaged_to', null),
     supabase.from('swms').select('title, version, swms_signons(attendee_name)').eq('project_id', projectId).eq('status', 'active'),
     supabase.from('controlled_documents').select('title, requires_acknowledgement, document_versions(version, status, document_acknowledgements(person_name))').eq('org_id', orgId).eq('active', true).eq('requires_acknowledgement', true),
-    supabase.from('labour').select('hours, overtime_hours, entry:entries!inner(project_id, status, entry_date)').eq('entry.project_id', projectId).eq('entry.status', 'signed').gte('entry.entry_date', yearAgoDate),
+    supabase.from('labour').select('hours, overtime_hours, entry:entries!inner(project_id, status, entry_date)').eq('entry.project_id', projectId).eq('entry.status', 'signed').gte('entry.entry_date', yearAgoDate).lte('entry.entry_date', today),
   ]);
 
   const crewNames = ((crew.data ?? []) as Array<{ name: string }>).map((c) => c.name);

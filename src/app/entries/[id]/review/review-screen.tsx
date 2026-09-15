@@ -42,6 +42,8 @@ import { SpecBlock, type SpecLine } from './spec-block';
 import type { ReviewWeather } from './page';
 import { fmtDate } from '@/lib/pdf/dates';
 import { minutesBetween } from '@/lib/review/minutes';
+import { workedHours } from '@/lib/review/hours';
+import { fromGate, mergeGateIntoLabour, GATE_CLOCK_FIELDS, GATE_EDITED, normaliseName as gateName, type GateSignIn, type LabourItem } from '@/lib/signin/labour';
 import { loadPlantOnJob, asKnownPlant } from '@/lib/plant/on-job';
 
 type Item = Record<string, unknown>;
@@ -309,6 +311,62 @@ export function ReviewScreen(props: {
       [group]: (prev[group] as Item[]).filter((_, i) => i !== index),
     }));
   }, []);
+
+  /**
+   * The gate feeds the labour list. Whoever signed in at the gate today is on
+   * it with the clock the gate saw; when they sign out, their finish and hours
+   * follow — as long as the row is still the gate's (see src/lib/signin/labour.ts).
+   * Checked when the screen opens, when it comes back to the front, and every
+   * minute while it is open. Nothing here is stored until the supervisor saves
+   * or signs, like everything else on this screen.
+   */
+  useEffect(() => {
+    let cancelled = false;
+    const supabase = createClient();
+    async function syncGate() {
+      if (typeof document !== 'undefined' && document.visibilityState === 'hidden') return;
+      try {
+        const [{ data: gate }, { data: crewRows }] = await Promise.all([
+          supabase
+            .from('site_signins')
+            .select('person_name, company, person_kind, signed_in_at, signed_in_on_device_at, signed_out_at, signed_out_on_device_at')
+            .eq('project_id', props.projectId)
+            .eq('signin_date', props.entryDate)
+            .in('person_kind', ['crew', 'subcontractor']),
+          supabase.from('crew').select('name, role').eq('project_id', props.projectId).eq('active', true),
+        ]);
+        if (cancelled || !gate || gate.length === 0) return;
+        const roles = new Map<string, string | null>();
+        for (const c of (crewRows ?? []) as Array<{ name: string; role: string | null }>) roles.set(gateName(c.name), c.role);
+        let touched = false;
+        setPayload((prev) => {
+          const r = mergeGateIntoLabour(prev.labour as unknown as LabourItem[], gate as GateSignIn[], roles);
+          if (!r.changed) return prev;
+          touched = true;
+          return { ...prev, labour: r.items as unknown as ReviewPayload['labour'] };
+        });
+        // Rows landing answers the section's nil question, as adding one by hand does.
+        if (touched) {
+          setNilConfirmed((prev) => {
+            const next = new Set(prev);
+            for (const [key, mapped] of Object.entries(REQUIRED_GROUP)) if (mapped === 'labour') next.delete(key as SectionKey);
+            return next;
+          });
+        }
+      } catch {
+        // No signal: the list stands as it is until the next look.
+      }
+    }
+    void syncGate();
+    const timer = window.setInterval(() => void syncGate(), 60_000);
+    const onVisible = () => { if (document.visibilityState === 'visible') void syncGate(); };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => {
+      cancelled = true;
+      window.clearInterval(timer);
+      document.removeEventListener('visibilitychange', onVisible);
+    };
+  }, [props.projectId, props.entryDate]);
 
   /**
    * The request body. The weather object is included only when it actually
@@ -1177,31 +1235,6 @@ function DocketSection({
   );
 }
 
-/**
- * Worked hours from the clock: span minus break, rolling past midnight when
- * the finish reads earlier. Mirrors the computation apply_entry_review does
- * at save time, so what the supervisor sees is what the record stores.
- */
-/** Minutes between two clock times, over midnight if it must. */
-function workedHours(
-  start: string | null | undefined,
-  finish: string | null | undefined,
-  breakMins: number | null | undefined,
-): number | null {
-  if (!start || !finish) return null;
-  const parse = (value: string) => {
-    const m = /^(\d{1,2}):(\d{2})/.exec(value);
-    return m ? Number(m[1]) * 60 + Number(m[2]) : null;
-  };
-  const from = parse(start);
-  const to = parse(finish);
-  if (from == null || to == null) return null;
-  let span = to - from;
-  if (span <= 0) span += 24 * 60;
-  const net = (span - (breakMins ?? 0)) / 60;
-  return net > 0 ? Math.round(net * 100) / 100 : null;
-}
-
 type DocketState =
   | { status: 'reading' }
   | { status: 'done'; changes: DocketChange[]; issue: string | null }
@@ -1301,6 +1334,10 @@ function ItemCard({
             entryId={entryId}
             onChange={(value) => {
               onChange(section.group, index, field.key, value);
+              // A clock touched by hand hands the row over from the gate; it stops following sign-outs.
+              if (section.group === 'labour' && GATE_CLOCK_FIELDS.has(field.key) && fromGate(item)) {
+                onPatch(section.group, index, { source_quote: GATE_EDITED });
+              }
               if (
                 section.group === 'labour' &&
                 (field.key === 'start_time' || field.key === 'finish_time' || field.key === 'break_mins')
@@ -1362,7 +1399,11 @@ function ItemCard({
       )}
 
       <div className="itemfoot">
-        {quote ? (
+        {quote && fromGate(item) ? (
+          <span className="quotebtn quotebtn--muted" title="Follows the gate until a clock is edited by hand">{quote.replace(/^Gate:/, 'From the gate —')}</span>
+        ) : quote === GATE_EDITED ? (
+          <span className="quotebtn quotebtn--muted">{quote}</span>
+        ) : quote ? (
           <button type="button" className="quotebtn" onClick={() => setShowQuote((v) => !v)}>
             {showQuote ? 'Hide what was said' : 'What was said'}
           </button>

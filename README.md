@@ -1397,6 +1397,21 @@ gets the day first. The headings, the drawer and the desktop rail draw one list 
 filtered by the role the server already knows. The section that lists the days is called **Daily
 Diary**, not "Past days": it is the diary itself, the thing the app is named for.
 
+**R45. The gate fills the labour list; the supervisor still owns it.** Mitchell: "when someone signs
+in and out, it updates on the labour hours within the daily diary … automatically, but can also be
+inserted manually." The two halves pull against each other — an automatic feed that overwrites what a
+supervisor typed is inventing a number with extra steps — so the rule is ownership. A crew member or
+subbie who signs in at the gate lands on the day's labour list with the gate's arrival clock; when they
+sign out, the finish and the hours follow (span minus whatever break the supervisor set). That row is
+the gate's, and says so under it, until the supervisor edits a clock or the hours on it — from then on
+it is theirs and the gate leaves it alone, and the row says that instead. A row typed by hand or heard
+in the recording is never overwritten: the gate fills only what is blank on it, and never a stated
+figure. Still on site means no finish and no hours — the amber "hours missing" asks, rather than the
+app guessing knock-off. The review screen looks at the gate when it opens, when it comes back to the
+front, and every minute; and as with everything on that screen, nothing reaches the record until the
+supervisor saves or signs. Signed days are untouched; a sign-out after signing is a correction, as it
+always was.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;

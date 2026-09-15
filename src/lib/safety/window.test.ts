@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { perthWindowDate, perthWindowStart } from './window.ts';
+import { perthWindowDate, perthWindowEnd, perthWindowStart } from './window.ts';
 
 test('a 30-day Perth window opens at Perth midnight 29 days back, so today is the 30th day', () => {
   assert.equal(perthWindowDate('2026-09-15', 30), '2026-08-17');
@@ -17,4 +17,9 @@ test('the date and the instant agree, and a one-day window is today alone', () =
   assert.equal(perthWindowDate('2026-09-15', 90), '2026-06-18');
   assert.equal(perthWindowDate('2026-09-15', 365), '2025-09-16');
   assert.equal(perthWindowStart('2026-09-15', 365).slice(0, 10), '2025-09-15');
+});
+test('the window closes at the end of today, Perth time, so a future-dated row stays out', () => {
+  assert.equal(perthWindowEnd('2026-09-15'), '2026-09-15T16:00:00.000Z');
+  assert.ok('2026-09-15T15:59:00Z' < perthWindowEnd('2026-09-15'), '23:59 AWST today is in');
+  assert.ok('2026-09-15T16:00:00Z' >= perthWindowEnd('2026-09-15'), 'midnight tomorrow is out');
 });

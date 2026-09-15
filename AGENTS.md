@@ -88,7 +88,11 @@ improvising; the register once shipped dead because a live smoke test was skippe
   hand, hours to the quarter), `pdf.tsx` (the day's attendance register). Table `site_signins`: the DB
   decides `inducted` at sign-in and stamps the arrival clocks; the phone's clocks travel alongside; a
   signed-out row is frozen; one open sign-in per person per day. Gate duty = `app.can_run_talks`.
-  Offline via outbox kinds `signin_in` / `signin_out`. The diary's labour list offers the day's sign-ins
+  Offline via outbox kinds `signin_in` / `signin_out`. The gate FEEDS the diary's labour list: `labour.ts`
+  (`mergeGateIntoLabour`, pure) puts each crew/subbie sign-in on the draft with the gate's clocks, and the
+  sign-out brings the finish and hours; the row is the gate's (`source_quote` starts `Gate:`) until a clock is
+  edited by hand, and a row typed or heard is only ever filled where blank. The review screen polls it every
+  minute. Nothing is stored until the supervisor saves or signs, as ever
 - `src/lib/swms/` — SWMS and JSA: `model.ts` (the 18 high-risk categories of WHS r.291, the 5×5 risk matrix,
   `readSteps`, `swmsProblems` — the TS half of `app.swms_problems`, the DB wins), `pdf.tsx`. Tables `swms`
   (born a draft; `active` only when complete, then frozen; a revision has `supersedes_id` and supersedes on
