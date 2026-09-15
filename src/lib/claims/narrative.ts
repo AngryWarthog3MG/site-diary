@@ -28,10 +28,10 @@ Hard rules:
 - No pleading, no adjectives, no legal posturing. State, cite, stop.
 - Open with one line: "DRAFT for review — prepared from the signed site diary record. Not a contractual notice until reviewed and issued."`;
 
-/** How long the whole draft may take before we stop and say so, well inside the route's own limit. */
-const BUDGET_MS = 150_000;
-/** One model call may take this long; the SDK then gives up rather than the platform cutting us off. */
-const CALL_TIMEOUT_MS = 80_000;
+/** How long the whole draft may take before we stop and say so, inside the route's 240 s. */
+const BUDGET_MS = 210_000;
+/** One model call may take this long, once; the SDK then gives up rather than the platform cutting us off. */
+const CALL_TIMEOUT_MS = 150_000;
 
 /**
  * What the model is given: the claims register and only the claims register.
@@ -62,7 +62,7 @@ export async function draftClaimNarrative(
   data: ClaimsData,
 ): Promise<{ draft: string | null; rejected?: string[]; failure?: string }> {
   if (!process.env.ANTHROPIC_API_KEY) return { draft: null, failure: 'ANTHROPIC_API_KEY is not set.' };
-  const client = new Anthropic({ timeout: CALL_TIMEOUT_MS, maxRetries: 1 });
+  const client = new Anthropic({ timeout: CALL_TIMEOUT_MS, maxRetries: 0 });
   const started = Date.now();
   const input = narrativeInput(data);
   const allowed = allowedNumbers(input);
@@ -72,10 +72,12 @@ export async function draftClaimNarrative(
       { role: 'user', content: `Draft the claim skeleton for ${data.project.name}.\n\n# Claims register (signed entries only)\n\n${input}` },
     ];
     if (correction) messages.push({ role: 'user', content: correction });
+    // No extended thinking here: measured on a register this size, thinking took
+    // 64 s for a draft the plain call wrote in 27 s at the same length, and the
+    // figures are checked by code below, not by the model's deliberation.
     const response = await client.messages.create({
       model: CLAIMS_MODEL,
-      max_tokens: 8000,
-      thinking: { type: 'adaptive' },
+      max_tokens: 4000,
       system: [{ type: 'text', text: SYSTEM_PROMPT, cache_control: { type: 'ephemeral' } }],
       messages,
     });

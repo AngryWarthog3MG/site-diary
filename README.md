@@ -1530,6 +1530,17 @@ both times are said, so the rule was tightened to say so and the three affected 
 (a fraction of a run) before shipping. The eval's `invented` line counts extra items too; those are
 fixture-design disagreements of the same kind v13 shipped with, and are judged one by one, not summed.
 
+**R55. The claims draft that timed out.** Mitchell: "claims draft has error." The platform was
+cutting the route off at 120 seconds with no message. Two causes, both of the day: the variation
+tracker had put the status ledger and each day's text onto the claims data, and the whole of that was
+being serialised into the model's input; and the draft ran with extended thinking and an 8,000-token
+cap, which on a register this size measured 64 seconds against 27 without, for the same length of
+draft. Now the model is given the claim figures alone, thinks in the ordinary way (the numerals are
+checked by code, not by deliberation), gets one attempt of up to 150 seconds, skips the corrective
+retry when it would breach the budget, and the route allows 240. A slow answer is a sentence on the
+screen, never a blank platform error. Lesson for the record: whatever rides on `ClaimsData` for a
+screen reaches the narrative unless the narrative's input is built on purpose.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;
