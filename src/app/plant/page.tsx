@@ -133,7 +133,6 @@ export default async function PlantPage({ searchParams }: { searchParams: Promis
       </p>
       <PlantRegister orgId={orgId} projectId={current.project_id} initial={rows} onJob={[...onJob]} canEdit={canRun} />
 
-      <Link className="button button--quiet" href="/">Home</Link>
     </main>
   );
 }

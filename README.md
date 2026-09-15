@@ -1448,6 +1448,13 @@ serial, the history of who moved it and when, and the same controls as before. T
 one line of text, because the day's dropdown is where numbers are picked. The Claims screen keeps its
 plainer section; both read the same loader.
 
+**R48. Home under the thumb.** Mitchell: "add a home button to each section and screen so people can go
+back to the home page." The top bar had one, but a top bar is where you were, not where you are after
+reading down a long screen with gloves on. One component in the root layout (`src/components/home-foot.tsx`)
+puts a solid Home button at the foot of every screen but Home itself and the public gate flows, carrying
+the job so Home opens on the same project. Three screens had grown their own Home button, each of which
+dropped the job; they use the foot now. On a desk the rail carries Home and the foot steps aside.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;

@@ -188,7 +188,6 @@ export function NewPrestartForm({
           This screen was opened from the phone&rsquo;s cache for a different job. Open it again once
           you have signal, or go back and start from Home.
         </p>
-        <Link className="button button--quiet" href="/">Home</Link>
       </main>
     );
   }

@@ -191,7 +191,6 @@ export default async function ReviewPage({ params }: { params: Promise<{ id: str
             tell the office. Do not re-type the day.
           </p>
           <Link className="button button--quiet" href={`/entries/${id}/docket`}>See what is recorded (read only)</Link>
-          <Link className="button button--quiet" href="/">Home</Link>
         </main>
       );
     }
