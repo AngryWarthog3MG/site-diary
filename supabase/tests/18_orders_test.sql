@@ -60,6 +60,13 @@ end $$;
 select tests.expect_error($q$
   update public.orders set quantity = '800 L' where id = 'dddddddd-0000-0000-0000-000000000001'
 $q$, 'does not change');
+-- Not ordered after all: back to open leaves no supplier or reference behind.
+update public.orders set status = 'open' where id = 'dddddddd-0000-0000-0000-000000000001';
+do $$ declare o public.orders; begin
+  select * into o from public.orders where id = 'dddddddd-0000-0000-0000-000000000001';
+  assert o.status = 'open' and o.ordered_at is null and o.supplier is null and o.order_ref is null, 'back to open kept order details';
+end $$;
+update public.orders set status = 'ordered', supplier = 'Ampol', order_ref = 'PO-118' where id = 'dddddddd-0000-0000-0000-000000000001';
 select tests.expect_error($q$
   insert into public.orders (project_id, kind, item, raised_by) values ('bbbbbbbb-0000-0000-0000-000000000001', 'material', 'PM cannot raise', '33333333-3333-3333-3333-333333333333')
 $q$, 'row-level security');

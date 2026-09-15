@@ -172,8 +172,13 @@ async function replay(item: OutboxItem): Promise<void> {
       const { data, error } = await supabase.from('orders').update(p.patch as Record<string, unknown>).eq('id', item.subjectId).select('id');
       if (error && !isFrozen(error)) throw error;
       if (!error && (!data || data.length === 0)) {
+        // Nothing changed and no error: either it was finished by someone else
+        // (done is done) or this account can no longer see or move it — which is
+        // a blocked item to show, never a change to drop on the floor.
         const { data: row } = await supabase.from('orders').select('status').eq('id', item.subjectId).maybeSingle();
-        if (row && row.status === 'open') throw Object.assign(new Error('The change could not be recorded from this account.'), { code: '42501' });
+        if (!row || row.status === 'open' || row.status === 'ordered') {
+          throw Object.assign(new Error('The change could not be recorded from this account.'), { code: '42501' });
+        }
       }
       return;
     }
