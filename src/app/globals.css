@@ -4001,3 +4001,13 @@ a.dash-row:hover { background: var(--teal-tint); }
   .chemreg .page-subtitle { display: none; }
   .chemreg__asof { display: block !important; font-size: 10pt; }
 }
+
+/* The WorkSafe trail on a notifiable incident. */
+.regpanel__todo { margin-top: 0.4rem; }
+.regpanel__facts { display: grid; grid-template-columns: minmax(7rem, auto) 1fr; gap: 0.3rem 0.9rem; margin: 0.7rem 0 0; font-size: 0.875rem; }
+.regpanel__facts dt { color: var(--ink-60); }
+.regpanel__facts dd { margin: 0; }
+.regpanel__log { margin-top: 0.7rem; font-size: 0.875rem; }
+.regpanel__log summary { cursor: pointer; }
+.regpanel__form { margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid var(--ink-12); }
+@media (max-width: 480px) { .regpanel__facts { grid-template-columns: 1fr; gap: 0.1rem; } .regpanel__facts dd { margin-bottom: 0.4rem; } }

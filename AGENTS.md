@@ -117,7 +117,13 @@ improvising; the register once shipped dead because a live smoke test was skippe
   `incident_updates` (append-only, for everyone), `incident_actions` (done stamped by the DB, then frozen).
   Reporting/updates = `app.can_run_talks`; managing/closing = `app.can_manage_incidents` (supervisor/admin).
   Outbox kind `incident_report` (photos as blobs). `/api/incidents/[id]/notify` emails `projects.report_emails`
-  for urgent reports, once (`notified_at`). Reports are never deleted — a drill closes its own
+  for urgent reports, once (`notified_at`). Reports are never deleted — a drill closes its own. The WorkSafe trail for a
+  notifiable incident is `incident_regulator_events` (became_aware, notified, written_notice_required/given, site_preserved,
+  site_released): events, not columns, because the report is frozen on first account and the trail unfolds over days.
+  `regulator.ts` reads state off them (minutes to notify, the 48-hour written notice clock, the five-year keep-until date).
+  A notification must carry its method, preservation must name the duty-holder, nothing is in the future, each is frozen.
+  Managers write it; the labourer does not read it. Unnotified incidents and outstanding written notices show on `/due`.
+  Suite 22. README R62
 - `src/lib/inspections/` — inspections and audits: `model.ts` (kinds, the four built-in templates, `templateFromLines`,
   `readItems`, `findings`), `pdf.tsx`. Tables `inspection_templates` (org; `app.can_manage_crew`), `inspections`
   (born open; the signature completes it over ≥1 answered item from its own folder — `app.inspection_answered`;

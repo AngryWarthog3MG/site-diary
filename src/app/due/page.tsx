@@ -17,6 +17,7 @@ const SOURCE_LABEL: Record<ObligationItem['source'], string> = {
   scheduled: 'Schedule',
   sds: 'Chemicals',
   ticket: 'Tickets',
+  incident: 'WorkSafe',
 };
 
 /**

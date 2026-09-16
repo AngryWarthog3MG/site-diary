@@ -124,7 +124,7 @@ export function daysLate(completion: CompletionFacts): number {
 }
 
 /** Where an item came from. Only 'scheduled' is stored as an obligation; the rest are read off their records. */
-export type ItemSource = 'scheduled' | 'sds' | 'ticket';
+export type ItemSource = 'scheduled' | 'sds' | 'ticket' | 'incident';
 
 export interface ObligationItem {
   key: string;

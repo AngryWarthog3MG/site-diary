@@ -2,6 +2,8 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { TICKET_LABEL, normaliseName, type TicketType } from '@/lib/crew/tickets';
 import { loadChemicals } from '@/lib/chemicals/load';
 import { SDS_STATUS_LABEL } from '@/lib/chemicals/model';
+import { regulatorState, perthDay, type RegulatorEvent } from '@/lib/incidents/regulator';
+import { incidentRef } from '@/lib/incidents/model';
 import {
   dueStatus, nextDue, onTime, sortItems, summarise, KIND_LABEL,
   type ObligationItem, type ObligationKind,
@@ -42,7 +44,7 @@ export async function loadObligations(
   today: string,
 ): Promise<ObligationsData> {
   const q = `?project=${projectId}`;
-  const [{ data: schedRows }, chemicals, { data: crewRows }, { data: ticketRows }] = await Promise.all([
+  const [{ data: schedRows }, chemicals, { data: crewRows }, { data: ticketRows }, { data: notifiableRows }, { data: regRows }] = await Promise.all([
     supabase
       .from('obligations')
       .select('id, project_id, kind, title, basis, interval_months, first_due_on, active, obligation_completions(id, due_on, done_on, evidence_note, evidence_ref, created_at, done_by)')
@@ -52,6 +54,8 @@ export async function loadObligations(
     loadChemicals(supabase, projectId, orgId, today),
     supabase.from('crew').select('name').eq('project_id', projectId).eq('active', true),
     supabase.from('crew_tickets').select('id, person_name, ticket_type, expires_on, active').eq('org_id', orgId).eq('active', true).not('expires_on', 'is', null),
+    supabase.from('incidents').select('id, seq, notifiable').eq('project_id', projectId).eq('notifiable', true),
+    supabase.from('incident_regulator_events').select('id, kind, happened_at, method, person_name, detail, incident:incidents!inner(id, seq, notifiable, project_id)').eq('incident.project_id', projectId),
   ]);
 
   const scheduled = (schedRows ?? []) as ScheduledRow[];
@@ -116,6 +120,45 @@ export async function loadObligations(
       dueOn: t.expires_on, status,
       href: `/training${q}`,
     });
+  }
+
+  // Notifiable incidents: telling WorkSafe is due the moment the business is aware, and written
+  // notice 48 hours after WorkSafe asks for it (WHS Act 2020 (WA) s. 38). Read off the events.
+  const byIncident = new Map<string, { seq: number; notifiable: boolean; events: RegulatorEvent[] }>();
+  for (const i of (notifiableRows ?? []) as Array<{ id: string; seq: number; notifiable: boolean }>) {
+    byIncident.set(i.id, { seq: i.seq, notifiable: i.notifiable, events: [] });
+  }
+  for (const e of (regRows ?? []) as Array<RegulatorEvent & { incident: { id: string; seq: number; notifiable: boolean } | Array<{ id: string; seq: number; notifiable: boolean }> }>) {
+    const inc = Array.isArray(e.incident) ? e.incident[0] : e.incident;
+    if (!inc) continue;
+    const entry = byIncident.get(inc.id) ?? { seq: inc.seq, notifiable: inc.notifiable, events: [] };
+    entry.events.push({ id: e.id, kind: e.kind, happened_at: e.happened_at, method: e.method, person_name: e.person_name, detail: e.detail });
+    byIncident.set(inc.id, entry);
+  }
+  const nowIso = new Date().toISOString();
+  for (const [id, inc] of byIncident) {
+    const st = regulatorState(inc.notifiable, inc.events, nowIso);
+    if (!st.applies) continue;
+    const ref = incidentRef(inc.seq);
+    if (!st.notifiedAt) {
+      items.push({
+        key: `incident-notify:${id}`, source: 'incident',
+        title: `Notify WorkSafe WA — ${ref}`,
+        basis: 'WHS Act 2020 (WA) s. 38 · immediately after becoming aware · 1800 678 198',
+        dueOn: st.becameAwareAt ? perthDay(st.becameAwareAt) : today, status: 'overdue',
+        href: `/incidents/${id}`,
+      });
+    }
+    if (st.writtenNoticeDueAt && !st.writtenNoticeGivenAt) {
+      const dueDay = perthDay(st.writtenNoticeDueAt);
+      items.push({
+        key: `incident-written:${id}`, source: 'incident',
+        title: `Written notice to WorkSafe WA — ${ref}`,
+        basis: 'WHS Act 2020 (WA) s. 38(4)(b) · within 48 hours of the requirement',
+        dueOn: dueDay, status: st.writtenNoticeOverdue ? 'overdue' : 'due_soon',
+        href: `/incidents/${id}`,
+      });
+    }
   }
 
   const sorted = sortItems(items);

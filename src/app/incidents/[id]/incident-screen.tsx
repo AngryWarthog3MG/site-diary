@@ -21,13 +21,13 @@ export interface IncidentView {
   actions: Array<{ id: string; action: string; owner_name: string | null; due_on: string | null; done_at: string | null; done_note: string | null; created_by: string }>;
 }
 
-interface Props { incident: IncidentView; crew: string[]; canReport: boolean; canManage: boolean; userId: string; today: string }
+interface Props { incident: IncidentView; crew: string[]; canReport: boolean; canManage: boolean; userId: string; today: string; /** The WorkSafe trail, drawn under the notifiable warning. */ regulator?: React.ReactNode }
 
 const UPDATE_KINDS: Array<{ key: string; label: string }> = [
   { key: 'note', label: 'Note' }, { key: 'investigation', label: 'Investigation' }, { key: 'root_cause', label: 'Root cause' }, { key: 'regulator', label: 'Regulator contact' },
 ];
 
-export function IncidentScreen({ incident: r, crew, canReport, canManage, userId, today }: Props) {
+export function IncidentScreen({ incident: r, crew, canReport, canManage, userId, today, regulator }: Props) {
   const router = useRouter();
   const [urls, setUrls] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState<string | null>(null);
@@ -116,6 +116,7 @@ export function IncidentScreen({ incident: r, crew, canReport, canManage, userId
       {r.notifiable && !closed && (
         <p className="alert" role="alert">Notifiable: WorkSafe WA must be told immediately by phone on <a href="tel:1800678198"><strong>1800 678 198</strong></a> (24 hours), and the site left undisturbed until an inspector says otherwise.</p>
       )}
+      {regulator}
 
       <div className="item">
         <p className="label">The report — first account, frozen</p>

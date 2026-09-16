@@ -1674,6 +1674,27 @@ auditor reads, and every field stays editable because a principal's contract can
 than a standard's "planned intervals". Plant inspections, hold points and non-conformance close-outs join
 as derived items when those modules are built. Suite 21.
 
+**R62. A notifiable incident is a trail of times, not a flag.** The report carried one boolean,
+`notifiable`. The WHS Act 2020 (WA) makes compliance a matter of times: s. 38 requires notice "immediately
+after becoming aware"; where notice was by phone the regulator may require written notice within 48 hours of
+asking; s. 38(7) keeps the record "for at least 5 years from the day that notice of the incident is given"; s.
+39 leaves the site undisturbed until an inspector arrives or directs otherwise. None of those times had a home.
+
+They are events, not columns. The report is frozen on its first account, and a regulator trail unfolds over
+days — written notice is asked for after the call, the site is released after the inspector comes. Punching
+mutable holes in a frozen row would undo the reason it is frozen, so each step is a dated row of its own in
+`incident_regulator_events`, written by a manager, stamped with who recorded it, never re-timed or removed.
+`regulator.ts` reads the state off them: how many minutes passed between becoming aware and notifying, when
+written notice falls due and whether it is late, the Perth day the record may finally be let go.
+
+Two things the research verified shaped it. The preservation duty in s. 39 belongs to whoever has management or
+control of the workplace, which on a principal contractor's site is often not the subcontractor reporting, so a
+preservation step must name the duty-holder rather than assume it. And the claim that WorkSafe requires a
+regulator reference number to be stored was refuted, so there is room to write one in the detail and nothing
+demands it. The flag can also be raised after the fact: recording "became aware" makes the duties apply even
+where the first account said otherwise, because realising an injury was serious often comes from the hospital,
+not the site. An unnotified incident is overdue on `/due` from the moment of awareness. Suite 22.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;
