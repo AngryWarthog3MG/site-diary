@@ -96,6 +96,7 @@ export const NAV_GROUPS: NavGroup[] = [
     label: 'Setup',
     items: [
       { href: '/settings', name: 'Settings', what: 'Hours, emails, crew and plant lists', screen: 'settings' },
+      { href: '/name', name: 'Your name', what: 'How your name prints on the sheets' },
       { href: '/settings/vocabulary', name: 'Words and names', what: 'Names and site terms', when: 'canRecord' },
       { href: '/portfolio', name: 'All jobs', what: 'Every active site at once', when: 'multiJob' },
     ],

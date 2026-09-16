@@ -68,6 +68,39 @@ function AccessGrid({ member, canEdit, busy, onSave }: { member: MemberRow; canE
   );
 }
 
+/** The member's name as the sheets print it; an admin can set it. */
+function NameLine({ member, canEdit, busy, onSave }: { member: MemberRow; canEdit: boolean; busy: boolean; onSave: (name: string) => Promise<boolean> }) {
+  const [editing, setEditing] = useState(false);
+  const [value, setValue] = useState(member.name ?? '');
+  return (
+    <>
+      <p style={{ margin: 0, fontWeight: 600 }}>
+        {member.name ?? <span className="vr-missing">No name yet — sheets would show their email</span>}
+        {member.isCurrentUser ? ' · you' : ''}
+      </p>
+      {canEdit && !editing && (
+        <button type="button" className="linklike" disabled={busy} onClick={() => { setValue(member.name ?? ''); setEditing(true); }}>
+          {member.name ? 'Change name' : 'Set their name'}
+        </button>
+      )}
+      {editing && (
+        <form
+          className="signin__grid"
+          style={{ alignItems: 'end', margin: '0.25rem 0' }}
+          onSubmit={(e) => { e.preventDefault(); void onSave(value).then((saved) => { if (saved) setEditing(false); }); }}
+        >
+          <label className="fieldcell">
+            <span className="label">Name on the sheets</span>
+            <input id={`member-name-${member.userId}`} className="field field--sm" autoCapitalize="words" autoFocus value={value} onChange={(e) => setValue(e.target.value)} />
+          </label>
+          <button type="submit" className="button button--quiet" disabled={busy || !value.trim()}>Save</button>
+          <button type="button" className="linklike" onClick={() => setEditing(false)}>Cancel</button>
+        </form>
+      )}
+    </>
+  );
+}
+
 export function MembersForm({
   projectId,
   projectRef,
@@ -160,10 +193,12 @@ export function MembersForm({
             return (
               <article key={member.userId} className="member">
                 <div>
-                  <p style={{ margin: 0, fontWeight: 600 }}>
-                    {member.name ?? member.email ?? 'Unnamed member'}
-                    {member.isCurrentUser ? ' · you' : ''}
-                  </p>
+                  <NameLine
+                    member={member}
+                    canEdit={canEdit}
+                    busy={busy !== null}
+                    onSave={(name) => request('PATCH', { userId: member.userId, name }, `name:${member.userId}`)}
+                  />
                   <p className="mono" style={{ margin: '0.125rem 0 0', color: 'var(--ink-60)', fontSize: '0.8125rem' }}>
                     {member.email ?? member.userId}
                   </p>

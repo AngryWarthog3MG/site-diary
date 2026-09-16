@@ -2,6 +2,7 @@ import { fail, ok, readJson, requireApiUser, isUuid } from '@/lib/api';
 import { createAdminClient } from '@/lib/supabase/admin';
 import type { MemberRole } from '@/types/database';
 import { SCREENS, grantableScreens, type Screen } from '@/lib/roles';
+import { cleanName } from '@/lib/people/name';
 
 const ROLES = new Set<MemberRole>(['supervisor', 'leading_hand', 'labourer', 'pm', 'admin']);
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -115,6 +116,22 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
   const userId = body?.userId;
   const role = body?.role;
   if (!isUuid(userId)) return fail('bad_request', 'Bad user id.', 400);
+
+  // The name printed on the sheets. An admin sets it for someone on THIS job — the
+  // person can change their own at /name. Profiles only let a person write their own
+  // row, so the write is the service role's, after the admin and membership checks.
+  if (body && typeof body === 'object' && 'name' in body) {
+    const result = cleanName((body as { name: unknown }).name);
+    if (!result.ok) return fail('bad_request', result.message, 400);
+    const { data: member, error: mErr } = await auth.supabase.from('project_members').select('user_id').eq('project_id', projectId).eq('user_id', userId).maybeSingle();
+    if (mErr) return fail('server_error', mErr.message, 500);
+    if (!member) return fail('not_found', 'That person is not on this job.', 404);
+    const admin = createAdminClient();
+    const { error } = await admin.from('profiles').update({ full_name: result.name }).eq('id', userId);
+    if (error) return fail('server_error', error.message, 500);
+    await admin.auth.admin.updateUserById(userId, { user_metadata: { full_name: result.name } }).catch(() => undefined);
+    return ok({ message: `Name set: ${result.name}. New sheets will print it.` });
+  }
 
   // Access by tick box: exactly these screens, or null for the role's own list. Checked
   // against the list of screens there are and this role's ceiling, so a stray name can

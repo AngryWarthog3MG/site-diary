@@ -1859,6 +1859,16 @@ A record is frozen, and its retention date is stamped by the database from the m
 and the file is removed if the row is refused. What's due lists health monitoring falling due as a count per programme, never
 a name, read off each person's latest record, and only for a keeper, because only a keeper's query returns rows. Suite 29.
 
+**R70. A person's name on the sheets, never their email.** People sign in with an email address, and every sheet and
+screen prints `profiles.full_name`, falling back to the email only when no name was ever given. Accounts made by adding a
+single email, or a bulk line with no name, had none, so a supervisor's prestart could go out signed by an address. Mitchell
+asked for names on the sheets. Rather than chase the fallback through thirty places, nobody can reach a screen without a
+name: `requireUser` sends a nameless account to `/name` first, once. The same page changes it later ("Your name" in the
+menu), and an admin can set a member's name from the members screen, written by the service role after the admin and
+membership checks because profiles only let a person write their own row. The database refuses a blank name or one with an
+@ in it (`profiles_full_name_is_a_name`); `src/lib/people/name.ts` is the TypeScript half. A diary PDF is stored the first
+time it is opened, so one that has been opened keeps the name it printed. Suite 30.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;

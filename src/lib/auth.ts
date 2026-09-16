@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation';
 import { sees, type Screen } from '@/lib/roles';
 import { createClient } from '@/lib/supabase/server';
 import type { MemberRole, Profile } from '@/types/database';
+import { needsName } from '@/lib/people/name';
 
 export interface Membership {
   project_id: string;
@@ -57,6 +58,12 @@ export async function requireUser(): Promise<SessionContext> {
   // message tells a seated supervisor they have been removed, over a blip.
   if (membershipError) {
     throw new Error(`Could not load your projects: ${membershipError.message}`);
+  }
+
+  // A person's name goes on the sheets, never their email address: nobody reaches a
+  // screen until they have given one (README R70).
+  if (needsName(profile as { full_name: string | null } | null)) {
+    redirect('/name');
   }
 
   return {

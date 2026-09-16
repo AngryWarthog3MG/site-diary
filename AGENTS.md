@@ -247,6 +247,9 @@ improvising; the register once shipped dead because a live smoke test was skippe
   `retain_until` stamped), `lead_risk_notifications` (within 7 days, constraint). Bucket `health-records`
   `{org}/{program}/{record}.ext`, keepers only. `/health`. Never put a monitored person's name anywhere a non-keeper reads —
   What's due, the safety dashboard, a PDF, a push, an email. Suite 29
+- `src/lib/people/name.ts` — the name on the sheets (README R70): `cleanName`, `needsName`. `requireUser` redirects a nameless
+  account to `/name` (which must never call `requireUser`); admins set names via PATCH `/api/projects/[id]/members` `{ userId, name }`.
+  DB constraint `profiles_full_name_is_a_name`. Never print an email where a person's name belongs. Suite 30
 - `src/lib/safety/` — the dashboard: `stats.ts` (pure: `classify` injuries MTI/FAI, `injurySummary` with the
   rate per million labour hours, `daysSinceLastInjury`, `monthBuckets`, `overdue`), `load.ts` (one gather under the
   caller's RLS across sign-ins, prestarts, plant, permits, incidents, inspections, tickets, subcontractors, SWMS,
