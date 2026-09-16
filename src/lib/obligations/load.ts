@@ -6,6 +6,7 @@ import { regulatorState, perthDay, type RegulatorEvent } from '@/lib/incidents/r
 import { incidentRef } from '@/lib/incidents/model';
 import { loadEmergency } from '@/lib/emergency/load';
 import { withoutWhiteCard } from '@/lib/construction/model';
+import { registerInForce, planReviewDue, notBriefed } from '@/lib/asbestos/model';
 import { ncrRef, lotRef, ncrReportState, holdsAwaitingRelease, calibrationStatus, CALIBRATION_LABEL, type PointType, type Result } from '@/lib/quality/model';
 import { nextInspection, registrationStatus, REGISTRATION_LABEL, type InspectionBasis, type RecordKind, type Outcome } from '@/lib/plant/inspections';
 import {
@@ -48,7 +49,7 @@ export async function loadObligations(
   today: string,
 ): Promise<ObligationsData> {
   const q = `?project=${projectId}`;
-  const [{ data: schedRows }, chemicals, { data: crewRows }, { data: ticketRows }, { data: notifiableRows }, { data: regRows }, emergency, { data: plantRows }, { data: pcRow }, { data: whsPlanRows }, { data: whiteCards }, { data: ncrRows }, { data: openLots }, { data: equipRows }, { data: findingRows }, { data: reviewActionRows }] = await Promise.all([
+  const [{ data: schedRows }, chemicals, { data: crewRows }, { data: ticketRows }, { data: notifiableRows }, { data: regRows }, emergency, { data: plantRows }, { data: pcRow }, { data: whsPlanRows }, { data: whiteCards }, { data: ncrRows }, { data: openLots }, { data: equipRows }, { data: findingRows }, { data: reviewActionRows }, { data: asbestosRows }] = await Promise.all([
     supabase
       .from('obligations')
       .select('id, project_id, kind, title, basis, interval_months, first_due_on, active, obligation_completions(id, due_on, done_on, evidence_note, evidence_ref, created_at, done_by)')
@@ -70,6 +71,7 @@ export async function loadObligations(
     supabase.from('measuring_equipment').select('id, name, active, equipment_calibrations(calibrated_on, due_on, certificate_no)').eq('org_id', orgId).eq('active', true),
     supabase.from('audit_findings').select('id, seq, action, due_on, audit:audits!inner(id, org_id, project_id, status, audit_date)').is('done_at', null).not('action', 'is', null).eq('audit.org_id', orgId).eq('audit.status', 'issued').or(`project_id.eq.${projectId},project_id.is.null`, { referencedTable: 'audit' }),
     supabase.from('review_actions').select('id, action, due_on, review:management_reviews!inner(id, org_id, project_id, status, held_on)').is('done_at', null).eq('review.org_id', orgId).eq('review.status', 'issued').or(`project_id.eq.${projectId},project_id.is.null`, { referencedTable: 'review' }),
+    supabase.from('asbestos_registers').select('id, register_date, superseded_by, asbestos_present, plan_date, plan_file_path, asbestos_acknowledgements(person_name)').eq('project_id', projectId),
   ]);
 
   const scheduled = (schedRows ?? []) as ScheduledRow[];
@@ -260,6 +262,22 @@ export async function loadObligations(
     const rv = Array.isArray(ra.review) ? ra.review[0] : ra.review;
     if (!rv) continue;
     items.push({ key: `review-action:${ra.id}`, source: 'audits', title: `Management review action — ${ra.action}`, basis: 'Carried forward until closed out', dueOn: ra.due_on ?? rv.held_on, status: ra.due_on ? dueStatus(ra.due_on, today) : 'due_soon', href: `/audits/review/${rv.id}${q}` });
+  }
+
+  // Asbestos (WHS (General) Regs 2022 (WA) regs 425, 429): a plan where it is present, its five-yearly review, the crew briefed.
+  const asb = registerInForce((asbestosRows ?? []) as Array<{ id: string; register_date: string; superseded_by: string | null; asbestos_present: boolean; plan_date: string | null; plan_file_path: string | null; asbestos_acknowledgements: Array<{ person_name: string }> }>);
+  if (asb && asb.asbestos_present) {
+    const href = `/asbestos${q}`;
+    if (!asb.plan_file_path) {
+      items.push({ key: 'asbestos-plan', source: 'asbestos', title: 'Asbestos management plan — asbestos is present', basis: 'WHS (General) Regs 2022 (WA) reg. 429', dueOn: today, status: 'overdue', href });
+    } else {
+      const review = planReviewDue(asb);
+      if (review) items.push({ key: 'asbestos-plan-review', source: 'asbestos', title: 'Asbestos management plan review', basis: 'WHS (General) Regs 2022 (WA) reg. 429 · at least every five years', dueOn: review, status: dueStatus(review, today), href });
+    }
+    const unbriefed = notBriefed(((crewRows ?? []) as Array<{ name: string }>).map((c) => c.name), (asb.asbestos_acknowledgements ?? []).map((a) => a.person_name));
+    if (unbriefed.length > 0) {
+      items.push({ key: 'asbestos-brief', source: 'asbestos', title: `Brief the crew on the asbestos register — ${unbriefed.length === 1 ? unbriefed[0] : `${unbriefed.length} not yet briefed`}`, basis: 'WHS (General) Regs 2022 (WA) reg. 425 · register readily accessible to workers', dueOn: today, status: 'due_soon', href });
+    }
   }
 
   const sorted = sortItems(items);

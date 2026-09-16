@@ -233,6 +233,13 @@ improvising; the register once shipped dead because a live smoke test was skippe
   the `obligation_completions` row IN THE SAME TRIGGER, using `app.obligation_next_due` — the SQL twin of `nextDue`; change
   both together. Access reuses `app.obligation_readable` / `app.obligation_manageable`. `/audits`, `/audits/{audit,review}/[id]`;
   open actions appear on What's due. Suite 27
+- `src/lib/asbestos/` — regs 425, 429, 466 (README R68): `model.ts` (`registerInForce`, `planReviewDue` five-yearly, `notBriefed`,
+  `notRequiredProblem` — all three limbs, `removalProblems` — five days' notice unless emergency, friable is Class A). Tables
+  `asbestos_registers` (status received | own | not_required; names the duty holder; `superseded_by` is the only change a register
+  takes, once; files in bucket `asbestos-docs` `{project}/{register}/{register|plan}.ext`), `asbestos_acknowledgements` (who was
+  briefed, once per person, on the register in force only), `asbestos_removals` (constraints mirror reg. 466). Registers and
+  briefings readable by every member (reg. 425: accessible to workers); removals follow the record read lock. `/asbestos`;
+  What's due flags a missing plan where asbestos is present, the plan's review, and crew not briefed. Suite 28
 - `src/lib/safety/` — the dashboard: `stats.ts` (pure: `classify` injuries MTI/FAI, `injurySummary` with the
   rate per million labour hours, `daysSinceLastInjury`, `monthBuckets`, `overdue`), `load.ts` (one gather under the
   caller's RLS across sign-ins, prestarts, plant, permits, incidents, inspections, tickets, subcontractors, SWMS,

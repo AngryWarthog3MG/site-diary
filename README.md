@@ -1825,6 +1825,22 @@ reference back to the report — through `app.obligation_next_due`, which comput
 does. Doing it as a second write from the phone would have let a report exist with its schedule still showing overdue.
 Open actions from issued audits and reviews appear on What's due. Suite 27.
 
+**R68. Asbestos: mostly a register received, not one written.** WHS (General) Regulations 2022 (WA) reg. 425 puts
+the asbestos register on the person with management or control of the workplace, reg. 429 adds a management plan wherever
+asbestos is identified or presumed, and reg. 466 requires licensed removal notified to WorkSafe five days ahead. The research's
+design point decided the shape: on a principal contractor's site the duty holder is usually the principal contractor or the
+owner, not this company. So the main act is receiving their register, keeping it where the crew can reach it, and briefing
+the crew on it — and the app records exactly that.
+
+A register names who holds the duty, its date and reference, what it says in brief, whether asbestos is present, and the
+document itself; where asbestos is present, the management plan and its date, with the review falling due five years on. A
+newer register supersedes the old, which is kept and frozen. "No register required" is accepted only with all three of reg.
+425's limbs stated — built after 2003, none identified, none likely — because any one of them alone is how the exception gets
+misused. Briefings are recorded by name against the register in force, once each, and What's due lists anyone on the crew
+not yet briefed where asbestos is present. A removal records the removalist, licence class and number, the notification and
+the start of work; the database refuses friable asbestos under anything but a Class A licence and fewer than five days'
+notice unless it is an emergency. Suite 28.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;
