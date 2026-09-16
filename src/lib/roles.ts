@@ -64,11 +64,11 @@ export function canExportReports(role: MemberRole): boolean {
 }
 
 export type Screen =
-  | 'today' | 'entries' | 'weekly' | 'prestart' | 'plant' | 'toolbox' | 'signin' | 'swms' | 'incidents' | 'inspections' | 'permits' | 'subcontractors' | 'procedures' | 'training' | 'safety' | 'orders' | 'chemicals' | 'obligations' | 'emergency' | 'construction' | 'quality' | 'audits' | 'asbestos'
+  | 'today' | 'entries' | 'weekly' | 'prestart' | 'plant' | 'toolbox' | 'signin' | 'swms' | 'incidents' | 'inspections' | 'permits' | 'subcontractors' | 'procedures' | 'training' | 'safety' | 'orders' | 'chemicals' | 'obligations' | 'emergency' | 'construction' | 'quality' | 'audits' | 'asbestos' | 'health'
   | 'claims' | 'variations' | 'progress' | 'ask' | 'documents' | 'settings';
 
 /** Every screen there is, in the order the Members screen lists them. */
-export const SCREENS: Screen[] = ['today', 'entries', 'weekly', 'signin', 'claims', 'variations', 'progress', 'quality', 'audits', 'safety', 'obligations', 'emergency', 'incidents', 'inspections', 'permits', 'swms', 'chemicals', 'asbestos', 'construction', 'prestart', 'toolbox', 'plant', 'orders', 'training', 'subcontractors', 'procedures', 'documents', 'ask', 'settings'];
+export const SCREENS: Screen[] = ['today', 'entries', 'weekly', 'signin', 'claims', 'variations', 'progress', 'quality', 'audits', 'safety', 'obligations', 'emergency', 'incidents', 'inspections', 'permits', 'swms', 'chemicals', 'asbestos', 'construction', 'prestart', 'toolbox', 'plant', 'orders', 'training', 'health', 'subcontractors', 'procedures', 'documents', 'ask', 'settings'];
 
 /** A membership as the gates read it: the role, and the screens ticked for this person (null = the role's list). */
 export interface Access { role: MemberRole; screens?: readonly string[] | null }

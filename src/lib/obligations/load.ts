@@ -7,6 +7,7 @@ import { incidentRef } from '@/lib/incidents/model';
 import { loadEmergency } from '@/lib/emergency/load';
 import { withoutWhiteCard } from '@/lib/construction/model';
 import { registerInForce, planReviewDue, notBriefed } from '@/lib/asbestos/model';
+import { programmesDue } from '@/lib/health/model';
 import { ncrRef, lotRef, ncrReportState, holdsAwaitingRelease, calibrationStatus, CALIBRATION_LABEL, type PointType, type Result } from '@/lib/quality/model';
 import { nextInspection, registrationStatus, REGISTRATION_LABEL, type InspectionBasis, type RecordKind, type Outcome } from '@/lib/plant/inspections';
 import {
@@ -49,7 +50,7 @@ export async function loadObligations(
   today: string,
 ): Promise<ObligationsData> {
   const q = `?project=${projectId}`;
-  const [{ data: schedRows }, chemicals, { data: crewRows }, { data: ticketRows }, { data: notifiableRows }, { data: regRows }, emergency, { data: plantRows }, { data: pcRow }, { data: whsPlanRows }, { data: whiteCards }, { data: ncrRows }, { data: openLots }, { data: equipRows }, { data: findingRows }, { data: reviewActionRows }, { data: asbestosRows }] = await Promise.all([
+  const [{ data: schedRows }, chemicals, { data: crewRows }, { data: ticketRows }, { data: notifiableRows }, { data: regRows }, emergency, { data: plantRows }, { data: pcRow }, { data: whsPlanRows }, { data: whiteCards }, { data: ncrRows }, { data: openLots }, { data: equipRows }, { data: findingRows }, { data: reviewActionRows }, { data: asbestosRows }, { data: healthRows }] = await Promise.all([
     supabase
       .from('obligations')
       .select('id, project_id, kind, title, basis, interval_months, first_due_on, active, obligation_completions(id, due_on, done_on, evidence_note, evidence_ref, created_at, done_by)')
@@ -72,6 +73,8 @@ export async function loadObligations(
     supabase.from('audit_findings').select('id, seq, action, due_on, audit:audits!inner(id, org_id, project_id, status, audit_date)').is('done_at', null).not('action', 'is', null).eq('audit.org_id', orgId).eq('audit.status', 'issued').or(`project_id.eq.${projectId},project_id.is.null`, { referencedTable: 'audit' }),
     supabase.from('review_actions').select('id, action, due_on, review:management_reviews!inner(id, org_id, project_id, status, held_on)').is('done_at', null).eq('review.org_id', orgId).eq('review.status', 'issued').or(`project_id.eq.${projectId},project_id.is.null`, { referencedTable: 'review' }),
     supabase.from('asbestos_registers').select('id, register_date, superseded_by, asbestos_present, plan_date, plan_file_path, asbestos_acknowledgements(person_name)').eq('project_id', projectId),
+    // Keepers only, under RLS: anyone else gets no rows, and so no health items.
+    supabase.from('health_monitoring_records').select('program_id, person_name, monitored_on, next_due_on, program:health_monitoring_programs!inner(id, hazard, org_id, active)').eq('program.org_id', orgId).eq('program.active', true),
   ]);
 
   const scheduled = (schedRows ?? []) as ScheduledRow[];
@@ -278,6 +281,15 @@ export async function loadObligations(
     if (unbriefed.length > 0) {
       items.push({ key: 'asbestos-brief', source: 'asbestos', title: `Brief the crew on the asbestos register — ${unbriefed.length === 1 ? unbriefed[0] : `${unbriefed.length} not yet briefed`}`, basis: 'WHS (General) Regs 2022 (WA) reg. 425 · register readily accessible to workers', dueOn: today, status: 'due_soon', href });
     }
+  }
+
+  // Health monitoring (Part 7.1 Div 6, Part 7.2): counted per programme, never a name — this list is not confidential.
+  type HealthRow = { program_id: string; person_name: string; monitored_on: string; next_due_on: string | null; program: { hazard: string } | Array<{ hazard: string }> };
+  const healthList = (healthRows ?? []) as HealthRow[];
+  const hazardOf = new Map(healthList.map((h) => [h.program_id, (Array.isArray(h.program) ? h.program[0] : h.program)?.hazard ?? 'Health monitoring']));
+  for (const due of programmesDue(healthList, today)) {
+    const n = due.overdue + due.dueSoon;
+    items.push({ key: `health:${due.programId}`, source: 'health', title: `Health monitoring — ${hazardOf.get(due.programId)}: ${n} ${n === 1 ? 'person' : 'people'} due`, basis: 'WHS (General) Regs 2022 (WA) Part 7.1 Div 6 · names are on the confidential record', dueOn: due.earliestDue ?? today, status: due.overdue > 0 ? 'overdue' : 'due_soon', href: `/health${q}` });
   }
 
   const sorted = sortItems(items);

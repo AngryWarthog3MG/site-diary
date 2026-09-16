@@ -240,6 +240,13 @@ improvising; the register once shipped dead because a live smoke test was skippe
   briefed, once per person, on the register in force only), `asbestos_removals` (constraints mirror reg. 466). Registers and
   briefings readable by every member (reg. 425: accessible to workers); removals follow the record read lock. `/asbestos`;
   What's due flags a missing plan where asbestos is present, the plan's review, and crew not briefed. Suite 28
+- `src/lib/health/` — health monitoring (README R69), the CONFIDENTIALITY TIER: `model.ts` (`latestPerPerson`, `programmesDue` —
+  counts per programme, never names, `retainUntil` 30/40 years, `leadNotifyBy` 7 days). Tables `health_record_keepers` (named per
+  org; admin appoints/revokes, stamped; never deleted), `health_monitoring_programs` (hazard + basis; `app.can_manage_crew` or a
+  keeper), `health_monitoring_records` (KEEPERS ONLY via `app.is_health_keeper` — not admin, not any screen tick; frozen;
+  `retain_until` stamped), `lead_risk_notifications` (within 7 days, constraint). Bucket `health-records`
+  `{org}/{program}/{record}.ext`, keepers only. `/health`. Never put a monitored person's name anywhere a non-keeper reads —
+  What's due, the safety dashboard, a PDF, a push, an email. Suite 29
 - `src/lib/safety/` — the dashboard: `stats.ts` (pure: `classify` injuries MTI/FAI, `injurySummary` with the
   rate per million labour hours, `daysSinceLastInjury`, `monthBuckets`, `overdue`), `load.ts` (one gather under the
   caller's RLS across sign-ins, prestarts, plant, permits, incidents, inspections, tickets, subcontractors, SWMS,

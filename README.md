@@ -1841,6 +1841,24 @@ not yet briefed where asbestos is present. A removal records the removalist, lic
 the start of work; the database refuses friable asbestos under anything but a Class A licence and fewer than five days'
 notice unless it is an emergency. Suite 28.
 
+**R69. Health monitoring: a tier of its own, not a tick box.** WHS (General) Regulations 2022 (WA) Part 7.1 Division 6
+requires health monitoring, supervised by a registered medical practitioner, where a worker uses, handles or stores a Schedule
+14 hazardous chemical and there is a significant risk to health, or where the risk assessment otherwise shows it; Part 7.2 adds
+lead risk work, notified to WorkSafe within seven days of it being determined; asbestos work brings its own. The reports are
+confidential and kept 30 years, 40 for asbestos. The research warned against implying it applies to all chemical work, so a
+programme is set up deliberately, for a named hazard, on one of those four stated bases, and the page says when it applies.
+
+Every other module's access is a role plus the per-person screen ticks (R57). That was not good enough here: a supervisor who
+is ticked for the training matrix must not thereby read a doctor's report. So the reports sit behind a third gate, in the
+database — `health_record_keepers`, named people per organisation. Only an active keeper reads or writes a record or its
+file; an admin appoints and revokes keepers but reads nothing unless they appoint themselves, and every appointment and
+revocation is stamped with who did it and when. A keeper is revoked, never deleted. The screen tick decides only whether the
+page opens; a non-keeper who opens it sees the programmes and the keepers' names, never a person.
+
+A record is frozen, and its retention date is stamped by the database from the monitoring date. Upload first, then the row,
+and the file is removed if the row is refused. What's due lists health monitoring falling due as a count per programme, never
+a name, read off each person's latest record, and only for a keeper, because only a keeper's query returns rows. Suite 29.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;

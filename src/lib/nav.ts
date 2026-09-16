@@ -79,6 +79,7 @@ export const NAV_GROUPS: NavGroup[] = [
     label: 'People',
     items: [
       { href: '/training', name: 'Training matrix', what: 'Who holds what, what each role needs, what is expiring', screen: 'training' },
+      { href: '/health', name: 'Health monitoring', short: 'Health', what: 'Confidential — blood lead, asbestos and Schedule 14 monitoring, for named record keepers only', screen: 'health' },
       { href: '/subcontractors', name: 'Subcontractors', what: 'Insurances, SWMS and licences, chased before they lapse', screen: 'subcontractors' },
       { href: '/settings/members', name: 'Who is on this job', what: 'Crew and PM access', when: 'canRecord' },
     ],
