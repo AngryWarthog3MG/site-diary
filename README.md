@@ -1650,6 +1650,30 @@ the table has no read lock. Suite 20 asserts that directly, alongside the labour
 entries. The screen prints, which is the backup WorkSafe WA asks for when the power or the network
 is out.
 
+**R61. One scheduler for everything that falls due.** The certification research found nine of its
+eleven gaps were the same object: something that comes due on a cycle, with evidence it happened on
+time. An internal audit, a management review, an emergency drill, a safety data sheet up for review, a
+five-yearly plan review, a ticket expiring. A surveillance auditor asks one question of each — show me
+the schedule, and show me each one happened when it was meant to — so the app answers it in one place,
+`/due`, rather than in nine modules.
+
+Two kinds, and only one is stored. **Derived** obligations are read off records that already carry their
+dates: a sheet's issue date, a ticket's expiry. Copying those into a table would let the copy and the
+record disagree, so `load.ts` computes them each time. **Scheduled** obligations exist only as a schedule
+— "audit this job at most every three months" — and live in `obligations`, with each occurrence recorded
+in `obligation_completions`.
+
+The next occurrence counts from when the last one was **done**, not when it was due. Main Roads WA
+Specification 201 requires audits "at a maximum of three-monthly intervals", which limits the gap
+between two audits: an audit done a month late buys the next one no grace, and one done early pulls the
+next one forward. A completion carries the day it was due, taken from the schedule rather than typed, and
+the day it was done, which the database refuses if it is in the future; who did it is stamped by the
+database; then it is frozen. So "was it on time" is a fact of the row, not something that can be tidied
+later. Each preset carries the clause that asks for it, because why a thing is due is the first line an
+auditor reads, and every field stays editable because a principal's contract can set a tighter interval
+than a standard's "planned intervals". Plant inspections, hold points and non-conformance close-outs join
+as derived items when those modules are built. Suite 21.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;

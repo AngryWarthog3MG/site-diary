@@ -171,6 +171,15 @@ improvising; the register once shipped dead because a live smoke test was skippe
   requires the register be readily accessible to the workers involved, so the labourer reads it and `canSee`
   lists `chemicals` among their doors. The screen prints — that is the backup WorkSafe WA asks for when the
   power or the network is out. Suite 20. README R60
+- `src/lib/obligations/` — what falls due, and whether it happened on time: `model.ts` (`nextDue` counts from when the
+  last occurrence was DONE, because a maximum interval limits the gap between two; `dueStatus`, `onTime`, `PRESETS`
+  each carrying its clause), `load.ts` (merges SCHEDULED rows with DERIVED ones read off their own records — a
+  sheet's review date, a ticket's expiry — never copied). Tables `obligations` (per job, or company-wide with a null
+  project) and `obligation_completions` (due_on from the schedule, done_on from the person, never in the future,
+  `done_by` stamped by the DB, then frozen). Setting/discharging = `app.can_manage_incidents` per job,
+  `app.can_manage_crew` company-wide; reads refuse the labourer. Screens `/due`, `/due/[id]`; home card when
+  anything is overdue or due in 30 days. A NEW thing that falls due on a cycle is a row here or a derived item in
+  `load.ts`, not a new screen. Suite 21. README R61
 - `src/lib/safety/` — the dashboard: `stats.ts` (pure: `classify` injuries MTI/FAI, `injurySummary` with the
   rate per million labour hours, `daysSinceLastInjury`, `monthBuckets`, `overdue`), `load.ts` (one gather under the
   caller's RLS across sign-ins, prestarts, plant, permits, incidents, inspections, tickets, subcontractors, SWMS,

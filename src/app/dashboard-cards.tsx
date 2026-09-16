@@ -7,6 +7,7 @@ import { fmtDate } from '@/lib/pdf/dates';
 import { KIND_LABEL, incidentRef, type IncidentKind } from '@/lib/incidents/model';
 import { VERDICT_LABEL, type Verdict } from '@/lib/subcontractors/model';
 import { loadDashboard, perthBadge, OPEN_LIST } from '@/lib/home/dashboard';
+import { loadObligations } from '@/lib/obligations/load';
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
@@ -47,7 +48,10 @@ interface Card { key: string; name: string; attention: boolean; node: React.Reac
 export async function DashboardCards({ projectId, orgId, member }: { projectId: string; orgId: string; member: Access }) {
   const supabase = await createClient();
   const today = perthToday();
-  const d = await loadDashboard(supabase, projectId, orgId, today);
+  const [d, due] = await Promise.all([
+    loadDashboard(supabase, projectId, orgId, today),
+    sees(member, 'obligations') ? loadObligations(supabase, projectId, orgId, today) : Promise.resolve(null),
+  ]);
   const s = d.safety;
   const q = `?project=${projectId}`;
   const see = (screen: Screen) => sees(member, screen);
@@ -76,6 +80,17 @@ export async function DashboardCards({ projectId, orgId, member }: { projectId: 
         <Big n={s.actions.overdue} tone={s.actions.overdue > 0 ? 'bad' : undefined} />
         <p className="dash-card__sub">of {s.actions.open} corrective action{s.actions.open === 1 ? '' : 's'} open</p>
         <Foot href={`/safety${q}`} />
+      </section>
+    ),
+  });
+  if (due) cards.push({
+    key: 'due', name: 'schedules, sheets and tickets', attention: due.summary.attention > 0,
+    node: (
+      <section className="dash-card">
+        <p className="dash-card__title">What&rsquo;s due</p>
+        <Big n={due.summary.overdue} tone={due.summary.overdue > 0 ? 'bad' : undefined} />
+        <p className="dash-card__sub">overdue · {due.summary.dueSoon} more in the next 30 days</p>
+        <Foot href={`/due${q}`} label="What's due" />
       </section>
     ),
   });
