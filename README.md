@@ -1739,6 +1739,33 @@ check form. Reg. 213 does not literally require recording the inspector's compet
 a competent person" cannot be shown without naming the person and the basis, and it is what an auditor asks to see. Plant on
 the job appears on What's due. Suite 24.
 
+**R65. Construction records: the principal contractor's plan, and what was known before digging.** Chapter 6 of the
+WHS (General) Regulations 2022 (WA) asks four things of a construction contractor that the app did not keep.
+
+**The WHS management plan (regs 309–313)** belongs to the principal contractor, who must write it before work starts, tell
+everyone carrying out the work, revise it as the work changes and keep every version. Whether a company is principal
+contractor is a fact of the job, so projects carry `is_principal_contractor`, off by default because most of a
+subcontractor's jobs are someone else's project, and the database refuses a plan on a job without it. The plan's five
+required headings are reg. 310's, a revision records why, and versions are numbered by the database and frozen. The research
+corrected a threshold that matters here: in WA a construction project is defined by five or more people working on the site
+at the same time (reg. 292), not by the $250,000 test in the model regulations, so the duty reaches smaller jobs than a
+reader of the national guidance would expect.
+
+**The excavation record (regs 304 and 306).** The excavation permit asked "Dial Before You Dig plans current; services
+located and potholed" as a tick. Reg. 304 requires the information itself obtained, had regard to, made available and kept,
+so a record now holds where the information came from, its reference, when it was obtained and until when it was said to be
+valid, what it showed, the plans, and who located the services and how. Reg. 306 requires a trench 1.5 m or deeper benched,
+battered or shored unless a geotechnical engineer advised in writing otherwise; the database refuses a deep trench with no
+control, and engineer advice with no reference. The permit is not changed: it stays the go/no-go, and this is the evidence
+behind its tick.
+
+**Retention (regs 303 and 313)** is met by never deleting — the SWMS and the plan are kept until the work is complete, and
+two years after a notifiable incident, and nothing in the app is ever purged. The research warned against a blanket two-year
+purge; the answer is no purge at all. **White cards (reg. 317)** were already a ticket type; the construction page and What's
+due now name anyone on the crew list with none recorded. Both the plan and the services information are readable by every
+member of the job, as regs 311 and 304(4) require them made available, though the screen is not added to the labourer's
+doors: a supervisor briefs them at the prestart. Suite 25.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;

@@ -5,6 +5,7 @@ import { SDS_STATUS_LABEL } from '@/lib/chemicals/model';
 import { regulatorState, perthDay, type RegulatorEvent } from '@/lib/incidents/regulator';
 import { incidentRef } from '@/lib/incidents/model';
 import { loadEmergency } from '@/lib/emergency/load';
+import { withoutWhiteCard } from '@/lib/construction/model';
 import { nextInspection, registrationStatus, REGISTRATION_LABEL, type InspectionBasis, type RecordKind, type Outcome } from '@/lib/plant/inspections';
 import {
   dueStatus, nextDue, onTime, sortItems, summarise, KIND_LABEL,
@@ -46,7 +47,7 @@ export async function loadObligations(
   today: string,
 ): Promise<ObligationsData> {
   const q = `?project=${projectId}`;
-  const [{ data: schedRows }, chemicals, { data: crewRows }, { data: ticketRows }, { data: notifiableRows }, { data: regRows }, emergency, { data: plantRows }] = await Promise.all([
+  const [{ data: schedRows }, chemicals, { data: crewRows }, { data: ticketRows }, { data: notifiableRows }, { data: regRows }, emergency, { data: plantRows }, { data: pcRow }, { data: whsPlanRows }, { data: whiteCards }] = await Promise.all([
     supabase
       .from('obligations')
       .select('id, project_id, kind, title, basis, interval_months, first_due_on, active, obligation_completions(id, due_on, done_on, evidence_note, evidence_ref, created_at, done_by)')
@@ -60,6 +61,9 @@ export async function loadObligations(
     supabase.from('incident_regulator_events').select('id, kind, happened_at, method, person_name, detail, incident:incidents!inner(id, seq, notifiable, project_id)').eq('incident.project_id', projectId),
     loadEmergency(supabase, projectId),
     supabase.from('project_plant').select('plant:plant_register!inner(id, name, active, inspection_basis, inspection_interval_months, registration_required, registration_no, registration_expires_on, plant_maintenance_records(kind, done_on, next_due_on, outcome))').eq('project_id', projectId).eq('active', true),
+    supabase.from('projects').select('is_principal_contractor').eq('id', projectId).maybeSingle(),
+    supabase.from('whs_management_plans').select('id').eq('project_id', projectId).limit(1),
+    supabase.from('crew_tickets').select('person_name, ticket_type, active, expires_on').eq('org_id', orgId).eq('ticket_type', 'white_card'),
   ]);
 
   const scheduled = (schedRows ?? []) as ScheduledRow[];
@@ -201,6 +205,15 @@ export async function loadObligations(
     } else if (p.registration_required && p.registration_expires_on) {
       items.push({ key: `plant-reg:${p.id}`, source: 'plant', title: `Registration renewal — ${p.name}`, basis: 'WHS Act 2020 (WA) s. 42', dueOn: p.registration_expires_on, status: dueStatus(p.registration_expires_on, today), href });
     }
+  }
+
+  // Construction work (WHS (General) Regs 2022 (WA) Chapter 6).
+  if (pcRow?.is_principal_contractor && (whsPlanRows ?? []).length === 0) {
+    items.push({ key: 'whs-plan', source: 'construction', title: 'WHS management plan — you are principal contractor', basis: 'WHS (General) Regs 2022 (WA) reg. 309 · written before work starts', dueOn: today, status: 'overdue', href: `/construction${q}` });
+  }
+  const noCard = withoutWhiteCard(((crewRows ?? []) as Array<{ name: string }>).map((c) => c.name), (whiteCards ?? []) as Array<{ person_name: string; ticket_type: string; active: boolean; expires_on: string | null }>, today);
+  if (noCard.length > 0) {
+    items.push({ key: 'white-cards', source: 'construction', title: `No white card recorded — ${noCard.length === 1 ? noCard[0] : `${noCard.length} on the crew list`}`, basis: 'WHS (General) Regs 2022 (WA) reg. 317 · general construction induction', dueOn: today, status: 'overdue', href: `/construction${q}` });
   }
 
   const sorted = sortItems(items);

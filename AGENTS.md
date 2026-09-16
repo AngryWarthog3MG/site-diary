@@ -202,6 +202,15 @@ improvising; the register once shipped dead because a live smoke test was skippe
   theirs), and the labourer home shows it with a 000 button; the drills follow the record read lock. `/emergency`; What's
   due shows a missing plan as overdue and the next drill from the plan's frequency — there is no manual drill preset. Suite
   23. README R63
+- `src/lib/construction/` — Chapter 6 records (README R65): `model.ts` (`trenchProblem` mirrors the DB constraints — reg. 306
+  control at 1.5 m, engineer advice needs its written reference; `servicesInfoCurrency`; `withoutWhiteCard`, reg. 317).
+  `projects.is_principal_contractor` (off by default, admin sets it). `whs_management_plans` (regs 309–313: only when principal
+  contractor — the DB refuses otherwise; reg. 310's five headings required; versioned by the DB, frozen) and
+  `excavation_records` (reg. 304: services information source, reference, obtained date, optional plans in bucket
+  `services-plans` `{project}/{record}.ext`; reg. 306 trench control; frozen). Both readable by every member — regs 311 and
+  304(4) — though the screen is not a labourer door. Nothing in the app is purged, which is how regs 303 and 313 retention is
+  met; do not add a purge. `/construction`; What's due flags a principal contractor with no plan and crew with no white card.
+  Suite 25
 - `src/lib/safety/` — the dashboard: `stats.ts` (pure: `classify` injuries MTI/FAI, `injurySummary` with the
   rate per million labour hours, `daysSinceLastInjury`, `monthBuckets`, `overdue`), `load.ts` (one gather under the
   caller's RLS across sign-ins, prestarts, plant, permits, incidents, inspections, tickets, subcontractors, SWMS,
