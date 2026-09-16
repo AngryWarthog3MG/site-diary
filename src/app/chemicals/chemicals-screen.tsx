@@ -164,6 +164,18 @@ export function ChemicalsScreen({ projectId, orgId, userId, canKeepList, canPutO
                 <span className="label">What it is used for</span>
                 <input className="field field--sm" id="chem-use" value={usedFor} placeholder="Refuelling plant, spraying the batters" onChange={(e) => setUsedFor(e.target.value)} />
               </label>
+              {canPutOnSite && (
+                <div className="signin__grid">
+                  <label className="fieldcell">
+                    <span className="label">Where it is kept on this site</span>
+                    <input className="field field--sm" id="new-chem-loc" value={location} placeholder="Compound, ute, bunded store" onChange={(e) => setLocation(e.target.value)} />
+                  </label>
+                  <label className="fieldcell">
+                    <span className="label">How much</span>
+                    <input className="field field--sm" id="new-chem-qty" value={quantity} placeholder="1000 L, 2 × 20 L" onChange={(e) => setQuantity(e.target.value)} />
+                  </label>
+                </div>
+              )}
               <p className="label" style={{ marginTop: '0.75rem' }}>Hazards on the label</p>
               <div className="crewchips">
                 {HAZARD_CLASSES.map((h) => (
