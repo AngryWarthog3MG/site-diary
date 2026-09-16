@@ -6,7 +6,7 @@ import { createClient } from '@/lib/supabase/client';
 import { fmtDate } from '@/lib/pdf/dates';
 import { awstClock } from '@/lib/signin/register';
 import {
-  regulatorState, EVENT_LABEL, METHOD_LABEL, METHODS, REGULATOR_EVENT_KINDS,
+  regulatorState, perthDay, EVENT_LABEL, METHOD_LABEL, METHODS, REGULATOR_EVENT_KINDS,
   type RegulatorEvent, type RegulatorEventKind, type Method,
 } from '@/lib/incidents/regulator';
 
@@ -76,7 +76,8 @@ export function RegulatorPanel({ incidentId, notifiable, events, canManage, now 
     }
   }
 
-  const when = (iso: string | null) => (iso ? `${fmtDate(iso.slice(0, 10))} ${awstClock(iso)}` : '—');
+  // The Perth day, not the UTC one: 06:30 in Perth is still the previous day in UTC.
+  const when = (iso: string | null) => (iso ? `${fmtDate(perthDay(iso))} ${awstClock(iso)}` : '—');
   const sorted = [...events].sort((a, b) => a.happened_at.localeCompare(b.happened_at));
 
   if (!state.applies) {

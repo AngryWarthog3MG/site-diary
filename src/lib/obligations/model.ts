@@ -33,7 +33,6 @@ export const PRESETS: ReadonlyArray<{ kind: ObligationKind; title: string; inter
   { kind: 'internal_audit', title: 'Internal audit of this job', intervalMonths: 3, basis: 'ISO 9001, 45001, 14001 cl. 9.2 · Main Roads WA Spec 201 cl. 201.12.03 (at most three-monthly)', scope: 'project' },
   { kind: 'management_review', title: 'Management review of this job', intervalMonths: 3, basis: 'Main Roads WA Spec 201 cl. 201.13', scope: 'project' },
   { kind: 'management_review', title: 'Company management review', intervalMonths: 12, basis: 'ISO 9001, 45001, 14001 cl. 9.3', scope: 'org' },
-  { kind: 'emergency_drill', title: 'Emergency procedures tested', intervalMonths: 6, basis: 'WHS (General) Regs 2022 (WA) reg. 43(1)(b) · ISO 45001 cl. 8.2', scope: 'project' },
   { kind: 'compliance_evaluation', title: 'Evaluation of compliance with legal obligations', intervalMonths: 12, basis: 'ISO 45001 cl. 9.1.2 · ISO 14001 cl. 9.1.2', scope: 'org' },
   { kind: 'plan_review', title: 'Asbestos management plan reviewed', intervalMonths: 60, basis: 'WHS (General) Regs 2022 (WA) reg. 429', scope: 'project' },
 ];
@@ -124,7 +123,7 @@ export function daysLate(completion: CompletionFacts): number {
 }
 
 /** Where an item came from. Only 'scheduled' is stored as an obligation; the rest are read off their records. */
-export type ItemSource = 'scheduled' | 'sds' | 'ticket' | 'incident';
+export type ItemSource = 'scheduled' | 'sds' | 'ticket' | 'incident' | 'emergency';
 
 export interface ObligationItem {
   key: string;

@@ -8,6 +8,7 @@ import { fmtDate } from '@/lib/pdf/dates';
 import { normaliseName } from '@/lib/crew/tickets';
 import { eventClock, hoursOnSite, type SignInRow } from '@/lib/signin/register';
 import type { Membership } from '@/lib/auth';
+import { loadCurrentPlan } from '@/lib/emergency/load';
 
 /**
  * The labourer's opening page: are they signed in right now, and the two
@@ -19,6 +20,7 @@ import type { Membership } from '@/lib/auth';
 export async function LabourerHome({ current, name }: { current: Membership; name: string }) {
   const supabase = await createClient();
   const today = perthToday();
+  const planPromise = loadCurrentPlan(supabase, current.project_id);
   const { data } = await supabase
     .from('site_signins')
     .select('id, person_name, company, person_kind, inducted, signed_in_at, signed_in_on_device_at, signed_out_at, signed_out_on_device_at')
@@ -29,6 +31,7 @@ export async function LabourerHome({ current, name }: { current: Membership; nam
   const open = mine.find((r) => r.signed_out_at == null) ?? null;
   const done = mine.filter((r) => r.signed_out_at != null);
   const q = `?project=${current.project_id}`;
+  const plan = await planPromise;
 
   return (
     <main className="app-shell home-shell dash labhome">
@@ -70,7 +73,17 @@ export async function LabourerHome({ current, name }: { current: Membership; nam
           <span className="labhome__hint">Something unsafe, a near miss, someone hurt</span>
         </Link>
       </div>
-      <p className="labhome__more"><Link href={`/incidents${q}`}>Hazards reported on this job</Link></p>
+      <section className="labhome__emerg">
+        <p className="label">In an emergency</p>
+        <a className="emerg__call" href="tel:000">Call <strong>000</strong></a>
+        {plan ? (
+          <p className="labhome__muster">Muster at <strong>{plan.muster_point}</strong>{plan.nearest_hospital ? <><br /><span className="caption">Nearest hospital: {plan.nearest_hospital}</span></> : null}</p>
+        ) : (
+          <p className="caption">No emergency plan recorded for this site yet — ask your supervisor where to muster.</p>
+        )}
+        <Link href={`/emergency${q}`}>The whole emergency plan</Link>
+      </section>
+      <p className="labhome__more"><Link href={`/chemicals${q}`}>Chemicals on this site</Link> · <Link href={`/incidents${q}`}>Hazards reported on this job</Link></p>
     </main>
   );
 }

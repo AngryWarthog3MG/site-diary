@@ -28,9 +28,9 @@ test('a labourer never gets past their own doors, whatever is ticked', () => {
   assert.equal(sees({ role: 'labourer', screens: ['entries', 'claims', 'signin'] }, 'claims'), false);
   assert.equal(sees({ role: 'labourer', screens: ['entries', 'claims', 'signin'] }, 'signin'), true);
   assert.equal(sees({ role: 'labourer', screens: [] }, 'incidents'), false);
-  // The gate, hazard reporting, and the chemicals register — the third is reg. 346(3),
-  // which requires the register be readable by the worker handling the drum (README R60).
-  assert.deepEqual(grantableScreens('labourer'), ['signin', 'incidents', 'chemicals']);
+  // The gate, hazard reporting, the emergency plan and the chemicals register. The last two
+  // are the law reaching the worker: reg. 43(1)(c) and reg. 346(3) (README R60, R63).
+  assert.deepEqual(grantableScreens('labourer'), ['signin', 'emergency', 'incidents', 'chemicals']);
 });
 
 test('an admin keeps Settings — the screen the ticks are set from', () => {

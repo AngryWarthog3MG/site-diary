@@ -1695,6 +1695,29 @@ demands it. The flag can also be raised after the fact: recording "became aware"
 where the first account said otherwise, because realising an injury was serious often comes from the hospital,
 not the site. An unnotified incident is overdue on `/due` from the moment of awareness. Suite 22.
 
+**R63. An emergency plan for each workplace, and the drills that prove it works.** WHS (General) Regulations
+2022 (WA) reg. 43 requires a plan prepared for the workplace, providing for its emergency procedures, for
+testing them "including the frequency of testing", and for telling the workers; subregulation (3) requires
+regard to this site's work, hazards, size, location and people. So one company procedure does not serve a
+distinct construction site. ISO 45001 cl. 8.2 supplies what the regulation does not say in terms: test the
+planned response and keep the evidence.
+
+The plan is a document and is versioned. Each version is numbered by the database, frozen once issued, and a
+change is a new version, so the plan in force on the day of an emergency can always be shown. Its fields are
+the things someone needs in a hurry — the muster point, the site address as you would give it to 000, the
+nearest hospital, who to call, the first aiders, where the kit is — rather than a PDF to download on a phone
+with one bar. The drill is a record, against a plan of the same workplace, never dated in the future, frozen.
+
+Two decisions. **The plan reaches the labourer.** Reg. 43(1)(c) is about the workers knowing the procedures,
+and in an emergency the labourer is the person who needs the muster point, so the plan is readable by every
+member, the labourer gets it as a fifth door, and their home shows the muster point with a button that calls
+000. Drill records stay management's evidence under the ordinary read lock. **The drill schedule comes from
+the plan.** The plan states how often its procedures are tested, so the next drill is derived from that and
+from the last drill held — not a separate schedule someone must remember to set up, which is why the manual
+"emergency procedures tested" preset added in R61 has gone. Reissuing the plan does not reset the clock, or
+reissuing would become a way to put a drill off. A workplace with no plan shows as overdue on What's due,
+because reg. 43 applies to every one. Suite 23.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;

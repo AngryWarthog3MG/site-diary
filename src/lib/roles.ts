@@ -64,11 +64,11 @@ export function canExportReports(role: MemberRole): boolean {
 }
 
 export type Screen =
-  | 'today' | 'entries' | 'weekly' | 'prestart' | 'plant' | 'toolbox' | 'signin' | 'swms' | 'incidents' | 'inspections' | 'permits' | 'subcontractors' | 'procedures' | 'training' | 'safety' | 'orders' | 'chemicals' | 'obligations'
+  | 'today' | 'entries' | 'weekly' | 'prestart' | 'plant' | 'toolbox' | 'signin' | 'swms' | 'incidents' | 'inspections' | 'permits' | 'subcontractors' | 'procedures' | 'training' | 'safety' | 'orders' | 'chemicals' | 'obligations' | 'emergency'
   | 'claims' | 'variations' | 'progress' | 'ask' | 'documents' | 'settings';
 
 /** Every screen there is, in the order the Members screen lists them. */
-export const SCREENS: Screen[] = ['today', 'entries', 'weekly', 'signin', 'claims', 'variations', 'progress', 'safety', 'obligations', 'incidents', 'inspections', 'permits', 'swms', 'chemicals', 'prestart', 'toolbox', 'plant', 'orders', 'training', 'subcontractors', 'procedures', 'documents', 'ask', 'settings'];
+export const SCREENS: Screen[] = ['today', 'entries', 'weekly', 'signin', 'claims', 'variations', 'progress', 'safety', 'obligations', 'emergency', 'incidents', 'inspections', 'permits', 'swms', 'chemicals', 'prestart', 'toolbox', 'plant', 'orders', 'training', 'subcontractors', 'procedures', 'documents', 'ask', 'settings'];
 
 /** A membership as the gates read it: the role, and the screens ticked for this person (null = the role's list). */
 export interface Access { role: MemberRole; screens?: readonly string[] | null }
@@ -105,9 +105,11 @@ export function canSee(role: MemberRole, screen: Screen): boolean {
   // The labourer keeps one more door than their two: the chemicals register. Reg. 346(3)
   // requires it be readily accessible to the workers involved in using, handling or storing
   // the chemical, and that worker is very often the labourer holding the drum.
-  if (role === 'labourer') return screen === 'today' || screen === 'signin' || screen === 'incidents' || screen === 'chemicals';
+  // And the emergency plan: reg. 43(1)(c) is about the workers knowing it, and in an emergency
+  // the labourer is the one who needs the muster point (README R63).
+  if (role === 'labourer') return screen === 'today' || screen === 'signin' || screen === 'incidents' || screen === 'chemicals' || screen === 'emergency';
   if (role === 'leading_hand') {
-    return screen === 'today' || screen === 'entries' || screen === 'weekly' || screen === 'prestart' || screen === 'plant' || screen === 'toolbox' || screen === 'signin' || screen === 'swms' || screen === 'incidents' || screen === 'inspections' || screen === 'permits' || screen === 'procedures' || screen === 'safety' || screen === 'orders' || screen === 'chemicals' || screen === 'obligations';
+    return screen === 'today' || screen === 'entries' || screen === 'weekly' || screen === 'prestart' || screen === 'plant' || screen === 'toolbox' || screen === 'signin' || screen === 'swms' || screen === 'incidents' || screen === 'inspections' || screen === 'permits' || screen === 'procedures' || screen === 'safety' || screen === 'orders' || screen === 'chemicals' || screen === 'obligations' || screen === 'emergency';
   }
   if (screen === 'settings') return canAuthorEntries(role);
   return true;

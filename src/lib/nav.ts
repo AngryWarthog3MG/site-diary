@@ -47,6 +47,7 @@ export const NAV_GROUPS: NavGroup[] = [
     label: 'Safety',
     items: [
       { href: '/safety', name: 'Safety dashboard', short: 'Safety', what: 'Open actions, expiring tickets, injuries and rates — read from the record', screen: 'safety' },
+      { href: '/emergency', name: 'Emergency plan', short: 'Emergency', what: 'Muster point, nearest hospital, who to call — and the drills that test it', screen: 'emergency' },
       { href: '/due', name: "What's due", what: 'Audits, reviews, drills, safety data sheets and tickets, in the order they need doing', screen: 'obligations' },
       { href: '/incidents', name: 'Hazards & incidents', what: 'Report it in a minute; actions until it is closed', screen: 'incidents' },
       { href: '/inspections', name: 'Inspections', what: 'Site walks, environmental and quality checks', screen: 'inspections' },
@@ -95,7 +96,7 @@ export const NAV_GROUPS: NavGroup[] = [
  * drawer and rail learn it a moment after they open), so nobody sees a door
  * that closes on them; the pages refuse anything a role should not reach anyway.
  */
-export const EVERY_ROLE: Screen[] = ['today', 'entries', 'weekly', 'prestart', 'plant', 'toolbox', 'signin', 'swms', 'incidents', 'inspections', 'permits', 'procedures', 'safety', 'orders', 'chemicals', 'obligations'];
+export const EVERY_ROLE: Screen[] = ['today', 'entries', 'weekly', 'prestart', 'plant', 'toolbox', 'signin', 'swms', 'incidents', 'inspections', 'permits', 'procedures', 'safety', 'orders', 'chemicals', 'obligations', 'emergency'];
 
 export interface NavViewer { role: MemberRole | null; screens?: readonly string[] | null; canRecord: boolean; multiJob: boolean }
 

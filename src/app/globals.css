@@ -4011,3 +4011,19 @@ a.dash-row:hover { background: var(--teal-tint); }
 .regpanel__log summary { cursor: pointer; }
 .regpanel__form { margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid var(--ink-12); }
 @media (max-width: 480px) { .regpanel__facts { grid-template-columns: 1fr; gap: 0.1rem; } .regpanel__facts dd { margin-bottom: 0.4rem; } }
+
+/* The emergency plan: the three things someone needs in a hurry are the biggest things on the page. */
+.emerg__call {
+  display: block; margin: 0.75rem 0 0; padding: 0.85rem 1rem; border-radius: 12px; text-align: center;
+  background: #9A2B2B; color: #fff; text-decoration: none; font-size: 1.125rem; font-weight: 600;
+}
+.emerg__call strong { font-size: 1.5rem; letter-spacing: 0.04em; margin-left: 0.2rem; }
+.emerg__plan { margin-top: 1rem; display: grid; gap: 0.75rem; }
+.emerg__key .label { margin: 0; }
+.emerg__big { margin: 0.15rem 0 0; font-size: 1.5rem; font-weight: 600; line-height: 1.25; }
+.emerg__mid { margin: 0.15rem 0 0; font-size: 1.0625rem; line-height: 1.4; }
+.emerg__pre { white-space: pre-line; margin: 0.25rem 0 0; }
+.emerg__facts { margin-top: 0; }
+.labhome__emerg { margin-top: 1rem; padding: 0.9rem 1rem; border: 1px solid rgba(154, 43, 43, 0.35); border-radius: 12px; background: var(--paper); }
+.labhome__emerg .label { margin: 0; }
+.labhome__muster { margin: 0.6rem 0 0.4rem; font-size: 1.0625rem; line-height: 1.4; }

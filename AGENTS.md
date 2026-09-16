@@ -186,6 +186,15 @@ improvising; the register once shipped dead because a live smoke test was skippe
   `app.can_manage_crew` company-wide; reads refuse the labourer. Screens `/due`, `/due/[id]`; home card when
   anything is overdue or due in 30 days. A NEW thing that falls due on a cycle is a row here or a derived item in
   `load.ts`, not a new screen. Suite 21. README R61
+- `src/lib/emergency/` — the emergency plan per workplace and its drills: `model.ts` (`currentPlan` = highest version,
+  `nextDrillDue` counts from the last drill on the workplace, or the plan's issue day if none, by the frequency the plan
+  itself states — reissuing the plan does not reset it), `load.ts`. Tables `emergency_plans` (versioned per project, the
+  version numbered by the DB under a lock, frozen once issued — a change is a new version) and `emergency_drills` (against
+  a plan of the same workplace, never in the future, frozen). Issuing = `app.can_manage_incidents`; drills =
+  `app.can_run_talks`. **The plan is readable by every member including the labourer** (reg. 43(1)(c); the muster point is
+  theirs), and the labourer home shows it with a 000 button; the drills follow the record read lock. `/emergency`; What's
+  due shows a missing plan as overdue and the next drill from the plan's frequency — there is no manual drill preset. Suite
+  23. README R63
 - `src/lib/safety/` — the dashboard: `stats.ts` (pure: `classify` injuries MTI/FAI, `injurySummary` with the
   rate per million labour hours, `daysSinceLastInjury`, `monthBuckets`, `overdue`), `load.ts` (one gather under the
   caller's RLS across sign-ins, prestarts, plant, permits, incidents, inspections, tickets, subcontractors, SWMS,

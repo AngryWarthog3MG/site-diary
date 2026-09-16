@@ -4,6 +4,7 @@ import { loadChemicals } from '@/lib/chemicals/load';
 import { SDS_STATUS_LABEL } from '@/lib/chemicals/model';
 import { regulatorState, perthDay, type RegulatorEvent } from '@/lib/incidents/regulator';
 import { incidentRef } from '@/lib/incidents/model';
+import { loadEmergency } from '@/lib/emergency/load';
 import {
   dueStatus, nextDue, onTime, sortItems, summarise, KIND_LABEL,
   type ObligationItem, type ObligationKind,
@@ -44,7 +45,7 @@ export async function loadObligations(
   today: string,
 ): Promise<ObligationsData> {
   const q = `?project=${projectId}`;
-  const [{ data: schedRows }, chemicals, { data: crewRows }, { data: ticketRows }, { data: notifiableRows }, { data: regRows }] = await Promise.all([
+  const [{ data: schedRows }, chemicals, { data: crewRows }, { data: ticketRows }, { data: notifiableRows }, { data: regRows }, emergency] = await Promise.all([
     supabase
       .from('obligations')
       .select('id, project_id, kind, title, basis, interval_months, first_due_on, active, obligation_completions(id, due_on, done_on, evidence_note, evidence_ref, created_at, done_by)')
@@ -56,6 +57,7 @@ export async function loadObligations(
     supabase.from('crew_tickets').select('id, person_name, ticket_type, expires_on, active').eq('org_id', orgId).eq('active', true).not('expires_on', 'is', null),
     supabase.from('incidents').select('id, seq, notifiable').eq('project_id', projectId).eq('notifiable', true),
     supabase.from('incident_regulator_events').select('id, kind, happened_at, method, person_name, detail, incident:incidents!inner(id, seq, notifiable, project_id)').eq('incident.project_id', projectId),
+    loadEmergency(supabase, projectId),
   ]);
 
   const scheduled = (schedRows ?? []) as ScheduledRow[];
@@ -159,6 +161,24 @@ export async function loadObligations(
         href: `/incidents/${id}`,
       });
     }
+  }
+
+  // The emergency plan: one per workplace is the law, and its procedures are tested at the
+  // frequency the plan itself states (WHS (General) Regs 2022 (WA) reg. 43; ISO 45001 cl. 8.2).
+  if (!emergency.current) {
+    items.push({
+      key: 'emergency-plan', source: 'emergency',
+      title: 'Emergency plan for this workplace',
+      basis: 'WHS (General) Regs 2022 (WA) reg. 43 · one plan for each workplace',
+      dueOn: today, status: 'overdue', href: `/emergency${q}`,
+    });
+  } else if (emergency.nextDrillDue) {
+    items.push({
+      key: 'emergency-drill', source: 'emergency',
+      title: 'Emergency procedures tested — a drill',
+      basis: `WHS (General) Regs 2022 (WA) reg. 43(1)(b) · ISO 45001 cl. 8.2 · every ${emergency.current.test_every_months} months, per the plan`,
+      dueOn: emergency.nextDrillDue, status: dueStatus(emergency.nextDrillDue, today), href: `/emergency${q}`,
+    });
   }
 
   const sorted = sortItems(items);
