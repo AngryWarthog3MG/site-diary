@@ -47,6 +47,7 @@ export const NAV_GROUPS: NavGroup[] = [
     label: 'Quality',
     items: [
       { href: '/quality', name: 'Quality', what: 'Inspection and test plans, lots and hold points, non-conformances', screen: 'quality' },
+      { href: '/audits', name: 'Audits and reviews', short: 'Audits', what: 'Internal audits, management reviews, and their actions until closed', screen: 'audits' },
       { href: '/quality/equipment', name: 'Calibration register', short: 'Calibration', what: 'Measuring equipment and when each is due', screen: 'quality' },
     ],
   },
@@ -104,7 +105,7 @@ export const NAV_GROUPS: NavGroup[] = [
  * drawer and rail learn it a moment after they open), so nobody sees a door
  * that closes on them; the pages refuse anything a role should not reach anyway.
  */
-export const EVERY_ROLE: Screen[] = ['today', 'entries', 'weekly', 'prestart', 'plant', 'toolbox', 'signin', 'swms', 'incidents', 'inspections', 'permits', 'procedures', 'safety', 'orders', 'chemicals', 'obligations', 'emergency', 'construction', 'quality'];
+export const EVERY_ROLE: Screen[] = ['today', 'entries', 'weekly', 'prestart', 'plant', 'toolbox', 'signin', 'swms', 'incidents', 'inspections', 'permits', 'procedures', 'safety', 'orders', 'chemicals', 'obligations', 'emergency', 'construction', 'quality', 'audits'];
 
 export interface NavViewer { role: MemberRole | null; screens?: readonly string[] | null; canRecord: boolean; multiJob: boolean }
 

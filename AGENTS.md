@@ -226,6 +226,13 @@ improvising; the register once shipped dead because a live smoke test was skippe
   = none — never hard-code 24. Writes: ITPs and NCR approval = `app.can_manage_incidents`; lots, checks, releases, raising an
   NCR = `app.can_run_talks`; equipment = `app.can_manage_crew`. Labourer reads none. `/quality` and `/quality/{itp,lot,ncr}/[id]`,
   `/quality/equipment`. Suite 26
+- Audits and management reviews (README R67): tables `audits` + `audit_findings`, `management_reviews` + `review_actions`
+  (migration 20260916200000). Drafted, then issued, then frozen; an audit issues only with `auditor_independent` and a
+  summary (ISO 9.2.2 c). A finding's or action's done is stamped by the DB once, then frozen; an issued review's actions do
+  not change and are carried forward until done. Issuing one that names its schedule (`obligation_id`, kind must match) inserts
+  the `obligation_completions` row IN THE SAME TRIGGER, using `app.obligation_next_due` — the SQL twin of `nextDue`; change
+  both together. Access reuses `app.obligation_readable` / `app.obligation_manageable`. `/audits`, `/audits/{audit,review}/[id]`;
+  open actions appear on What's due. Suite 27
 - `src/lib/safety/` — the dashboard: `stats.ts` (pure: `classify` injuries MTI/FAI, `injurySummary` with the
   rate per million labour hours, `daysSinceLastInjury`, `monthBuckets`, `overdue`), `load.ts` (one gather under the
   caller's RLS across sign-ins, prestarts, plant, permits, incidents, inspections, tickets, subcontractors, SWMS,

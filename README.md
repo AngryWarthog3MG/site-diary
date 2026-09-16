@@ -1804,6 +1804,27 @@ calibration certificates. A point that uses calibrated equipment will not take a
 the database refuses one that was out of calibration on the day of the check — not today, the day. Hold points awaiting
 release, NCRs to report or close, and equipment falling due all appear on What's due. Suite 26.
 
+**R67. Internal audits and management reviews: the evidence behind the schedule.** R61 made them fall due. This
+records that they happened and what came of them. ISO 9001, 45001 and 14001 cl. 9.2 ask for audits against a stated
+scope and criteria by auditors chosen for objectivity and impartiality, with the results reported and kept; cl. 9.3 asks
+for management reviews that consider set inputs — the status of earlier actions first — and record decisions and actions.
+Main Roads WA Specification 201 adds that audits are done by people not delivering the work, each audit reviews the last
+one's actions, and review actions are "reviewed at subsequent meetings until closed-out".
+
+An audit report is drafted with its scope, criteria, auditor and findings — major or minor nonconformity, observation or
+opportunity, with the clause, an action, an owner and a due date — and issued. It will not issue unless someone ticks that
+the auditor does not deliver the work audited, and unless it has a summary of results; the page offers the previous audit's
+open actions as the starting text for reviewing them. A management review opens with the cl. 9.3.2 inputs laid out as
+headings, shows every action still open from earlier reviews at the top so they are reviewed rather than forgotten, and
+records its decisions and its own actions. Once issued, both are frozen, and an action is marked done once, stamped by the
+database.
+
+The link to the schedule is made by the database, not the screen. Issuing an audit or review that names its schedule
+records the schedule's completion in the same transaction — due date from the schedule, done date from the audit, a
+reference back to the report — through `app.obligation_next_due`, which computes the next occurrence exactly as `nextDue`
+does. Doing it as a second write from the phone would have let a report exist with its schedule still showing overdue.
+Open actions from issued audits and reviews appear on What's due. Suite 27.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;

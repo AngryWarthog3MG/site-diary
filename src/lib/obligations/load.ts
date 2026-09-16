@@ -48,7 +48,7 @@ export async function loadObligations(
   today: string,
 ): Promise<ObligationsData> {
   const q = `?project=${projectId}`;
-  const [{ data: schedRows }, chemicals, { data: crewRows }, { data: ticketRows }, { data: notifiableRows }, { data: regRows }, emergency, { data: plantRows }, { data: pcRow }, { data: whsPlanRows }, { data: whiteCards }, { data: ncrRows }, { data: openLots }, { data: equipRows }] = await Promise.all([
+  const [{ data: schedRows }, chemicals, { data: crewRows }, { data: ticketRows }, { data: notifiableRows }, { data: regRows }, emergency, { data: plantRows }, { data: pcRow }, { data: whsPlanRows }, { data: whiteCards }, { data: ncrRows }, { data: openLots }, { data: equipRows }, { data: findingRows }, { data: reviewActionRows }] = await Promise.all([
     supabase
       .from('obligations')
       .select('id, project_id, kind, title, basis, interval_months, first_due_on, active, obligation_completions(id, due_on, done_on, evidence_note, evidence_ref, created_at, done_by)')
@@ -68,6 +68,8 @@ export async function loadObligations(
     supabase.from('ncrs').select('id, seq, status, detected_at, reported_to_principal_at').eq('project_id', projectId).neq('status', 'closed'),
     supabase.from('lots').select('id, seq, description, itp:itps!inner(itp_points(id, seq, inspection_test, point_type, uses_calibrated_equipment)), lot_checks(itp_point_id, result, created_at), hold_point_releases(itp_point_id)').eq('project_id', projectId).eq('status', 'open'),
     supabase.from('measuring_equipment').select('id, name, active, equipment_calibrations(calibrated_on, due_on, certificate_no)').eq('org_id', orgId).eq('active', true),
+    supabase.from('audit_findings').select('id, seq, action, due_on, audit:audits!inner(id, org_id, project_id, status, audit_date)').is('done_at', null).not('action', 'is', null).eq('audit.org_id', orgId).eq('audit.status', 'issued').or(`project_id.eq.${projectId},project_id.is.null`, { referencedTable: 'audit' }),
+    supabase.from('review_actions').select('id, action, due_on, review:management_reviews!inner(id, org_id, project_id, status, held_on)').is('done_at', null).eq('review.org_id', orgId).eq('review.status', 'issued').or(`project_id.eq.${projectId},project_id.is.null`, { referencedTable: 'review' }),
   ]);
 
   const scheduled = (schedRows ?? []) as ScheduledRow[];
@@ -243,6 +245,21 @@ export async function loadObligations(
     const cal = calibrationStatus(eq.equipment_calibrations ?? [], today);
     if (cal.status === 'current') continue;
     items.push({ key: `cal:${eq.id}`, source: 'quality', title: `${CALIBRATION_LABEL[cal.status]} — ${eq.name}`, basis: 'ISO 9001 cl. 7.1.5', dueOn: cal.latest?.due_on ?? today, status: cal.status === 'due_soon' ? 'due_soon' : 'overdue', href: `/quality/equipment${q}` });
+  }
+
+  // Actions from issued audits and reviews, until they are done (ISO cl. 9.2, 9.3; Spec 201 cl. 201.13).
+  type AuditRef = { id: string; audit_date: string };
+  for (const fnd of (findingRows ?? []) as Array<{ id: string; seq: number; action: string; due_on: string | null; audit: AuditRef | AuditRef[] }>) {
+    const au = Array.isArray(fnd.audit) ? fnd.audit[0] : fnd.audit;
+    if (!au) continue;
+    const dueOn = fnd.due_on ?? au.audit_date;
+    items.push({ key: `finding:${fnd.id}`, source: 'audits', title: `Audit action — ${fnd.action}`, basis: `From the internal audit of ${au.audit_date.slice(8, 10)}/${au.audit_date.slice(5, 7)}/${au.audit_date.slice(0, 4)}, finding ${fnd.seq}`, dueOn, status: fnd.due_on ? dueStatus(fnd.due_on, today) : 'due_soon', href: `/audits/audit/${au.id}${q}` });
+  }
+  type ReviewRef = { id: string; held_on: string };
+  for (const ra of (reviewActionRows ?? []) as Array<{ id: string; action: string; due_on: string | null; review: ReviewRef | ReviewRef[] }>) {
+    const rv = Array.isArray(ra.review) ? ra.review[0] : ra.review;
+    if (!rv) continue;
+    items.push({ key: `review-action:${ra.id}`, source: 'audits', title: `Management review action — ${ra.action}`, basis: 'Carried forward until closed out', dueOn: ra.due_on ?? rv.held_on, status: ra.due_on ? dueStatus(ra.due_on, today) : 'due_soon', href: `/audits/review/${rv.id}${q}` });
   }
 
   const sorted = sortItems(items);
