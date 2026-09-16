@@ -4027,3 +4027,7 @@ a.dash-row:hover { background: var(--teal-tint); }
 .labhome__emerg { margin-top: 1rem; padding: 0.9rem 1rem; border: 1px solid rgba(154, 43, 43, 0.35); border-radius: 12px; background: var(--paper); }
 .labhome__emerg .label { margin: 0; }
 .labhome__muster { margin: 0.6rem 0 0.4rem; font-size: 1.0625rem; line-height: 1.4; }
+
+/* Quality: ITP points and lot points. A hold point is marked, because work stops at it. */
+.itp__points { display: grid; gap: 0.6rem; }
+.itp__point--hold { border-left: 3px solid #9A2B2B; }

@@ -1766,6 +1766,44 @@ due now name anyone on the crew list with none recorded. Both the plan and the s
 member of the job, as regs 311 and 304(4) require them made available, though the screen is not added to the labourer's
 doors: a supervisor briefs them at the prestart. Suite 25.
 
+**R66. Quality: inspection and test plans, lots, hold points, non-conformance, and calibration.** The largest gap
+in the certification research, and the one that decides whether a principal will let the company work on a road job.
+Main Roads WA Specification 201 Quality Management, and the council specifications built on AUS-SPEC, ask a civil
+contractor to run four things the app had no structure for.
+
+**Inspection and test plans.** Each point carries the elements cl. 201.06.02 lists — the work process and what is
+inspected or tested, who does it, how often, the method, the acceptance criteria, whether it uses calibrated equipment,
+and whether it is a hold or witness point — plus who reviews the result, from the council specification. An ITP is a
+document: a draft is written and edited, issuing freezes it and its points, the principal's review is recorded against
+it (review, not approval, as the specification says), and a change is a revision carrying its points that supersedes
+the old one when issued.
+
+**Lots.** Conformance is recorded against a lot, numbered by the database, worked to an issued ITP, with its location and
+— where it is needed — its surveyed position. Each check is a record against a point: result, what was measured, the test
+report number that traces it to the laboratory, the day. A lot closes as conforming only when every point has a result,
+none still fails, every hold point is released and no non-conformance on it is unclosed; the database checks, and the
+screen lists what is still missing. A rework is a new lot, re-numbered and cross-referenced to the one it replaces.
+
+**Hold points have teeth.** C02 defines one as a position "beyond which work cannot proceed without the designated
+authorisation", so a release is a record naming who released it and in what role, and it can only be recorded once the
+point's check conforms. A failed check puts the whole lot on hold. Writing the test suite found the first version
+wrong twice: a failed lot could still be tested before any NCR was raised, against cl. 201.06.04's "no further testing
+until an NCR has been submitted and corrective action approved"; and a lot repaired in place could never close, because
+releasing needed an open lot and nothing reopened it. The fix (migration 20260916190100) is that the hold lifts only when
+the lot's last non-conformance is closed — never by reopening the lot by hand.
+
+**Non-conformance.** An NCR's observation is its first account and never changes. The root cause, the corrective and
+preventative actions and the proposed disposition are worked up while it is open; approving them needs all three and a
+named approver, and freezes them; closing it lifts the lot's hold. The research's caution decided the clock: the 24-hour
+report and the automatic hold point are Main Roads' contract terms, mirrored by many principals, not something ISO 9001
+imposes — so the reporting deadline is a per-job setting, off unless the contract sets it, and a refuted "two working
+days" variant is nowhere.
+
+**Calibration (ISO 9001 cl. 7.1.5).** Element (f) of an ITP point implies a register, so there is one: equipment and its
+calibration certificates. A point that uses calibrated equipment will not take a check without naming the equipment, and
+the database refuses one that was out of calibration on the day of the check — not today, the day. Hold points awaiting
+release, NCRs to report or close, and equipment falling due all appear on What's due. Suite 26.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;

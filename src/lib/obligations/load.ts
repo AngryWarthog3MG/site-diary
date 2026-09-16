@@ -6,6 +6,7 @@ import { regulatorState, perthDay, type RegulatorEvent } from '@/lib/incidents/r
 import { incidentRef } from '@/lib/incidents/model';
 import { loadEmergency } from '@/lib/emergency/load';
 import { withoutWhiteCard } from '@/lib/construction/model';
+import { ncrRef, lotRef, ncrReportState, holdsAwaitingRelease, calibrationStatus, CALIBRATION_LABEL, type PointType, type Result } from '@/lib/quality/model';
 import { nextInspection, registrationStatus, REGISTRATION_LABEL, type InspectionBasis, type RecordKind, type Outcome } from '@/lib/plant/inspections';
 import {
   dueStatus, nextDue, onTime, sortItems, summarise, KIND_LABEL,
@@ -47,7 +48,7 @@ export async function loadObligations(
   today: string,
 ): Promise<ObligationsData> {
   const q = `?project=${projectId}`;
-  const [{ data: schedRows }, chemicals, { data: crewRows }, { data: ticketRows }, { data: notifiableRows }, { data: regRows }, emergency, { data: plantRows }, { data: pcRow }, { data: whsPlanRows }, { data: whiteCards }] = await Promise.all([
+  const [{ data: schedRows }, chemicals, { data: crewRows }, { data: ticketRows }, { data: notifiableRows }, { data: regRows }, emergency, { data: plantRows }, { data: pcRow }, { data: whsPlanRows }, { data: whiteCards }, { data: ncrRows }, { data: openLots }, { data: equipRows }] = await Promise.all([
     supabase
       .from('obligations')
       .select('id, project_id, kind, title, basis, interval_months, first_due_on, active, obligation_completions(id, due_on, done_on, evidence_note, evidence_ref, created_at, done_by)')
@@ -61,9 +62,12 @@ export async function loadObligations(
     supabase.from('incident_regulator_events').select('id, kind, happened_at, method, person_name, detail, incident:incidents!inner(id, seq, notifiable, project_id)').eq('incident.project_id', projectId),
     loadEmergency(supabase, projectId),
     supabase.from('project_plant').select('plant:plant_register!inner(id, name, active, inspection_basis, inspection_interval_months, registration_required, registration_no, registration_expires_on, plant_maintenance_records(kind, done_on, next_due_on, outcome))').eq('project_id', projectId).eq('active', true),
-    supabase.from('projects').select('is_principal_contractor').eq('id', projectId).maybeSingle(),
+    supabase.from('projects').select('is_principal_contractor, ncr_report_hours').eq('id', projectId).maybeSingle(),
     supabase.from('whs_management_plans').select('id').eq('project_id', projectId).limit(1),
     supabase.from('crew_tickets').select('person_name, ticket_type, active, expires_on').eq('org_id', orgId).eq('ticket_type', 'white_card'),
+    supabase.from('ncrs').select('id, seq, status, detected_at, reported_to_principal_at').eq('project_id', projectId).neq('status', 'closed'),
+    supabase.from('lots').select('id, seq, description, itp:itps!inner(itp_points(id, seq, inspection_test, point_type, uses_calibrated_equipment)), lot_checks(itp_point_id, result, created_at), hold_point_releases(itp_point_id)').eq('project_id', projectId).eq('status', 'open'),
+    supabase.from('measuring_equipment').select('id, name, active, equipment_calibrations(calibrated_on, due_on, certificate_no)').eq('org_id', orgId).eq('active', true),
   ]);
 
   const scheduled = (schedRows ?? []) as ScheduledRow[];
@@ -214,6 +218,31 @@ export async function loadObligations(
   const noCard = withoutWhiteCard(((crewRows ?? []) as Array<{ name: string }>).map((c) => c.name), (whiteCards ?? []) as Array<{ person_name: string; ticket_type: string; active: boolean; expires_on: string | null }>, today);
   if (noCard.length > 0) {
     items.push({ key: 'white-cards', source: 'construction', title: `No white card recorded — ${noCard.length === 1 ? noCard[0] : `${noCard.length} on the crew list`}`, basis: 'WHS (General) Regs 2022 (WA) reg. 317 · general construction induction', dueOn: today, status: 'overdue', href: `/construction${q}` });
+  }
+
+  // Quality: the contract's NCR reporting clock, NCRs to close, hold points waiting on a release, calibration.
+  const clockHours = (pcRow as { ncr_report_hours?: number | null } | null)?.ncr_report_hours ?? null;
+  const nowForNcr = new Date().toISOString();
+  for (const n of (ncrRows ?? []) as Array<{ id: string; seq: number; status: string; detected_at: string; reported_to_principal_at: string | null }>) {
+    const href = `/quality/ncr/${n.id}${q}`;
+    const clock = ncrReportState(n.detected_at, n.reported_to_principal_at, clockHours, nowForNcr);
+    if (clock.state === 'due' || clock.state === 'overdue') {
+      items.push({ key: `ncr-report:${n.id}`, source: 'quality', title: `Report ${ncrRef(n.seq)} to the principal`, basis: `This job's contract: within ${clockHours} hours of detection`, dueOn: perthDay(clock.dueAt!), status: clock.state === 'overdue' ? 'overdue' : 'due_soon', href });
+    }
+    items.push({ key: `ncr-close:${n.id}`, source: 'quality', title: `${ncrRef(n.seq)} — ${n.status === 'open' ? 'disposition to approve' : 'to close out'}`, basis: 'ISO 9001 cl. 8.7 · 10.2', dueOn: perthDay(n.detected_at), status: 'due_soon', href });
+  }
+  type LotRow = { id: string; seq: number; description: string; itp: { itp_points: Array<{ id: string; seq: number; inspection_test: string; point_type: PointType; uses_calibrated_equipment: boolean }> } | Array<{ itp_points: Array<{ id: string; seq: number; inspection_test: string; point_type: PointType; uses_calibrated_equipment: boolean }> }>; lot_checks: Array<{ itp_point_id: string; result: Result; created_at: string }>; hold_point_releases: Array<{ itp_point_id: string }> };
+  for (const lot of (openLots ?? []) as LotRow[]) {
+    const itp = Array.isArray(lot.itp) ? lot.itp[0] : lot.itp;
+    const waiting = holdsAwaitingRelease(itp?.itp_points ?? [], lot.lot_checks ?? [], new Set((lot.hold_point_releases ?? []).map((r) => r.itp_point_id)));
+    for (const pt of waiting) {
+      items.push({ key: `hold:${lot.id}:${pt.id}`, source: 'quality', title: `Hold point awaiting release — ${lotRef(lot.seq)} point ${pt.seq}, ${pt.inspection_test}`, basis: 'Work beyond a hold point stops until it is released', dueOn: today, status: 'due_soon', href: `/quality/lot/${lot.id}${q}` });
+    }
+  }
+  for (const eq of (equipRows ?? []) as Array<{ id: string; name: string; equipment_calibrations: Array<{ calibrated_on: string; due_on: string; certificate_no: string }> }>) {
+    const cal = calibrationStatus(eq.equipment_calibrations ?? [], today);
+    if (cal.status === 'current') continue;
+    items.push({ key: `cal:${eq.id}`, source: 'quality', title: `${CALIBRATION_LABEL[cal.status]} — ${eq.name}`, basis: 'ISO 9001 cl. 7.1.5', dueOn: cal.latest?.due_on ?? today, status: cal.status === 'due_soon' ? 'due_soon' : 'overdue', href: `/quality/equipment${q}` });
   }
 
   const sorted = sortItems(items);

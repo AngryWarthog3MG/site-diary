@@ -211,6 +211,21 @@ improvising; the register once shipped dead because a live smoke test was skippe
   304(4) — though the screen is not a labourer door. Nothing in the app is purged, which is how regs 303 and 313 retention is
   met; do not add a purge. `/construction`; What's due flags a principal contractor with no plan and crew with no white card.
   Suite 25
+- `src/lib/quality/` — ITPs, lots, hold points, NCRs, calibration (README R66). `model.ts` mirrors the DB rules
+  (`lotCloseProblems`, `testingAllowed`, `holdsAwaitingRelease`, `ncrReportState`, `calibrationStatus`, `calibratedOn`,
+  `pointProblems`); the DB wins (`app.lot_close_problems`, the triggers in 20260916190000 and 20260916190100). Tables:
+  `itps` + `itp_points` (draft editable; issued frozen; a revision with `supersedes_id` supersedes on issue; points only change
+  on a draft), `lots` (numbered per job, worked to an ISSUED ITP; `open → nonconforming → open` only as its last NCR closes;
+  `conforming` only with every point resulted and none failing, every hold point released, no NCR unclosed; a rework lot
+  with `replaces_lot_id` marks the original `replaced`), `lot_checks` (frozen; a calibrated point needs equipment in
+  calibration ON the check date; a failed check puts the lot on hold; no testing on a held lot until an NCR exists and none is
+  open — Spec 201 cl. 201.06.04; `created_at` is `clock_timestamp()` so "latest" works inside one transaction),
+  `hold_point_releases` (a hold point, open lot, latest check conforms; frozen), `ncrs` (numbered; observation frozen; approve
+  needs root cause, corrective action, disposition and an approver's name, then those freeze; close lifts the lot's hold),
+  `measuring_equipment` + `equipment_calibrations` (org). `projects.ncr_report_hours` is the CONTRACT's reporting clock, null
+  = none — never hard-code 24. Writes: ITPs and NCR approval = `app.can_manage_incidents`; lots, checks, releases, raising an
+  NCR = `app.can_run_talks`; equipment = `app.can_manage_crew`. Labourer reads none. `/quality` and `/quality/{itp,lot,ncr}/[id]`,
+  `/quality/equipment`. Suite 26
 - `src/lib/safety/` — the dashboard: `stats.ts` (pure: `classify` injuries MTI/FAI, `injurySummary` with the
   rate per million labour hours, `daysSinceLastInjury`, `monthBuckets`, `overdue`), `load.ts` (one gather under the
   caller's RLS across sign-ins, prestarts, plant, permits, incidents, inspections, tickets, subcontractors, SWMS,
