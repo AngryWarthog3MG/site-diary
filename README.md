@@ -1626,6 +1626,30 @@ with a role's rights and a hand-written database call reaches what the role reac
 ticks; and a retired drill subcontractor document on the sandbox organisation whose file was
 removed with the drill, which the nightly storage check will keep naming until the row is gone.
 
+**R60. The hazardous chemicals register, and the one table a labourer may read.** The first gap
+closed from the certification research (R59). WHS (General) Regulations 2022 (WA) reg. 346 requires a
+register of the hazardous chemicals used, handled or stored at the workplace, kept there, maintained
+up to date, holding "the current safety data sheet for each hazardous chemical listed", and readily
+accessible to the workers involved. The app held none of it: the only matches in the repository were
+an inspection checklist line and a SWMS category label, and a tick box is not a register.
+
+Shaped like the plant register because it is the same shape. `chemical_products` keeps each product
+once for the company, `chemical_sds` keeps every sheet it has ever had, and `project_chemicals` says
+which of them are on this workplace and where they are kept. A sheet is a record: a newer one
+supersedes it and the old one is retired, never rewritten or deleted, so the register can still say
+what the crew was working to last March.
+
+Two decisions worth keeping. **Current has a meaning**: a safety data sheet is reviewed at least
+every five years, so `sdsStatus` reads the date printed on the sheet and calls anything older out of
+date, warns ninety days ahead, and treats a sheet recorded without a file as not accessible rather
+than as current — three answers where a boolean would have given one. **And this is the only record
+table without a `_reads_record` restrictive policy.** Every other one got one in 20260915140000 to
+keep a labourer out of the record. Here the regulation runs the other way: the worker holding the
+drum is exactly who must be able to read the sheet, so `canSee` gives the labourer a fourth door and
+the table has no read lock. Suite 20 asserts that directly, alongside the labourer still reading no
+entries. The screen prints, which is the backup WorkSafe WA asks for when the power or the network
+is out.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;

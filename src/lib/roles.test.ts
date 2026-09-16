@@ -23,12 +23,14 @@ test('a tick can open a screen the role would not have had', () => {
   assert.equal(sees({ role: 'leading_hand', screens: ['claims'] }, 'claims'), true);
 });
 
-test('a labourer never gets past their two doors, whatever is ticked', () => {
+test('a labourer never gets past their own doors, whatever is ticked', () => {
   assert.equal(sees({ role: 'labourer', screens: ['entries', 'claims', 'signin'] }, 'entries'), false);
   assert.equal(sees({ role: 'labourer', screens: ['entries', 'claims', 'signin'] }, 'claims'), false);
   assert.equal(sees({ role: 'labourer', screens: ['entries', 'claims', 'signin'] }, 'signin'), true);
   assert.equal(sees({ role: 'labourer', screens: [] }, 'incidents'), false);
-  assert.deepEqual(grantableScreens('labourer'), ['signin', 'incidents']);
+  // The gate, hazard reporting, and the chemicals register — the third is reg. 346(3),
+  // which requires the register be readable by the worker handling the drum (README R60).
+  assert.deepEqual(grantableScreens('labourer'), ['signin', 'incidents', 'chemicals']);
 });
 
 test('an admin keeps Settings — the screen the ticks are set from', () => {

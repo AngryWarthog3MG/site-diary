@@ -3984,3 +3984,20 @@ a.dash-row:hover { background: var(--teal-tint); }
 @media (min-width: 700px) { .access__body { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 .access .checkrow--inline { margin: 0; align-items: center; min-height: 2.6rem; }
 
+/* ==========================================================================
+   The hazardous chemicals register. It is printed and pinned up as often as
+   it is read on a phone, so it has real print rules of its own.
+   ========================================================================== */
+.chemreg__stats { display: flex; flex-wrap: wrap; gap: 0.4rem 1.4rem; margin: 0.9rem 0 0; font-size: 0.875rem; color: var(--ink-60); }
+.chemreg__stats strong { font-size: 1.05rem; color: var(--ink); margin-right: 0.3rem; }
+.chemreg__asof { margin: 0.6rem 0 0.9rem; }
+.chemreg__list { display: grid; gap: 0.45rem; }
+.chemreg__add { margin-top: 1.25rem; }
+.item--warn { border-color: rgba(154, 43, 43, 0.35); }
+
+@media print {
+  .chemreg .chemreg__add, .chemreg .chemreg__open { display: none !important; }
+  .chemreg .prestart-row { break-inside: avoid; border: 1px solid #999 !important; background: #fff !important; }
+  .chemreg .page-subtitle { display: none; }
+  .chemreg__asof { display: block !important; font-size: 10pt; }
+}

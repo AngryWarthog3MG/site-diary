@@ -52,8 +52,20 @@ npm test             # typecheck + unit tests — the gate for any change
 npm run db:test      # SQL suites
 npm run pdf:check    # byte-identical PDF assertion; run if src/lib/pdf/ changed
 npm run test:all     # npm test + pdf:check — does NOT include db:test
-npm run db:types     # regenerate src/types/database.ts after a migration
+npm run db:types     # DANGER — see below; src/types/database.ts is hand-written
 ```
+
+**`npm run db:types` destroys `src/types/database.ts`.** That file is hand-written — its own
+header says so — and holds `MemberRole`, `Profile`, `Entry` and the rest of the domain types the
+app imports. The script pipes `supabase gen types` over the top of it with `>`, which replaces
+all of it with a generated `Database` type that exports none of those names, and roughly thirty
+files stop compiling. Add what a migration needs to the hand-written file by hand. If you have
+already run it, restore with `git checkout -- src/types/database.ts`.
+
+**If git fails with "You have not agreed to the Xcode license agreements"**, the Xcode command
+line tools have been updated underneath the session. Prefix git with
+`DEVELOPER_DIR=/Library/Developer/CommandLineTools`, which needs no password, rather than asking
+for `sudo xcodebuild -license`.
 
 Deployment has its own procedure — see `docs/ship.md`. Do not deploy by
 improvising; the register once shipped dead because a live smoke test was skipped.
@@ -149,6 +161,16 @@ improvising; the register once shipped dead because a live smoke test was skippe
   keyed) and `competency_requirements` (role → competency; role normalised). Records stay in `crew_tickets`. Screens
   `/training` (job or whole company; tap a cell to record), `/training/requirements`; PDF GET `/api/training/pdf?project`;
   nightly `tickets=1` also emails `trainingGaps()`
+- `src/lib/chemicals/` — the hazardous chemicals register: `model.ts` (GHS hazard classes, `currentSds`,
+  `sdsStatus` — a sheet is current for five years from the date printed on it, `registerFor`), `load.ts`.
+  Tables `chemical_products` (org-wide, one product once), `chemical_sds` (retired never rewritten or deleted,
+  newest active sheet is the one the register holds) and `project_chemicals` (what is on THIS workplace, with
+  where it is kept). Bucket `chemical-sds` `{org}/{product}/{sds}.ext`, file first then row. Keeping the
+  product list and its sheets = `app.can_manage_crew`; saying what is on site = `app.can_run_talks`.
+  **This is the one record table with NO `_reads_record` restrictive policy, on purpose**: reg. 346(3)
+  requires the register be readily accessible to the workers involved, so the labourer reads it and `canSee`
+  lists `chemicals` among their doors. The screen prints — that is the backup WorkSafe WA asks for when the
+  power or the network is out. Suite 20. README R60
 - `src/lib/safety/` — the dashboard: `stats.ts` (pure: `classify` injuries MTI/FAI, `injurySummary` with the
   rate per million labour hours, `daysSinceLastInjury`, `monthBuckets`, `overdue`), `load.ts` (one gather under the
   caller's RLS across sign-ins, prestarts, plant, permits, incidents, inspections, tickets, subcontractors, SWMS,
