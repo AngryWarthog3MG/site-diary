@@ -95,7 +95,14 @@ improvising; the register once shipped dead because a live smoke test was skippe
   (the machines on a job: `project_plant` → `plant_register`, the ONE plant vocabulary — there is no per-job
   plant list any more). Tables `plant_register` (org-wide fleet), `project_plant`, `plant_prestarts` (signed =
   frozen), `plant_defects`. `app.entry_warnings`
-  raises `plant_without_prestart`; the TS half is `reviewQualityWarnings(payload, { plantPrestarted })`
+  raises `plant_without_prestart`; the TS half is `reviewQualityWarnings(payload, { plantPrestarted })`. Inspections and
+  registration (README R64): `inspections.ts` (`nextInspection` — reg. 213's cascade, a date the inspector set wins, maintenance
+  alone does not reset it; `registrationStatus`, `mayNotBeUsed`). `plant_register` carries `inspection_basis`,
+  `inspection_interval_months` and registration fields — registration OFF by default, because most civil plant is not
+  registrable. `plant_maintenance_records` (reg. 237: names the competent person and their competence, never in the future,
+  frozen; optional report in bucket `plant-records`). Trigger `plant_prestarts_registration_current` refuses a prestart for a
+  machine marked registrable with no number or a lapsed one (WHS Act s. 42), and the check form disables it. Machine page
+  `/plant/machine/[id]`. Suite 24
 - `src/lib/signin/` — site sign-in (the gate): `register.ts` (who is on site / who left, AWST clocks by
   hand, hours to the quarter), `pdf.tsx` (the day's attendance register). Table `site_signins`: the DB
   decides `inducted` at sign-in and stamps the arrival clocks; the phone's clocks travel alongside; a

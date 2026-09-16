@@ -17,7 +17,7 @@ export default async function NewPlantPrestartPage({ searchParams }: { searchPar
   const supabase = await createClient();
   const { data: register } = await supabase
     .from('plant_register')
-    .select('id, name, kind, make_model, plant_no, ownership, supplier, active')
+    .select('id, name, kind, make_model, plant_no, ownership, supplier, active, inspection_basis, inspection_interval_months, registration_required, registration_no, registration_expires_on')
     .eq('org_id', current.project.org.id)
     .eq('active', true)
     .order('name');

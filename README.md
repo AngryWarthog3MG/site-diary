@@ -1718,6 +1718,27 @@ from the last drill held — not a separate schedule someone must remember to se
 reissuing would become a way to put a drill off. A workplace with no plan shows as overdue on What's due,
 because reg. 43 applies to every one. Suite 23.
 
+**R64. Plant: who inspected it, on what basis, and may it be used.** The plant module had daily walk-arounds and
+defects, which is not what WHS (General) Regulations 2022 (WA) reg. 213 asks for. Reg. 213 requires maintenance, inspection
+and if necessary testing "conducted by a competent person", at intervals that cascade: the manufacturer's recommendations;
+failing those, a competent person's; and — for inspection only — failing both, annually. Reg. 237 requires the records kept
+for as long as the plant is used. WHS Act 2020 (WA) s. 42 forbids using plant that must be registered and is not.
+
+A machine now carries its inspection basis and interval, and a register of inspections, tests and repairs, each naming who
+did it and on what competence, never dated in the future, frozen, with the service report attached if there is one. The
+next inspection is a date the inspector wrote on the last one if they wrote one, otherwise the interval counted from the last
+inspection; maintenance on its own does not reset the clock, because a service is not an inspection. A machine with a basis
+set and no inspection on record is overdue: it cannot be shown to have been inspected at all. Nothing is due for a machine
+with no basis — there is no interval to invent.
+
+The research's design caution decided the registration half. A fleet of excavators, skid steers, rollers, dumpers and trucks
+contains few or no registrable items: Schedule 5 is tower cranes, mobile cranes over 10 t, concrete placing booms, lifts,
+boilers and pressure vessels. So registration is off unless someone says a machine needs it, and only then does anything
+bite: a machine marked registrable with no number, or a lapsed one, is refused a prestart by the database and disabled in the
+check form. Reg. 213 does not literally require recording the inspector's competence; it is recorded anyway, because "done by
+a competent person" cannot be shown without naming the person and the basis, and it is what an auditor asks to see. Plant on
+the job appears on What's due. Suite 24.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;

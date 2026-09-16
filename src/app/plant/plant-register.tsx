@@ -2,11 +2,18 @@
 
 import { useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
+import Link from 'next/link';
 import { PLANT_KINDS, PLANT_KIND_LABEL, OWNERSHIP_LABEL, type PlantKind, type Ownership } from '@/lib/plant/checklist';
+import { registrationStatus, mayNotBeUsed, REGISTRATION_LABEL, type InspectionBasis } from '@/lib/plant/inspections';
+
+/** Today in Perth, for a badge. Perth has no daylight saving. */
+const perthToday = () => new Date(Date.now() + 8 * 3_600_000).toISOString().slice(0, 10);
 
 export interface RegisterRow {
   id: string; name: string; kind: string; make_model: string | null; plant_no: string | null;
   ownership: string; supplier: string | null; active: boolean; aliases?: string[] | null;
+  inspection_basis?: InspectionBasis | null; inspection_interval_months?: number | null;
+  registration_required?: boolean; registration_no?: string | null; registration_expires_on?: string | null;
 }
 
 /** Add a machine to the fleet, or retire one. Used on the Plant page and inline from the checklist. */
@@ -136,6 +143,16 @@ export function PlantRegister({ orgId, projectId, initial, onJob: initialOnJob, 
                 {[PLANT_KIND_LABEL[r.kind as PlantKind] ?? r.kind, r.make_model, OWNERSHIP_LABEL[r.ownership as Ownership] ?? r.ownership, r.supplier].filter(Boolean).join(' · ')}
                 {!r.active ? ' · retired' : ''}
               </p>
+              {(() => {
+                const reg = registrationStatus({ inspection_basis: r.inspection_basis ?? null, inspection_interval_months: r.inspection_interval_months ?? null, registration_required: Boolean(r.registration_required), registration_no: r.registration_no ?? null, registration_expires_on: r.registration_expires_on ?? null }, perthToday());
+                return (
+                  <p className="machine__meta">
+                    {mayNotBeUsed(reg) ? <strong className="vr-missing">Do not use — {REGISTRATION_LABEL[reg].toLowerCase()} · </strong> : null}
+                    {r.inspection_basis ? null : <span>Inspection basis not set · </span>}
+                    <Link href={`/plant/machine/${r.id}?project=${projectId}`}>Inspections and registration</Link>
+                  </p>
+                );
+              })()}
               {canEdit && r.active ? (
                 aliasDraft[r.id] !== undefined ? (
                   <div className="defect__close">

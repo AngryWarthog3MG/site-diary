@@ -5,6 +5,7 @@ import { SDS_STATUS_LABEL } from '@/lib/chemicals/model';
 import { regulatorState, perthDay, type RegulatorEvent } from '@/lib/incidents/regulator';
 import { incidentRef } from '@/lib/incidents/model';
 import { loadEmergency } from '@/lib/emergency/load';
+import { nextInspection, registrationStatus, REGISTRATION_LABEL, type InspectionBasis, type RecordKind, type Outcome } from '@/lib/plant/inspections';
 import {
   dueStatus, nextDue, onTime, sortItems, summarise, KIND_LABEL,
   type ObligationItem, type ObligationKind,
@@ -45,7 +46,7 @@ export async function loadObligations(
   today: string,
 ): Promise<ObligationsData> {
   const q = `?project=${projectId}`;
-  const [{ data: schedRows }, chemicals, { data: crewRows }, { data: ticketRows }, { data: notifiableRows }, { data: regRows }, emergency] = await Promise.all([
+  const [{ data: schedRows }, chemicals, { data: crewRows }, { data: ticketRows }, { data: notifiableRows }, { data: regRows }, emergency, { data: plantRows }] = await Promise.all([
     supabase
       .from('obligations')
       .select('id, project_id, kind, title, basis, interval_months, first_due_on, active, obligation_completions(id, due_on, done_on, evidence_note, evidence_ref, created_at, done_by)')
@@ -58,6 +59,7 @@ export async function loadObligations(
     supabase.from('incidents').select('id, seq, notifiable').eq('project_id', projectId).eq('notifiable', true),
     supabase.from('incident_regulator_events').select('id, kind, happened_at, method, person_name, detail, incident:incidents!inner(id, seq, notifiable, project_id)').eq('incident.project_id', projectId),
     loadEmergency(supabase, projectId),
+    supabase.from('project_plant').select('plant:plant_register!inner(id, name, active, inspection_basis, inspection_interval_months, registration_required, registration_no, registration_expires_on, plant_maintenance_records(kind, done_on, next_due_on, outcome))').eq('project_id', projectId).eq('active', true),
   ]);
 
   const scheduled = (schedRows ?? []) as ScheduledRow[];
@@ -179,6 +181,26 @@ export async function loadObligations(
       basis: `WHS (General) Regs 2022 (WA) reg. 43(1)(b) · ISO 45001 cl. 8.2 · every ${emergency.current.test_every_months} months, per the plan`,
       dueOn: emergency.nextDrillDue, status: dueStatus(emergency.nextDrillDue, today), href: `/emergency${q}`,
     });
+  }
+
+  // Plant on this job: its reg. 213 inspection and, where it must be registered, its registration (s. 42).
+  type PlantRow = { id: string; name: string; active: boolean; inspection_basis: InspectionBasis | null; inspection_interval_months: number | null; registration_required: boolean; registration_no: string | null; registration_expires_on: string | null; plant_maintenance_records: Array<{ kind: RecordKind; done_on: string; next_due_on: string | null; outcome: Outcome | null }> | null };
+  for (const row of (plantRows ?? []) as Array<{ plant: PlantRow | PlantRow[] }>) {
+    const p = Array.isArray(row.plant) ? row.plant[0] : row.plant;
+    if (!p || !p.active) continue;
+    const href = `/plant/machine/${p.id}${q}`;
+    const insp = nextInspection(p, p.plant_maintenance_records ?? []);
+    if (insp.state === 'never_inspected') {
+      items.push({ key: `plant-insp:${p.id}`, source: 'plant', title: `Inspection — ${p.name} (none on record)`, basis: 'WHS (General) Regs 2022 (WA) reg. 213 · by a competent person', dueOn: today, status: 'overdue', href });
+    } else if (insp.state === 'scheduled') {
+      items.push({ key: `plant-insp:${p.id}`, source: 'plant', title: `Inspection — ${p.name}`, basis: 'WHS (General) Regs 2022 (WA) reg. 213 · by a competent person', dueOn: insp.due, status: dueStatus(insp.due, today), href });
+    }
+    const reg = registrationStatus(p, today);
+    if (reg === 'missing' || reg === 'expired') {
+      items.push({ key: `plant-reg:${p.id}`, source: 'plant', title: `${REGISTRATION_LABEL[reg]} — ${p.name}`, basis: 'WHS Act 2020 (WA) s. 42 · may not be used until registered', dueOn: p.registration_expires_on ?? today, status: 'overdue', href });
+    } else if (p.registration_required && p.registration_expires_on) {
+      items.push({ key: `plant-reg:${p.id}`, source: 'plant', title: `Registration renewal — ${p.name}`, basis: 'WHS Act 2020 (WA) s. 42', dueOn: p.registration_expires_on, status: dueStatus(p.registration_expires_on, today), href });
+    }
   }
 
   const sorted = sortItems(items);

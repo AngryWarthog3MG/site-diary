@@ -21,6 +21,8 @@ import { ticketVerdict, normaliseName, TICKET_LABEL, type TicketVerdict, type Ti
  * hour meter, say whether it is fit to use, sign. Nothing is pre-answered;
  * the signature is what saves it, and from then on it is frozen.
  */
+import { registrationStatus, mayNotBeUsed, REGISTRATION_LABEL } from '@/lib/plant/inspections';
+
 export function PlantCheckForm({ projectId, projectName, orgId, register, onJob, preselect, defaultOperator }: {
   projectId: string; projectName: string; orgId: string; register: RegisterRow[]; onJob: string[]; preselect: string | null; defaultOperator: string;
 }) {
@@ -187,10 +189,18 @@ export function PlantCheckForm({ projectId, projectName, orgId, register, onJob,
           <ul className="plantpick">
             {matches.map((r) => (
               <li key={r.id}>
-                <button type="button" className="plantpick__item" onClick={() => setPlantId(r.id)}>
-                  <span className="machine__name">{r.name}</span>
-                  <span className="machine__meta">{[isPlantKind(r.kind) ? PLANT_KIND_LABEL[r.kind] : r.kind, r.plant_no, r.make_model, onJobSet.has(r.id) ? 'on this job' : null].filter(Boolean).join(' · ')}</span>
-                </button>
+                {(() => {
+                  // WHS Act s. 42: a machine that must be registered and is not may not be used. The database refuses it too.
+                  const reg = registrationStatus({ inspection_basis: r.inspection_basis ?? null, inspection_interval_months: r.inspection_interval_months ?? null, registration_required: Boolean(r.registration_required), registration_no: r.registration_no ?? null, registration_expires_on: r.registration_expires_on ?? null }, new Date(Date.now() + 8 * 3_600_000).toISOString().slice(0, 10));
+                  const blocked = mayNotBeUsed(reg);
+                  return (
+                    <button type="button" className="plantpick__item" disabled={blocked} onClick={() => setPlantId(r.id)}>
+                      <span className="machine__name">{r.name}</span>
+                      <span className="machine__meta">{[isPlantKind(r.kind) ? PLANT_KIND_LABEL[r.kind] : r.kind, r.plant_no, r.make_model, onJobSet.has(r.id) ? 'on this job' : null].filter(Boolean).join(' · ')}</span>
+                      {blocked && <span className="machine__meta vr-missing">Do not use — {REGISTRATION_LABEL[reg].toLowerCase()}</span>}
+                    </button>
+                  );
+                })()}
               </li>
             ))}
             {matches.length === 0 && <li className="caption">Nothing on the register matches &ldquo;{search}&rdquo;.</li>}
