@@ -354,6 +354,8 @@ Change four of them and the app silently stops capturing what supervisors say. I
 - **Generated SQL is safe because of `security_invoker` views, a read-only transaction, an
   empty `search_path`, and a timeout** — in that order. `src/lib/query/validate.ts` exists
   for readable errors, *not* for safety. The file says so; believe it.
+- **A timestamp's date is Perth's.** Never `.slice(0, 10)` a timestamptz for display — that is the UTC day, a day early for
+  anything before 8 am in Perth. Use `fmtPerthDate` / `perthDate` (`src/lib/pdf/dates.ts`, arithmetic, PDF-safe). README R77.
 - **`entry_date` comes from the device**, not the server. A Perth knock-off at 17:30 is
   already tomorrow in UTC.
 - **One document per day, in the database.** `entries_one_open_per_day` (one unsigned entry

@@ -74,7 +74,7 @@ export function GateForm({ token, projectName, rules }: Props) {
     return (
       <div className="item">
         <p className="label">{done === 'in' ? 'Signed in' : 'You are signed in'}</p>
-        <p><strong>{current.name}</strong> · since {new Date(current.at).toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit' })}</p>
+        <p><strong>{current.name}</strong> · since {new Date(current.at).toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit', timeZone: 'Australia/Perth' })}</p>
         <p className="way-hint">{done === 'in' ? 'Report to the site supervisor. ' : ''}When you leave, open this code again and sign out.</p>
         {error && <p className="alert" role="alert">{error}</p>}
         <button type="button" className="button" disabled={busy} onClick={() => void signOut()}>{busy ? 'Signing out…' : 'Sign out — I am leaving'}</button>

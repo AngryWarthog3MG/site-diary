@@ -5,7 +5,7 @@ import { requireUser, resolveProject, canRunTalks } from '@/lib/auth';
 import { sees } from '@/lib/roles';
 import { BrandMark } from '@/components/brand-mark';
 import { OutboxStatus } from '@/components/outbox-status';
-import { fmtDate } from '@/lib/pdf/dates';
+import { fmtDate, fmtPerthDate } from '@/lib/pdf/dates';
 import { perthToday } from '@/lib/push/decide';
 import { KIND_LABEL, orderRef, statusLabel, summarise, isFinished, type OrderKind, type OrderStatus } from '@/lib/orders/model';
 import { RaiseOrder } from './raise-order';
@@ -52,7 +52,7 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
           <br />
           <span className="caption">
             {orderRef(r.seq)} · {statusLabel(r.kind, r.status)}{r.supplier ? ` · ${r.supplier}` : ''}
-            {r.needed_by ? ` · needed by ${fmtDate(r.needed_by)}${late ? ' — LATE' : ''}` : ''} · raised {fmtDate(r.raised_on_device_at.slice(0, 10))}
+            {r.needed_by ? ` · needed by ${fmtDate(r.needed_by)}${late ? ' — LATE' : ''}` : ''} · raised {fmtPerthDate(r.raised_on_device_at)}
           </span>
         </span>
         <span>Open</span>

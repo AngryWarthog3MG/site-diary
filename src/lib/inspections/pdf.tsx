@@ -1,6 +1,6 @@
 import type { ReactElement } from 'react';
 import { LOGO_DATA_URI } from '@/lib/pdf/logo';
-import { fmtDate } from '@/lib/pdf/dates';
+import { fmtDate, fmtPerthDate } from '@/lib/pdf/dates';
 import { KIND_LABEL, RESULT_LABEL, type InspectionItem, type InspectionKind } from './model';
 
 export interface InspectionPdfData {
@@ -59,7 +59,7 @@ export function InspectionDoc({ data }: { data: InspectionPdfData }): ReactEleme
                   <td>{a.item_key ? data.items.find((it) => it.key === a.item_key)?.label.slice(0, 30) ?? a.item_key : '—'}</td>
                   <td>{a.owner ?? '—'}</td>
                   <td className="mono">{a.due ? fmtDate(a.due) : '—'}</td>
-                  <td className={`mono${a.done_at ? '' : ' vr-missing'}`}>{a.done_at ? fmtDate(a.done_at.slice(0, 10)) : 'OPEN'}</td>
+                  <td className={`mono${a.done_at ? '' : ' vr-missing'}`}>{a.done_at ? fmtPerthDate(a.done_at) : 'OPEN'}</td>
                 </tr>
               ))}
             </tbody>

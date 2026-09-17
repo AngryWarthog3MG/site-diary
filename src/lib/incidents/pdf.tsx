@@ -1,6 +1,6 @@
 import type { ReactElement } from 'react';
 import { LOGO_DATA_URI } from '@/lib/pdf/logo';
-import { fmtDate } from '@/lib/pdf/dates';
+import { fmtDate, fmtPerthDate } from '@/lib/pdf/dates';
 import { awstClock } from '@/lib/signin/register';
 import { KIND_LABEL, STATUS_LABEL, TREATMENT_LABEL, SEVERITY_LABEL, incidentRef, type IncidentKind, type IncidentStatus, type Treatment, type Severity } from './model';
 
@@ -37,9 +37,9 @@ export function IncidentDoc({ data }: { data: IncidentPdfData }): ReactElement {
         <p className="lbl">The report — first account</p>
         <table>
           <tbody>
-            <tr><th>When</th><td>{fmtDate(data.occurred_at.slice(0, 10))} {awstClock(data.occurred_at)} AWST</td></tr>
+            <tr><th>When</th><td>{fmtPerthDate(data.occurred_at)} {awstClock(data.occurred_at)} AWST</td></tr>
             <tr><th>Where</th><td>{data.location ?? '—'}</td></tr>
-            <tr><th>Reported by</th><td>{data.reported_by} · {fmtDate(data.reported_on_device_at.slice(0, 10))} {awstClock(data.reported_on_device_at)} AWST</td></tr>
+            <tr><th>Reported by</th><td>{data.reported_by} · {fmtPerthDate(data.reported_on_device_at)} {awstClock(data.reported_on_device_at)} AWST</td></tr>
             <tr><th>What happened</th><td className="w">{data.description}</td></tr>
             <tr><th>Done straight away</th><td className="w">{data.immediate_actions ?? '—'}</td></tr>
             {data.injured_name && <tr><th>Person hurt</th><td>{data.injured_name}{data.injury_type ? ` · ${data.injury_type}` : ''}{data.body_part ? ` · ${data.body_part}` : ''}{data.treatment ? ` · ${TREATMENT_LABEL[data.treatment]}` : ''}</td></tr>}
@@ -62,7 +62,7 @@ export function IncidentDoc({ data }: { data: IncidentPdfData }): ReactElement {
                   <td className="w">{a.action}{a.done_note ? <span className="src"> — {a.done_note}</span> : null}</td>
                   <td>{a.owner ?? '—'}</td>
                   <td className="mono">{a.due ? fmtDate(a.due) : '—'}</td>
-                  <td className={`mono${a.done_at ? '' : ' vr-missing'}`}>{a.done_at ? fmtDate(a.done_at.slice(0, 10)) : 'OPEN'}</td>
+                  <td className={`mono${a.done_at ? '' : ' vr-missing'}`}>{a.done_at ? fmtPerthDate(a.done_at) : 'OPEN'}</td>
                 </tr>
               ))}
             </tbody>
@@ -73,9 +73,9 @@ export function IncidentDoc({ data }: { data: IncidentPdfData }): ReactElement {
       <section className="sect">
         <p className="lbl">Updates</p>
         {data.updates.length === 0 ? <p className="nil">No updates</p> : data.updates.map((u, i) => (
-          <p key={i} className="incident-doc__update"><span className="mono">{fmtDate(u.at.slice(0, 10))} {awstClock(u.at)}</span> · {u.kind} · {u.by}<br />{u.body}</p>
+          <p key={i} className="incident-doc__update"><span className="mono">{fmtPerthDate(u.at)} {awstClock(u.at)}</span> · {u.kind} · {u.by}<br />{u.body}</p>
         ))}
-        {data.closed_at && <p className="src">Closed {fmtDate(data.closed_at.slice(0, 10))} {awstClock(data.closed_at)} AWST.</p>}
+        {data.closed_at && <p className="src">Closed {fmtPerthDate(data.closed_at)} {awstClock(data.closed_at)} AWST.</p>}
         <p className="src">Printed {data.printedAwst}. The report is the first account and is never edited; everything after it is an update.</p>
       </section>
 

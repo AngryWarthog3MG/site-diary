@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import { fmtDate } from '@/lib/pdf/dates';
+import { fmtDate, fmtPerthDate } from '@/lib/pdf/dates';
 
 export interface DefectRow { id: string; plant: string; item: string; note: string | null; raised: string }
 
@@ -33,7 +33,7 @@ export function DefectList({ initial, canClose }: { projectId: string; initial: 
         <li key={d.id} className="defect">
           <div>
             <p className="machine__name">{d.plant} · {d.item}</p>
-            <p className="machine__meta">{d.note ? `${d.note} · ` : ''}raised {fmtDate(d.raised.slice(0, 10))}</p>
+            <p className="machine__meta">{d.note ? `${d.note} · ` : ''}raised {fmtPerthDate(d.raised)}</p>
             {closing === d.id && (
               <div className="defect__close">
                 <input className="field field--sm" value={note} placeholder="What was done — replaced hose, tagged out, sent for service…" onChange={(e) => setNote(e.target.value)} />

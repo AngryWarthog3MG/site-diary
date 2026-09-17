@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
-import { fmtDate } from '@/lib/pdf/dates';
+import { fmtDate, fmtPerthDate } from '@/lib/pdf/dates';
 
 export interface DocumentRow {
   id: string;
@@ -215,7 +215,7 @@ export function DocumentsManager({ projectId, userId, initial }: { projectId: st
                 {kindLabel(doc.kind)} · {mb(doc.bytes)}
                 {doc.pages != null ? ` · ${doc.pages} page${doc.pages === 1 ? '' : 's'}` : ''}
                 {doc.status === 'ready' && doc.method === 'vision' ? ' · read from a scan' : ''}
-                {' · added '}{fmtDate(doc.created_at.slice(0, 10))}
+                {' · added '}{fmtPerthDate(doc.created_at)}
               </p>
               {doc.status === 'failed' && doc.error && <p className="alert">{doc.error}</p>}
               <div className="docs-card__actions">

@@ -6,7 +6,7 @@ import { createClient } from '@/lib/supabase/client';
 import * as outbox from '@/lib/outbox/store';
 import { runOrQueue } from '@/lib/outbox/sync';
 import { SignaturePad } from '@/components/signature-pad';
-import { fmtDate } from '@/lib/pdf/dates';
+import { fmtDate, fmtPerthDate } from '@/lib/pdf/dates';
 import { KIND_LABEL, coverage, normalisePerson, type ControlledKind } from '@/lib/documents-control/model';
 import { IssueForm } from '../new/issue-form';
 
@@ -73,7 +73,7 @@ export function ProcedureScreen({ doc, projectId, crew, canManage, canSign, user
       <p className="label">{KIND_LABEL[doc.kind]}{doc.doc_number ? ` · ${doc.doc_number}` : ''}</p>
       <h1 className="page-title">{doc.title}</h1>
       {current ? (
-        <p className="page-subtitle">Version {current.version} · issued {fmtDate(current.issued_at.slice(0, 10))}{current.summary ? ` — ${current.summary}` : ''}</p>
+        <p className="page-subtitle">Version {current.version} · issued {fmtPerthDate(current.issued_at)}{current.summary ? ` — ${current.summary}` : ''}</p>
       ) : <p className="page-subtitle vr-missing">No version issued yet.</p>}
       {current && urls[current.file_path] && <a className="button" href={urls[current.file_path]} target="_blank" rel="noopener">Open the document</a>}
 
@@ -91,7 +91,7 @@ export function ProcedureScreen({ doc, projectId, crew, canManage, canSign, user
           <p className="label">Read and understood — version {current.version}</p>
           <h2 className="home-card__title">{crew.length === 0 ? `${acks.length + pending.length} signed · no crew list on this job to check against` : `${cov.read.length} of ${crew.length} on this job${cov.unread.length > 0 ? ` · still to read: ${cov.unread.join(', ')}` : ' · everyone has read it'}`}</h2>
           {pending.map((p) => <div key={p} className="talk-attendee"><span className="talk-attendee__pending" /><span>{p}<span className="pending-tag">waiting for signal</span></span></div>)}
-          {acks.map((a) => <div key={a.id} className="talk-attendee"><span className="talk-attendee__pending" /><span>{a.person_name}<span className="caption"> · {fmtDate(a.acknowledged_on_device_at.slice(0, 10))}</span></span></div>)}
+          {acks.map((a) => <div key={a.id} className="talk-attendee"><span className="talk-attendee__pending" /><span>{a.person_name}<span className="caption"> · {fmtPerthDate(a.acknowledged_on_device_at)}</span></span></div>)}
           {canSign && (
             <div className="sigslot item" style={{ marginTop: '1rem' }}>
               <p className="label">Hand them the phone</p>
@@ -110,7 +110,7 @@ export function ProcedureScreen({ doc, projectId, crew, canManage, canSign, user
         <div className="item">
           <p className="label">Earlier versions</p>
           {doc.versions.filter((v) => v.status !== 'current').map((v) => (
-            <p key={v.id} className="caption">v{v.version} · issued {fmtDate(v.issued_at.slice(0, 10))}{v.superseded_at ? `, superseded ${fmtDate(v.superseded_at.slice(0, 10))}` : ''} · {v.document_acknowledgements.length} signed{urls[v.file_path] ? <> · <a href={urls[v.file_path]} target="_blank" rel="noopener">open</a></> : null}{v.summary ? ` — ${v.summary}` : ''}</p>
+            <p key={v.id} className="caption">v{v.version} · issued {fmtPerthDate(v.issued_at)}{v.superseded_at ? `, superseded ${fmtPerthDate(v.superseded_at)}` : ''} · {v.document_acknowledgements.length} signed{urls[v.file_path] ? <> · <a href={urls[v.file_path]} target="_blank" rel="noopener">open</a></> : null}{v.summary ? ` — ${v.summary}` : ''}</p>
           ))}
         </div>
       )}

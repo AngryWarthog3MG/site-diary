@@ -5,7 +5,7 @@ import { requireUser, resolveProject } from '@/lib/auth';
 import { sees, canAuthorEntries } from '@/lib/roles';
 import { BrandMark } from '@/components/brand-mark';
 import { OutboxStatus } from '@/components/outbox-status';
-import { fmtDate } from '@/lib/pdf/dates';
+import { fmtDate, fmtPerthDate } from '@/lib/pdf/dates';
 import { KIND_LABEL, coverage, type ControlledKind } from '@/lib/documents-control/model';
 
 export const dynamic = 'force-dynamic';
@@ -46,7 +46,7 @@ export default async function ProceduresPage({ searchParams }: { searchParams: P
             <span>
               <strong>{r.title}</strong>{r.doc_number ? ` · ${r.doc_number}` : ''}
               <br />
-              <span className="caption">{KIND_LABEL[r.kind]}{cur ? ` · v${cur.version} issued ${fmtDate(cur.issued_at.slice(0, 10))}` : ' · no version issued'}{cur && r.requires_acknowledgement ? ` · ${cov.read.length} of ${crewNames.length} on this job have read it` : ''}</span>
+              <span className="caption">{KIND_LABEL[r.kind]}{cur ? ` · v${cur.version} issued ${fmtPerthDate(cur.issued_at)}` : ' · no version issued'}{cur && r.requires_acknowledgement ? ` · ${cov.read.length} of ${crewNames.length} on this job have read it` : ''}</span>
             </span>
             <span>Open</span>
           </Link>

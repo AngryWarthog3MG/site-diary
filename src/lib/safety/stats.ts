@@ -47,7 +47,8 @@ export function injurySummary(incidents: readonly IncidentFacts[], hoursWorked: 
  * 400 days ago has a number, not "none".
  */
 export function daysSinceLastInjury(incidents: readonly Pick<IncidentFacts, 'kind' | 'occurred_at'>[], today: string): number | null {
-  const last = incidents.filter((i) => i.kind === 'injury').map((i) => i.occurred_at.slice(0, 10)).sort().at(-1);
+  // The injury's day in Perth: an injury at 6 am happened on that Perth day, not the UTC day before.
+  const last = incidents.filter((i) => i.kind === 'injury').map((i) => new Date(Date.parse(i.occurred_at) + 8 * 3_600_000).toISOString().slice(0, 10)).sort().at(-1);
   if (!last) return null;
   return Math.max(0, Math.round((Date.parse(`${today}T00:00:00Z`) - Date.parse(`${last}T00:00:00Z`)) / 86_400_000));
 }

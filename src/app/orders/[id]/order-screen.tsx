@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import * as outbox from '@/lib/outbox/store';
 import { runOrQueue } from '@/lib/outbox/sync';
-import { fmtDate } from '@/lib/pdf/dates';
+import { fmtDate, fmtPerthDate } from '@/lib/pdf/dates';
 import { awstClock } from '@/lib/signin/register';
 import { KIND_LABEL, orderRef, statusLabel, isFinished, type OrderKind, type OrderStatus } from '@/lib/orders/model';
 
@@ -92,8 +92,8 @@ export function OrderScreen({ order: r, canProgress, userId, today }: Props) {
       <h1 className="page-title">{r.item}</h1>
       <p className={`page-subtitle ${finished ? '' : 'swms__status--active'}`}>
         {statusLabel(r.kind, r.status)}
-        {r.status === 'ordered' && r.ordered_at ? ` · ${fmtDate(r.ordered_at.slice(0, 10))}` : ''}
-        {r.done_at ? ` · ${fmtDate(r.done_at.slice(0, 10))}` : ''}{r.cancelled_at ? ` · ${fmtDate(r.cancelled_at.slice(0, 10))}` : ''}
+        {r.status === 'ordered' && r.ordered_at ? ` · ${fmtPerthDate(r.ordered_at)}` : ''}
+        {r.done_at ? ` · ${fmtPerthDate(r.done_at)}` : ''}{r.cancelled_at ? ` · ${fmtPerthDate(r.cancelled_at)}` : ''}
         {late ? ' · LATE' : ''}
         {r.urgent && r.notified_at ? ' · office emailed' : ''}
       </p>
@@ -106,7 +106,7 @@ export function OrderScreen({ order: r, canProgress, userId, today }: Props) {
 
       <div className="item">
         <p className="label">What was asked for</p>
-        <p className="incident__meta">Raised by {r.raised_by_name} · {fmtDate(r.raised_on_device_at.slice(0, 10))} {awstClock(r.raised_on_device_at)}</p>
+        <p className="incident__meta">Raised by {r.raised_by_name} · {fmtPerthDate(r.raised_on_device_at)} {awstClock(r.raised_on_device_at)}</p>
         {r.quantity && <p><span className="label">How much</span> {r.quantity}</p>}
         {r.plant && <p><span className="label">Machine</span> {r.plant}</p>}
         {r.needed_by && <p><span className="label">Needed by</span> {fmtDate(r.needed_by)}{late ? ' — late' : ''}</p>}
@@ -140,7 +140,7 @@ export function OrderScreen({ order: r, canProgress, userId, today }: Props) {
         {r.updates.length === 0 && <p className="nil">Nothing added yet.</p>}
         {r.updates.map((u) => (
           <div key={u.id} className="incident__update">
-            <p className="caption">{u.by} · {fmtDate(u.created_at.slice(0, 10))} {awstClock(u.created_at)}</p>
+            <p className="caption">{u.by} · {fmtPerthDate(u.created_at)} {awstClock(u.created_at)}</p>
             <p className="incident__text">{u.body}</p>
           </div>
         ))}

@@ -1,6 +1,6 @@
 import { createAdminClient } from '@/lib/supabase/admin';
 import { KIND_LABEL, SEVERITY_LABEL, incidentRef, urgent, type IncidentKind, type Severity } from './model';
-import { fmtDate } from '@/lib/pdf/dates';
+import { fmtDate, fmtPerthDate } from '@/lib/pdf/dates';
 
 const esc = (v: unknown) => String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
@@ -48,7 +48,7 @@ export async function notifyOffice(incidentId: string): Promise<NotifyOutcome> {
         `<div style="font-family:Arial,sans-serif;max-width:560px">` +
         `<p style="font-size:11px;letter-spacing:.08em;color:#9a2b2b;font-weight:bold;text-transform:uppercase">${r.notifiable ? 'Notifiable incident' : 'Safety report'}</p>` +
         `<h2 style="margin:.25em 0">${esc(ref)} · ${esc(kindLabel)}</h2>` +
-        `<p style="margin:.25em 0">${esc(project.name)} · ${esc(fmtDate(String(r.occurred_at).slice(0, 10)))}${r.location ? ` · ${esc(r.location)}` : ''}</p>` +
+        `<p style="margin:.25em 0">${esc(project.name)} · ${esc(fmtPerthDate(String(r.occurred_at)))}${r.location ? ` · ${esc(r.location)}` : ''}</p>` +
         `<p style="margin:.5em 0">${esc(r.description)}</p>` +
         (r.injured_name ? `<p style="margin:.25em 0"><b>Person hurt:</b> ${esc(r.injured_name)}</p>` : '') +
         `<p style="margin:.25em 0;color:#555">Severity: ${r.actual_severity ? SEVERITY_LABEL[r.actual_severity as Severity] : '—'} actual, ${r.potential_severity ? SEVERITY_LABEL[r.potential_severity as Severity] : '—'} potential. Reported by ${esc(reporter?.full_name ?? reporter?.email ?? '—')}.</p>` +

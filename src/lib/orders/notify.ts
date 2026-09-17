@@ -1,6 +1,6 @@
 import { createAdminClient } from '@/lib/supabase/admin';
 import { KIND_LABEL, orderRef, type OrderKind } from './model';
-import { fmtDate } from '@/lib/pdf/dates';
+import { fmtDate, fmtPerthDate } from '@/lib/pdf/dates';
 
 const esc = (v: unknown) => String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
@@ -48,7 +48,7 @@ export async function notifyOfficeOrder(orderId: string): Promise<NotifyOutcome>
         `<h2 style="margin:.25em 0">${esc(ref)} · ${esc(r.item)}</h2>` +
         `<p style="margin:.25em 0">${esc(project.name)}${r.quantity ? ` · ${esc(r.quantity)}` : ''}${r.plant ? ` · ${esc(r.plant)}` : ''}${r.needed_by ? ` · needed by ${esc(fmtDate(String(r.needed_by)))}` : ''}</p>` +
         (r.notes ? `<p style="margin:.5em 0">${esc(r.notes)}</p>` : '') +
-        `<p style="margin:.25em 0;color:#555">Raised by ${esc(raiser?.full_name ?? raiser?.email ?? '—')} · ${esc(fmtDate(String(r.raised_on_device_at).slice(0, 10)))}. Work stops or is unsafe without it.</p>` +
+        `<p style="margin:.25em 0;color:#555">Raised by ${esc(raiser?.full_name ?? raiser?.email ?? '—')} · ${esc(fmtPerthDate(String(r.raised_on_device_at)))}. Work stops or is unsafe without it.</p>` +
         `<p style="margin:.5em 0"><a href="${esc(process.env.NEXT_PUBLIC_SITE_URL ?? 'https://kbsdailydiary.me')}/orders/${esc(r.id)}">Open it</a></p>` +
         `</div>`,
     }),

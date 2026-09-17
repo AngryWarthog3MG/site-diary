@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
-import { fmtDate } from '@/lib/pdf/dates';
+import { fmtDate, fmtPerthDate } from '@/lib/pdf/dates';
 import { awstClock } from '@/lib/signin/register';
 import {
   KIND_LABEL, STATUS_LABEL, TREATMENT_LABEL, SEVERITY_LABEL, incidentRef, actionOverdue, urgent,
@@ -106,7 +106,7 @@ export function IncidentScreen({ incident: r, crew, canReport, canManage, userId
     <section className="incident">
       <p className="label">{incidentRef(r.seq)} · {KIND_LABEL[r.kind]}{r.notifiable ? ' · NOTIFIABLE' : ''}</p>
       <h1 className="page-title">{r.description.length > 60 ? `${r.description.slice(0, 60)}…` : r.description}</h1>
-      <p className={`page-subtitle ${closed ? '' : 'swms__status--active'}`}>{STATUS_LABEL[r.status]}{r.closed_at ? ` · ${fmtDate(r.closed_at.slice(0, 10))}` : ''}</p>
+      <p className={`page-subtitle ${closed ? '' : 'swms__status--active'}`}>{STATUS_LABEL[r.status]}{r.closed_at ? ` · ${fmtPerthDate(r.closed_at)}` : ''}</p>
       {isUrgent && !r.notified_at && !closed && (
         <p className="notice gap">
           The office has not been emailed about this report yet.
@@ -121,7 +121,7 @@ export function IncidentScreen({ incident: r, crew, canReport, canManage, userId
       <div className="item">
         <p className="label">The report — first account, frozen</p>
         <p className="incident__meta">
-          {fmtDate(r.occurred_at.slice(0, 10))} {awstClock(r.occurred_at)}{r.location ? ` · ${r.location}` : ''} · reported by {r.reported_by_name} {awstClock(r.reported_on_device_at)}
+          {fmtPerthDate(r.occurred_at)} {awstClock(r.occurred_at)}{r.location ? ` · ${r.location}` : ''} · reported by {r.reported_by_name} {awstClock(r.reported_on_device_at)}
           {r.notified_at ? ' · office emailed' : ''}
         </p>
         <p className="incident__text">{r.description}</p>
@@ -160,7 +160,7 @@ export function IncidentScreen({ incident: r, crew, canReport, canManage, userId
                 <p className="incident__text">{a.action}</p>
                 <p className="caption">
                   {a.owner_name ?? 'no owner'}{a.due_on ? ` · due ${fmtDate(a.due_on)}` : ''}{late ? ' · OVERDUE' : ''}
-                  {a.done_at ? ` · done ${fmtDate(a.done_at.slice(0, 10))}${a.done_note ? ` — ${a.done_note}` : ''}` : ''}
+                  {a.done_at ? ` · done ${fmtPerthDate(a.done_at)}${a.done_note ? ` — ${a.done_note}` : ''}` : ''}
                 </p>
               </div>
               {!a.done_at && canManage && !closed && (
@@ -194,7 +194,7 @@ export function IncidentScreen({ incident: r, crew, canReport, canManage, userId
         {r.updates.length === 0 && <p className="nil">Nothing added yet.</p>}
         {r.updates.map((u) => (
           <div key={u.id} className="incident__update">
-            <p className="caption">{UPDATE_KINDS.find((k) => k.key === u.kind)?.label ?? u.kind} · {u.by} · {fmtDate(u.created_at.slice(0, 10))} {awstClock(u.created_at)}</p>
+            <p className="caption">{UPDATE_KINDS.find((k) => k.key === u.kind)?.label ?? u.kind} · {u.by} · {fmtPerthDate(u.created_at)} {awstClock(u.created_at)}</p>
             <p className="incident__text">{u.body}</p>
           </div>
         ))}

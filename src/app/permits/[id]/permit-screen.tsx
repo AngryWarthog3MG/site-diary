@@ -6,7 +6,7 @@ import { createClient } from '@/lib/supabase/client';
 import * as outbox from '@/lib/outbox/store';
 import { runOrQueue } from '@/lib/outbox/sync';
 import { SignaturePad } from '@/components/signature-pad';
-import { fmtDate } from '@/lib/pdf/dates';
+import { fmtDate, fmtPerthDate, perthDate } from '@/lib/pdf/dates';
 import { finishedAtAwst } from '@/lib/pdf/finished-at';
 import { awstClock } from '@/lib/signin/register';
 import { KIND_LABEL, STATUS_LABEL, permitRef, expired, live, closeoutFor, allAnswered, type Control, type ControlResult, type PermitKind, type PermitStatus } from '@/lib/permits/model';
@@ -101,7 +101,7 @@ export function PermitScreen({ permit: p, canManage, userId }: Props) {
       <h1 className="page-title">{p.title}</h1>
       <p className={`page-subtitle ${isExpired ? 'vr-missing' : isLive ? 'swms__status--active' : ''}`}>
         {isExpired ? 'PAST ITS WINDOW — not closed out' : isLive ? 'Live now' : STATUS_LABEL[p.status]}
-        {' · '}{fmtDate(p.valid_from.slice(0, 10))} {awstClock(p.valid_from)} to {p.valid_to.slice(0, 10) !== p.valid_from.slice(0, 10) ? `${fmtDate(p.valid_to.slice(0, 10))} ` : ''}{awstClock(p.valid_to)}
+        {' · '}{fmtPerthDate(p.valid_from)} {awstClock(p.valid_from)} to {perthDate(p.valid_to) !== perthDate(p.valid_from) ? `${fmtPerthDate(p.valid_to)} ` : ''}{awstClock(p.valid_to)}
         {p.location ? ` · ${p.location}` : ''}
       </p>
       {p.status === 'open' && <p className="notice gap">This permit was saved but never issued — the signatures did not land. Raise it again, or delete this one.</p>}

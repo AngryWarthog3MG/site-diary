@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
-import { fmtDate } from '@/lib/pdf/dates';
+import { fmtDate, fmtPerthDate } from '@/lib/pdf/dates';
 import { newGateToken, gateUrl } from '@/lib/gate/model';
 
 interface Props { projectId: string; userId: string; gate: { id: string; token: string; rules: string; since: string; svg: string } | null; base: string; defaultRules: string }
@@ -47,7 +47,7 @@ export function GateAdmin({ projectId, userId, gate, base, defaultRules }: Props
         <div className="item gate-admin__code">
           <div className="gate-admin__qr" dangerouslySetInnerHTML={{ __html: gate.svg }} />
           <p className="mono gate-admin__url">{gateUrl(gate.token, base)}</p>
-          <p className="caption">In use since {fmtDate(gate.since.slice(0, 10))}. Print it large, laminate it, put it on the gate.</p>
+          <p className="caption">In use since {fmtPerthDate(gate.since)}. Print it large, laminate it, put it on the gate.</p>
           <div className="photo-add-pair">
             <button type="button" className="button" disabled={busy != null} onClick={() => void printSign()}>{busy === 'make the gate sign' ? 'Making…' : 'Print the gate sign (A4)'}</button>
             <button type="button" className="button button--quiet" disabled={busy != null} onClick={() => void newCode()}>New code</button>

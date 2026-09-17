@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
-import { fmtDate } from '@/lib/pdf/dates';
+import { fmtDate, fmtPerthDate } from '@/lib/pdf/dates';
 import { evaluationProblems, RESULT_LABEL, type ComplianceResult } from '@/lib/environment/model';
 
 export interface EvalView { id: string; org_id: string; project_id: string | null; obligation_id: string | null; evaluated_on: string; evaluator_name: string; summary: string | null; status: 'draft' | 'issued'; issued_on: string | null }
@@ -82,7 +82,7 @@ export function EvaluationScreen({ evaluation: e, obligations, allObligations, r
                 {r.action && (
                   <p className="caption">
                     Action: {r.action}{r.owner_name ? ` · ${r.owner_name}` : ''}{r.due_on ? <span className={!r.done_at && r.due_on < today ? 'vr-missing' : undefined}> · by {fmtDate(r.due_on)}</span> : ''}
-                    {r.done_at ? ` · done ${fmtDate(r.done_at.slice(0, 10))}${r.done_note ? ` — ${r.done_note}` : ''}` : ''}
+                    {r.done_at ? ` · done ${fmtPerthDate(r.done_at)}${r.done_note ? ` — ${r.done_note}` : ''}` : ''}
                   </p>
                 )}
                 {r.action && !r.done_at && canManage && !draft && (

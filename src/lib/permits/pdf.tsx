@@ -1,6 +1,6 @@
 import type { ReactElement } from 'react';
 import { LOGO_DATA_URI } from '@/lib/pdf/logo';
-import { fmtDate } from '@/lib/pdf/dates';
+import { fmtDate, fmtPerthDate } from '@/lib/pdf/dates';
 import { awstClock } from '@/lib/signin/register';
 import { KIND_LABEL, STATUS_LABEL, permitRef, type Control, type PermitKind, type PermitStatus } from './model';
 
@@ -39,7 +39,7 @@ export function PermitDoc({ data }: { data: PermitPdfData }): ReactElement {
         <table><tbody>
           <tr><th>Task</th><td className="w">{data.title}</td></tr>
           <tr><th>Where</th><td>{data.location ?? '—'}</td></tr>
-          <tr><th>Window</th><td className="mono">{fmtDate(data.valid_from.slice(0, 10))} {awstClock(data.valid_from)} to {fmtDate(data.valid_to.slice(0, 10))} {awstClock(data.valid_to)} AWST</td></tr>
+          <tr><th>Window</th><td className="mono">{fmtPerthDate(data.valid_from)} {awstClock(data.valid_from)} to {fmtPerthDate(data.valid_to)} {awstClock(data.valid_to)} AWST</td></tr>
           <tr><th>SWMS</th><td>{data.swms ?? '—'}</td></tr>
           <tr><th>Plant</th><td>{data.plant ?? '—'}</td></tr>
           <tr><th>Workers</th><td>{data.workers.length ? data.workers.join(', ') : '—'}</td></tr>

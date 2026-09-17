@@ -7,7 +7,7 @@ import { createClient } from '@/lib/supabase/client';
 import * as outbox from '@/lib/outbox/store';
 import { runOrQueue } from '@/lib/outbox/sync';
 import { usePending } from '@/lib/outbox/use-pending';
-import { fmtDate } from '@/lib/pdf/dates';
+import { fmtDate, fmtPerthDate } from '@/lib/pdf/dates';
 import {
   CONDITIONS, CONDITION_LABEL, SOURCE_TYPES, SOURCE_LABEL, MONITORING_KINDS, MONITORING_LABEL, OUTCOME_LABEL,
   significance, monitoringOutcome, type Condition, type SourceType, type MonitoringKind, type Outcome,
@@ -118,7 +118,7 @@ export function EnvironmentScreen(props: Props) {
         <div className="item" style={{ marginBottom: '0.75rem' }}>
           <p className="label">Significance criteria{criteria ? ` · version ${criteria.version}` : ''}</p>
           {criteria ? (
-            <p className="caption">{criteria.method} Significant at a score of <strong>{criteria.threshold}</strong> or more. Set {fmtDate(criteria.issued_at.slice(0, 10))}.</p>
+            <p className="caption">{criteria.method} Significant at a score of <strong>{criteria.threshold}</strong> or more. Set {fmtPerthDate(criteria.issued_at)}.</p>
           ) : (
             <p className="caption vr-missing">Not set. Aspects are judged against the criteria, so set them first.</p>
           )}

@@ -5,7 +5,7 @@ import { requireUser, resolveProject } from '@/lib/auth';
 import { sees, canAuthorEntries } from '@/lib/roles';
 import { BrandMark } from '@/components/brand-mark';
 import { OutboxStatus } from '@/components/outbox-status';
-import { fmtDate } from '@/lib/pdf/dates';
+import { fmtDate, fmtPerthDate, perthDate } from '@/lib/pdf/dates';
 import { awstClock } from '@/lib/signin/register';
 import { KIND_LABEL, STATUS_LABEL, permitRef, expired, live, type PermitKind, type PermitStatus } from '@/lib/permits/model';
 
@@ -35,7 +35,7 @@ export default async function PermitsPage({ searchParams }: { searchParams: Prom
         <span>
           <strong>{permitRef(r.seq)}</strong> · {KIND_LABEL[r.kind]} · {r.title}
           <br />
-          <span className="caption">{fmtDate(r.valid_from.slice(0, 10))} {awstClock(r.valid_from)}–{awstClock(r.valid_to)}{r.valid_to.slice(0, 10) !== r.valid_from.slice(0, 10) ? ` ${fmtDate(r.valid_to.slice(0, 10))}` : ''}{r.location ? ` · ${r.location}` : ''} · holder {r.holder_name}</span>
+          <span className="caption">{fmtPerthDate(r.valid_from)} {awstClock(r.valid_from)}–{awstClock(r.valid_to)}{perthDate(r.valid_to) !== perthDate(r.valid_from) ? ` ${fmtPerthDate(r.valid_to)}` : ''}{r.location ? ` · ${r.location}` : ''} · holder {r.holder_name}</span>
           <br />
           <span className="caption">{isExpired ? 'PAST ITS WINDOW — not closed' : isLive ? 'Live now' : STATUS_LABEL[r.status]}</span>
         </span>

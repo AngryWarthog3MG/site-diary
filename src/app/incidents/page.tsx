@@ -5,7 +5,7 @@ import { requireUser, resolveProject, canReport } from '@/lib/auth';
 import { sees } from '@/lib/roles';
 import { BrandMark } from '@/components/brand-mark';
 import { OutboxStatus } from '@/components/outbox-status';
-import { fmtDate } from '@/lib/pdf/dates';
+import { fmtDate, fmtPerthDate } from '@/lib/pdf/dates';
 import { perthToday } from '@/lib/push/decide';
 import { KIND_LABEL, STATUS_LABEL, incidentRef, summarise, actionOverdue, type IncidentKind, type IncidentStatus } from '@/lib/incidents/model';
 
@@ -53,7 +53,7 @@ export default async function IncidentsPage({ searchParams }: { searchParams: Pr
           <strong>{incidentRef(r.seq)}</strong> · {KIND_LABEL[r.kind]}{r.notifiable ? ' · NOTIFIABLE' : ''}
           <br />
           <span className="caption">
-            {fmtDate(r.occurred_at.slice(0, 10))}{r.location ? ` · ${r.location}` : ''} · {r.description.slice(0, 80)}{r.description.length > 80 ? '…' : ''}
+            {fmtPerthDate(r.occurred_at)}{r.location ? ` · ${r.location}` : ''} · {r.description.slice(0, 80)}{r.description.length > 80 ? '…' : ''}
           </span>
           <br />
           <span className="caption">{STATUS_LABEL[r.status]}{openActions > 0 ? ` · ${openActions} action${openActions === 1 ? '' : 's'} open` : ''}{late > 0 ? ` · ${late} overdue` : ''}</span>

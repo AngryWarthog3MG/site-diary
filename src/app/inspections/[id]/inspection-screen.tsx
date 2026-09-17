@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
-import { fmtDate } from '@/lib/pdf/dates';
+import { fmtDate, fmtPerthDate } from '@/lib/pdf/dates';
 import { SignaturePad } from '@/components/signature-pad';
 import { finishedAtAwst } from '@/lib/pdf/finished-at';
 import { KIND_LABEL, RESULT_LABEL, findings, answered, actionOverdue, type InspectionItem, type InspectionKind } from '@/lib/inspections/model';
@@ -82,7 +82,7 @@ export function InspectionScreen({ inspection: r, crew, canManage, userId, today
       <div key={a.id} className={`incident__action${a.done_at ? ' incident__action--done' : late ? ' incident__action--late' : ''}`}>
         <div>
           <p className="incident__text">{a.action}</p>
-          <p className="caption">{a.owner_name ?? 'no owner'}{a.due_on ? ` · due ${fmtDate(a.due_on)}` : ''}{late ? ' · OVERDUE' : ''}{a.done_at ? ` · done ${fmtDate(a.done_at.slice(0, 10))}${a.done_note ? ` — ${a.done_note}` : ''}` : ''}</p>
+          <p className="caption">{a.owner_name ?? 'no owner'}{a.due_on ? ` · due ${fmtDate(a.due_on)}` : ''}{late ? ' · OVERDUE' : ''}{a.done_at ? ` · done ${fmtPerthDate(a.done_at)}${a.done_note ? ` — ${a.done_note}` : ''}` : ''}</p>
         </div>
         {!a.done_at && canManage && (
           <div className="signin__actions">

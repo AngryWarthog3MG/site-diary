@@ -1954,6 +1954,16 @@ still on the phone (`usePending`), marked as not yet sent, and the waiting banne
 Environment screens. A save with no signal no longer refreshes the page, which offline blanked it. Drilled with the signal cut on
 all four, then restored: each landed once, in order, the plan with its file, superseding the older copy.
 
+**R77. A timestamp's date is Perth's, not UTC's.** Timestamps are stored in UTC, and in 42 places a date was cut from one by
+taking its first ten characters, which is the UTC day. Anything from midnight to 8 am in Perth then showed the day before,
+beside a Perth clock time that said otherwise: an incident at 06:30 on the 17th printed "16/09/2026 06:30 AWST". It appeared on
+the incident, permit and inspection PDFs, the office emails, and the order, incident, procedure, document and environment
+screens. The days-since-last-injury count took the UTC day too. `perthDate` and `fmtPerthDate` in `src/lib/pdf/dates.ts` add
+Perth's eight hours by arithmetic, since Perth has no daylight saving, so PDFs stay deterministic (`pdf:check` passes). The
+daily docket never had the fault: its date is the device's entry date. The visitor gate's "since" time now reads in Perth
+whatever the visitor's phone is set to. PDFs already stored keep the date they printed, because a stored PDF is the record and
+is never regenerated. Rule: never `.slice(0, 10)` a timestamp for display; use `fmtPerthDate`.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;
