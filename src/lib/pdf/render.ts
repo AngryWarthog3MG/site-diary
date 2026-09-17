@@ -211,7 +211,25 @@ async function shrinkMarkedImages(): Promise<void> {
   }
 }
 
+/** A Chromium that died while the instance was frozen: the page opens and then nothing answers. */
+function isDeadBrowser(error: unknown): boolean {
+  return /target (page, context or browser )?(has been )?closed|browser has (been )?(closed|disconnected)|protocol error/i.test(error instanceof Error ? error.message : String(error));
+}
+
 export async function renderPdfDocument(html: string, meta: DocumentMeta): Promise<Uint8Array> {
+  try {
+    return await renderOnce(html, meta);
+  } catch (error) {
+    // On Vercel a warm instance is frozen between requests; the Chromium kept from the last one can
+    // accept a page and then answer nothing. Drop that browser — ours alone — and render once more
+    // (README R78). Closing it after every render instead would kill a render running beside this one.
+    if (!isDeadBrowser(error)) throw error;
+    await closeBrowser();
+    return renderOnce(html, meta);
+  }
+}
+
+async function renderOnce(html: string, meta: DocumentMeta): Promise<Uint8Array> {
   const page = await openPage();
 
   try {
