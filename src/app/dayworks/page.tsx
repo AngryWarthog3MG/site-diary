@@ -89,6 +89,9 @@ export default async function DayworksPage({ searchParams }: { searchParams: Pro
             <Link className="button button--quiet" href={`/claims?project=${p}`}>Claims register</Link>
           </div>
 
+          {data.truncated && (
+            <p className="alert">More than 1,000 dayworks in this period — only the first 1,000 are shown and totalled. Choose a shorter period.</p>
+          )}
           {data.unsignedItems > 0 && (
             <p className="notice">{data.unsignedItems} more daywork{data.unsignedItems === 1 ? ' is' : 's are'} on {data.unsignedDays} day{data.unsignedDays === 1 ? '' : 's'} not yet signed. They join the schedule once the day is signed.</p>
           )}

@@ -57,7 +57,8 @@ export function MonthlyBundleButton({ projectId, start }: { projectId: string; s
 
   const call = async (url: string) => {
     const res = await fetch(url, { method: 'POST' });
-    const body = (await res.json().catch(() => null)) as (BundlePart & { parts?: BundlePart[]; error?: { message?: string } }) | null;
+    const body = (await res.json().catch(() => null)) as (BundlePart & { parts?: BundlePart[]; plan?: string; error?: { message?: string } }) | null;
+    if (res.status === 409) throw Object.assign(new Error(body?.error?.message ?? 'The month changed.'), { restart: true });
     if (!res.ok || !body) throw new Error(body?.error?.message ?? 'The bundle could not be made.');
     return body;
   };
@@ -67,15 +68,25 @@ export function MonthlyBundleButton({ projectId, start }: { projectId: string; s
     setError(null);
     setParts(null);
     try {
-      const plan = await call(base);
-      let list = plan.parts ?? [];
-      setParts(list);
-      for (const p of list) {
-        if (p.ready) continue;
-        setBusy(list.length > 1 ? `Building part ${p.part} of ${p.of} — up to two minutes each…` : 'Building the bundle…');
-        const built = await call(`${base}&part=${p.part}`);
-        list = list.map((x) => (x.part === built.part ? built : x));
+      // Every part must come from one plan; if the month changes midway, start again from the new one (twice at most).
+      let list: BundlePart[] = [];
+      for (let attempt = 0; attempt < 3; attempt += 1) {
+        const plan = await call(base);
+        list = plan.parts ?? [];
         setParts(list);
+        try {
+          for (const p of list) {
+            if (p.ready) continue;
+            setBusy(list.length > 1 ? `Building part ${p.part} of ${p.of}…` : 'Building the bundle…');
+            const built = await call(`${base}&part=${p.part}&plan=${plan.plan ?? ''}`);
+            list = list.map((x) => (x.part === built.part ? built : x));
+            setParts(list);
+          }
+          break;
+        } catch (inner) {
+          if (!(inner as { restart?: boolean }).restart || attempt === 2) throw inner;
+          setBusy('The month changed while binding — starting again…');
+        }
       }
       if (list.length === 1 && list[0].url) window.open(list[0].url, '_blank', 'noopener');
     } catch (err) {

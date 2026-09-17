@@ -10,6 +10,9 @@
  */
 export function fmtDate(iso: string | null | undefined): string {
   if (!iso) return '—';
+  // A full timestamp is an instant: its first ten characters are the UTC day, a day early before 8 am in
+  // Perth. Show its Perth day instead, wherever one is passed in (README R78).
+  if (/^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}/.test(iso)) iso = perthDate(iso);
   const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);
   return m ? `${m[3]}/${m[2]}/${m[1]}` : iso;
 }

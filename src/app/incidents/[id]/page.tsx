@@ -81,6 +81,7 @@ export default async function IncidentPage({ params }: { params: Promise<{ id: s
               incidentId={r.id}
               projectId={r.project_id}
               occurredAt={r.occurred_at}
+              envToldAt={((envRows ?? []) as EnvEvent[]).filter((e) => e.kind === 'superintendent_notified').map((e) => e.happened_at).sort()[0] ?? null}
               contractor={jobRow!.principal_contractor}
               hours={jobRow!.head_contractor_incident_hours}
               notices={(noticeRows ?? []) as IncidentNotice[]}

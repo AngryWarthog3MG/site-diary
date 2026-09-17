@@ -47,10 +47,10 @@ export default async function EnvironmentPage({ searchParams }: { searchParams: 
     supabase.from('env_legal_obligations').select('id, project_id, title, source_type, reference, requirement, how_applies, active, reviewed_at').eq('org_id', org).or(`project_id.is.null,project_id.eq.${p}`).order('title'),
     supabase.from('env_obligation_aspects').select('obligation_id, aspect_id'),
     supabase.from('compliance_evaluations').select('id, project_id, evaluated_on, evaluator_name, status, summary').eq('org_id', org).or(`project_id.is.null,project_id.eq.${p}`).order('evaluated_on', { ascending: false }),
-    supabase.from('env_monitoring_records').select('id, monitored_on, kind, location, parameter, value, unit, limit_value, outcome, action_taken, method, notes').eq('project_id', p).order('monitored_on', { ascending: false }).limit(60),
+    supabase.from('env_monitoring_records').select('id, monitored_on, kind, location, parameter, value, unit, limit_value, limit_kind, outcome, action_taken, method, notes').eq('project_id', p).order('monitored_on', { ascending: false }).limit(60),
     supabase.from('measuring_equipment').select('id, name').eq('org_id', org).eq('active', true).order('name'),
     supabase.from('project_weather_days').select('day, rainfall_mm').eq('project_id', p).gte('day', addDays(today, -15)),
-    supabase.from('inspections').select('inspection_date').eq('project_id', p).eq('kind', 'environmental').gte('inspection_date', addDays(today, -15)),
+    supabase.from('inspections').select('inspection_date').eq('project_id', p).eq('kind', 'environmental').not('completed_at', 'is', null).gte('inspection_date', addDays(today, -15)),
     supabase.from('obligations').select('id, project_id, title').eq('org_id', org).eq('kind', 'compliance_evaluation').eq('active', true).or(`project_id.is.null,project_id.eq.${p}`),
   ]);
 

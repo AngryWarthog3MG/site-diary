@@ -19,3 +19,8 @@ test('nothing reads as a dash, never a guess', () => {
   assert.equal(fmtPerthDate(null), '—');
   assert.equal(perthDate(undefined), '');
 });
+
+test('a timestamp handed to fmtDate itself shows its Perth day', () => {
+  assert.equal(fmtDate('2026-09-16T22:30:00.000Z'), '17/09/2026');
+  assert.equal(fmtDate('2026-09-16 22:30:00+00'), '17/09/2026');
+});

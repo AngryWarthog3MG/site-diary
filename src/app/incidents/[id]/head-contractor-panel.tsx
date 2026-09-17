@@ -19,7 +19,9 @@ const fromPerthLocal = (v: string) => new Date(`${v}:00+08:00`).toISOString();
  * incident goes to them — usually within a time their site rules set — whatever else is owed to
  * WorkSafe. Each time they are told is its own dated row, never changed.
  */
-export function HeadContractorPanel({ incidentId, projectId, occurredAt, contractor, hours, notices, canRecord, defaultName, now }: {
+export function HeadContractorPanel({ incidentId, projectId, occurredAt, contractor, hours, notices, canRecord, defaultName, now, envToldAt = null }: {
+  /** When the environmental panel recorded telling the head contractor or Superintendent: the same call, not a second duty. */
+  envToldAt?: string | null;
   incidentId: string; projectId: string; occurredAt: string; contractor: string | null; hours: number | null; notices: IncidentNotice[]; canRecord: boolean; defaultName: string; now: string;
 }) {
   const router = useRouter();
@@ -63,7 +65,9 @@ export function HeadContractorPanel({ incidentId, projectId, occurredAt, contrac
   return (
     <div className={`item regpanel${!st.toldAt ? ' item--warn' : ''}`} style={{ marginTop: '0.9rem' }}>
       <p className="label">Reported to {name}</p>
-      {st.toldAt ? (
+      {!st.toldAt && envToldAt ? (
+        <p className="caption">Told {when(envToldAt)} — recorded on the environmental incident&rsquo;s trail below.</p>
+      ) : st.toldAt ? (
         <p className="caption">Told {when(st.toldAt)}{st.minutesToTell != null ? ` · ${st.minutesToTell < 120 ? `${st.minutesToTell} min` : `${Math.round(st.minutesToTell / 60)} h`} after it happened` : ''}.</p>
       ) : (
         <p className={`caption${st.overdue ? ' vr-missing' : ''}`}>

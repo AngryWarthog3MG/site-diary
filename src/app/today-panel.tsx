@@ -73,14 +73,14 @@ export function TodayPanel({
   canRecord,
   canPrestart,
   roleLabel,
-  doors = { prestart: true, permits: true, incidents: true, signin: true, plant: true },
+  doors = { prestart: true, permits: true, incidents: true, signin: true, plant: true, entries: true, weekly: true },
 }: {
   projectId: string;
   canRecord: boolean;
   canPrestart: boolean;
   roleLabel: string;
   /** Which of the screens this panel links to are ticked for this person (README R57). A row for a closed screen is not drawn. */
-  doors?: { prestart: boolean; permits: boolean; incidents: boolean; signin: boolean; plant: boolean };
+  doors?: { prestart: boolean; permits: boolean; incidents: boolean; signin: boolean; plant: boolean; entries?: boolean; weekly?: boolean };
 }) {
   const router = useRouter();
   const [date, setDate] = useState('');
@@ -526,7 +526,9 @@ export function TodayPanel({
       {status && <p className="today-status">{status}</p>}
 
       <div className="home-actions">
-        {entry?.status === 'signed' ? (
+        {doors.entries === false ? (
+          <p className="notice">The diary is not one of your screens on this job.</p>
+        ) : entry?.status === 'signed' ? (
           <>
             <Link className="button" href={`/entries/${entry.id}/signed`}>View the signed entry</Link>
             {canRecord && (
@@ -558,7 +560,7 @@ export function TodayPanel({
         )}
       </div>
 
-      {canRecord && entry && entry.status !== 'signed' && (entry.hasProposal || entry.hasRecord) && (
+      {doors.entries !== false && canRecord && entry && entry.status !== 'signed' && (entry.hasProposal || entry.hasRecord) && (
         <Link className="button" href={`/entries/${entry.id}/review`}>
           {entry.hasRecord ? 'Back to today’s entry' : 'Check it over and sign'}
         </Link>
@@ -626,7 +628,7 @@ export function TodayPanel({
         <div className="weekstrip home-week" aria-label="The last seven days">
           {week.map((day) => {
             const title = `${fmtDate(day.date)} — ${day.state === 'signed' ? 'signed · open the diary' : day.state === 'draft' ? 'started, not signed · open it' : day.state === 'today' ? 'today' : day.state === 'rest' ? 'weekend · rest day' : 'nothing written down · record it'}`;
-            return day.href ? (
+            return day.href && doors.entries !== false ? (
               <Link key={day.date} href={day.href} className={`weekstrip__day weekstrip__day--${day.state} weekstrip__day--link`} title={title} aria-label={title}>
                 <span className="weekstrip__num mono">{Number(day.date.slice(8, 10))}</span>
                 <span className="weekstrip__dow">{day.label}</span>
@@ -641,7 +643,7 @@ export function TodayPanel({
         </div>
       )}
 
-      {(unfinished.length > 0 || holes.length > 0) && (
+      {doors.entries !== false && (unfinished.length > 0 || holes.length > 0) && (
         <div className="unfinished home-unfinished">
           <p className="label">Not signed yet · {unfinished.length + holes.length}</p>
           {holes.map((d) => (
@@ -689,7 +691,7 @@ export function TodayPanel({
         <p className="home-wx mono">
           {weather ? weatherLine(weather) : 'No weather reading yet today'}
           {' · '}
-          <Link className="linklike" href={`/reports/weekly?project=${projectId}`}>this week</Link>
+          {doors.weekly !== false && <Link className="linklike" href={`/reports/weekly?project=${projectId}`}>this week</Link>}
         </p>
       )}
       {weatherNote && <p className="notice gap">{weatherNote}</p>}

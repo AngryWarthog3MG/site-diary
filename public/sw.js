@@ -21,7 +21,8 @@
 // v6: forty deploys shipped on v5 without a bump, so a phone that opened the
 // app with no signal was handed a page shell from weeks ago and kept it.
 // Bumped alongside the update check in sw-register.tsx, which is the real fix.
-const VERSION = 'v9';
+// v10: /health is confidential and is never cached — a revoked keeper's phone must not still show it offline.
+const VERSION = 'v10';
 const PAGES = `pages-${VERSION}`;
 const ASSETS = `assets-${VERSION}`;
 const OFFLINE_URL = '/offline.html';
@@ -77,6 +78,9 @@ self.addEventListener('fetch', (event) => {
     );
     return;
   }
+
+  // Confidential screens are never kept on the phone (README R78).
+  if (request.mode === 'navigate' && url.pathname.startsWith('/health')) return;
 
   if (request.mode === 'navigate') {
     event.respondWith(

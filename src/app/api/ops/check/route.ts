@@ -643,7 +643,8 @@ async function sendMonthlyBundles(force = false): Promise<Record<string, unknown
   // A heavy month takes more than one night's run to bind (README R71), so the job
   // keeps building through the first week and sends once every part is stored.
   if (!force && Number(today.slice(8, 10)) > 7) return { skipped: 'past the first week of the month' };
-  const deadline = Date.now() + 150_000;
+  // Parts are STARTED only within this window; one part takes well under a minute once Chromium is warm.
+  const deadline = Date.now() + 120_000;
 
   const previousMonth = (() => {
     const t = new Date(`${today.slice(0, 7)}-01T00:00:00Z`);
@@ -689,6 +690,11 @@ async function sendMonthlyBundles(force = false): Promise<Record<string, unknown
         for (const v of generation.parts) {
           const { data: link } = await admin.storage.from('exports').createSignedUrl(v.objectPath, 7 * 24 * 60 * 60);
           if (link?.signedUrl) links.push({ label: v.of > 1 ? `Part ${v.part} of ${v.of} (${v.from} to ${v.to})` : 'Download the bundle', url: link.signedUrl });
+        }
+        // An email with a part missing is worse than tomorrow's complete one: nothing is sent or marked sent.
+        if (links.length !== generation.parts.length) {
+          results.push({ project: project.code, error: `links made for ${links.length} of ${generation.parts.length} parts; not sent, tried again tomorrow` });
+          continue;
         }
       }
       let attachment: Uint8Array | null = null;

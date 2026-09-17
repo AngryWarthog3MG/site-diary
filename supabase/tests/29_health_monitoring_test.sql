@@ -101,10 +101,61 @@ select set_config('request.jwt.claims', '{"sub":"44444444-4444-4444-4444-4444444
 set local role authenticated;
 insert into public.lead_risk_notifications (org_id, project_id, description, determined_on, notified_on)
 values ('aaaaaaaa-0000-0000-0000-000000000001', 'bbbbbbbb-0000-0000-0000-000000000001', 'Removing lead paint from bridge rails', current_date - 5, current_date - 1);
+-- README R78: a late notification is recorded with its true date (the screen shows it late), never before the determination.
+insert into public.lead_risk_notifications (org_id, description, determined_on, notified_on) values ('aaaaaaaa-0000-0000-0000-000000000001', 'Late', current_date - 12, current_date - 1);
 select tests.expect_error($q$
-  insert into public.lead_risk_notifications (org_id, description, determined_on, notified_on) values ('aaaaaaaa-0000-0000-0000-000000000001', 'Late', current_date - 12, current_date - 1)
-$q$, 'lead_notified_within_7_days');
-do $$ begin raise notice 'PASS  lead risk work is notified within 7 days of being determined'; end $$;
+  insert into public.lead_risk_notifications (org_id, description, determined_on, notified_on) values ('aaaaaaaa-0000-0000-0000-000000000001', 'Backwards', current_date - 1, current_date - 3)
+$q$, 'lead_notified_not_before_determined');
+do $$ begin raise notice 'PASS  a lead notification is recorded with its true date, late or not, but never before the determination'; end $$;
+
+-- ---------------------------------------------------------------- README R78 (second-agent review)
+-- Re-appointing the keeper keeps both appointments and the revocation between them.
+update public.health_record_keepers set active = true where org_id = 'aaaaaaaa-0000-0000-0000-000000000001' and user_id = '66666666-6666-6666-6666-666666666666';
+do $$ begin
+  assert (select count(*) from public.health_keeper_events where user_id = '66666666-6666-6666-6666-666666666666') = 3, 'appointed, revoked, appointed again were not all kept';
+  assert (select string_agg(kind, ',' order by at, kind) from public.health_keeper_events where user_id = '66666666-6666-6666-6666-666666666666') in ('appointed,revoked,appointed', 'appointed,appointed,revoked'), 'the events are wrong';
+  raise notice 'PASS  every appointment and revocation is kept, not just the latest';
+end $$;
+
+-- A programme cannot move to another company, even for someone who manages crew in both.
+reset role;
+insert into public.organisations (id, name, code) values ('aaaaaaaa-0000-0000-0000-000000000002', 'Other Civil', 'OTC');
+insert into public.projects (id, org_id, name, code) values ('bbbbbbbb-0000-0000-0000-000000000002', 'aaaaaaaa-0000-0000-0000-000000000002', 'Other job', 'O001');
+insert into public.project_members (project_id, user_id, role) values ('bbbbbbbb-0000-0000-0000-000000000002', '11111111-1111-1111-1111-111111111111', 'supervisor');
+select set_config('request.jwt.claims', '{"sub":"11111111-1111-1111-1111-111111111111","role":"authenticated"}', true);
+set local role authenticated;
+select tests.expect_error($q$
+  update public.health_monitoring_programs set org_id = 'aaaaaaaa-0000-0000-0000-000000000002' where id = 'c0000000-0000-0000-0000-000000000001'
+$q$, 'stays with its company');
+update public.health_monitoring_programs set active = false where id = 'c0000000-0000-0000-0000-000000000002';
+do $$ begin
+  assert (select active_changed_by from public.health_monitoring_programs where id = 'c0000000-0000-0000-0000-000000000002') = '11111111-1111-1111-1111-111111111111', 'retiring a programme was not stamped';
+  -- A supervisor reads the programmes and who the keepers are — but still no report.
+  assert (select count(*) from public.health_record_keepers) >= 1, 'a supervisor cannot see who the keepers are';
+  assert (select count(*) from public.health_monitoring_records) = 0, 'a supervisor read a health record';
+  raise notice 'PASS  a programme stays with its company; retiring it is stamped; supervisors see programmes and keepers, never reports';
+end $$;
+
+-- The keeper records a person's monitoring as ended.
+reset role;
+select set_config('request.jwt.claims', '{"sub":"66666666-6666-6666-6666-666666666666","role":"authenticated"}', true);
+set local role authenticated;
+insert into public.health_monitoring_ended (program_id, person_name, ended_on, reason) values ('c0000000-0000-0000-0000-000000000001', ' evan burke ', current_date, 'Left the company');
+do $$ begin
+  assert (select person_name from public.health_monitoring_ended) = 'evan burke', 'name not tidied';
+  raise notice 'PASS  a keeper records that a person''s monitoring ended';
+end $$;
+
+-- A keeper who is no longer on any job of the company reads nothing, keeper row or not.
+reset role;
+delete from public.project_members where user_id = '66666666-6666-6666-6666-666666666666';
+select set_config('request.jwt.claims', '{"sub":"66666666-6666-6666-6666-666666666666","role":"authenticated"}', true);
+set local role authenticated;
+do $$ begin
+  assert (select count(*) from public.health_monitoring_records) = 0, 'a keeper who left the company still reads health records';
+  assert (select count(*) from public.health_monitoring_ended) = 0, 'a keeper who left the company still reads ended markers';
+  raise notice 'PASS  a keeper who has left the company reads nothing';
+end $$;
 
 reset role;
 select set_config('request.jwt.claims', '', true);

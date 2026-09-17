@@ -87,7 +87,7 @@ insert into public.equipment_calibrations (equipment_id, calibrated_on, due_on, 
   ('e1000000-0000-0000-0000-000000000001', current_date - 30, current_date + 335, 'NATA-12345', 'Accredited lab'),
   ('e1000000-0000-0000-0000-000000000002', current_date - 400, current_date - 35, 'NATA-00001', 'Accredited lab');
 select tests.expect_error($q$
-  insert into public.equipment_calibrations (equipment_id, calibrated_on, due_on, certificate_no) values ('e1000000-0000-0000-0000-000000000001', current_date + 1, current_date + 100, 'X')
+  insert into public.equipment_calibrations (equipment_id, calibrated_on, due_on, certificate_no) values ('e1000000-0000-0000-0000-000000000001', app.perth_today() + 1, app.perth_today() + 100, 'X')
 $q$, 'in the future');
 
 -- ---------------------------------------------------------------- lot 1: the good path

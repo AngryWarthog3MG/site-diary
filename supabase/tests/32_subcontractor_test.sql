@@ -107,13 +107,55 @@ select tests.expect_error($q$
   insert into public.swms_reviews (swms_id, kind, happened_on) values ('dddddddd-0000-0000-0000-000000000001', 'submitted', current_date)
 $q$, 'row-level security');
 
+-- ---------------------------------------------------------------- README R78 (second-agent review)
+reset role;
+select set_config('request.jwt.claims', '{"sub":"11111111-1111-1111-1111-111111111111","role":"authenticated"}', true);
+set local role authenticated;
+-- A copy received before another cannot replace it.
+insert into public.head_contractor_documents (id, project_id, kind, title, revision, received_on) values
+  ('a2000000-0000-0000-0000-000000000004', 'bbbbbbbb-0000-0000-0000-000000000001', 'traffic_management_plan', 'TMP north', 'Rev 2', current_date - 1),
+  ('a2000000-0000-0000-0000-000000000005', 'bbbbbbbb-0000-0000-0000-000000000001', 'traffic_management_plan', 'TMP north', 'Rev 1', current_date - 9),
+  ('a2000000-0000-0000-0000-000000000006', 'bbbbbbbb-0000-0000-0000-000000000001', 'emergency_plan', 'Site emergency plan', 'Rev A', current_date - 2);
+select tests.expect_error($q$
+  update public.head_contractor_documents set superseded_by = 'a2000000-0000-0000-0000-000000000005' where id = 'a2000000-0000-0000-0000-000000000004'
+$q$, 'received on or after');
+-- A reply cannot be dated before the submission it answers.
+insert into public.swms (id, project_id, kind, title, prepared_by, steps, created_by)
+values ('dddddddd-0000-0000-0000-000000000002', 'bbbbbbbb-0000-0000-0000-000000000001', 'swms', 'Draft to abandon', 'Matty', '[{"step":"Dig","hazards":"x","controls":"y"}]'::jsonb, '11111111-1111-1111-1111-111111111111');
+insert into public.swms_reviews (swms_id, kind, happened_on) values ('dddddddd-0000-0000-0000-000000000002', 'submitted', current_date);
+select tests.expect_error($q$
+  insert into public.swms_reviews (swms_id, kind, happened_on) values ('dddddddd-0000-0000-0000-000000000002', 'accepted', current_date - 5)
+$q$, 'before it was submitted');
+-- A submitted draft can still be deleted as a draft; its review steps go with it. A step alone cannot be.
+delete from public.swms_reviews where swms_id = 'dddddddd-0000-0000-0000-000000000002';
+do $$ begin assert (select count(*) from public.swms_reviews where swms_id = 'dddddddd-0000-0000-0000-000000000002') = 1, 'a supervisor deleted a review step'; end $$;
+reset role;
+select set_config('request.jwt.claims', '', true);
+select tests.expect_error($q$ delete from public.swms_reviews where swms_id = 'dddddddd-0000-0000-0000-000000000002' $q$, 'never changed');
+delete from public.swms where id = 'dddddddd-0000-0000-0000-000000000002';
+do $$ begin
+  assert (select count(*) from public.swms_reviews where swms_id = 'dddddddd-0000-0000-0000-000000000002') = 0, 'the draft''s review steps did not go with it';
+  raise notice 'PASS  a copy cannot replace a newer one; a reply cannot predate its submission; a submitted draft can still be deleted';
+end $$;
+
+-- The labourer reads the head contractor's emergency plan and site rules — nothing else of theirs.
+reset role;
+select set_config('request.jwt.claims', '{"sub":"55555555-5555-5555-5555-555555555555","role":"authenticated"}', true);
+set local role authenticated;
+do $$ begin
+  assert (select count(*) from public.head_contractor_documents where kind = 'emergency_plan') = 1, 'a labourer cannot read the site emergency plan';
+  assert (select count(*) from public.head_contractor_documents where kind = 'site_rules') = 1, 'a labourer cannot read the site rules';
+  assert (select count(*) from public.head_contractor_documents where kind not in ('emergency_plan', 'site_rules')) = 0, 'a labourer read other head contractor plans';
+  raise notice 'PASS  a labourer reads the site emergency plan and site rules only';
+end $$;
+
 -- ---------------------------------------------------------------- the labourer reads none of it
 reset role;
 select set_config('request.jwt.claims', '{"sub":"55555555-5555-5555-5555-555555555555","role":"authenticated"}', true);
 set local role authenticated;
 do $$ begin
   assert (select count(*) from public.incident_notices) = 0, 'a labourer read an incident notice';
-  assert (select count(*) from public.head_contractor_documents) = 0, 'a labourer read the plans register';
+  assert (select count(*) from public.head_contractor_documents where kind not in ('emergency_plan', 'site_rules')) = 0, 'a labourer read the plans register';
   assert (select count(*) from public.swms_reviews) = 0, 'a labourer read SWMS reviews';
   raise notice 'PASS  the labourer reads none of it';
 end $$;

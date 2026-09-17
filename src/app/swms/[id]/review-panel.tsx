@@ -20,8 +20,8 @@ export function SwmsReviewPanel({ swmsId, projectId, status: swmsStatus, contrac
   const router = useRouter();
   const name = headContractorName(contractor);
   // Steps recorded with no signal count at once, in the order they were made; the replay keeps that order.
-  const pending = usePending('swms_review', swmsId).map((q) => ({ ...(q.payload.row as Omit<SwmsReview, 'created_at'>), created_at: `~${q.createdAt}`, queued: true }));
-  const reviews: Array<SwmsReview & { queued?: boolean }> = [...saved, ...pending];
+  const pending = usePending('swms_review', swmsId).map((q) => ({ ...(q.payload.row as Omit<SwmsReview, 'created_at'>), created_at: q.createdAt, queued: true }));
+  const reviews: SwmsReview[] = [...saved, ...pending];
   const { status, latest } = swmsReviewStatus(reviews);
   const [adding, setAdding] = useState<SwmsReviewKind | null>(null);
   const [on, setOn] = useState(today);
@@ -31,6 +31,8 @@ export function SwmsReviewPanel({ swmsId, projectId, status: swmsStatus, contrac
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const open = swmsStatus === 'draft' || swmsStatus === 'active';
+  // A reply cannot be dated before the submission it answers — the database refuses it too (README R78).
+  const lastSubmitted = reviews.filter((r) => r.kind === 'submitted').map((r) => r.happened_on).sort().at(-1) ?? null;
   const next: SwmsReviewKind[] = status === 'with_them' ? ['accepted', 'returned'] : status === 'accepted' ? [] : ['submitted'];
 
   async function save() {
@@ -81,13 +83,14 @@ export function SwmsReviewPanel({ swmsId, projectId, status: swmsStatus, contrac
           {error && <p className="alert" role="alert">{error}</p>}
           <p className="label">{STEP_LABEL[adding]}</p>
           <div className="signin__grid">
-            <label className="fieldcell"><span className="label">On</span><input id="swr-on" className="field field--sm" type="date" max={today} value={on} onChange={(e) => setOn(e.target.value)} /></label>
+            <label className="fieldcell"><span className="label">On</span><input id="swr-on" className="field field--sm" type="date" max={today} min={adding !== 'submitted' && lastSubmitted ? lastSubmitted : undefined} value={on} onChange={(e) => setOn(e.target.value)} /></label>
             <label className="fieldcell"><span className="label">{adding === 'submitted' ? 'Sent to' : 'By'}</span><input id="swr-person" className="field field--sm" value={person} onChange={(e) => setPerson(e.target.value)} /></label>
           </div>
           <label className="fieldcell"><span className="label">Reference</span><input id="swr-ref" className="field field--sm" placeholder="Their document or transmittal number" value={ref} onChange={(e) => setRef(e.target.value)} /></label>
           <label className="fieldcell"><span className="label">{adding === 'returned' ? 'What they want changed' : 'Comments'}</span>
             <textarea id="swr-comments" className="field field--sm" rows={2} value={comments} onChange={(e) => setComments(e.target.value)} /></label>
-          <button type="button" className="button" disabled={busy || (adding === 'returned' && !comments.trim())} onClick={() => void save()}>{busy ? 'Saving…' : 'Record it'}</button>
+          {adding !== 'submitted' && lastSubmitted && on < lastSubmitted && <p className="caption vr-missing">Their reply cannot be before it was submitted ({fmtDate(lastSubmitted)}).</p>}
+          <button type="button" className="button" disabled={busy || (adding === 'returned' && !comments.trim()) || (adding !== 'submitted' && lastSubmitted != null && on < lastSubmitted)} onClick={() => void save()}>{busy ? 'Saving…' : 'Record it'}</button>
           <button type="button" className="linklike" onClick={() => setAdding(null)}>Cancel</button>
         </div>
       )}

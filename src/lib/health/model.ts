@@ -39,10 +39,23 @@ export function latestPerPerson<T extends MonitoringFacts>(records: readonly T[]
   return [...latest.values()];
 }
 
-/** Per programme, how many people are overdue or due soon — counts, never names. Programmes with neither are left out. */
-export function programmesDue(records: readonly MonitoringFacts[], today: string): ProgrammeDue[] {
+export interface EndedFacts { program_id: string; person_name: string; ended_on: string }
+
+/** Whether monitoring was recorded as ended for this person on or after their latest record. */
+function endedAfter(r: MonitoringFacts, ended: readonly EndedFacts[]): boolean {
+  const k = personKey(r.person_name);
+  return ended.some((e) => e.program_id === r.program_id && personKey(e.person_name) === k && e.ended_on >= r.monitored_on);
+}
+
+/**
+ * Per programme, how many people are overdue or due soon — counts, never names. Programmes with
+ * neither are left out. A person whose monitoring was recorded as ended (they left, or moved off
+ * the work) after their latest record is not due (README R78).
+ */
+export function programmesDue(records: readonly MonitoringFacts[], today: string, ended: readonly EndedFacts[] = []): ProgrammeDue[] {
   const out = new Map<string, ProgrammeDue>();
   for (const r of latestPerPerson(records)) {
+    if (endedAfter(r, ended)) continue;
     const status = dueStatus(r.next_due_on, today);
     if (status !== 'overdue' && status !== 'due_soon') continue;
     const row = out.get(r.program_id) ?? { programId: r.program_id, overdue: 0, dueSoon: 0, earliestDue: null };
@@ -60,6 +73,11 @@ export function retainUntil(monitoredOn: string, asbestos: boolean): string {
   // 29 February becomes 28 February in a year that has none, as Postgres does.
   const leap = (y % 4 === 0 && y % 100 !== 0) || y % 400 === 0;
   return `${y}-${md === '02-29' && !leap ? '02-28' : md}`;
+}
+
+/** Whether a notification went in after the seven days (reg. 394) — recorded with its true date, and shown as late. */
+export function leadNotifiedLate(determinedOn: string, notifiedOn: string): boolean {
+  return notifiedOn > leadNotifyBy(determinedOn);
 }
 
 /** The last day lead risk work may be notified: seven days after it is determined (reg. 394). */

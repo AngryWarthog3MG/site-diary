@@ -28,9 +28,12 @@ export const RESULT_LABEL: Record<ComplianceResult, string> = { compliant: 'Comp
 export interface ObligationInScope { id: string; project_id: string | null; active: boolean }
 export interface ResultFacts { legal_obligation_id: string; result: ComplianceResult; evidence: string | null; action: string | null }
 
-/** The obligations an evaluation must cover — the TS half of app.compliance_scope_missing. */
+/**
+ * The obligations an evaluation must cover — the TS half of app.compliance_scope_missing. A company-wide
+ * evaluation covers the company-wide obligations; a job's covers those and the job's own (README R78).
+ */
 export function inScope<T extends ObligationInScope>(obligations: readonly T[], evaluationProject: string | null): T[] {
-  return obligations.filter((o) => o.active && (evaluationProject == null || o.project_id == null || o.project_id === evaluationProject));
+  return obligations.filter((o) => o.active && (o.project_id == null || o.project_id === evaluationProject));
 }
 
 /** Why an evaluation cannot be issued yet, in words; empty when it can. */
@@ -161,9 +164,10 @@ function addDays(date: string, days: number): string {
 
 /**
  * Days of heavy rain with no environmental check after them. The Bureau's rain for
- * `day` is the 24 hours from 9 am on that day, so the check falls due the next day;
- * a check dated from `day` to two days after counts. Only the last `lookbackDays`.
- * A prompt, never the record: the weather days are a glance (README invariants).
+ * `day` is the 24 hours from 9 am on that day, so the check falls due the next day.
+ * A signed check dated from the day after to a week after counts — a Friday storm is
+ * answered by Monday's check, and a check the morning before the rain does not count
+ * (README R78). Only the last `lookbackDays`. A prompt, never the record.
  */
 export function rainPrompts(
   weather: ReadonlyArray<{ day: string; rainfall_mm: number | null }>,
@@ -176,7 +180,7 @@ export function rainPrompts(
   const from = addDays(today, -lookbackDays);
   return weather
     .filter((w) => w.rainfall_mm != null && w.rainfall_mm >= thresholdMm && w.day >= from && w.day < today)
-    .filter((w) => !envCheckDates.some((d) => d >= w.day && d <= addDays(w.day, 2)))
+    .filter((w) => !envCheckDates.some((d) => d > w.day && d <= addDays(w.day, 7)))
     .map((w) => ({ day: w.day, rainfallMm: Number(w.rainfall_mm), dueOn: addDays(w.day, 1) }))
     .sort((a, b) => a.day.localeCompare(b.day));
 }
@@ -188,8 +192,20 @@ export const MONITORING_LABEL: Record<MonitoringKind, string> = { dust: 'Dust', 
 export type Outcome = 'within_limit' | 'exceedance' | 'observation';
 export const OUTCOME_LABEL: Record<Outcome, string> = { within_limit: 'Within limit', exceedance: 'Exceedance', observation: 'Observation' };
 
-/** The outcome the database will stamp — the TS half of app.env_monitoring_before_insert. */
-export function monitoringOutcome(value: number | null, limit: number | null, stated: Outcome): Outcome {
-  if (value != null && limit != null) return value > limit ? 'exceedance' : 'within_limit';
+export type LimitKind = 'maximum' | 'minimum';
+
+/** The outcome the database will stamp — the TS half of app.env_monitoring_before_insert. A limit is a maximum or a minimum. */
+export function monitoringOutcome(value: number | null, limit: number | null, stated: Outcome, limitKind: LimitKind = 'maximum'): Outcome {
+  if (value != null && limit != null) return (limitKind === 'minimum' ? value < limit : value > limit) ? 'exceedance' : 'within_limit';
   return stated;
+}
+
+/**
+ * A number typed on site, or null when left blank. Anything else is NaN, never quietly nothing: a lab
+ * result of ">1000" or "72dB" saved as a blank reading would be judged within limit (README R78).
+ */
+export function parseReading(text: string): number | null {
+  const t = text.trim();
+  if (t === '') return null;
+  return /^-?\d+(\.\d+)?$/.test(t) ? Number(t) : Number.NaN;
 }

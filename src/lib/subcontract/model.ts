@@ -50,10 +50,13 @@ export const HC_DOC_LABEL: Record<HcDocKind, string> = {
   induction: 'Site induction material',
   other: 'Other plan or procedure',
 };
+/** Reports made before head contractor notices existed are not asked for (README R78): the record began here. */
+export const HC_NOTICE_FROM = '2026-09-17T00:00:00+08:00';
+
 /** The ones What's due asks for on a subcontract job. */
 export const HC_DOC_EXPECTED: readonly HcDocKind[] = ['whs_management_plan', 'emergency_plan'];
 
-export interface HcDoc { id: string; kind: HcDocKind; title: string; revision: string | null; received_on: string; file_path: string | null; superseded_by: string | null; notes: string | null }
+export interface HcDoc { id: string; kind: HcDocKind; title: string; revision: string | null; received_on: string; file_path: string | null; superseded_by: string | null; notes: string | null; created_at?: string }
 
 /** The copy in force for each kind: not superseded, latest received. Older copies are kept, not shown as current. */
 export function currentDocs<T extends HcDoc>(docs: readonly T[]): Map<HcDocKind, T> {
@@ -61,14 +64,14 @@ export function currentDocs<T extends HcDoc>(docs: readonly T[]): Map<HcDocKind,
   for (const d of docs) {
     if (d.superseded_by) continue;
     const have = out.get(d.kind);
-    if (!have || d.received_on > have.received_on) out.set(d.kind, d);
+    if (!have || d.received_on > have.received_on || (d.received_on === have.received_on && (d.created_at ?? '') > (have.created_at ?? ''))) out.set(d.kind, d);
   }
   return out;
 }
 
 // ---------------------------------------------------------------- SWMS to the head contractor
 export type SwmsReviewKind = 'submitted' | 'accepted' | 'returned';
-export interface SwmsReview { id: string; kind: SwmsReviewKind; happened_on: string; person_name: string | null; reference: string | null; comments: string | null; created_at: string }
+export interface SwmsReview { id: string; kind: SwmsReviewKind; happened_on: string; person_name: string | null; reference: string | null; comments: string | null; created_at: string; /** Still on this phone, not yet sent: after every saved step of the same day. */ queued?: boolean }
 export type SwmsReviewStatus = 'not_submitted' | 'with_them' | 'accepted' | 'returned';
 export const SWMS_REVIEW_LABEL: Record<SwmsReviewStatus, string> = {
   not_submitted: 'Not yet submitted', with_them: 'Submitted, awaiting their review', accepted: 'Accepted', returned: 'Returned for changes',
@@ -76,7 +79,7 @@ export const SWMS_REVIEW_LABEL: Record<SwmsReviewStatus, string> = {
 
 /** Where a SWMS stands with the head contractor: the latest step decides, in the order it was recorded. */
 export function swmsReviewStatus(reviews: readonly SwmsReview[]): { status: SwmsReviewStatus; latest: SwmsReview | null } {
-  const sorted = [...reviews].sort((a, b) => a.happened_on.localeCompare(b.happened_on) || a.created_at.localeCompare(b.created_at));
+  const sorted = [...reviews].sort((a, b) => a.happened_on.localeCompare(b.happened_on) || Number(Boolean(a.queued)) - Number(Boolean(b.queued)) || a.created_at.localeCompare(b.created_at));
   const latest = sorted[sorted.length - 1] ?? null;
   if (!latest) return { status: 'not_submitted', latest };
   return { status: latest.kind === 'submitted' ? 'with_them' : latest.kind, latest };

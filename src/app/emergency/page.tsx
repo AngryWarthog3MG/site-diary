@@ -6,6 +6,7 @@ import { BrandMark } from '@/components/brand-mark';
 import { perthToday } from '@/lib/push/decide';
 import { fmtDate } from '@/lib/pdf/dates';
 import { loadEmergency } from '@/lib/emergency/load';
+import { loadHeadContractorEmergencyPlan } from '@/lib/subcontract/load';
 import { perthDayOf } from '@/lib/emergency/model';
 import { dueStatus, STATUS_LABEL } from '@/lib/obligations/model';
 import { PlanForm } from './plan-form';
@@ -30,7 +31,7 @@ export default async function EmergencyPage({ searchParams }: { searchParams: Pr
 
   const supabase = await createClient();
   const today = perthToday();
-  const data = await loadEmergency(supabase, current.project_id);
+  const [data, sitePlan] = await Promise.all([loadEmergency(supabase, current.project_id), loadHeadContractorEmergencyPlan(supabase, current.project_id)]);
   const plan = data.current;
   const canIssue = canAuthorEntries(current.role);
   const canDrill = canRunTalks(current.role);
@@ -44,7 +45,16 @@ export default async function EmergencyPage({ searchParams }: { searchParams: Pr
 
       <a className="emerg__call" href="tel:000">In an emergency call <strong>000</strong></a>
 
-      {!plan ? (
+      {!plan && sitePlan ? (
+        <div className="item" style={{ marginTop: '1rem' }}>
+          <p className="label">The site emergency plan — the head contractor&rsquo;s</p>
+          <p style={{ fontWeight: 600, margin: '0.25rem 0' }}>
+            {sitePlan.url ? <a href={sitePlan.url} target="_blank" rel="noopener">{sitePlan.title}{sitePlan.revision ? ` ${sitePlan.revision}` : ''}</a> : <>{sitePlan.title}{sitePlan.revision ? ` ${sitePlan.revision}` : ''}</>}
+          </p>
+          <p className="caption">Received {fmtDate(sitePlan.receivedOn)}. On this job it is the plan the crew works to: the muster point, who to call, and how the site is evacuated are in it.</p>
+          {canIssue && <p className="caption">Recorded under Construction. Your own plan below is only needed if the head contractor&rsquo;s does not cover your work.</p>}
+        </div>
+      ) : !plan ? (
         <>
           <p className="nil" style={{ marginTop: '1rem' }}>
             No emergency plan for this workplace yet. The law asks for one per workplace, written for this site —

@@ -33,6 +33,8 @@ export interface BundlePlan {
   /** Which part each entry is in, for the covers. */
   partOf: Map<string, number>;
   indices: number[][];
+  /** Identifies this exact set of parts. A part asked for under another plan is refused (README R78). */
+  planKey: string;
 }
 
 const PAGE = 1000;
@@ -94,9 +96,12 @@ export async function planMonthlyBundle(supabase: SupabaseClient, project: Proje
   // The cover lists the whole month, so every part's key covers every entry, plus its place in the set.
   const monthHash = createHash('sha256').update(entries.map((e) => `${e.entry_no}:${e.content_hash ?? e.id}:${e.superseded_by ?? ''}:${e.author_name}`).join('|')).digest('hex');
 
+  const groupingOf = (group: number[]) => group.map((index) => entries[index].entry_no).join(',');
+  const planKey = createHash('sha256').update(`${monthHash}|${project.name}|${indices.map(groupingOf).join('/')}`).digest('hex').slice(0, 16);
   const parts = indices.map((group, i): BundlePart => {
     const part = i + 1;
-    const key = createHash('sha256').update(`${monthHash}#${part}/${indices.length}`).digest('hex').slice(0, 12);
+    // The record, the project's name on the covers, and exactly which dockets this part holds.
+    const key = createHash('sha256').update(`${monthHash}|${project.name}#${part}/${indices.length}|${groupingOf(group)}`).digest('hex').slice(0, 12);
     const objectPath = volumePath(project.id, month, part, indices.length, key);
     const name = objectPath.slice(`${project.id}/monthly/`.length);
     const storedBytes = indices.length > 1 ? built.get(name) ?? null : null;
@@ -112,7 +117,7 @@ export async function planMonthlyBundle(supabase: SupabaseClient, project: Proje
       bytes: storedBytes,
     };
   });
-  return { data, parts, partOf, indices };
+  return { data, parts, partOf, indices, planKey };
 }
 
 /** Bind and store one part (or say it is already stored). One part is one request's worth of work. */
@@ -156,8 +161,8 @@ export async function generateMonthlyBundle(
   if ('empty' in plan) return plan;
   for (const part of plan.parts) {
     if (part.ready) continue;
-    // A part takes up to a couple of minutes on Vercel; do not start one that cannot finish.
-    if (Date.now() + 150_000 > deadline) break;
+    // Do not START a part after the deadline; one part takes well under a minute once Chromium is warm.
+    if (Date.now() > deadline) break;
     await buildBundlePart(plan, part.part);
   }
   return plan;

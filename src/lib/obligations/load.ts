@@ -9,7 +9,7 @@ import { withoutWhiteCard } from '@/lib/construction/model';
 import { registerInForce, planReviewDue, notBriefed } from '@/lib/asbestos/model';
 import { programmesDue } from '@/lib/health/model';
 import { envIncidentState, rainPrompts, type EnvEvent } from '@/lib/environment/model';
-import { currentDocs, noticeState, swmsReviewStatus, headContractorName, HC_DOC_EXPECTED, HC_DOC_LABEL, type HcDoc, type IncidentNotice, type SwmsReview } from '@/lib/subcontract/model';
+import { currentDocs, noticeState, swmsReviewStatus, headContractorName, HC_DOC_EXPECTED, HC_DOC_LABEL, HC_NOTICE_FROM, type HcDoc, type IncidentNotice, type SwmsReview } from '@/lib/subcontract/model';
 import { ncrRef, lotRef, ncrReportState, holdsAwaitingRelease, calibrationStatus, CALIBRATION_LABEL, type PointType, type Result } from '@/lib/quality/model';
 import { nextInspection, registrationStatus, REGISTRATION_LABEL, type InspectionBasis, type RecordKind, type Outcome } from '@/lib/plant/inspections';
 import {
@@ -58,7 +58,7 @@ export async function loadObligations(
   today: string,
 ): Promise<ObligationsData> {
   const q = `?project=${projectId}`;
-  const [{ data: schedRows }, chemicals, { data: crewRows }, { data: ticketRows }, { data: notifiableRows }, { data: regRows }, emergency, { data: plantRows }, { data: pcRow }, { data: whsPlanRows }, { data: whiteCards }, { data: ncrRows }, { data: openLots }, { data: equipRows }, { data: findingRows }, { data: reviewActionRows }, { data: asbestosRows }, { data: healthRows }, { data: envApplies }, { data: envIncidents }, { data: envSettings }, { data: envWeather }, { data: envChecks }, { data: envActions }, { data: subIncidents }, { data: hcDocRows }, { data: swmsRows }] = await Promise.all([
+  const [{ data: schedRows }, chemicals, { data: crewRows }, { data: ticketRows }, { data: notifiableRows }, { data: regRows }, emergency, { data: plantRows }, { data: pcRow }, { data: whsPlanRows }, { data: whiteCards }, { data: ncrRows }, { data: openLots }, { data: equipRows }, { data: findingRows }, { data: reviewActionRows }, { data: asbestosRows }, { data: healthRows }, { data: healthEnded }, { data: envApplies }, { data: envIncidents }, { data: envSettings }, { data: envWeather }, { data: envChecks }, { data: envActions }, { data: subIncidents }, { data: hcDocRows }, { data: swmsRows }] = await Promise.all([
     supabase
       .from('obligations')
       .select('id, project_id, kind, title, basis, interval_months, first_due_on, active, obligation_completions(id, due_on, done_on, evidence_note, evidence_ref, created_at, done_by)')
@@ -83,18 +83,21 @@ export async function loadObligations(
     supabase.from('asbestos_registers').select('id, register_date, superseded_by, asbestos_present, plan_date, plan_file_path, asbestos_acknowledgements(person_name)').eq('project_id', projectId),
     // Keepers only, under RLS: anyone else gets no rows, and so no health items.
     supabase.from('health_monitoring_records').select('program_id, person_name, monitored_on, next_due_on, program:health_monitoring_programs!inner(id, hazard, org_id, active)').eq('program.org_id', orgId).eq('program.active', true),
+    supabase.from('health_monitoring_ended').select('program_id, person_name, ended_on, program:health_monitoring_programs!inner(org_id)').eq('program.org_id', orgId),
     // Environment (README R73), under RLS like everything here.
     supabase.from('project_env_aspects').select('aspect_id').eq('project_id', projectId).eq('applies', true),
-    supabase.from('incidents').select('id, seq, occurred_at, incident_environment_events(id, kind, happened_at, severity, serious, dwer_trigger, person_name, detail)').eq('project_id', projectId).eq('kind', 'environmental').neq('status', 'closed'),
+    // Closing a report does not discharge DWER notice or the report deadlines (README R78): read closed ones too.
+    supabase.from('incidents').select('id, seq, occurred_at, incident_environment_events(id, kind, happened_at, severity, serious, dwer_trigger, person_name, detail)').eq('project_id', projectId).eq('kind', 'environmental').gte('occurred_at', new Date(Date.now() - 365 * 86_400_000).toISOString()),
     supabase.from('projects').select('env_report_hours_serious, env_report_hours_minor, env_investigation_days, env_rain_inspection_mm').eq('id', projectId).maybeSingle(),
     supabase.from('project_weather_days').select('day, rainfall_mm').eq('project_id', projectId).gte('day', addDaysIso(today, -15)),
-    supabase.from('inspections').select('inspection_date').eq('project_id', projectId).eq('kind', 'environmental').gte('inspection_date', addDaysIso(today, -15)),
+    supabase.from('inspections').select('inspection_date').eq('project_id', projectId).eq('kind', 'environmental').not('completed_at', 'is', null).gte('inspection_date', addDaysIso(today, -15)),
     supabase.from('compliance_evaluation_results').select('id, action, due_on, evaluation:compliance_evaluations!inner(id, org_id, project_id, status, evaluated_on)').eq('result', 'non_compliant').is('done_at', null).eq('evaluation.org_id', orgId).eq('evaluation.status', 'issued').or(`project_id.eq.${projectId},project_id.is.null`, { referencedTable: 'evaluation' }),
     // Working under a head contractor (README R74): the last 90 days' reports and whether each was told up,
     // their plans on file, and the SWMS in use with where each stands in their review.
-    supabase.from('incidents').select('id, seq, kind, occurred_at, incident_notices(id, notified_at, method, told_by_name, recipient_name, reference, detail)').eq('project_id', projectId).gte('occurred_at', new Date(Date.now() - 90 * 86_400_000).toISOString()),
+    supabase.from('incidents').select('id, seq, kind, occurred_at, incident_notices(id, notified_at, method, told_by_name, recipient_name, reference, detail), incident_environment_events(kind, happened_at)').eq('project_id', projectId).gte('created_at', HC_NOTICE_FROM),
     supabase.from('head_contractor_documents').select('id, kind, title, revision, received_on, file_path, superseded_by, notes').eq('project_id', projectId),
-    supabase.from('swms').select('id, title, version, swms_reviews(id, kind, happened_on, person_name, reference, comments, created_at)').eq('project_id', projectId).eq('status', 'active'),
+    // A SWMS goes to the head contractor; a JSA is the crew's own (README R78).
+    supabase.from('swms').select('id, title, version, swms_reviews(id, kind, happened_on, person_name, reference, comments, created_at)').eq('project_id', projectId).eq('status', 'active').eq('kind', 'swms'),
   ]);
   const job = pcRow as { is_principal_contractor?: boolean; principal_contractor?: string | null; head_contractor_incident_hours?: number | null } | null;
   const subcontract = job != null && !job.is_principal_contractor;
@@ -312,7 +315,7 @@ export async function loadObligations(
   type HealthRow = { program_id: string; person_name: string; monitored_on: string; next_due_on: string | null; program: { hazard: string } | Array<{ hazard: string }> };
   const healthList = (healthRows ?? []) as HealthRow[];
   const hazardOf = new Map(healthList.map((h) => [h.program_id, (Array.isArray(h.program) ? h.program[0] : h.program)?.hazard ?? 'Health monitoring']));
-  for (const due of programmesDue(healthList, today)) {
+  for (const due of programmesDue(healthList, today, (healthEnded ?? []) as Array<{ program_id: string; person_name: string; ended_on: string }>)) {
     const n = due.overdue + due.dueSoon;
     items.push({ key: `health:${due.programId}`, source: 'health', title: `Health monitoring — ${hazardOf.get(due.programId)}: ${n} ${n === 1 ? 'person' : 'people'} due`, basis: 'WHS (General) Regs 2022 (WA) Part 7.1 Div 6 · names are on the confidential record', dueOn: due.earliestDue ?? today, status: due.overdue > 0 ? 'overdue' : 'due_soon', href: `/health${q}` });
   }
@@ -322,9 +325,10 @@ export async function loadObligations(
     const hours = job?.head_contractor_incident_hours ?? null;
     const nowMs = new Date().toISOString();
     const dayOf = (iso: string) => new Date(Date.parse(iso) + 8 * 3_600_000).toISOString().slice(0, 10);
-    for (const inc of (subIncidents ?? []) as Array<{ id: string; seq: number; occurred_at: string; incident_notices: IncidentNotice[] }>) {
+    for (const inc of (subIncidents ?? []) as Array<{ id: string; seq: number; occurred_at: string; incident_notices: IncidentNotice[]; incident_environment_events?: Array<{ kind: string; happened_at: string }> }>) {
       const st = noticeState(inc.occurred_at, inc.incident_notices ?? [], hours, nowMs);
-      if (st.toldAt) continue;
+      // Telling them through the environmental incident's own trail counts too — never two records of one call.
+      if (st.toldAt || (inc.incident_environment_events ?? []).some((e) => e.kind === 'superintendent_notified')) continue;
       items.push({ key: `hc-notice:${inc.id}`, source: 'head_contractor', title: `Tell ${hcName} — ${incidentRef(inc.seq)}`, basis: hours ? `Their rules: within ${hours} hour${hours === 1 ? '' : 's'}` : 'Reporting up to the head contractor', dueOn: st.dueAt ? dayOf(st.dueAt) : dayOf(inc.occurred_at), status: st.overdue || !st.dueAt ? 'overdue' : 'due_soon', href: `/incidents/${inc.id}` });
     }
     for (const kind of HC_DOC_EXPECTED) {

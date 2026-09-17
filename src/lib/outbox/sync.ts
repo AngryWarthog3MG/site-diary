@@ -22,6 +22,34 @@ async function uploadIfMissing(path: string, blob: Blob, contentType: string, bu
   if (error && !isAlreadyDone(error)) throw error;
 }
 
+/**
+ * Mark `older` as replaced by `mine` — or, when another copy replaced `older` while this one waited,
+ * follow the chain: a newer-or-same copy is replaced by mine only if mine is not older than it; if mine
+ * is the older one, mine is marked replaced by it. Either way exactly one copy is left in force, and
+ * never a guess about which (README R78).
+ */
+async function supersedeChain(older: string, mine: string, myReceivedOn: string): Promise<void> {
+  const supabase = createClient();
+  let target = older;
+  for (let hop = 0; hop < 10; hop += 1) {
+    const { data: row, error: readErr } = await supabase.from('head_contractor_documents').select('id, superseded_by, received_on').eq('id', target).maybeSingle();
+    if (readErr) throw readErr;
+    if (!row) return;
+    if (row.superseded_by === mine) return;
+    if (!row.superseded_by) {
+      if ((row.received_on as string) <= myReceivedOn) {
+        const { error } = await supabase.from('head_contractor_documents').update({ superseded_by: mine }).eq('id', target);
+        if (error && !isFrozen(error)) throw error;
+      } else {
+        const { error } = await supabase.from('head_contractor_documents').update({ superseded_by: target }).eq('id', mine);
+        if (error && !isFrozen(error)) throw error;
+      }
+      return;
+    }
+    target = row.superseded_by as string;
+  }
+}
+
 async function replay(item: OutboxItem): Promise<void> {
   const supabase = createClient();
   const p = item.payload;
@@ -203,14 +231,14 @@ async function replay(item: OutboxItem): Promise<void> {
     }
     case 'hc_document': {
       // The copy first, then the row that names it, then the older copy marked superseded.
+      if (p.path && !blobs.file) {
+        // Never write a row naming a file that was not kept on the phone.
+        throw Object.assign(new Error('The attached copy was lost from this phone. Record the plan again with its file.'), { code: '42501' });
+      }
       if (p.path && blobs.file) await uploadIfMissing(p.path as string, blobs.file, (p.contentType as string) ?? 'application/pdf', 'head-contractor-docs');
       const { error } = await supabase.from('head_contractor_documents').insert(p.row as Record<string, unknown>);
       if (error && !isAlreadyDone(error)) throw error;
-      if (p.supersedes) {
-        const { error: se } = await supabase.from('head_contractor_documents').update({ superseded_by: item.subjectId }).eq('id', p.supersedes as string);
-        // Already superseded by another copy while this waited: that copy stands, this one is kept alongside.
-        if (se && !isFrozen(se)) throw se;
-      }
+      if (p.supersedes) await supersedeChain(p.supersedes as string, item.subjectId, (p.row as { received_on: string }).received_on);
       return;
     }
     case 'swms_signon': {

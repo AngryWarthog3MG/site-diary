@@ -152,7 +152,7 @@ async function openPage() {
     const b = await browser();
     let timer: ReturnType<typeof setTimeout> | undefined;
     const page = await Promise.race([
-      b.newPage(),
+      b.newPage().catch(() => null),
       new Promise<null>((resolve) => { timer = setTimeout(() => resolve(null), PAGE_OPEN_MS); }),
     ]).finally(() => clearTimeout(timer));
     if (page) return page;

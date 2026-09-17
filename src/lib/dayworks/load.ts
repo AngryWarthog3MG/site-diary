@@ -6,6 +6,8 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
 export interface DayworksScheduleData extends DayworksSchedule {
+  /** The diary query is capped at 1,000 rows; true when the period reached it, so totals may be short. */
+  truncated: boolean;
   /** Dayworks on days not yet signed in the period — not in the schedule, which is the signed record. */
   unsignedItems: number;
   unsignedDays: number;
@@ -67,5 +69,5 @@ export async function loadDayworksSchedule(supabase: SupabaseClient, projectId: 
   const openRows = (open ?? []) as unknown as OpenRow[];
   const openDays = new Set(openRows.map((r) => (Array.isArray(r.entry) ? r.entry[0]?.entry_date : r.entry?.entry_date)).filter(Boolean));
 
-  return { ...buildSchedule(lines, range), unsignedItems: openRows.length, unsignedDays: openDays.size };
+  return { ...buildSchedule(lines, range), truncated: rows.length >= 1000, unsignedItems: openRows.length, unsignedDays: openDays.size };
 }

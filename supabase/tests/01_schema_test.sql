@@ -682,7 +682,7 @@ begin
 
   perform public.set_variation_status(v_reg.id, 'submitted', 'Sent to the QS');
   select * into v_reg from public.variation_register where id = v_reg.id;
-  assert v_reg.status = 'submitted' and v_reg.submitted_on = current_date, 'submitted stamps the date';
+  assert v_reg.status = 'submitted' and v_reg.submitted_on = app.perth_today(), 'submitted stamps the Perth date (README R78)';
   select count(*) into v_ev from public.variation_status_events where register_id = v_reg.id;
   assert v_ev = 2, format('expected raised + submitted events, got %s', v_ev);
 

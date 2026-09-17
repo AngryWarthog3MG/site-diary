@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { PDFDocument } from 'pdf-lib';
 import { DOCKET_CSS } from '@/lib/pdf/styles';
 import { EMBEDDED_FONT_CSS } from '@/lib/pdf/fonts';
@@ -46,7 +47,9 @@ export async function renderMonthlyBundle(
   const split = volume != null && volume.of > 1;
   const partLabel = split ? ` part ${volume.part} of ${volume.of}` : '';
   // A single part keeps exactly the identifier a single bundle always had.
-  const idSeed = data.entries.map((e) => e.content_hash ?? e.id).join('') + (split ? `#${volume.part}/${volume.of}` : '');
+  const base = data.entries.map((e) => e.content_hash ?? e.id).join('');
+  // withFixedId keeps the seed's first 32 hex characters, so a suffix would be cut off: hash the part in instead.
+  const idSeed = split ? createHash('sha256').update(`${base}#${volume.part}/${volume.of}`).digest('hex') : base;
   const cover = await renderPdfDocument(await buildCoverHtml(data, volume), {
     title: `Monthly bundle ${data.project.code} ${data.month}${partLabel}`,
     author: data.project.name,

@@ -44,7 +44,7 @@ export default async function ConstructionPage({ searchParams }: { searchParams:
     supabase.from('excavation_records').select('id, location, planned_start_on, info_source, info_reference, info_obtained_on, info_valid_until, services_identified, plans_file_path, services_located_by, locating_method, located_on, max_depth_m, trench_control, engineer_advice_ref, notes, created_at').eq('project_id', current.project_id).order('created_at', { ascending: false }),
     supabase.from('crew').select('name').eq('project_id', current.project_id).eq('active', true),
     supabase.from('crew_tickets').select('person_name, ticket_type, active, expires_on').eq('org_id', current.project.org.id).eq('ticket_type', 'white_card'),
-    supabase.from('head_contractor_documents').select('id, kind, title, revision, received_on, file_path, superseded_by, notes').eq('project_id', current.project_id),
+    supabase.from('head_contractor_documents').select('id, kind, title, revision, received_on, file_path, superseded_by, notes, created_at').eq('project_id', current.project_id),
   ]);
 
   const isPC = Boolean(proj?.is_principal_contractor);

@@ -38,3 +38,9 @@ test('a SWMS stands where its latest review step left it', () => {
   assert.equal(swmsReviewStatus([rev('submitted', '2026-09-15', '1'), rev('returned', '2026-09-16', '2')]).status, 'returned');
   assert.equal(swmsReviewStatus([rev('submitted', '2026-09-15', '1'), rev('returned', '2026-09-16', '2'), rev('submitted', '2026-09-17', '3'), rev('accepted', '2026-09-17', '4')]).status, 'accepted');
 });
+
+test('a step still on the phone sorts after the saved steps of the same day', () => {
+  const saved = { ...rev('submitted', '2026-09-17', '2026-09-17T01:00:00Z') };
+  const queued = { ...rev('returned', '2026-09-17', '2026-09-17T00:30:00Z'), queued: true };
+  assert.equal(swmsReviewStatus([saved, queued]).status, 'returned');
+});

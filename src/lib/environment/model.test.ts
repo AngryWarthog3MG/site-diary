@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { significance, evaluationProblems, envIncidentState, rainPrompts, monitoringOutcome, type EnvEvent } from './model.ts';
+import { significance, evaluationProblems, envIncidentState, rainPrompts, monitoringOutcome, parseReading, type EnvEvent } from './model.ts';
 
 test('significance is likelihood x consequence at or over the threshold', () => {
   assert.deepEqual(significance(4, 3, 12), { score: 12, significant: true });
@@ -16,7 +16,8 @@ test('an evaluation must cover the register in scope, evidence each result, and 
     { id: 'd', project_id: null, active: false },
   ];
   assert.deepEqual(evaluationProblems(obligations, 'p1', [], null), ['2 obligations without a result', 'no summary of compliance status']);
-  assert.equal(evaluationProblems(obligations, null, [], 'x')[0], '3 obligations without a result');
+  // A company-wide evaluation covers the company-wide obligations only.
+  assert.equal(evaluationProblems(obligations, null, [], 'x')[0], '1 obligation without a result');
   assert.deepEqual(evaluationProblems(obligations, 'p1', [
     { legal_obligation_id: 'a', result: 'non_compliant', evidence: 'phoned only', action: null },
     { legal_obligation_id: 'b', result: 'not_applicable', evidence: null, action: null },
@@ -75,6 +76,9 @@ test('heavy rain asks for an environmental check the next day, unless one was do
     { day: '2026-08-20', rainfall_mm: 40 },
   ];
   assert.deepEqual(rainPrompts(weather, ['2026-09-11'], 10, '2026-09-17'), [{ day: '2026-09-14', rainfallMm: 18, dueOn: '2026-09-15' }]);
+  // Monday's check answers Friday's storm; a check on the morning of the rain day does not.
+  assert.deepEqual(rainPrompts([{ day: '2026-09-11', rainfall_mm: 20 }], ['2026-09-14'], 10, '2026-09-17'), []);
+  assert.equal(rainPrompts([{ day: '2026-09-11', rainfall_mm: 20 }], ['2026-09-11'], 10, '2026-09-17').length, 1);
   assert.deepEqual(rainPrompts(weather, [], null, '2026-09-17'), []);
 });
 
@@ -82,4 +86,14 @@ test('a reading over its limit is an exceedance whatever was ticked', () => {
   assert.equal(monitoringOutcome(72, 65, 'within_limit'), 'exceedance');
   assert.equal(monitoringOutcome(60, 65, 'exceedance'), 'within_limit');
   assert.equal(monitoringOutcome(null, null, 'observation'), 'observation');
+  // A minimum: pH 4.8 against 6.5 is an exceedance.
+  assert.equal(monitoringOutcome(4.8, 6.5, 'within_limit', 'minimum'), 'exceedance');
+  assert.equal(monitoringOutcome(7.1, 6.5, 'exceedance', 'minimum'), 'within_limit');
+});
+
+test('a reading that is not a plain number is not taken as blank', () => {
+  assert.equal(parseReading(''), null);
+  assert.equal(parseReading(' 72.5 '), 72.5);
+  assert.ok(Number.isNaN(parseReading('>1000') as number));
+  assert.ok(Number.isNaN(parseReading('72dB') as number));
 });

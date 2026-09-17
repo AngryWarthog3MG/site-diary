@@ -28,9 +28,19 @@ export default async function NamePage() {
       <p className="page-subtitle">
         {first
           ? 'This is the name printed on the sheets you fill in and sign: prestarts, sign-ons, reports and the diary. You only need to do this once.'
-          : 'This is the name printed on the sheets you fill in and sign. Your email address stays how you sign in and is not printed.'}
+          : 'This is the name printed on the sheets you fill in and sign.'}
       </p>
-      <NameForm userId={user.id} email={user.email ?? null} current={(profile?.full_name as string | null) ?? ''} first={first} />
+      {first ? (
+        <NameForm userId={user.id} email={user.email ?? null} current={(profile?.full_name as string | null) ?? ''} first={first} />
+      ) : (
+        <>
+          <p style={{ fontSize: '1.25rem', fontWeight: 600, margin: '1rem 0 0.25rem' }}>{profile?.full_name as string}</p>
+          <p className="caption">
+            To change it, ask an admin — they can do it from Who is on this job. It is set once by you because the gate
+            knows you by it (README R78).
+          </p>
+        </>
+      )}
     </main>
   );
 }

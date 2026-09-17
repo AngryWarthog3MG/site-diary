@@ -9,6 +9,7 @@ import { normaliseName } from '@/lib/crew/tickets';
 import { eventClock, hoursOnSite, type SignInRow } from '@/lib/signin/register';
 import type { Membership } from '@/lib/auth';
 import { loadCurrentPlan } from '@/lib/emergency/load';
+import { loadHeadContractorEmergencyPlan } from '@/lib/subcontract/load';
 
 /**
  * The labourer's opening page: are they signed in right now, and the two
@@ -21,6 +22,7 @@ export async function LabourerHome({ current, name }: { current: Membership; nam
   const supabase = await createClient();
   const today = perthToday();
   const planPromise = loadCurrentPlan(supabase, current.project_id);
+  const sitePlanPromise = loadHeadContractorEmergencyPlan(supabase, current.project_id);
   const { data } = await supabase
     .from('site_signins')
     .select('id, person_name, company, person_kind, inducted, signed_in_at, signed_in_on_device_at, signed_out_at, signed_out_on_device_at')
@@ -31,7 +33,7 @@ export async function LabourerHome({ current, name }: { current: Membership; nam
   const open = mine.find((r) => r.signed_out_at == null) ?? null;
   const done = mine.filter((r) => r.signed_out_at != null);
   const q = `?project=${current.project_id}`;
-  const plan = await planPromise;
+  const [plan, sitePlan] = await Promise.all([planPromise, sitePlanPromise]);
 
   return (
     <main className="app-shell home-shell dash labhome">
@@ -78,6 +80,11 @@ export async function LabourerHome({ current, name }: { current: Membership; nam
         <a className="emerg__call" href="tel:000">Call <strong>000</strong></a>
         {plan ? (
           <p className="labhome__muster">Muster at <strong>{plan.muster_point}</strong>{plan.nearest_hospital ? <><br /><span className="caption">Nearest hospital: {plan.nearest_hospital}</span></> : null}</p>
+        ) : sitePlan ? (
+          <p className="labhome__muster">
+            The site&rsquo;s emergency plan is the head contractor&rsquo;s: {sitePlan.url ? <a href={sitePlan.url} target="_blank" rel="noopener"><strong>{sitePlan.title}{sitePlan.revision ? ` ${sitePlan.revision}` : ''}</strong></a> : <strong>{sitePlan.title}{sitePlan.revision ? ` ${sitePlan.revision}` : ''}</strong>}
+            <br /><span className="caption">Muster point and who to call are in it. Ask your supervisor if you have not been shown.</span>
+          </p>
         ) : (
           <p className="caption">No emergency plan recorded for this site yet — ask your supervisor where to muster.</p>
         )}

@@ -26,13 +26,14 @@ export default async function HealthPage({ searchParams }: { searchParams: Promi
   const supabase = await createClient();
   const org = current.project.org.id;
   const isAdmin = current.role === 'admin';
-  const [{ data: programs }, { data: records }, { data: keepers }, { data: notices }, { data: members }] = await Promise.all([
+  const [{ data: programs }, { data: records }, { data: keepers }, { data: notices }, { data: members }, { data: ended }] = await Promise.all([
     supabase.from('health_monitoring_programs').select('id, hazard, basis, frequency_months, practitioner, active').eq('org_id', org).order('hazard'),
-    // Under RLS: empty unless the viewer is a keeper.
-    supabase.from('health_monitoring_records').select('id, program_id, person_name, monitored_on, practitioner, result_summary, action_required, next_due_on, report_file_path, retain_until').order('monitored_on', { ascending: false }),
+    // Under RLS: empty unless the viewer is a keeper — and only this company's, even for a keeper of two.
+    supabase.from('health_monitoring_records').select('id, program_id, person_name, monitored_on, practitioner, result_summary, action_required, next_due_on, report_file_path, retain_until, program:health_monitoring_programs!inner(org_id)').eq('program.org_id', org).order('monitored_on', { ascending: false }),
     supabase.from('health_record_keepers').select('user_id, active, granted_at, revoked_at').eq('org_id', org),
     supabase.from('lead_risk_notifications').select('id, description, determined_on, notified_on, reference, project_id').eq('org_id', org).order('determined_on', { ascending: false }),
     isAdmin ? supabase.from('project_members').select('user_id').eq('project_id', current.project_id) : Promise.resolve({ data: [] }),
+    supabase.from('health_monitoring_ended').select('id, program_id, person_name, ended_on, reason, program:health_monitoring_programs!inner(org_id)').eq('program.org_id', org),
   ]);
   const keeperRows = (keepers ?? []) as Array<{ user_id: string; active: boolean; granted_at: string; revoked_at: string | null }>;
   const ids = [...new Set([...keeperRows.map((k) => k.user_id), ...((members ?? []) as Array<{ user_id: string }>).map((m) => m.user_id)])];
@@ -60,6 +61,7 @@ export default async function HealthPage({ searchParams }: { searchParams: Promi
         keepers={keeperRows.map((k) => ({ ...k, name: name.get(k.user_id) ?? 'Someone' })) as Keeper[]}
         candidates={isAdmin ? ((members ?? []) as Array<{ user_id: string }>).map((m) => ({ id: m.user_id, name: name.get(m.user_id) ?? 'Someone' })) : []}
         notices={(notices ?? []) as LeadNotice[]}
+        ended={((ended ?? []) as Array<{ id: string; program_id: string; person_name: string; ended_on: string; reason: string }>)}
         today={perthToday()}
         userId={userId}
       />

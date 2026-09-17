@@ -60,7 +60,8 @@ export function monthBuckets(incidents: readonly IncidentFacts[], today: string,
   for (let k = months - 1; k >= 0; k -= 1) {
     const d = new Date(Date.UTC(y, m - 1 - k, 1));
     const key = d.toISOString().slice(0, 7);
-    const inMonth = incidents.filter((i) => i.occurred_at.slice(0, 7) === key);
+    // The Perth month: an incident at 6 am on the 1st belongs to that month, not the one before (README R78).
+    const inMonth = incidents.filter((i) => new Date(Date.parse(i.occurred_at) + 8 * 3_600_000).toISOString().slice(0, 7) === key);
     out.push({ month: key, total: inMonth.length, injuries: inMonth.filter((i) => i.kind === 'injury').length, nearMisses: inMonth.filter((i) => i.kind === 'near_miss').length, hazards: inMonth.filter((i) => i.kind === 'hazard').length });
   }
   return out;

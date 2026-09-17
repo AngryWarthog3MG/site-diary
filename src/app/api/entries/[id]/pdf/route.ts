@@ -21,7 +21,9 @@ const LINK_TTL_SECONDS = 60 * 60;
  * should only ever come from the generator.
  *
  * A signed entry's PDF is byte-identical on every render, so an existing file
- * is reused rather than regenerated. Pass `?force=1` after a template change.
+ * is reused and NEVER regenerated over: the stored PDF is the record (README
+ * R78 — this route used to overwrite it on `?force=1`, and whenever making a
+ * link to it failed for a moment).
  */
 export async function POST(request: Request, context: { params: Promise<{ id: string }> }) {
   const { supabase, user, response } = await requireApiUser();
@@ -48,15 +50,23 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
   // members can find their own project's exports. A human-readable code here
   // would make every stored PDF invisible to them.
   const objectPath = `${entry.project_id}/${entry.entry_no}.pdf`;
-  const force = new URL(request.url).searchParams.get('force') === '1';
 
-  if (!force) {
-    const existing = await admin.storage
-      .from(EXPORTS_BUCKET)
-      .createSignedUrl(objectPath, LINK_TTL_SECONDS);
-    if (existing.data?.signedUrl) {
-      return ok({ url: existing.data.signedUrl, path: objectPath, regenerated: false });
-    }
+  const existing = await admin.storage
+    .from(EXPORTS_BUCKET)
+    .createSignedUrl(objectPath, LINK_TTL_SECONDS);
+  if (existing.data?.signedUrl) {
+    return ok({ url: existing.data.signedUrl, path: objectPath, regenerated: false });
+  }
+  // No link is not proof there is no file: a Storage blip looks the same. Establish absence
+  // before rendering anything, and never render over a file that is there.
+  const { data: listed, error: listError } = await admin.storage
+    .from(EXPORTS_BUCKET)
+    .list(entry.project_id as string, { search: `${entry.entry_no}.pdf`, limit: 100 });
+  if (listError) {
+    return fail('server_error', `Could not confirm whether this day's PDF is already stored: ${listError.message}. Try again in a moment.`, 503);
+  }
+  if ((listed ?? []).some((o) => o.name === `${entry.entry_no}.pdf`)) {
+    return fail('server_error', 'This day\'s PDF is stored but a link could not be made just now. Try again in a moment — it will not be regenerated.', 503);
   }
 
   let pdf: Uint8Array;
@@ -80,10 +90,11 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
     .from(EXPORTS_BUCKET)
     .upload(objectPath, Buffer.from(pdf), {
       contentType: 'application/pdf',
-      upsert: true,
+      upsert: false,
     });
 
-  if (uploadError) {
+  // Another request stored it first: that file is the record. Link it; this render is discarded.
+  if (uploadError && !/exists|duplicate/i.test(uploadError.message)) {
     return fail('server_error', `Could not store the daily PDF: ${uploadError.message}`, 500);
   }
 

@@ -354,6 +354,9 @@ Change four of them and the app silently stops capturing what supervisors say. I
 - **Generated SQL is safe because of `security_invoker` views, a read-only transaction, an
   empty `search_path`, and a timeout** — in that order. `src/lib/query/validate.ts` exists
   for readable errors, *not* for safety. The file says so; believe it.
+- **A stored PDF is never written over.** `/api/entries/[id]/pdf` establishes absence (a signed-URL failure is not proof) and
+  uploads with `upsert:false`; there is no `force`. README R78.
+- **A save kept on the phone never refreshes the page** — decide on the save's outcome, not `navigator.onLine` (README R78).
 - **A timestamp's date is Perth's.** Never `.slice(0, 10)` a timestamptz for display — that is the UTC day, a day early for
   anything before 8 am in Perth. Use `fmtPerthDate` / `perthDate` (`src/lib/pdf/dates.ts`, arithmetic, PDF-safe). README R77.
 - **`entry_date` comes from the device**, not the server. A Perth knock-off at 17:30 is

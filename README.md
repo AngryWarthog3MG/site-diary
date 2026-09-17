@@ -1964,6 +1964,67 @@ daily docket never had the fault: its date is the device's entry date. The visit
 whatever the visitor's phone is set to. PDFs already stored keep the date they printed, because a stored PDF is the record and
 is never regenerated. Rule: never `.slice(0, 10)` a timestamp for display; use `fmtPerthDate`.
 
+**R78. The second-agent review of everything built on 17 September.** Five reviewers read the day's work against
+`docs/review.md`, each on one area and none of them its author (AGENTS: one agent builds, the other reviews). They found
+28 defects; every one below was checked against the code before it was fixed, and the fixes went out with the suites that
+prove them.
+
+*Confidentiality (R69).* `app.is_health_keeper` asked only whether a keeper row existed, so a keeper who left the company
+kept every worker's results — it now also requires them to be on a job of that company. Re-appointing someone overwrote the
+one keeper row, losing the history; appointments and revocations are now events in `health_keeper_events`. A programme's
+`org_id` could be changed by someone who managed crew in two companies, taking its records with it; it is frozen, and
+retiring a programme is stamped. A refused record left its confidential report in storage, because the bucket had no delete
+policy; the screen now checks everything the database will check before it uploads, and a keeper may delete a file no record
+names. A person who leaves stayed "due" for ever, inviting a false record: `health_monitoring_ended` records that monitoring
+ended. A lead notification later than seven days was refused outright, which invited a false date; it is recorded with its
+true date and shown as late. `/health` is never kept in the phone's page cache (`sw.js` v10). A PM or supervisor saw "None
+set up" rather than the programmes and keepers R69 promised — programmes and keeper names are readable by whoever reads the
+company's record; reports stay keepers-only.
+
+*Names (R70).* "Your name" let anyone rename themselves, and the gate lets a labourer sign in or out only rows carrying
+their own name: a rename was a way to sign a workmate in. A name is now set once by the person and changed after that by an
+admin (`app.profiles_name_guard`). A failed profile read was treated as "no name" and sent a named supervisor to the name
+prompt; it now fails loudly, like the membership read beside it.
+
+*Environment (R73).* A reading typed ">1000" or "72dB" became NaN, which the client sends as null: the row saved as "within
+limit" with no reading, frozen. Readings and the contract deadlines are now parsed strictly and refused with an explanation.
+A limit can be a minimum (`limit_kind`), so pH 4.8 against 6.5 is an exceedance. Closing an environmental incident hid its
+DWER notice and report deadlines from What's due. A company-wide evaluation of compliance counted every job's contract
+obligations, which the evaluator often cannot even see: it covers the company-wide ones. The after-rain prompt counted a
+check dated up to two days after the rain — a Friday storm answered on Monday could not be cleared honestly — and counted a
+check made the morning before the rain, and unsigned checks; it now takes a completed check from the next day to a week
+after. The pre-filled significance criteria promised something the database does not do. Links between obligations and
+aspects can no longer be repointed, the register's history is frozen for every role, and a done date on a draft is stamped
+once (audits too).
+
+*Subcontractor (R74).* Recording any plan marked the current one of that kind as replaced — an unrelated procedure, or a
+second traffic plan — and froze it; replacing is now an explicit choice, and only a copy received on or after the one it
+replaces. A queued plan could supersede a copy that had itself been superseded while the phone waited, leaving two in force;
+the replay follows the chain. The head contractor's emergency plan cleared What's due while the crew could not read it: the
+plan and the site rules are readable by every member, a labourer included (reg. 43), and the labourer home and `/emergency`
+show it. Telling them through the environmental trail left What's due asking for the same call again. Every JSA was flagged
+as a SWMS awaiting their acceptance. A reply cannot be dated before the submission it answers. A submitted draft SWMS can
+still be deleted as a draft. The 90-day window on "tell the head contractor" is gone; the duty runs from when the record
+began.
+
+*The month bundle (R71) and older PDF code.* The nightly email would never have sent: the deadline check compared against a
+window that had already passed, and a one-part month was never marked ready. The page could hand over parts bound under two
+different plans; each part request now carries the plan's key and a changed month starts again. Closing Chromium after each
+part could kill another request's render on the same instance, and a `newPage()` that rejected was not retried. Every part
+shared one PDF identifier. The dayworks schedule's header total now says when hours are missing, and says so when the
+1,000-row cap is reached. And `/api/entries/[id]/pdf` — older code — re-rendered a signed day and wrote it over the stored
+PDF on `?force=1` or after a moment's Storage failure. The stored PDF is the record: it is never written over, absence is
+established before rendering, and `force` is gone.
+
+*Dates (R77).* `fmtDate` itself now shows a full timestamp's Perth day, which fixes the places R77's search missed —
+including SWMS sign-on dates on a stored PDF. The safety dashboard's monthly buckets were the UTC month. In SQL,
+`set_variation_status` and `set_daywork_docket` stamped `current_date` (UTC); they use `app.perth_today()`.
+
+*Offline (R76).* A queued step sorted before the saved steps of its own day, so a returned SWMS still read "awaiting
+acceptance". A save kept on the phone refreshed the page whenever the device claimed to be online, which blanks it on one
+bar; the outcome of the save decides now. A replay whose file had been lost from the phone would have written a row naming
+a file that was never uploaded.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;

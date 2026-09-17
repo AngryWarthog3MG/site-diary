@@ -136,7 +136,7 @@ set local role authenticated;
 select tests.expect_error($q$
   insert into public.env_monitoring_records (project_id, monitored_on, kind, location, parameter, value, unit, limit_value, outcome)
   values ('bbbbbbbb-0000-0000-0000-000000000001', current_date, 'noise', 'Boundary east', 'LAeq 15 min', 72, 'dB(A)', 65, 'within_limit')
-$q$, 'over its limit');
+$q$, 'outside its limit');
 insert into public.env_monitoring_records (id, project_id, monitored_on, kind, location, parameter, value, unit, limit_value, outcome, action_taken) values
   ('91000000-0000-0000-0000-000000000001', 'bbbbbbbb-0000-0000-0000-000000000001', current_date, 'noise', 'Boundary east', 'LAeq 15 min', 72, 'dB(A)', 65, 'within_limit', 'Rock breaker stood down, resumed after 9 am'),
   ('91000000-0000-0000-0000-000000000002', 'bbbbbbbb-0000-0000-0000-000000000001', current_date, 'dust', 'Haul road', 'Visible dust', null, null, null, 'observation', null);
@@ -150,6 +150,49 @@ end $$;
 select tests.expect_error($q$
   insert into public.env_aspects (org_id, activity, aspect, impact, likelihood, consequence) values ('aaaaaaaa-0000-0000-0000-000000000001', 'x', 'y', 'z', 1, 1)
 $q$, 'row-level security');
+
+-- ---------------------------------------------------------------- README R78 (second-agent review)
+reset role;
+select set_config('request.jwt.claims', '{"sub":"11111111-1111-1111-1111-111111111111","role":"authenticated"}', true);
+set local role authenticated;
+-- A company-wide evaluation covers company-wide obligations only: this job's contract obligation is not asked of it.
+insert into public.compliance_evaluations (id, org_id, project_id, evaluated_on, evaluator_name)
+values ('d0000000-0000-0000-0000-000000000002', 'aaaaaaaa-0000-0000-0000-000000000001', null, current_date, 'Company evaluator');
+insert into public.compliance_evaluation_results (id, evaluation_id, legal_obligation_id, result, evidence)
+values ('e0000000-0000-0000-0000-000000000002', 'd0000000-0000-0000-0000-000000000002', 'b1000000-0000-0000-0000-000000000001', 'compliant', 'Checked');
+select tests.expect_error($q$
+  insert into public.compliance_evaluation_results (evaluation_id, legal_obligation_id, result, evidence) values ('d0000000-0000-0000-0000-000000000002', 'b1000000-0000-0000-0000-000000000002', 'compliant', 'x')
+$q$, 'not in this evaluation');
+-- Done on a draft is stamped once; a later update does not move it.
+update public.compliance_evaluation_results set done_at = now(), done_note = 'x' where id = 'e0000000-0000-0000-0000-000000000002';
+update public.compliance_evaluation_results set done_at = '2000-01-01' where id = 'e0000000-0000-0000-0000-000000000002';
+update public.compliance_evaluations set status = 'issued', summary = 'Company compliant' where id = 'd0000000-0000-0000-0000-000000000002';
+do $$ begin
+  assert (select status from public.compliance_evaluations where id = 'd0000000-0000-0000-0000-000000000002') = 'issued', 'a company-wide evaluation could not be issued without a job''s obligations';
+  assert (select done_at from public.compliance_evaluation_results where id = 'e0000000-0000-0000-0000-000000000002') > now() - interval '1 minute', 'a done date was moved on a draft';
+  raise notice 'PASS  a company-wide evaluation covers company-wide obligations; a done date is not moved';
+end $$;
+reset role;
+select set_config('request.jwt.claims', '{"sub":"22222222-2222-2222-2222-222222222222","role":"authenticated"}', true);
+set local role authenticated;
+-- A minimum limit: pH 4.8 against a minimum of 6.5 is an exceedance and needs its action.
+select tests.expect_error($q$
+  insert into public.env_monitoring_records (project_id, monitored_on, kind, location, parameter, value, unit, limit_value, limit_kind, outcome)
+  values ('bbbbbbbb-0000-0000-0000-000000000001', current_date, 'water', 'Sediment basin', 'pH', 4.8, 'pH', 6.5, 'minimum', 'within_limit')
+$q$, 'outside its limit');
+insert into public.env_monitoring_records (id, project_id, monitored_on, kind, location, parameter, value, unit, limit_value, limit_kind, outcome, action_taken)
+values ('91000000-0000-0000-0000-000000000003', 'bbbbbbbb-0000-0000-0000-000000000001', current_date, 'water', 'Sediment basin', 'pH', 4.8, 'pH', 6.5, 'minimum', 'within_limit', 'Dosed with lime, retested');
+do $$ begin
+  assert (select outcome from public.env_monitoring_records where id = '91000000-0000-0000-0000-000000000003') = 'exceedance', 'a reading below its minimum was not an exceedance';
+  raise notice 'PASS  a reading below a minimum limit is an exceedance';
+end $$;
+-- Frozen for everyone, the service role included: history and monitoring cannot be edited or removed.
+reset role;
+select set_config('request.jwt.claims', '', true);
+select tests.expect_error($q$ update public.env_register_history set was = '{}'::jsonb $q$, 'never changed');
+select tests.expect_error($q$ delete from public.env_monitoring_records where id = '91000000-0000-0000-0000-000000000003' $q$, 'never changed');
+select tests.expect_error($q$ update public.env_significance_criteria set threshold = 1 $q$, 'never changed');
+do $$ begin raise notice 'PASS  history, monitoring and criteria are frozen for every role, the service role included'; end $$;
 
 -- ---------------------------------------------------------------- the labourer reads none of it
 reset role;

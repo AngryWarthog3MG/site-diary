@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { fmtDate } from '@/lib/pdf/dates';
-import { latestPerPerson } from '@/lib/health/model';
+import { latestPerPerson, leadNotifiedLate } from '@/lib/health/model';
 
 export interface Program { id: string; hazard: string; basis: 'schedule_14' | 'significant_risk' | 'lead_risk_work' | 'asbestos'; frequency_months: number | null; practitioner: string | null; active: boolean }
 export interface HealthRecord { id: string; program_id: string; person_name: string; monitored_on: string; practitioner: string; result_summary: string | null; action_required: string | null; next_due_on: string | null; report_file_path: string | null; retain_until: string }
@@ -22,10 +22,12 @@ const BASIS_LABEL: Record<Program['basis'], string> = {
 interface Props {
   orgId: string; projectId: string; isKeeper: boolean; isAdmin: boolean; canManagePrograms: boolean;
   programs: Program[]; records: HealthRecord[]; keepers: Keeper[]; candidates: Array<{ id: string; name: string }>; notices: LeadNotice[];
+  ended: Array<{ id: string; program_id: string; person_name: string; ended_on: string; reason: string }>;
   today: string; userId: string;
 }
 
-export function HealthScreen({ orgId, projectId, isKeeper, isAdmin, canManagePrograms, programs, records, keepers, candidates, notices, today, userId }: Props) {
+export function HealthScreen({ orgId, projectId, isKeeper, isAdmin, canManagePrograms, programs, records, keepers, candidates, notices, ended, today, userId }: Props) {
+  const [ending, setEnding] = useState<{ programId: string; person: string; on: string; reason: string } | null>(null);
   const router = useRouter();
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -109,16 +111,40 @@ export function HealthScreen({ orgId, projectId, isKeeper, isAdmin, canManagePro
                   <>
                     {latest.length === 0 ? <p className="caption">No monitoring recorded.</p> : (
                       <ul className="gaplist">
-                        {latest.map((r) => (
+                        {latest.map((r) => {
+                          const stopped = ended.find((e) => e.program_id === r.program_id && e.person_name.toLowerCase() === r.person_name.toLowerCase() && e.ended_on >= r.monitored_on);
+                          return (
                           <li key={r.id} className="caption">
                             <strong>{r.person_name}</strong> · {fmtDate(r.monitored_on)} · {r.practitioner}{r.result_summary ? ` · ${r.result_summary}` : ''}
                             {r.action_required ? ` · action: ${r.action_required}` : ''}
                             {r.next_due_on ? <span className={r.next_due_on < today ? 'vr-missing' : undefined}> · next due {fmtDate(r.next_due_on)}</span> : ''}
                             {r.report_file_path && urls[r.report_file_path] ? <> · <a href={urls[r.report_file_path]} target="_blank" rel="noopener">report</a></> : ''}
                             {' · kept until '}{fmtDate(r.retain_until)}
+                            {stopped ? <> · <strong>monitoring ended {fmtDate(stopped.ended_on)}</strong> — {stopped.reason}</> : (
+                              <> · <button type="button" className="linklike" onClick={() => setEnding({ programId: r.program_id, person: r.person_name, on: today, reason: '' })}>Monitoring ended</button></>
+                            )}
                           </li>
-                        ))}
+                          );
+                        })}
                       </ul>
+                    )}
+                    {ending && ending.programId === p.id && (
+                      <div className="regpanel__form">
+                        <p className="label">Monitoring ended — {ending.person}</p>
+                        <div className="signin__grid">
+                          <label className="fieldcell"><span className="label">Ended on</span>
+                            <input className="field field--sm" id="he-on" type="date" max={today} value={ending.on} onChange={(e) => setEnding({ ...ending, on: e.target.value })} /></label>
+                          <label className="fieldcell"><span className="label">Why</span>
+                            <input className="field field--sm" id="he-reason" placeholder="Left the company; no longer on the work" value={ending.reason} onChange={(e) => setEnding({ ...ending, reason: e.target.value })} /></label>
+                        </div>
+                        <button type="button" className="button" disabled={busy !== null || !ending.reason.trim()} onClick={() => void act('ended', async () => {
+                          const { error: e } = await createClient().from('health_monitoring_ended').insert({ program_id: ending.programId, person_name: ending.person, ended_on: ending.on, reason: ending.reason.trim() });
+                          if (e) throw new Error(e.message);
+                          setEnding(null);
+                        })}>Record it</button>
+                        <button type="button" className="linklike" onClick={() => setEnding(null)}>Cancel</button>
+                        <p className="caption">Their records stay, kept for the full retention period. They stop showing as due.</p>
+                      </div>
                     )}
                     {rec.programId !== p.id ? (
                       <button type="button" className="linklike" onClick={() => setRec({ programId: p.id, person: '', on: today, practitioner: p.practitioner ?? '', result: '', action: '', next: '' })}>Record monitoring</button>
@@ -145,6 +171,9 @@ export function HealthScreen({ orgId, projectId, isKeeper, isAdmin, canManagePro
                           <input type="file" accept="application/pdf,image/*" hidden onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
                         </label>
                         <button type="button" className="button" disabled={busy !== null || !rec.person.trim() || !rec.practitioner.trim()} onClick={() => void act('record', async () => {
+                          // Everything the database checks, checked before the confidential file is uploaded (README R78).
+                          if (rec.on > today) throw new Error('Monitoring is recorded once it is done.');
+                          if (rec.next && rec.next <= rec.on) throw new Error('The next due date must be after the date monitored.');
                           const supabase = createClient();
                           const id = crypto.randomUUID();
                           let path: string | null = null;
@@ -211,7 +240,7 @@ export function HealthScreen({ orgId, projectId, isKeeper, isAdmin, canManagePro
           <p className="caption">Within 7 days of determining that work is lead risk work (Part 7.2).</p>
           {notices.length > 0 && (
             <ul className="gaplist">
-              {notices.map((n) => <li key={n.id} className="caption">{n.description} · determined {fmtDate(n.determined_on)} · notified {fmtDate(n.notified_on)}{n.reference ? ` · ${n.reference}` : ''}</li>)}
+              {notices.map((n) => <li key={n.id} className="caption">{n.description} · determined {fmtDate(n.determined_on)} · notified {fmtDate(n.notified_on)}{leadNotifiedLate(n.determined_on, n.notified_on) ? <strong className="vr-missing"> · late — after the 7 days</strong> : null}{n.reference ? ` · ${n.reference}` : ''}</li>)}
             </ul>
           )}
           {canManagePrograms && (!lead.open ? (
@@ -230,7 +259,7 @@ export function HealthScreen({ orgId, projectId, isKeeper, isAdmin, canManagePro
                 <input className="field field--sm" id="ln-ref" value={lead.reference} onChange={(e) => setLead({ ...lead, reference: e.target.value })} /></label>
               <button type="button" className="button" disabled={busy !== null || !lead.description.trim()} onClick={() => void act('lead', async () => {
                 const { error: e } = await createClient().from('lead_risk_notifications').insert({ org_id: orgId, project_id: projectId, description: lead.description.trim(), determined_on: lead.determined, notified_on: lead.notified, reference: lead.reference.trim() || null });
-                if (e) throw new Error(e.message.includes('lead_notified_within_7_days') ? 'The notification is due within 7 days of determining the work — and cannot be before it.' : e.message);
+                if (e) throw new Error(e.message.includes('lead_notified_not_before_determined') ? 'WorkSafe cannot have been notified before the work was determined to be lead risk work.' : e.message);
                 setLead({ open: false, description: '', determined: today, notified: today, reference: '' });
               })}>Record it</button>
               <button type="button" className="linklike" onClick={() => setLead({ ...lead, open: false })}>Cancel</button>

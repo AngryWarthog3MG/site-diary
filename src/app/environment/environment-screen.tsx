@@ -10,7 +10,7 @@ import { usePending } from '@/lib/outbox/use-pending';
 import { fmtDate, fmtPerthDate } from '@/lib/pdf/dates';
 import {
   CONDITIONS, CONDITION_LABEL, SOURCE_TYPES, SOURCE_LABEL, MONITORING_KINDS, MONITORING_LABEL, OUTCOME_LABEL,
-  significance, monitoringOutcome, type Condition, type SourceType, type MonitoringKind, type Outcome,
+  significance, monitoringOutcome, parseReading, type Condition, type SourceType, type MonitoringKind, type Outcome, type LimitKind,
 } from '@/lib/environment/model';
 
 export interface JobSettings { env_report_hours_serious: number | null; env_report_hours_minor: number | null; env_investigation_days: number | null; env_rain_inspection_mm: number | string | null }
@@ -18,7 +18,7 @@ export interface Criteria { id: string; version: number; method: string; thresho
 export interface AspectRow { id: string; activity: string; aspect: string; impact: string; condition: Condition; likelihood: number; consequence: number; score: number; significant: boolean; controls: string | null; active: boolean; reviewed_at: string; criteria_id: string | null; appliesHere: boolean | null; note: string | null }
 export interface LegalRow { id: string; project_id: string | null; title: string; source_type: SourceType; reference: string; requirement: string; how_applies: string; active: boolean; reviewed_at: string; aspectIds: string[] }
 export interface EvaluationRow { id: string; project_id: string | null; evaluated_on: string; evaluator_name: string; status: 'draft' | 'issued'; summary: string | null }
-export interface MonitoringRow { id: string; monitored_on: string; kind: MonitoringKind; location: string; parameter: string; value: number | null; unit: string | null; limit_value: number | null; outcome: Outcome; action_taken: string | null; method: string | null; notes: string | null }
+export interface MonitoringRow { id: string; monitored_on: string; kind: MonitoringKind; location: string; parameter: string; value: number | null; unit: string | null; limit_value: number | null; limit_kind?: LimitKind; outcome: Outcome; action_taken: string | null; method: string | null; notes: string | null }
 
 interface Props {
   orgId: string; projectId: string; today: string; canManage: boolean; canRecord: boolean; isAdmin: boolean;
@@ -29,7 +29,9 @@ interface Props {
 
 const blankAspect = { id: null as string | null, activity: '', aspect: '', impact: '', condition: 'normal' as Condition, likelihood: 3, consequence: 3, controls: '', active: true };
 const blankLegal = { id: null as string | null, scope: 'org' as 'org' | 'job', title: '', source_type: 'legislation' as SourceType, reference: '', requirement: '', how_applies: '', active: true, aspectIds: [] as string[] };
-const numOrNull = (s: string) => (s.trim() === '' ? null : Number(s));
+// A blank is null; anything that is not a plain number is NaN and stops the save (README R78).
+const numOrNull = parseReading;
+const notANumber = (s: string) => Number.isNaN(parseReading(s) as number);
 
 export function EnvironmentScreen(props: Props) {
   const { orgId, projectId, today, canManage, canRecord, isAdmin, settings, criteria, aspects, legal, evaluations, monitoring, equipment, schedules, rainPrompts } = props;
@@ -38,19 +40,24 @@ export function EnvironmentScreen(props: Props) {
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
 
-  const [crit, setCrit] = useState<{ open: boolean; method: string; threshold: string }>({ open: false, method: criteria?.method ?? 'Likelihood (1 rare to 5 almost certain) x consequence (1 negligible to 5 severe, long-lasting or off site). A score at or above the threshold is significant, as is anything a legal obligation applies to.', threshold: String(criteria?.threshold ?? 12) });
+  const [crit, setCrit] = useState<{ open: boolean; method: string; threshold: string }>({ open: false, method: criteria?.method ?? 'Likelihood (1 rare to 5 almost certain) x consequence (1 negligible to 5 severe, long-lasting or off site). A score at or above the threshold is significant.', threshold: String(criteria?.threshold ?? 12) });
   const [asp, setAsp] = useState<typeof blankAspect | null>(null);
   const [leg, setLeg] = useState<typeof blankLegal | null>(null);
   const [evalForm, setEvalForm] = useState<{ open: boolean; scope: 'job' | 'org'; on: string; evaluator: string; schedule: string }>({ open: false, scope: 'job', on: today, evaluator: '', schedule: '' });
-  const [mon, setMon] = useState({ open: false, on: today, kind: 'dust' as MonitoringKind, location: '', parameter: '', value: '', unit: '', limit: '', outcome: 'observation' as Outcome, action: '', method: '', equipment: '', notes: '' });
+  const [mon, setMon] = useState({ open: false, on: today, kind: 'dust' as MonitoringKind, location: '', parameter: '', value: '', unit: '', limit: '', outcome: 'observation' as Outcome, limitKind: 'maximum' as LimitKind, action: '', method: '', equipment: '', notes: '' });
   const [job, setJob] = useState({ serious: settings.env_report_hours_serious?.toString() ?? '', minor: settings.env_report_hours_minor?.toString() ?? '', days: settings.env_investigation_days?.toString() ?? '', rain: settings.env_rain_inspection_mm?.toString() ?? '' });
   const [showAll, setShowAll] = useState(false);
   const pendingMon = usePending('env_monitoring', projectId, 'project').map((q) => q.payload.row as MonitoringRow);
 
-  async function act(key: string, fn: () => Promise<string | void>) {
+  async function act(key: string, fn: () => Promise<string | void | { queued: true; message: string }>) {
     setBusy(key); setError(null); setNotice(null);
-    // With no signal a refresh would blank the screen; what was saved on the phone is shown from the queue instead.
-    try { const msg = await fn(); if (msg) setNotice(msg); if (navigator.onLine) router.refresh(); }
+    // A save kept on the phone never refreshes — with no signal (or one bar) a refresh blanks the screen; the
+    // queued item shows from the phone instead (README R78). Decided by the save's outcome, not navigator.onLine.
+    try {
+      const msg = await fn();
+      if (msg && typeof msg === 'object') setNotice(msg.message);
+      else { if (msg) setNotice(msg); router.refresh(); }
+    }
     catch (err) { setError(err instanceof Error ? err.message : 'That did not save.'); }
     finally { setBusy(null); }
   }
@@ -58,7 +65,8 @@ export function EnvironmentScreen(props: Props) {
 
   const applying = aspects.filter((a) => a.active && a.appliesHere === true);
   const significantHere = applying.filter((a) => a.significant);
-  const monAuto = monitoringOutcome(numOrNull(mon.value), numOrNull(mon.limit), mon.outcome);
+  const monBad = notANumber(mon.value) || notANumber(mon.limit);
+  const monAuto = monBad ? mon.outcome : monitoringOutcome(numOrNull(mon.value), numOrNull(mon.limit), mon.outcome, mon.limitKind);
   const aspectName = (id: string) => aspects.find((a) => a.id === id)?.aspect ?? '—';
 
   return (
@@ -334,7 +342,7 @@ export function EnvironmentScreen(props: Props) {
                     <td className="mono">{fmtDate(m.monitored_on)}</td>
                     <td>{MONITORING_LABEL[m.kind]} · {m.parameter}{m.method ? <><br /><span className="caption">{m.method}</span></> : null}</td>
                     <td>{m.location}</td>
-                    <td className="n mono">{m.value == null ? '—' : `${m.value} ${m.unit ?? ''}`}{m.limit_value != null ? <><br /><span className="caption">limit {m.limit_value}</span></> : null}</td>
+                    <td className="n mono">{m.value == null ? '—' : `${m.value} ${m.unit ?? ''}`}{m.limit_value != null ? <><br /><span className="caption">{m.limit_kind === 'minimum' ? 'minimum' : 'limit'} {m.limit_value}</span></> : null}</td>
                     <td className={m.outcome === 'exceedance' ? 'claims-flag' : undefined}>{OUTCOME_LABEL[m.outcome]}{m.action_taken ? <><br /><span className="caption">{m.action_taken}</span></> : null}{m.notes ? <><br /><span className="caption">{m.notes}</span></> : null}</td>
                   </tr>
                 ))}
@@ -360,8 +368,14 @@ export function EnvironmentScreen(props: Props) {
               <label className="fieldcell fieldcell--narrow"><span className="label">Reading</span><input id="env-mon-value" className="field field--sm" inputMode="decimal" value={mon.value} onChange={(e) => setMon({ ...mon, value: e.target.value })} /></label>
               <label className="fieldcell fieldcell--narrow"><span className="label">Unit</span><input id="env-mon-unit" className="field field--sm" placeholder="dB(A)" value={mon.unit} onChange={(e) => setMon({ ...mon, unit: e.target.value })} /></label>
               <label className="fieldcell fieldcell--narrow"><span className="label">Limit</span><input id="env-mon-limit" className="field field--sm" inputMode="decimal" value={mon.limit} onChange={(e) => setMon({ ...mon, limit: e.target.value })} /></label>
+              <label className="fieldcell fieldcell--narrow"><span className="label">The limit is a</span>
+                <select id="env-mon-limit-kind" className="field field--sm" value={mon.limitKind} onChange={(e) => setMon({ ...mon, limitKind: e.target.value as LimitKind })}>
+                  <option value="maximum">Maximum (noise, dust, turbidity)</option>
+                  <option value="minimum">Minimum (pH, dissolved oxygen)</option>
+                </select></label>
             </div>
-            {numOrNull(mon.value) == null || numOrNull(mon.limit) == null ? (
+            {monBad && <p className="alert" role="alert">The reading and the limit must be plain numbers, like 72 or 6.5 — put the unit in the Unit box. For a result like "&gt;1000", leave the reading blank, choose the outcome and write it in Notes.</p>}
+            {monBad || numOrNull(mon.value) == null || numOrNull(mon.limit) == null ? (
               <label className="fieldcell"><span className="label">Outcome</span>
                 <select id="env-mon-outcome" className="field field--sm" value={mon.outcome} onChange={(e) => setMon({ ...mon, outcome: e.target.value as Outcome })}>
                   {(['observation', 'within_limit', 'exceedance'] as Outcome[]).map((o) => <option key={o} value={o}>{OUTCOME_LABEL[o]}</option>)}
@@ -380,17 +394,17 @@ export function EnvironmentScreen(props: Props) {
               )}
             </div>
             <label className="fieldcell"><span className="label">Notes</span><input id="env-mon-notes" className="field field--sm" value={mon.notes} onChange={(e) => setMon({ ...mon, notes: e.target.value })} /></label>
-            <button type="button" className="button" disabled={busy !== null || !mon.location.trim() || !mon.parameter.trim() || (numOrNull(mon.value) != null && !mon.unit.trim()) || (monAuto === 'exceedance' && !mon.action.trim())} onClick={() => void act('mon', async () => {
+            <button type="button" className="button" disabled={busy !== null || monBad || !mon.location.trim() || !mon.parameter.trim() || (numOrNull(mon.value) != null && !mon.unit.trim()) || (monAuto === 'exceedance' && !mon.action.trim())} onClick={() => void act('mon', async () => {
               const row = {
                 id: outbox.newId(), project_id: projectId, monitored_on: mon.on, kind: mon.kind, location: mon.location.trim(), parameter: mon.parameter.trim(),
-                value: numOrNull(mon.value), unit: mon.unit.trim() || null, limit_value: numOrNull(mon.limit), outcome: monAuto,
+                value: numOrNull(mon.value), unit: mon.unit.trim() || null, limit_value: numOrNull(mon.limit), limit_kind: mon.limitKind, outcome: monAuto,
                 action_taken: mon.action.trim() || null, method: mon.method.trim() || null, equipment_id: mon.equipment || null, notes: mon.notes.trim() || null,
               };
               const live = async () => { must((await createClient().from('env_monitoring_records').insert(row)).error); };
               const queue = () => outbox.enqueue({ kind: 'env_monitoring', projectId, subjectId: row.id, payload: { row } }).then(() => undefined);
               const outcome = await runOrQueue(live, queue);
               setMon({ ...mon, open: false, location: '', parameter: '', value: '', unit: '', limit: '', action: '', notes: '' });
-              return outcome === 'sent' ? 'Recorded.' : 'No signal — saved on this phone. It sends when you are back in range.';
+              return outcome === 'sent' ? 'Recorded.' : { queued: true as const, message: 'No signal — saved on this phone. It sends when you are back in range.' };
             })}>Record it</button>
             <button type="button" className="linklike" onClick={() => setMon({ ...mon, open: false })}>Cancel</button>
             <p className="caption">Once recorded it cannot be changed.</p>
@@ -417,6 +431,7 @@ export function EnvironmentScreen(props: Props) {
         {isAdmin && (
           <>
             <button type="button" className="button button--quiet" style={{ marginTop: '0.5rem' }} disabled={busy !== null} onClick={() => void act('job', async () => {
+              if ([job.serious, job.minor, job.days, job.rain].some(notANumber)) throw new Error('Deadlines and the rain trigger are plain numbers, like 24 or 10 — or blank for none. Nothing was saved.');
               must((await createClient().from('projects').update({ env_report_hours_serious: numOrNull(job.serious), env_report_hours_minor: numOrNull(job.minor), env_investigation_days: numOrNull(job.days), env_rain_inspection_mm: numOrNull(job.rain) }).eq('id', projectId)).error);
               return 'Saved.';
             })}>Save the clocks</button>

@@ -4,7 +4,7 @@ import { fail, ok, requireApiUser, isUuid } from '@/lib/api';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { MonthlyLoadError } from '@/lib/monthly/bundle';
 import { planMonthlyBundle, buildBundlePart, type BundlePart } from '@/lib/monthly/generate';
-import { BrowserUnavailableError, closeBrowser } from '@/lib/pdf/render';
+import { BrowserUnavailableError } from '@/lib/pdf/render';
 
 // One part is up to a couple of minutes on Vercel: downloads from storage, a cover, the merge, the upload.
 export const maxDuration = 300;
@@ -33,6 +33,7 @@ export async function POST(request: Request) {
   if (!isUuid(projectId)) return fail('bad_request', 'Bad project id.', 400);
   if (!month || !MONTH_RE.test(month)) return fail('bad_request', 'month must be YYYY-MM.', 400);
   const partNo = partParam == null ? null : Number(partParam);
+  const wantPlan = url.searchParams.get('plan');
   if (partNo != null && (!Number.isInteger(partNo) || partNo < 1)) return fail('bad_request', 'part must be a whole number from 1.', 400);
 
   const { data: project } = await supabase
@@ -59,7 +60,12 @@ export async function POST(request: Request) {
     const plan = await planMonthlyBundle(supabase, { id: project.id, name: project.name, code: project.code, orgCode }, month);
     if ('empty' in plan) return fail('not_found', 'No signed entries in that month — nothing to bundle.', 404);
     if (partNo == null) {
-      return ok({ entries: plan.data.entries.length, parts: await Promise.all(plan.parts.map(describe)) });
+      return ok({ entries: plan.data.entries.length, plan: plan.planKey, parts: await Promise.all(plan.parts.map(describe)) });
+    }
+    // The month changed (a day signed, a correction) since the page asked for the plan: the parts
+    // would no longer fit together. Say so, and the page starts again from the new plan.
+    if (wantPlan && wantPlan !== plan.planKey) {
+      return fail('bad_request', 'The month changed while it was being bound — a day was signed or corrected. Starting again.', 409);
     }
     const built = await buildBundlePart(plan, partNo);
     const described = await describe(built);
@@ -70,8 +76,5 @@ export async function POST(request: Request) {
     if (error instanceof BrowserUnavailableError) return fail('server_error', error.message, 501);
     const message = error instanceof Error ? error.message : 'Bundling failed.';
     return fail('server_error', `Could not build the monthly bundle: ${message}`, 500);
-  } finally {
-    // Leave no Chromium behind on an instance Vercel is about to freeze.
-    if (partNo != null) await closeBrowser();
   }
 }

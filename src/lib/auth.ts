@@ -43,7 +43,7 @@ export async function requireUser(): Promise<SessionContext> {
     redirect('/login');
   }
 
-  const [{ data: profile }, { data: memberships, error: membershipError }] = await Promise.all([
+  const [{ data: profile, error: profileError }, { data: memberships, error: membershipError }] = await Promise.all([
     supabase.from('profiles').select('*').eq('id', user.id).maybeSingle(),
     supabase
       .from('project_members')
@@ -58,6 +58,11 @@ export async function requireUser(): Promise<SessionContext> {
   // message tells a seated supervisor they have been removed, over a blip.
   if (membershipError) {
     throw new Error(`Could not load your projects: ${membershipError.message}`);
+  }
+
+  // Nor must a failed profile read pass for "no name" and send a named person to the name prompt (R78).
+  if (profileError) {
+    throw new Error(`Could not load your profile: ${profileError.message}`);
   }
 
   // A person's name goes on the sheets, never their email address: nobody reaches a
