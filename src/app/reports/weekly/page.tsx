@@ -362,6 +362,9 @@ const PAGE_CSS = `
   box-shadow: 0 1mm 3mm rgba(22, 33, 31, 0.06);
 }
 .weekly-actions .weekly-error { margin: 0; font-size: 9pt; color: var(--amber); }
+.weekly-actions .bundle-parts { display: grid; gap: 2mm; }
+.weekly-actions .bundle-parts .button { text-align: center; white-space: normal; }
+.weekly-actions .bundle-parts .caption { margin: 0; font-size: 9pt; }
 .weekly-state {
   width: min(210mm, calc(100vw - 8mm));
   margin: 0 auto;

@@ -30,7 +30,15 @@ function formatSigned(iso: string | null): string {
   return `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())} ${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())} AWST`;
 }
 
-export function MonthlyCover({ data }: { data: MonthData }): ReactElement {
+/** Which part of a month bound in several: this part's number, how many, and the part each entry is in. */
+export interface VolumeInfo {
+  part: number;
+  of: number;
+  partOf: ReadonlyMap<string, number>;
+}
+
+export function MonthlyCover({ data, volume }: { data: MonthData; volume?: VolumeInfo }): ReactElement {
+  const split = volume != null && volume.of > 1;
   return (
     <div className="docket">
       <header className="head">
@@ -41,6 +49,7 @@ export function MonthlyCover({ data }: { data: MonthData }): ReactElement {
           <h1>{data.project.name}</h1>
           <p className="sub">
             {data.project.orgCode}_{data.project.code} · {monthTitle(data.month)}
+            {split ? ` · part ${volume.part} of ${volume.of}` : ''}
           </p>
         </div>
         <div className="head__right">
@@ -54,6 +63,7 @@ export function MonthlyCover({ data }: { data: MonthData }): ReactElement {
         <table>
           <thead>
             <tr>
+              {split && <th>Part</th>}
               <th>Date</th>
               <th>Entry</th>
               <th>Signed by</th>
@@ -63,7 +73,8 @@ export function MonthlyCover({ data }: { data: MonthData }): ReactElement {
           </thead>
           <tbody>
             {data.entries.map((entry) => (
-              <tr key={entry.id}>
+              <tr key={entry.id} className={split && volume.partOf.get(entry.id) !== volume.part ? 'elsewhere' : undefined}>
+                {split && <td className="mono">{volume.partOf.get(entry.id)}</td>}
                 <td className="k mono">{fmtDate(entry.entry_date)}</td>
                 <td className="k mono">
                   {entry.entry_no}
@@ -86,6 +97,13 @@ export function MonthlyCover({ data }: { data: MonthData }): ReactElement {
         Entries marked superseded remain part of the record; their correction is bound
         alongside them.
       </p>
+      {split && (
+        <p className="bundle-note">
+          This month is bound in {volume.of} parts so that each file stays small enough to store, send and open on a
+          phone. This is part {volume.part}; it holds the dockets numbered {volume.part} in the Part column. The
+          contents above list the whole month, so every part carries the full index.
+        </p>
+      )}
     </div>
   );
 }
@@ -98,5 +116,6 @@ export const COVER_CSS = `
   color: #A8730A;
   letter-spacing: 0.05em;
 }
+tr.elsewhere td { color: #8A9296; }
 .bundle-note { margin-top: 6mm; font-size: 8.5pt; color: #5A6469; line-height: 1.5; }
 `;

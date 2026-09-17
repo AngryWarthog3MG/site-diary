@@ -1869,6 +1869,16 @@ membership checks because profiles only let a person write their own row. The da
 @ in it (`profiles_full_name_is_a_name`); `src/lib/people/name.ts` is the TypeScript half. A diary PDF is stored the first
 time it is opened, so one that has been opened keeps the name it printed. Suite 30.
 
+**R71. A heavy month is bound in parts.** The month bundle failed on Curtin in September with "The object exceeded
+the maximum allowed size": the exports bucket takes 50 MB a file, and half a month of dockets with their photographs was
+already 133 MB (one day alone is 26 MB). The dockets are frozen bytes, so nothing can be shrunk without changing the record,
+and a 300 MB file would not open on a phone or go by email anyway. So `generateMonthlyBundle` — now the one path for both the
+button and the first-of-month email — reads each stored docket's size, packs the month in date order into parts of at most
+40 MB (`planVolumes`), and binds and stores one part at a time. Every part carries the whole month's contents, with a Part
+column, and its title and footer say which part it is. One part keeps the old path and PDF identifier; several are stored as
+`{month}-part-N-of-M.pdf`. The page shows a link per part; the email attaches a single light part and otherwise links each.
+Proved on Curtin September: 17 dockets in four parts of 39, 40, 36 and 19 MB.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;

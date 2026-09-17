@@ -672,13 +672,21 @@ async function sendMonthlyBundles(force = false): Promise<Record<string, unknown
         results.push({ project: project.code, skipped: 'no signed entries that month' });
         continue;
       }
-      const heavy = generation.pdf.length > 30 * 1024 * 1024;
-      let linkUrl: string | null = null;
+      // Attached when it is one light part; otherwise a seven-day link per part.
+      const totalBytes = generation.volumes.reduce((sum, v) => sum + v.bytes, 0);
+      const heavy = generation.volumes.length > 1 || totalBytes > 30 * 1024 * 1024;
+      const links: Array<{ label: string; url: string }> = [];
       if (heavy) {
-        const { data: link } = await admin.storage
-          .from('exports')
-          .createSignedUrl(generation.objectPath, 7 * 24 * 60 * 60);
-        linkUrl = link?.signedUrl ?? null;
+        for (const v of generation.volumes) {
+          const { data: link } = await admin.storage.from('exports').createSignedUrl(v.objectPath, 7 * 24 * 60 * 60);
+          if (link?.signedUrl) links.push({ label: v.of > 1 ? `Part ${v.part} of ${v.of} (${v.from} to ${v.to})` : 'Download the bundle', url: link.signedUrl });
+        }
+      }
+      let attachment: Uint8Array | null = null;
+      if (!heavy) {
+        const { data: file } = await admin.storage.from('exports').download(generation.volumes[0].objectPath);
+        if (!file) throw new Error('The bundle was stored but could not be read back to attach.');
+        attachment = new Uint8Array(await file.arrayBuffer());
       }
       const send = await fetch('https://api.resend.com/emails', {
         method: 'POST',
@@ -692,16 +700,16 @@ async function sendMonthlyBundles(force = false): Promise<Record<string, unknown
             `<p style="font-size:11px;letter-spacing:.08em;color:#1f5c33;font-weight:bold;text-transform:uppercase">Monthly diary bundle</p>` +
             `<h2 style="margin:.25em 0">${project.name} — ${previousMonth}</h2>` +
             `<p style="margin:.25em 0;color:#555">${generation.data.entries.length} signed dockets behind a cover index of serials and content hashes. Verify any docket at kbsdailydiary.me/verify.</p>` +
-            (heavy && linkUrl ? `<p><a href="${linkUrl}">Download the bundle</a> (link valid seven days — too large to attach).</p>` : '') +
+            (heavy && links.length ? `<p>Too large to attach${generation.volumes.length > 1 ? `, so it is in ${generation.volumes.length} parts` : ''}. Links valid seven days:</p>` + links.map((l) => `<p style="margin:.25em 0"><a href="${l.url}">${l.label}</a></p>`).join('') : '') +
             `</div>`,
-          attachments: heavy
-            ? []
-            : [
+          attachments: attachment
+            ? [
                 {
                   filename: `${orgCode}_${project.code}_${previousMonth}.pdf`,
-                  content: Buffer.from(generation.pdf).toString('base64'),
+                  content: Buffer.from(attachment).toString('base64'),
                 },
-              ],
+              ]
+            : [],
         }),
       });
       if (!send.ok) {

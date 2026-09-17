@@ -2,13 +2,13 @@ import { PDFDocument } from 'pdf-lib';
 import { DOCKET_CSS } from '@/lib/pdf/styles';
 import { EMBEDDED_FONT_CSS } from '@/lib/pdf/fonts';
 import { renderPdfDocument, withFixedId } from '@/lib/pdf/render';
-import { MonthlyCover, COVER_CSS, monthTitle } from './cover';
+import { MonthlyCover, COVER_CSS, monthTitle, type VolumeInfo } from './cover';
 import type { MonthData } from './bundle';
 
 /** Cover page HTML — same skeleton and dress as every other document here. */
-async function buildCoverHtml(data: MonthData): Promise<string> {
+async function buildCoverHtml(data: MonthData, volume?: VolumeInfo): Promise<string> {
   const { renderToStaticMarkup } = await import('react-dom/server');
-  const markup = renderToStaticMarkup(MonthlyCover({ data }));
+  const markup = renderToStaticMarkup(MonthlyCover({ data, volume }));
   return [
     '<!doctype html>',
     '<html lang="en-AU"><head><meta charset="utf-8">',
@@ -41,15 +41,20 @@ function bundleInstant(data: MonthData): Date {
 export async function renderMonthlyBundle(
   data: MonthData,
   dailyPdfs: Uint8Array[],
+  volume?: VolumeInfo,
 ): Promise<Uint8Array> {
-  const cover = await renderPdfDocument(await buildCoverHtml(data), {
-    title: `Monthly bundle ${data.project.code} ${data.month}`,
+  const split = volume != null && volume.of > 1;
+  const partLabel = split ? ` part ${volume.part} of ${volume.of}` : '';
+  // A single part keeps exactly the identifier a single bundle always had.
+  const idSeed = data.entries.map((e) => e.content_hash ?? e.id).join('') + (split ? `#${volume.part}/${volume.of}` : '');
+  const cover = await renderPdfDocument(await buildCoverHtml(data, volume), {
+    title: `Monthly bundle ${data.project.code} ${data.month}${partLabel}`,
     author: data.project.name,
     subject: `${data.project.name} — site diary, ${monthTitle(data.month)}`,
     keywords: [data.project.orgCode, data.project.code, data.month],
     instant: bundleInstant(data),
-    idSeed: data.entries.map((e) => e.content_hash ?? e.id).join(''),
-    footerLeft: `${data.project.orgCode}_${data.project.code} · MONTHLY BUNDLE · ${data.month}`,
+    idSeed,
+    footerLeft: `${data.project.orgCode}_${data.project.code} · MONTHLY BUNDLE · ${data.month}${split ? ` · PART ${volume.part}/${volume.of}` : ''}`,
   });
 
   const merged = await PDFDocument.create();
@@ -60,7 +65,7 @@ export async function renderMonthlyBundle(
   }
 
   const at = bundleInstant(data);
-  merged.setTitle(`Monthly bundle ${data.project.code} ${data.month}`);
+  merged.setTitle(`Monthly bundle ${data.project.code} ${data.month}${partLabel}`);
   merged.setAuthor(data.project.name);
   merged.setSubject(`${data.project.name} — site diary, ${monthTitle(data.month)}`);
   merged.setKeywords([data.project.orgCode, data.project.code, data.month]);
@@ -70,5 +75,5 @@ export async function renderMonthlyBundle(
   merged.setModificationDate(at);
 
   const bytes = await merged.save({ useObjectStreams: false });
-  return withFixedId(bytes, data.entries.map((e) => e.content_hash ?? e.id).join(''));
+  return withFixedId(bytes, idSeed);
 }
