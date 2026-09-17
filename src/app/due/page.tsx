@@ -26,6 +26,7 @@ const SOURCE_LABEL: Record<ObligationItem['source'], string> = {
   asbestos: 'Asbestos',
   health: 'Health monitoring',
   environment: 'Environment',
+  head_contractor: 'Head contractor',
 };
 
 /**

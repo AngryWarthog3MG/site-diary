@@ -325,18 +325,18 @@ export async function loadObligations(
     for (const inc of (subIncidents ?? []) as Array<{ id: string; seq: number; occurred_at: string; incident_notices: IncidentNotice[] }>) {
       const st = noticeState(inc.occurred_at, inc.incident_notices ?? [], hours, nowMs);
       if (st.toldAt) continue;
-      items.push({ key: `hc-notice:${inc.id}`, source: 'incident', title: `Tell ${hcName} — ${incidentRef(inc.seq)}`, basis: hours ? `Their rules: within ${hours} hour${hours === 1 ? '' : 's'}` : 'Reporting up to the head contractor', dueOn: st.dueAt ? dayOf(st.dueAt) : dayOf(inc.occurred_at), status: st.overdue || !st.dueAt ? 'overdue' : 'due_soon', href: `/incidents/${inc.id}` });
+      items.push({ key: `hc-notice:${inc.id}`, source: 'head_contractor', title: `Tell ${hcName} — ${incidentRef(inc.seq)}`, basis: hours ? `Their rules: within ${hours} hour${hours === 1 ? '' : 's'}` : 'Reporting up to the head contractor', dueOn: st.dueAt ? dayOf(st.dueAt) : dayOf(inc.occurred_at), status: st.overdue || !st.dueAt ? 'overdue' : 'due_soon', href: `/incidents/${inc.id}` });
     }
     for (const kind of HC_DOC_EXPECTED) {
       // The emergency plan already has its own item above, worded for a head contractor's site.
       if (kind === 'emergency_plan' || hcCurrent.has(kind)) continue;
-      items.push({ key: `hc-doc:${kind}`, source: 'construction', title: `${hcName}'s ${HC_DOC_LABEL[kind].toLowerCase()} — get a copy`, basis: kind === 'whs_management_plan' ? 'WHS (General) Regs 2022 (WA) regs 309–311 · the principal contractor\'s plan, made available to the businesses on site' : 'WHS (General) Regs 2022 (WA) reg. 43 · the site\'s plan', dueOn: today, status: 'due_soon', href: hcHref });
+      items.push({ key: `hc-doc:${kind}`, source: 'head_contractor', title: `${hcName}'s ${HC_DOC_LABEL[kind].toLowerCase()} — get a copy`, basis: kind === 'whs_management_plan' ? 'WHS (General) Regs 2022 (WA) regs 309–311 · the principal contractor\'s plan, made available to the businesses on site' : 'WHS (General) Regs 2022 (WA) reg. 43 · the site\'s plan', dueOn: today, status: 'due_soon', href: hcHref });
     }
     for (const sw of (swmsRows ?? []) as Array<{ id: string; title: string; version: number; swms_reviews: SwmsReview[] }>) {
       const { status, latest } = swmsReviewStatus(sw.swms_reviews ?? []);
       if (status === 'accepted') continue;
       const title = status === 'returned' ? `SWMS returned by ${hcName} — ${sw.title}` : status === 'with_them' ? `SWMS awaiting ${hcName}'s acceptance — ${sw.title}` : `Submit SWMS to ${hcName} — ${sw.title}`;
-      items.push({ key: `hc-swms:${sw.id}`, source: 'construction', title, basis: 'WHS (General) Regs 2022 (WA) reg. 312 · the principal contractor collects SWMS before the work', dueOn: latest?.happened_on ?? today, status: status === 'with_them' ? 'due_soon' : 'overdue', href: `/swms/${sw.id}` });
+      items.push({ key: `hc-swms:${sw.id}`, source: 'head_contractor', title, basis: 'WHS (General) Regs 2022 (WA) reg. 312 · the principal contractor collects SWMS before the work', dueOn: latest?.happened_on ?? today, status: status === 'with_them' ? 'due_soon' : 'overdue', href: `/swms/${sw.id}` });
     }
   }
 
