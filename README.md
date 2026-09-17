@@ -1879,6 +1879,17 @@ column, and its title and footer say which part it is. One part keeps the old pa
 `{month}-part-N-of-M.pdf`. The page shows a link per part; the email attaches a single light part and otherwise links each.
 Proved on Curtin September: 17 dockets in four parts of 39, 40, 36 and 19 MB.
 
+**R72. The dayworks schedule.** Mitchell asked for a dayworks schedule with the total of dayworks hours and the works
+completed. The claims register already listed dayworks for the whole job, but not by period and not as a document to hand
+over with a claim. `/dayworks` (Claims in the menu, the `claims` screen) reads diary.dayworks, which holds signed days only
+with a corrected day counted once, plus dockets added after signing, exactly as the claims register does. It shows each daywork
+as a line of works completed with its hours, docket, labour, plant and materials. Lines are grouped by week (Monday to
+Sunday) with week subtotals and a period total, for the whole job, this week, this month, last month, or chosen dates, and
+each line links to its signed day. Hours are totalled only where recorded: a daywork without hours shows "Not recorded" and is
+counted separately, never added as nought. Dayworks on days not yet signed are counted in a note, not in the schedule. "Print
+schedule" returns the same content as an A4 PDF (`/api/dayworks/pdf`), rendered on demand, stored nowhere, with no AI text.
+Checked on Curtin: 12 items and 106 hours for the whole job, matching an independent count of the signed record.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;

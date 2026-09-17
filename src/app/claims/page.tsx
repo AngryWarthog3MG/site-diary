@@ -182,7 +182,7 @@ export default async function ClaimsPage({
               </p>
             ) : (
               <>
-                <p className="claims-total">{data.dayworks.totalHours} T&amp;M hours recorded</p>
+                <p className="claims-total">{data.dayworks.totalHours} T&amp;M hours recorded · <Link className="claims-cite" href={`/dayworks?project=${current.project_id}`}>Dayworks schedule by period</Link></p>
                 <div className="claims-tablewrap">
                   <table className="claims-table">
                     <thead>
