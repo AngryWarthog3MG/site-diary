@@ -65,7 +65,7 @@ export function EnvironmentPanel({ incidentId, occurredAt, events, clocks, canMa
 
       <dl className="regpanel__facts">
         <dt>Severity</dt><dd>{state.severity ? `${SEVERITY_204_LABEL[state.severity]}${state.serious ? ' · Serious' : ''}` : '—'}</dd>
-        <dt>Superintendent</dt><dd>{when(state.superintendentNotifiedAt)}</dd>
+        <dt>Head contractor</dt><dd>{when(state.superintendentNotifiedAt)}</dd>
         <dt>Incident report</dt>
         <dd className={state.reportOverdue ? 'vr-missing' : undefined}>
           {state.reportGivenAt ? `Given ${when(state.reportGivenAt)}` : state.reportDueAt ? `Due by ${when(state.reportDueAt)}${state.reportOverdue ? ' — overdue' : ''}` : noClocks ? 'No contract clock set for this job' : 'Assess the severity to start the clock'}
@@ -78,8 +78,9 @@ export function EnvironmentPanel({ incidentId, occurredAt, events, clocks, canMa
       </dl>
       <p className="caption">
         Notifiable to DWER when a discharge has caused or may cause pollution or environmental harm and came from an emergency,
-        accident or malfunction, breached an approval, or involves prescribed waste. Environment WAtch is 1300 784 782; the call
-        does not replace written notice.
+        accident or malfunction, breached an approval, or involves prescribed waste. The duty is the occupier&rsquo;s — on a head
+        contractor&rsquo;s site usually them, so tell them at once and record when their notice went in. Environment WAtch is
+        1300 784 782; the call does not replace written notice.
       </p>
 
       {events.length > 0 && (

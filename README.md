@@ -1917,6 +1917,23 @@ A Spec 204 environmental audit preset (three-monthly, cl. 204.32) joins the sche
 evaluation actions, audit findings or incident actions. The quality NCR stays tied to lots. Not built, because the research refuted
 them: a prescribed register format, and daily dust-control evidence as an ISO requirement. Suite 31.
 
+**R74. Working as a subcontractor.** Mitchell: "we are generally a sub contractor". Kooboolong works under a head contractor
+(Lendlease at Curtin), so what its records must show flows down from them rather than from a client specification or a
+principal contractor's duties. `projects.principal_contractor` already named them, now labelled "Head contractor" in
+Settings. `is_principal_contractor` stays off unless Kooboolong runs the site, and on such a job none of this applies. Three
+records were added, each frozen once made. **Reporting up:** every hazard, near miss and incident shows whether the head
+contractor was told, when, how, by and to whom, and their reference (`incident_notices`, recorded by the crew who run the
+day). An optional deadline in hours from their site rules is set per job, blank meaning none. What's due lists any report in
+the last 90 days not yet told up. **Their plans:** the WHS management plan (regs 309–313 are the principal contractor's), the
+environmental, emergency and traffic management plans, site rules and induction material are kept as received
+(`head_contractor_documents`), with revision, date and copy. A newer revision supersedes the old one, which is kept. What's
+due asks for their WHS and emergency plans, and their emergency plan on file stands in for the workplace's plan (reg. 43).
+**SWMS to them:** a SWMS is submitted, then accepted or returned with what to change, then resubmitted (`swms_reviews`;
+reg. 312 has the principal contractor collect them). What's due lists a SWMS in use that they have not accepted. The wording
+that assumed a Main Roads head contract was reworded: Superintendent became head contractor, and the Spec 201 and 204 presets
+and deadlines are offered where the head contract requires them. The environmental incident panel says the s. 72 DWER duty
+is the occupier's, usually the head contractor on their site. Suite 32.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;

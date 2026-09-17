@@ -137,7 +137,7 @@ export default async function QualityPage({ searchParams }: { searchParams: Prom
         <p className="label">Reporting a non-conformance to the principal</p>
         <p className="caption">
           {clock == null
-            ? 'No reporting deadline set for this job. Set one if the contract has it — Main Roads WA Specification 201 asks for 24 hours.'
+            ? 'No reporting deadline set for this job. Set one if the head contractor or subcontract has it — Main Roads WA Specification 201 asks for 24 hours.'
             : `This job's contract: report a non-conformance to the principal within ${clock} hours of detecting it.`}
         </p>
         {current.role === 'admin' && <NcrClockSetting projectId={current.project_id} hours={clock} />}

@@ -188,7 +188,7 @@ export function SettingsForm({ initial }: { initial: SettingsData }) {
         onChange={(v) => set('projectCode', v.toUpperCase())}
       />
       <Field
-        label="Principal contractor"
+        label="Head contractor"
         value={form.principalContractor ?? ''}
         disabled={locked}
         onChange={(v) => set('principalContractor', v)}

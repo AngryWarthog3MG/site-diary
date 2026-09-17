@@ -30,11 +30,11 @@ export const KIND_LABEL: Record<ObligationKind, string> = {
  * tighter than the standard's "planned intervals", and the admin can change it.
  */
 export const PRESETS: ReadonlyArray<{ kind: ObligationKind; title: string; intervalMonths: number | null; basis: string; scope: 'project' | 'org' }> = [
-  { kind: 'internal_audit', title: 'Internal audit of this job', intervalMonths: 3, basis: 'ISO 9001, 45001, 14001 cl. 9.2 · Main Roads WA Spec 201 cl. 201.12.03 (at most three-monthly)', scope: 'project' },
-  { kind: 'management_review', title: 'Management review of this job', intervalMonths: 3, basis: 'Main Roads WA Spec 201 cl. 201.13', scope: 'project' },
+  { kind: 'internal_audit', title: 'Internal audit of this job', intervalMonths: 3, basis: 'ISO 9001, 45001, 14001 cl. 9.2 · the head contract may set how often (Main Roads WA Spec 201 cl. 201.12.03: at most three-monthly)', scope: 'project' },
+  { kind: 'management_review', title: 'Management review of this job', intervalMonths: 3, basis: 'Where the head contract requires it (Main Roads WA Spec 201 cl. 201.13)', scope: 'project' },
   { kind: 'management_review', title: 'Company management review', intervalMonths: 12, basis: 'ISO 9001, 45001, 14001 cl. 9.3', scope: 'org' },
   { kind: 'compliance_evaluation', title: 'Evaluation of compliance with legal obligations', intervalMonths: 12, basis: 'ISO 45001 cl. 9.1.2 · ISO 14001 cl. 9.1.2', scope: 'org' },
-  { kind: 'internal_audit', title: 'Environmental audit of this job (EMP operational controls)', intervalMonths: 3, basis: 'Main Roads WA Spec 204 cl. 204.32 · first within a month of starting, then at least three-monthly · ISO 14001 cl. 9.2', scope: 'project' },
+  { kind: 'internal_audit', title: 'Environmental audit of this job (EMP operational controls)', intervalMonths: 3, basis: 'Where the head contract requires it (Main Roads WA Spec 204 cl. 204.32: first within a month, then at least three-monthly) · ISO 14001 cl. 9.2', scope: 'project' },
   { kind: 'plan_review', title: 'Asbestos management plan reviewed', intervalMonths: 60, basis: 'WHS (General) Regs 2022 (WA) reg. 429', scope: 'project' },
 ];
 

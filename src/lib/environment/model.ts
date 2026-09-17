@@ -18,7 +18,7 @@ export function significance(likelihood: number, consequence: number, threshold:
 export const SOURCE_TYPES = ['legislation', 'regulation', 'approval', 'licence', 'contract', 'standard', 'other'] as const;
 export type SourceType = (typeof SOURCE_TYPES)[number];
 export const SOURCE_LABEL: Record<SourceType, string> = {
-  legislation: 'Act', regulation: 'Regulations', approval: 'Approval or permit condition', licence: 'Licence', contract: 'Contract or specification', standard: 'Standard or code', other: 'Other',
+  legislation: 'Act', regulation: 'Regulations', approval: 'Approval or permit condition', licence: 'Licence', contract: 'Subcontract, head contractor’s plan or specification', standard: 'Standard or code', other: 'Other',
 };
 
 // ---------------------------------------------------------------- evaluations (cl. 9.1.2)
@@ -56,13 +56,13 @@ export const usesSeriousClock = (s: Severity204) => s === 'moderate' || s === 'm
 export const ENV_EVENT_KINDS = ['assessed', 'superintendent_notified', 'report_given', 'investigation_given', 'dwer_notifiable', 'dwer_phoned', 'dwer_written_notice'] as const;
 export type EnvEventKind = (typeof ENV_EVENT_KINDS)[number];
 export const ENV_EVENT_LABEL: Record<EnvEventKind, string> = {
-  assessed: 'Severity assessed (Spec 204)',
-  superintendent_notified: 'Superintendent notified',
+  assessed: 'Severity assessed (contract scale)',
+  superintendent_notified: 'Head contractor or Superintendent notified',
   report_given: 'Incident report given',
   investigation_given: 'Investigation report given',
   dwer_notifiable: 'Notifiable to DWER (EP Act s. 72)',
   dwer_phoned: 'Environment WAtch phoned',
-  dwer_written_notice: 'Written notice given to DWER',
+  dwer_written_notice: 'Written notice given to DWER (by us or the occupier)',
 };
 
 export const DWER_TRIGGERS = ['emergency_accident_malfunction', 'breach_of_approval', 'prescribed_waste'] as const;
@@ -135,9 +135,9 @@ export function envIncidentState(occurredAt: string, events: readonly EnvEvent[]
   const investigationOverdue = investigationDueAt != null && !investigation && now > investigationDueAt;
 
   const outstanding: string[] = [];
-  if (dwer && !written) outstanding.push(phoned ? 'Written notice to DWER — the phone call does not meet s. 72 on its own' : 'Written notice to DWER, as soon as practicable (EP Act s. 72)');
+  if (dwer && !written) outstanding.push(phoned ? 'Written notice to DWER — the phone call does not meet s. 72 on its own' : 'Written notice to DWER by the occupier, as soon as practicable (EP Act s. 72)');
   if (!assessment) outstanding.push('Assess the severity on the contract’s scale');
-  if (!notified) outstanding.push('Notify the Superintendent, as soon as practicable');
+  if (!notified) outstanding.push('Notify the head contractor (or Superintendent), as soon as practicable');
   if (reportDueAt && !report) outstanding.push(`Incident report ${reportOverdue ? 'overdue' : 'due'}`);
   if (investigationDueAt && !investigation) outstanding.push(`Investigation report ${investigationOverdue ? 'overdue' : 'due'}`);
 

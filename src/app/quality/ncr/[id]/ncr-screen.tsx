@@ -121,7 +121,7 @@ export function NcrScreen({ ncr, clockHours, canManage }: { ncr: Ncr; clockHours
             <p className="caption">Freezes the root cause, the actions and the disposition, and lets testing on the lot resume.</p>
             <label className="fieldcell">
               <span className="label">Approved by</span>
-              <input className="field field--sm" id="ncr-approver" value={approver} placeholder="Name and role — the Superintendent, or yours" onChange={(e) => setApprover(e.target.value)} />
+              <input className="field field--sm" id="ncr-approver" value={approver} placeholder="Name and role — the head contractor's representative, or yours" onChange={(e) => setApprover(e.target.value)} />
             </label>
             <button type="button" className="button" disabled={busy !== null || !readyToApprove || !approver.trim()} onClick={() => void act('approve', { ...workFields(), approved_by_name: approver.trim(), status: 'approved' })}>
               {busy === 'approve' ? 'Approving…' : 'Approve'}

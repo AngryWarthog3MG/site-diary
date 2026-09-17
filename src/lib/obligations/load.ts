@@ -9,6 +9,7 @@ import { withoutWhiteCard } from '@/lib/construction/model';
 import { registerInForce, planReviewDue, notBriefed } from '@/lib/asbestos/model';
 import { programmesDue } from '@/lib/health/model';
 import { envIncidentState, rainPrompts, type EnvEvent } from '@/lib/environment/model';
+import { currentDocs, noticeState, swmsReviewStatus, headContractorName, HC_DOC_EXPECTED, HC_DOC_LABEL, type HcDoc, type IncidentNotice, type SwmsReview } from '@/lib/subcontract/model';
 import { ncrRef, lotRef, ncrReportState, holdsAwaitingRelease, calibrationStatus, CALIBRATION_LABEL, type PointType, type Result } from '@/lib/quality/model';
 import { nextInspection, registrationStatus, REGISTRATION_LABEL, type InspectionBasis, type RecordKind, type Outcome } from '@/lib/plant/inspections';
 import {
@@ -57,7 +58,7 @@ export async function loadObligations(
   today: string,
 ): Promise<ObligationsData> {
   const q = `?project=${projectId}`;
-  const [{ data: schedRows }, chemicals, { data: crewRows }, { data: ticketRows }, { data: notifiableRows }, { data: regRows }, emergency, { data: plantRows }, { data: pcRow }, { data: whsPlanRows }, { data: whiteCards }, { data: ncrRows }, { data: openLots }, { data: equipRows }, { data: findingRows }, { data: reviewActionRows }, { data: asbestosRows }, { data: healthRows }, { data: envApplies }, { data: envIncidents }, { data: envSettings }, { data: envWeather }, { data: envChecks }, { data: envActions }] = await Promise.all([
+  const [{ data: schedRows }, chemicals, { data: crewRows }, { data: ticketRows }, { data: notifiableRows }, { data: regRows }, emergency, { data: plantRows }, { data: pcRow }, { data: whsPlanRows }, { data: whiteCards }, { data: ncrRows }, { data: openLots }, { data: equipRows }, { data: findingRows }, { data: reviewActionRows }, { data: asbestosRows }, { data: healthRows }, { data: envApplies }, { data: envIncidents }, { data: envSettings }, { data: envWeather }, { data: envChecks }, { data: envActions }, { data: subIncidents }, { data: hcDocRows }, { data: swmsRows }] = await Promise.all([
     supabase
       .from('obligations')
       .select('id, project_id, kind, title, basis, interval_months, first_due_on, active, obligation_completions(id, due_on, done_on, evidence_note, evidence_ref, created_at, done_by)')
@@ -71,7 +72,7 @@ export async function loadObligations(
     supabase.from('incident_regulator_events').select('id, kind, happened_at, method, person_name, detail, incident:incidents!inner(id, seq, notifiable, project_id)').eq('incident.project_id', projectId),
     loadEmergency(supabase, projectId),
     supabase.from('project_plant').select('plant:plant_register!inner(id, name, active, inspection_basis, inspection_interval_months, registration_required, registration_no, registration_expires_on, plant_maintenance_records(kind, done_on, next_due_on, outcome))').eq('project_id', projectId).eq('active', true),
-    supabase.from('projects').select('is_principal_contractor, ncr_report_hours').eq('id', projectId).maybeSingle(),
+    supabase.from('projects').select('is_principal_contractor, ncr_report_hours, principal_contractor, head_contractor_incident_hours').eq('id', projectId).maybeSingle(),
     supabase.from('whs_management_plans').select('id').eq('project_id', projectId).limit(1),
     supabase.from('crew_tickets').select('person_name, ticket_type, active, expires_on').eq('org_id', orgId).eq('ticket_type', 'white_card'),
     supabase.from('ncrs').select('id, seq, status, detected_at, reported_to_principal_at').eq('project_id', projectId).neq('status', 'closed'),
@@ -89,7 +90,16 @@ export async function loadObligations(
     supabase.from('project_weather_days').select('day, rainfall_mm').eq('project_id', projectId).gte('day', addDaysIso(today, -15)),
     supabase.from('inspections').select('inspection_date').eq('project_id', projectId).eq('kind', 'environmental').gte('inspection_date', addDaysIso(today, -15)),
     supabase.from('compliance_evaluation_results').select('id, action, due_on, evaluation:compliance_evaluations!inner(id, org_id, project_id, status, evaluated_on)').eq('result', 'non_compliant').is('done_at', null).eq('evaluation.org_id', orgId).eq('evaluation.status', 'issued').or(`project_id.eq.${projectId},project_id.is.null`, { referencedTable: 'evaluation' }),
+    // Working under a head contractor (README R74): the last 90 days' reports and whether each was told up,
+    // their plans on file, and the SWMS in use with where each stands in their review.
+    supabase.from('incidents').select('id, seq, kind, occurred_at, incident_notices(id, notified_at, method, told_by_name, recipient_name, reference, detail)').eq('project_id', projectId).gte('occurred_at', new Date(Date.now() - 90 * 86_400_000).toISOString()),
+    supabase.from('head_contractor_documents').select('id, kind, title, revision, received_on, file_path, superseded_by, notes').eq('project_id', projectId),
+    supabase.from('swms').select('id, title, version, swms_reviews(id, kind, happened_on, person_name, reference, comments, created_at)').eq('project_id', projectId).eq('status', 'active'),
   ]);
+  const job = pcRow as { is_principal_contractor?: boolean; principal_contractor?: string | null; head_contractor_incident_hours?: number | null } | null;
+  const subcontract = job != null && !job.is_principal_contractor;
+  const hcName = headContractorName(job?.principal_contractor);
+  const hcCurrent = currentDocs((hcDocRows ?? []) as HcDoc[]);
 
   const scheduled = (schedRows ?? []) as ScheduledRow[];
   const items: ObligationItem[] = [];
@@ -196,14 +206,15 @@ export async function loadObligations(
 
   // The emergency plan: one per workplace is the law, and its procedures are tested at the
   // frequency the plan itself states (WHS (General) Regs 2022 (WA) reg. 43; ISO 45001 cl. 8.2).
-  if (!emergency.current) {
+  // Under a head contractor, their site emergency plan received and on file answers for the workplace's plan.
+  if (!emergency.current && !(subcontract && hcCurrent.has('emergency_plan'))) {
     items.push({
       key: 'emergency-plan', source: 'emergency',
-      title: 'Emergency plan for this workplace',
-      basis: 'WHS (General) Regs 2022 (WA) reg. 43 · one plan for each workplace',
+      title: subcontract ? `Emergency plan for this workplace — ${hcName}'s copy, or your own` : 'Emergency plan for this workplace',
+      basis: subcontract ? 'WHS (General) Regs 2022 (WA) reg. 43 · on a head contractor\'s site, record their plan under Construction' : 'WHS (General) Regs 2022 (WA) reg. 43 · one plan for each workplace',
       dueOn: today, status: 'overdue', href: `/emergency${q}`,
     });
-  } else if (emergency.nextDrillDue) {
+  } else if (emergency.current && emergency.nextDrillDue) {
     items.push({
       key: 'emergency-drill', source: 'emergency',
       title: 'Emergency procedures tested — a drill',
@@ -306,6 +317,28 @@ export async function loadObligations(
     items.push({ key: `health:${due.programId}`, source: 'health', title: `Health monitoring — ${hazardOf.get(due.programId)}: ${n} ${n === 1 ? 'person' : 'people'} due`, basis: 'WHS (General) Regs 2022 (WA) Part 7.1 Div 6 · names are on the confidential record', dueOn: due.earliestDue ?? today, status: due.overdue > 0 ? 'overdue' : 'due_soon', href: `/health${q}` });
   }
 
+  if (subcontract) {
+    const hcHref = `/construction${q}`;
+    const hours = job?.head_contractor_incident_hours ?? null;
+    const nowMs = new Date().toISOString();
+    const dayOf = (iso: string) => new Date(Date.parse(iso) + 8 * 3_600_000).toISOString().slice(0, 10);
+    for (const inc of (subIncidents ?? []) as Array<{ id: string; seq: number; occurred_at: string; incident_notices: IncidentNotice[] }>) {
+      const st = noticeState(inc.occurred_at, inc.incident_notices ?? [], hours, nowMs);
+      if (st.toldAt) continue;
+      items.push({ key: `hc-notice:${inc.id}`, source: 'incident', title: `Tell ${hcName} — ${incidentRef(inc.seq)}`, basis: hours ? `Their rules: within ${hours} hour${hours === 1 ? '' : 's'}` : 'Reporting up to the head contractor', dueOn: st.dueAt ? dayOf(st.dueAt) : dayOf(inc.occurred_at), status: st.overdue || !st.dueAt ? 'overdue' : 'due_soon', href: `/incidents/${inc.id}` });
+    }
+    for (const kind of HC_DOC_EXPECTED) {
+      if (hcCurrent.has(kind)) continue;
+      items.push({ key: `hc-doc:${kind}`, source: 'construction', title: `${hcName}'s ${HC_DOC_LABEL[kind].toLowerCase()} — get a copy`, basis: kind === 'whs_management_plan' ? 'WHS (General) Regs 2022 (WA) regs 309–311 · the principal contractor\'s plan, made available to the businesses on site' : 'WHS (General) Regs 2022 (WA) reg. 43 · the site\'s plan', dueOn: today, status: 'due_soon', href: hcHref });
+    }
+    for (const sw of (swmsRows ?? []) as Array<{ id: string; title: string; version: number; swms_reviews: SwmsReview[] }>) {
+      const { status, latest } = swmsReviewStatus(sw.swms_reviews ?? []);
+      if (status === 'accepted') continue;
+      const title = status === 'returned' ? `SWMS returned by ${hcName} — ${sw.title}` : status === 'with_them' ? `SWMS awaiting ${hcName}'s acceptance — ${sw.title}` : `Submit SWMS to ${hcName} — ${sw.title}`;
+      items.push({ key: `hc-swms:${sw.id}`, source: 'construction', title, basis: 'WHS (General) Regs 2022 (WA) reg. 312 · the principal contractor collects SWMS before the work', dueOn: latest?.happened_on ?? today, status: status === 'with_them' ? 'due_soon' : 'overdue', href: `/swms/${sw.id}` });
+    }
+  }
+
   // Environment (README R73): aspects identified for the job, the environmental incident trail,
   // checks after heavy rain, and actions from issued evaluations of compliance.
   const envHref = `/environment${q}`;
@@ -323,10 +356,10 @@ export async function loadObligations(
       items.push({ key: `env-dwer:${inc.id}`, source: 'environment', title: `Written notice to DWER — ${incidentRef(inc.seq)}`, basis: 'EP Act 1986 (WA) s. 72 · as soon as practicable; a phone call alone does not meet it', dueOn: today, status: 'overdue', href });
     }
     if (st.reportDueAt && !st.reportGivenAt) {
-      items.push({ key: `env-report:${inc.id}`, source: 'environment', title: `Environmental incident report — ${incidentRef(inc.seq)}`, basis: 'Contract clock (MRWA Spec 204 cl. 204.28)', dueOn: perth(st.reportDueAt), status: st.reportOverdue ? 'overdue' : 'due_soon', href });
+      items.push({ key: `env-report:${inc.id}`, source: 'environment', title: `Environmental incident report — ${incidentRef(inc.seq)}`, basis: 'The head contractor’s or contract’s deadline (e.g. Main Roads WA Spec 204 cl. 204.28)', dueOn: perth(st.reportDueAt), status: st.reportOverdue ? 'overdue' : 'due_soon', href });
     }
     if (st.investigationDueAt && !st.investigationGivenAt) {
-      items.push({ key: `env-investigation:${inc.id}`, source: 'environment', title: `Investigation report, Serious incident — ${incidentRef(inc.seq)}`, basis: 'Contract clock (MRWA Spec 204 cl. 204.28)', dueOn: perth(st.investigationDueAt), status: st.investigationOverdue ? 'overdue' : dueStatus(perth(st.investigationDueAt), today), href });
+      items.push({ key: `env-investigation:${inc.id}`, source: 'environment', title: `Investigation report, Serious incident — ${incidentRef(inc.seq)}`, basis: 'The head contractor’s or contract’s deadline (e.g. Main Roads WA Spec 204 cl. 204.28)', dueOn: perth(st.investigationDueAt), status: st.investigationOverdue ? 'overdue' : dueStatus(perth(st.investigationDueAt), today), href });
     }
     if (!st.severity) {
       items.push({ key: `env-assess:${inc.id}`, source: 'environment', title: `Assess the environmental incident's severity — ${incidentRef(inc.seq)}`, basis: 'Starts the contract reporting clock', dueOn: perth(inc.occurred_at), status: 'overdue', href });

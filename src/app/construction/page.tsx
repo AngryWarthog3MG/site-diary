@@ -10,6 +10,8 @@ import { TRENCH_CONTROL_LABEL, servicesInfoCurrency, withoutWhiteCard, type Tren
 import { PrincipalToggle, WhsPlanForm } from './whs-plan-form';
 import { ExcavationForm } from './excavation-form';
 import { PlansLink } from './plans-link';
+import { HeadContractorSection } from './head-contractor-section';
+import type { HcDoc } from '@/lib/subcontract/model';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Construction records · KBS Daily Diary' };
@@ -35,12 +37,13 @@ export default async function ConstructionPage({ searchParams }: { searchParams:
 
   const supabase = await createClient();
   const today = perthToday();
-  const [{ data: proj }, { data: planRows }, { data: excRows }, { data: crewRows }, { data: ticketRows }] = await Promise.all([
-    supabase.from('projects').select('is_principal_contractor').eq('id', current.project_id).single(),
+  const [{ data: proj }, { data: planRows }, { data: excRows }, { data: crewRows }, { data: ticketRows }, { data: hcDocs }] = await Promise.all([
+    supabase.from('projects').select('is_principal_contractor, principal_contractor, head_contractor_incident_hours').eq('id', current.project_id).single(),
     supabase.from('whs_management_plans').select('id, version, responsibilities, consultation_arrangements, incident_arrangements, site_rules, swms_arrangements, other_matters, revision_reason, issued_at').eq('project_id', current.project_id).order('version', { ascending: false }),
     supabase.from('excavation_records').select('id, location, planned_start_on, info_source, info_reference, info_obtained_on, info_valid_until, services_identified, plans_file_path, services_located_by, locating_method, located_on, max_depth_m, trench_control, engineer_advice_ref, notes, created_at').eq('project_id', current.project_id).order('created_at', { ascending: false }),
     supabase.from('crew').select('name').eq('project_id', current.project_id).eq('active', true),
     supabase.from('crew_tickets').select('person_name, ticket_type, active, expires_on').eq('org_id', current.project.org.id).eq('ticket_type', 'white_card'),
+    supabase.from('head_contractor_documents').select('id, kind, title, revision, received_on, file_path, superseded_by, notes').eq('project_id', current.project_id),
   ]);
 
   const isPC = Boolean(proj?.is_principal_contractor);
@@ -56,9 +59,21 @@ export default async function ConstructionPage({ searchParams }: { searchParams:
       <p className="label"><BrandMark size={18} /> {current.project.name}</p>
       <h1 className="page-title">Construction records</h1>
       <p className="page-subtitle">
-        The WHS management plan when you run the job, the services and trench record for every dig, and the white cards on
-        the crew list.
+        The head contractor&rsquo;s plans you work to — or your own WHS management plan when you are principal contractor — the
+        services and trench record for every dig, and the white cards on the crew list.
       </p>
+
+      {!isPC && (
+        <HeadContractorSection
+          projectId={current.project_id}
+          contractor={(proj?.principal_contractor as string | null) ?? null}
+          hours={(proj?.head_contractor_incident_hours as number | null) ?? null}
+          docs={(hcDocs ?? []) as HcDoc[]}
+          today={today}
+          canManage={canAuthorEntries(current.role)}
+          isAdmin={isAdmin}
+        />
+      )}
 
       <section style={{ marginTop: '1rem' }}>
         <hr className="rule" />
@@ -66,8 +81,8 @@ export default async function ConstructionPage({ searchParams }: { searchParams:
         <PrincipalToggle projectId={current.project_id} isPrincipal={isPC} canChange={isAdmin} />
         {!isPC ? (
           <p className="caption">
-            On a job you are not principal contractor for, the principal contractor holds the plan. Ask them for it, and keep
-            it with the job&rsquo;s documents.
+            The head contractor is principal contractor and holds the plan (regs 309–313). Record the copy you work to under
+            their plans above.
           </p>
         ) : !plan ? (
           <p className="nil vr-missing">

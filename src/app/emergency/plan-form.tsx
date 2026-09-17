@@ -89,14 +89,14 @@ export function PlanForm({ projectId, current }: Props) {
       {field('ep-muster', 'Muster point', muster, setMuster, 'Site sheds car park, by the green gate')}
       {field('ep-address', 'Site address, as you would give it to 000', address, setAddress, 'Kent St entrance, Curtin University, Bentley WA 6102')}
       {field('ep-hospital', 'Nearest hospital with an emergency department', hospital, setHospital, 'Fiona Stanley Hospital, 11 Robin Warren Dr, Murdoch — 15 min')}
-      {field('ep-contacts', 'Who to call', contacts, setContacts, 'Site supervisor: Matt 04…\nPrincipal contractor site manager: …\nWorkSafe WA: 1800 678 198', 3)}
+      {field('ep-contacts', 'Who to call', contacts, setContacts, 'Site supervisor: Matt 04…\nHead contractor site manager: …\nWorkSafe WA: 1800 678 198', 3)}
       {field('ep-firstaiders', 'First aiders on this site (comma between names)', firstAiders, setFirstAiders, 'Matthew Rodgers, Evan Burke')}
       <div className="signin__grid">
         {field('ep-firstaid', 'First aid kit kept', firstAidAt, setFirstAidAt, 'Site office, ute 2')}
         {field('ep-fire', 'Fire equipment kept', fireAt, setFireAt, 'Extinguisher in each machine and the office')}
       </div>
       {field('ep-evac', 'How the site is evacuated', evacuation, setEvacuation, 'Three long blasts on the air horn. Stop plant, make safe, walk to the muster point. Supervisor takes the sign-in list and counts heads.', 4)}
-      {field('ep-notify', 'Who tells whom', notify, setNotify, 'Supervisor calls 000, then the principal contractor, then the office. The office calls WorkSafe for a notifiable incident.', 3)}
+      {field('ep-notify', 'Who tells whom', notify, setNotify, 'Supervisor calls 000, then the head contractor, then the office. The office calls WorkSafe for a notifiable incident.', 3)}
       {field('ep-spill', 'Spills', spill, setSpill, 'Spill kit in the fuel trailer. Stop the source, contain with sand bags, call the supervisor.', 2)}
       {field('ep-hazards', 'Hazards on this site that shape the response', hazards, setHazards, 'Live services under the car park, open excavations, public footpath', 2)}
       <div className="signin__grid">

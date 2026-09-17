@@ -158,7 +158,7 @@ export function ItpScreen({ itp, points, newer, canManage }: { itp: Itp; points:
       {canManage && itp.status === 'issued' && (
         <div className="item" style={{ marginTop: '1rem' }}>
           <p className="label">The principal&rsquo;s review</p>
-          <p className="caption">Main Roads WA Spec 201: an ITP is made available to the Superintendent for review before it is used.</p>
+          <p className="caption">The head contractor usually reviews an ITP before it is used (Main Roads WA Spec 201: the Superintendent).</p>
           <div className="signin__grid">
             <label className="fieldcell"><span className="label">Given for review on</span>
               <input className="field field--sm" id="itp-submitted" type="date" value={submittedOn} onChange={(e) => setSubmittedOn(e.target.value)} /></label>

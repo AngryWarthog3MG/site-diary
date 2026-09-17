@@ -33,7 +33,7 @@ const PROMPT: Record<RegulatorEventKind, { who: string | null; whoPlaceholder: s
   notified: { who: 'Who made the notification', whoPlaceholder: 'Mitchell Van Zyl', detailPlaceholder: 'Officer spoken to, any reference given, any direction about the site' },
   written_notice_required: { who: 'WorkSafe officer', whoPlaceholder: 'Name, if given', detailPlaceholder: 'What was asked for' },
   written_notice_given: { who: 'Who sent it', whoPlaceholder: '', detailPlaceholder: 'How it was sent, and any reference' },
-  site_preserved: { who: 'Who has management or control of the workplace', whoPlaceholder: 'Us, or the principal contractor by name', detailPlaceholder: 'What was left as it was, what was made safe' },
+  site_preserved: { who: 'Who has management or control of the workplace', whoPlaceholder: 'Usually the head contractor, by name', detailPlaceholder: 'What was left as it was, what was made safe' },
   site_released: { who: 'Inspector', whoPlaceholder: 'Name', detailPlaceholder: 'Attended, or directed by phone that work may resume' },
 };
 

@@ -76,7 +76,7 @@ export function NewProjectForm({
         />
       </label>
       <label className="fieldcell">
-        <span className="label">Principal contractor (optional)</span>
+        <span className="label">Head contractor (optional)</span>
         <input
           className="field"
           value={contractor}

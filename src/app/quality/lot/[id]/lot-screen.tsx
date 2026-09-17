@@ -167,7 +167,7 @@ export function LotScreen({ lot, points, checks, releases, ncrs, equipment, toda
                     <input className="field field--sm" id="rel-by" value={rel.by} placeholder="The person with authority to release it" onChange={(e) => setRel({ ...rel, by: e.target.value })} /></label>
                   <div className="signin__grid">
                     <label className="fieldcell"><span className="label">Their role</span>
-                      <input className="field field--sm" id="rel-authority" value={rel.authority} placeholder="Superintendent's representative" onChange={(e) => setRel({ ...rel, authority: e.target.value })} /></label>
+                      <input className="field field--sm" id="rel-authority" value={rel.authority} placeholder="Head contractor's representative" onChange={(e) => setRel({ ...rel, authority: e.target.value })} /></label>
                     <label className="fieldcell"><span className="label">Note</span>
                       <input className="field field--sm" id="rel-note" value={rel.note} onChange={(e) => setRel({ ...rel, note: e.target.value })} /></label>
                   </div>

@@ -67,7 +67,7 @@ export function EnvironmentScreen(props: Props) {
         <a className="chip chip--link" href="#legal">Legal register</a>
         <a className="chip chip--link" href="#evaluations">Compliance</a>
         <a className="chip chip--link" href="#monitoring">Monitoring</a>
-        <a className="chip chip--link" href="#job">Contract clocks</a>
+        <a className="chip chip--link" href="#job">Deadlines</a>
       </nav>
 
       <div className="claims-summary" aria-label="At a glance">
@@ -388,11 +388,12 @@ export function EnvironmentScreen(props: Props) {
       {/* ------------------------------------------------------------ job settings */}
       <hr className="rule" />
       <section id="job">
-        <p className="label">This job&rsquo;s contract clocks</p>
+        <p className="label">Environmental incident deadlines on this job</p>
         <p className="caption">
-          Environmental incident reporting is set by the contract — Main Roads WA Spec 204 cl. 204.28 is 24 hours for moderate,
-          major or catastrophic, 3 days for insignificant or minor, and 28 days for a Serious incident&rsquo;s investigation.
-          Blank means this contract sets none. {!isAdmin && 'An admin sets these.'}
+          As a subcontractor these come from the head contractor &mdash; their environmental management plan or the subcontract.
+          Where the head contract is a Main Roads WA job, Spec 204 cl. 204.28 flows down: 24 hours for moderate, major or
+          catastrophic, 3 days for insignificant or minor, 28 days for a Serious incident&rsquo;s investigation. Blank means none
+          is set. {!isAdmin && 'An admin sets these.'}
         </p>
         <div className="signin__grid" style={{ alignItems: 'end' }}>
           <label className="fieldcell fieldcell--narrow"><span className="label">Moderate or worse (hours)</span><input id="env-job-serious" className="field field--sm" inputMode="numeric" disabled={!isAdmin} value={job.serious} onChange={(e) => setJob({ ...job, serious: e.target.value })} /></label>
@@ -406,7 +407,7 @@ export function EnvironmentScreen(props: Props) {
               must((await createClient().from('projects').update({ env_report_hours_serious: numOrNull(job.serious), env_report_hours_minor: numOrNull(job.minor), env_investigation_days: numOrNull(job.days), env_rain_inspection_mm: numOrNull(job.rain) }).eq('id', projectId)).error);
               return 'Saved.';
             })}>Save the clocks</button>
-            <button type="button" className="linklike" disabled={busy !== null} onClick={() => setJob({ serious: '24', minor: '72', days: '28', rain: job.rain || '10' })}>Fill in Spec 204&rsquo;s</button>
+            <button type="button" className="linklike" disabled={busy !== null} onClick={() => setJob({ serious: '24', minor: '72', days: '28', rain: job.rain || '10' })}>Fill in Main Roads Spec 204&rsquo;s</button>
           </>
         )}
       </section>

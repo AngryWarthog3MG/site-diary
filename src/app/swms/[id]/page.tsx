@@ -6,6 +6,9 @@ import { BrandMark } from '@/components/brand-mark';
 import { OutboxStatus } from '@/components/outbox-status';
 import { readSteps, type SwmsKind } from '@/lib/swms/model';
 import { SwmsScreen, type SwmsView } from './swms-screen';
+import { SwmsReviewPanel } from './review-panel';
+import { perthToday } from '@/lib/push/decide';
+import type { SwmsReview } from '@/lib/subcontract/model';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'SWMS · KBS Daily Diary' };
@@ -24,9 +27,11 @@ export default async function SwmsPage({ params }: { params: Promise<{ id: strin
   const membership = memberships.find((m) => m.project_id === s.project_id);
   guardScreen(membership, 'swms');
   const role = membership?.role ?? 'pm';
-  const [{ data: crew }, { data: newer }] = await Promise.all([
+  const [{ data: crew }, { data: newer }, { data: job }, { data: reviews }] = await Promise.all([
     supabase.from('crew').select('name').eq('project_id', s.project_id).eq('active', true).order('sort_order').order('name'),
     supabase.from('swms').select('id, version, status').eq('supersedes_id', s.id).order('version', { ascending: false }).limit(1).maybeSingle(),
+    supabase.from('projects').select('principal_contractor, is_principal_contractor').eq('id', s.project_id).maybeSingle(),
+    supabase.from('swms_reviews').select('id, kind, happened_on, person_name, reference, comments, created_at').eq('swms_id', s.id),
   ]);
   const project = Array.isArray(s.project) ? s.project[0] : s.project;
   const view: SwmsView = {
@@ -41,6 +46,9 @@ export default async function SwmsPage({ params }: { params: Promise<{ id: strin
     <main className="sheet sheet--wide">
       <p className="label"><BrandMark size={18} /> {project.name}</p>
       <OutboxStatus />
+      {job && !job.is_principal_contractor && role !== 'labourer' && (
+        <SwmsReviewPanel swmsId={s.id} status={s.status} contractor={(job.principal_contractor as string | null) ?? null} reviews={(reviews ?? []) as SwmsReview[]} canWrite={canAuthorEntries(role)} today={perthToday()} />
+      )}
       <SwmsScreen swms={view} crew={(crew ?? []).map((c) => String(c.name))} canWrite={canAuthorEntries(role)} canSign={canRunTalks(role)} userId={userId} />
     </main>
   );

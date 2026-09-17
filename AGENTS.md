@@ -259,6 +259,12 @@ improvising; the register once shipped dead because a live smoke test was skippe
   scope answered, discharges the schedule), `incident_environment_events` (environmental incidents only, frozen), `env_monitoring_records`
   (DB judges value against limit; exceedance needs action; frozen). `/environment`, `/environment/evaluation/[id]`, panel on
   `/incidents/[id]`; What's due source `environment`. Labourer reads none. Suite 31
+- `src/lib/subcontract/` — WORKING UNDER A HEAD CONTRACTOR (README R74; Kooboolong's usual position): `model.ts` (`headContractorName`,
+  `noticeState`, `currentDocs`, `swmsReviewStatus`). `projects.principal_contractor` = the head contractor's name; `is_principal_contractor`
+  true switches all of this off. Tables `incident_notices` (told up; `app.can_run_talks`; frozen), `head_contractor_documents` (their plans
+  as received; supersede once; bucket `head-contractor-docs` `{project}/{doc}.ext`), `swms_reviews` (submitted → accepted | returned with
+  comments; `app.can_write_swms`; frozen). Panels on `/incidents/[id]` and `/swms/[id]`; section on `/construction`; What's due items.
+  Never assume a Main Roads / Superintendent contract: offer Spec 201/204 as where the head contract requires it. Suite 32
 - `src/lib/safety/` — the dashboard: `stats.ts` (pure: `classify` injuries MTI/FAI, `injurySummary` with the
   rate per million labour hours, `daysSinceLastInjury`, `monthBuckets`, `overdue`), `load.ts` (one gather under the
   caller's RLS across sign-ins, prestarts, plant, permits, incidents, inspections, tickets, subcontractors, SWMS,
