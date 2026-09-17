@@ -275,8 +275,10 @@ improvising; the register once shipped dead because a live smoke test was skippe
   1–50); the trigger registers by number, never by words or a client reference. Rows on days signed
   before the column existed carry theirs through the link (`public.variation_number`) — read that,
   never assume the column
-- `src/lib/weekly/`, `src/lib/monthly/` — reports. The month bundle is bound in parts under the 50 MB exports limit
-  (`monthly/volumes.ts` `planVolumes`, README R71); `monthly/generate.ts` is the ONE builder for the button and the monthly email. `weekly/photos.ts` gathers the week's photographs (embedded,
+- `src/lib/weekly/`, `src/lib/monthly/` — reports. The month bundle is bound in parts of at most 24 MB, ONE PART PER REQUEST
+  (a whole month does not fit Vercel's 300 s; README R71): `monthly/generate.ts` `planMonthlyBundle` / `buildBundlePart` is the one builder
+  for the button (`POST /api/reports/monthly` plan, then `&part=N`) and the monthly email (builds nightly through the first week).
+  A new PDF route must be added to `outputFileTracingIncludes` in `next.config.ts` or Chromium is missing on Vercel (501) `weekly/photos.ts` gathers the week's photographs (embedded,
   one print per photo per day, capped); `img[data-shrink]` in `src/lib/pdf/render.ts` re-encodes marked images
   before printing — never mark an image in the daily docket, its bytes must not change
 - `supabase/migrations/` — append only; never edit an applied migration

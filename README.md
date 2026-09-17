@@ -1869,15 +1869,18 @@ membership checks because profiles only let a person write their own row. The da
 @ in it (`profiles_full_name_is_a_name`); `src/lib/people/name.ts` is the TypeScript half. A diary PDF is stored the first
 time it is opened, so one that has been opened keeps the name it printed. Suite 30.
 
-**R71. A heavy month is bound in parts.** The month bundle failed on Curtin in September with "The object exceeded
-the maximum allowed size": the exports bucket takes 50 MB a file, and half a month of dockets with their photographs was
-already 133 MB (one day alone is 26 MB). The dockets are frozen bytes, so nothing can be shrunk without changing the record,
-and a 300 MB file would not open on a phone or go by email anyway. So `generateMonthlyBundle` — now the one path for both the
-button and the first-of-month email — reads each stored docket's size, packs the month in date order into parts of at most
-40 MB (`planVolumes`), and binds and stores one part at a time. Every part carries the whole month's contents, with a Part
-column, and its title and footer say which part it is. One part keeps the old path and PDF identifier; several are stored as
-`{month}-part-N-of-M.pdf`. The page shows a link per part; the email attaches a single light part and otherwise links each.
-Proved on Curtin September: 17 dockets in four parts of 39, 40, 36 and 19 MB.
+**R71. A heavy month is bound in parts, a part per request.** The month bundle failed on Curtin in September with "The
+object exceeded the maximum allowed size": the exports bucket takes 50 MB a file, and half a month of dockets with their
+photographs was already 133 MB (one day alone is 26 MB). The dockets are frozen bytes, so nothing can be shrunk without
+changing the record, and a 300 MB file would not open on a phone or go by email anyway. So the month is packed in date order
+into parts (`planVolumes`), every part carrying the whole month's contents with a Part column and its number in its title and
+footer. The first version bound all the parts in one request and passed on a laptop in 56 seconds, then died on Vercel at
+the 300-second limit after one 39 MB part took about two and a half minutes (the files cross between Tokyo and Sydney). So
+parts are now at most 24 MB and each is its own request: the button asks for the plan, then builds the parts not yet
+stored one after another, showing each link as it lands. A part's file name carries a key from the whole month's content
+hashes, so a part already built for exactly this record is reused and a late correction makes new parts rather than serving
+stale ones. The first-of-month email job, which shares one 300-second nightly run with other checks, builds what it can each
+night through the first week and sends once every part is stored.
 
 **R72. The dayworks schedule.** Mitchell asked for a dayworks schedule with the total of dayworks hours and the works
 completed. The claims register already listed dayworks for the whole job, but not by period and not as a document to hand

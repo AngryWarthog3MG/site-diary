@@ -3,13 +3,19 @@
  *
  * The dockets are frozen bytes — a day with twenty photographs is 25 MB and
  * cannot be made smaller without changing the record — so a busy month is
- * hundreds of megabytes: over the exports bucket's per-file limit, and too big
- * for a phone or an email anyway. So the month is bound in parts, in date
- * order, each under a budget, and every part carries the whole month's index.
+ * hundreds of megabytes: over the exports bucket's per-file limit, too big for
+ * a phone or an email, and more than one request can bind inside Vercel's
+ * 300-second limit (moving the files between Tokyo and Sydney is most of it).
+ * So the month is bound in parts, in date order, each under a budget, each
+ * built by its own request, and every part carries the whole month's index.
  */
 
-/** Leaves headroom under the bucket's 50 MB per-file limit for the cover and merge overhead. */
-export const VOLUME_BUDGET_BYTES = 40 * 1024 * 1024;
+/**
+ * Small enough that one part — downloads, cover, merge, upload — finishes well
+ * inside one 300-second function on Vercel. A 39 MB part took about two and a
+ * half minutes there.
+ */
+export const VOLUME_BUDGET_BYTES = 24 * 1024 * 1024;
 
 /** The bucket's hard limit; a part over this cannot be stored. */
 export const STORAGE_LIMIT_BYTES = 50 * 1024 * 1024;
@@ -36,7 +42,12 @@ export function planVolumes(sizes: readonly number[], budget = VOLUME_BUDGET_BYT
   return volumes;
 }
 
-/** Where a part is stored. One part keeps the name a single bundle always had. */
-export function volumePath(projectId: string, month: string, part: number, of: number): string {
-  return of === 1 ? `${projectId}/monthly/${month}.pdf` : `${projectId}/monthly/${month}-part-${part}-of-${of}.pdf`;
+/**
+ * Where a part is stored. One part keeps the name a single bundle always had
+ * and is rebuilt each time (it is light). Several carry a key made from the
+ * month's content hashes, so a part already built for exactly this record is
+ * reused, and a late correction produces new parts instead of stale ones.
+ */
+export function volumePath(projectId: string, month: string, part: number, of: number, key: string): string {
+  return of === 1 ? `${projectId}/monthly/${month}.pdf` : `${projectId}/monthly/${month}-part-${part}-of-${of}-${key}.pdf`;
 }

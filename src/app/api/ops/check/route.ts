@@ -640,7 +640,10 @@ async function sendMonthlyBundles(force = false): Promise<Record<string, unknown
   ]);
   const admin = createAdminClient();
   const today = perthToday();
-  if (!force && !today.endsWith('-01')) return { skipped: 'not the first of the month' };
+  // A heavy month takes more than one night's run to bind (README R71), so the job
+  // keeps building through the first week and sends once every part is stored.
+  if (!force && Number(today.slice(8, 10)) > 7) return { skipped: 'past the first week of the month' };
+  const deadline = Date.now() + 150_000;
 
   const previousMonth = (() => {
     const t = new Date(`${today.slice(0, 7)}-01T00:00:00Z`);
@@ -657,7 +660,7 @@ async function sendMonthlyBundles(force = false): Promise<Record<string, unknown
   for (const project of projects ?? []) {
     const list = (project.report_emails as string[] | null) ?? [];
     if (list.length === 0) continue;
-    if (!force && project.monthly_report_last_sent === today) {
+    if (!force && typeof project.monthly_report_last_sent === 'string' && project.monthly_report_last_sent >= `${today.slice(0, 7)}-01`) {
       results.push({ project: project.code, skipped: 'already sent' });
       continue;
     }
@@ -667,24 +670,30 @@ async function sendMonthlyBundles(force = false): Promise<Record<string, unknown
         admin,
         { id: project.id as string, name: project.name as string, code: project.code as string, orgCode },
         previousMonth,
+        deadline,
       );
       if ('empty' in generation) {
         results.push({ project: project.code, skipped: 'no signed entries that month' });
         continue;
       }
+      const waiting = generation.parts.filter((p) => !p.ready).length;
+      if (waiting > 0) {
+        results.push({ project: project.code, building: `${generation.parts.length - waiting} of ${generation.parts.length} parts stored; the rest tomorrow` });
+        continue;
+      }
       // Attached when it is one light part; otherwise a seven-day link per part.
-      const totalBytes = generation.volumes.reduce((sum, v) => sum + v.bytes, 0);
-      const heavy = generation.volumes.length > 1 || totalBytes > 30 * 1024 * 1024;
+      const totalBytes = generation.parts.reduce((sum, p) => sum + (p.bytes ?? p.estimatedBytes), 0);
+      const heavy = generation.parts.length > 1 || totalBytes > 30 * 1024 * 1024;
       const links: Array<{ label: string; url: string }> = [];
       if (heavy) {
-        for (const v of generation.volumes) {
+        for (const v of generation.parts) {
           const { data: link } = await admin.storage.from('exports').createSignedUrl(v.objectPath, 7 * 24 * 60 * 60);
           if (link?.signedUrl) links.push({ label: v.of > 1 ? `Part ${v.part} of ${v.of} (${v.from} to ${v.to})` : 'Download the bundle', url: link.signedUrl });
         }
       }
       let attachment: Uint8Array | null = null;
       if (!heavy) {
-        const { data: file } = await admin.storage.from('exports').download(generation.volumes[0].objectPath);
+        const { data: file } = await admin.storage.from('exports').download(generation.parts[0].objectPath);
         if (!file) throw new Error('The bundle was stored but could not be read back to attach.');
         attachment = new Uint8Array(await file.arrayBuffer());
       }
@@ -700,7 +709,7 @@ async function sendMonthlyBundles(force = false): Promise<Record<string, unknown
             `<p style="font-size:11px;letter-spacing:.08em;color:#1f5c33;font-weight:bold;text-transform:uppercase">Monthly diary bundle</p>` +
             `<h2 style="margin:.25em 0">${project.name} — ${previousMonth}</h2>` +
             `<p style="margin:.25em 0;color:#555">${generation.data.entries.length} signed dockets behind a cover index of serials and content hashes. Verify any docket at kbsdailydiary.me/verify.</p>` +
-            (heavy && links.length ? `<p>Too large to attach${generation.volumes.length > 1 ? `, so it is in ${generation.volumes.length} parts` : ''}. Links valid seven days:</p>` + links.map((l) => `<p style="margin:.25em 0"><a href="${l.url}">${l.label}</a></p>`).join('') : '') +
+            (heavy && links.length ? `<p>Too large to attach${generation.parts.length > 1 ? `, so it is in ${generation.parts.length} parts` : ''}. Links valid seven days:</p>` + links.map((l) => `<p style="margin:.25em 0"><a href="${l.url}">${l.label}</a></p>`).join('') : '') +
             `</div>`,
           attachments: attachment
             ? [
