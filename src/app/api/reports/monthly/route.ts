@@ -4,7 +4,7 @@ import { fail, ok, requireApiUser, isUuid } from '@/lib/api';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { MonthlyLoadError } from '@/lib/monthly/bundle';
 import { planMonthlyBundle, buildBundlePart, type BundlePart } from '@/lib/monthly/generate';
-import { BrowserUnavailableError } from '@/lib/pdf/render';
+import { BrowserUnavailableError, closeBrowser } from '@/lib/pdf/render';
 
 // One part is up to a couple of minutes on Vercel: downloads from storage, a cover, the merge, the upload.
 export const maxDuration = 300;
@@ -70,5 +70,8 @@ export async function POST(request: Request) {
     if (error instanceof BrowserUnavailableError) return fail('server_error', error.message, 501);
     const message = error instanceof Error ? error.message : 'Bundling failed.';
     return fail('server_error', `Could not build the monthly bundle: ${message}`, 500);
+  } finally {
+    // Leave no Chromium behind on an instance Vercel is about to freeze.
+    if (partNo != null) await closeBrowser();
   }
 }

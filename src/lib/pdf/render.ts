@@ -131,8 +131,34 @@ async function browser(): Promise<Browser> {
 }
 
 export async function closeBrowser(): Promise<void> {
-  await shared?.close();
+  const b = shared;
   shared = null;
+  // A browser from a paused instance may never answer close either; do not wait on it for long.
+  await Promise.race([b?.close().catch(() => undefined), new Promise((resolve) => setTimeout(resolve, 3000))]);
+}
+
+const PAGE_OPEN_MS = 15_000;
+
+/**
+ * A page from the shared browser — or, when the shared one does not answer, from
+ * a fresh one. On Vercel a warm instance is frozen between requests; the Chromium
+ * kept from the last request can report itself connected and then never answer,
+ * and every render on that instance hung until the 300-second limit (README R71:
+ * every other month-bundle part timed out). So opening a page gets a deadline,
+ * and a browser that misses it is dropped and relaunched once.
+ */
+async function openPage() {
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    const b = await browser();
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const page = await Promise.race([
+      b.newPage(),
+      new Promise<null>((resolve) => { timer = setTimeout(() => resolve(null), PAGE_OPEN_MS); }),
+    ]).finally(() => clearTimeout(timer));
+    if (page) return page;
+    if (shared === b) await closeBrowser();
+  }
+  throw new BrowserUnavailableError(`Chromium did not open a page within ${PAGE_OPEN_MS / 1000} seconds, twice.`);
 }
 
 /**
@@ -186,7 +212,7 @@ async function shrinkMarkedImages(): Promise<void> {
 }
 
 export async function renderPdfDocument(html: string, meta: DocumentMeta): Promise<Uint8Array> {
-  const page = await (await browser()).newPage();
+  const page = await openPage();
 
   try {
     await page.setContent(html, { waitUntil: 'load' });
