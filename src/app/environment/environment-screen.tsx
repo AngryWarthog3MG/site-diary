@@ -4,6 +4,9 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
+import * as outbox from '@/lib/outbox/store';
+import { runOrQueue } from '@/lib/outbox/sync';
+import { usePending } from '@/lib/outbox/use-pending';
 import { fmtDate } from '@/lib/pdf/dates';
 import {
   CONDITIONS, CONDITION_LABEL, SOURCE_TYPES, SOURCE_LABEL, MONITORING_KINDS, MONITORING_LABEL, OUTCOME_LABEL,
@@ -42,10 +45,12 @@ export function EnvironmentScreen(props: Props) {
   const [mon, setMon] = useState({ open: false, on: today, kind: 'dust' as MonitoringKind, location: '', parameter: '', value: '', unit: '', limit: '', outcome: 'observation' as Outcome, action: '', method: '', equipment: '', notes: '' });
   const [job, setJob] = useState({ serious: settings.env_report_hours_serious?.toString() ?? '', minor: settings.env_report_hours_minor?.toString() ?? '', days: settings.env_investigation_days?.toString() ?? '', rain: settings.env_rain_inspection_mm?.toString() ?? '' });
   const [showAll, setShowAll] = useState(false);
+  const pendingMon = usePending('env_monitoring', projectId, 'project').map((q) => q.payload.row as MonitoringRow);
 
   async function act(key: string, fn: () => Promise<string | void>) {
     setBusy(key); setError(null); setNotice(null);
-    try { const msg = await fn(); if (msg) setNotice(msg); router.refresh(); }
+    // With no signal a refresh would blank the screen; what was saved on the phone is shown from the queue instead.
+    try { const msg = await fn(); if (msg) setNotice(msg); if (navigator.onLine) router.refresh(); }
     catch (err) { setError(err instanceof Error ? err.message : 'That did not save.'); }
     finally { setBusy(null); }
   }
@@ -314,7 +319,12 @@ export function EnvironmentScreen(props: Props) {
       <hr className="rule" />
       <section id="monitoring">
         <p className="label">Monitoring — ISO 14001 cl. 9.1.1</p>
-        {monitoring.length === 0 ? <p className="nil">Nothing recorded on this job yet.</p> : (
+        {pendingMon.length > 0 && (
+          <ul className="gaplist">
+            {pendingMon.map((m) => <li key={m.id} className="caption"><strong>On this phone, not yet sent:</strong> {fmtDate(m.monitored_on)} · {MONITORING_LABEL[m.kind]} · {m.parameter} · {m.location}{m.value != null ? ` · ${m.value} ${m.unit ?? ''}` : ''} · {OUTCOME_LABEL[m.outcome]}</li>)}
+          </ul>
+        )}
+        {monitoring.length === 0 && pendingMon.length === 0 ? <p className="nil">Nothing recorded on this job yet.</p> : monitoring.length === 0 ? null : (
           <div className="claims-tablewrap">
             <table className="claims-table">
               <thead><tr><th>Date</th><th>What</th><th>Where</th><th className="n">Reading</th><th>Outcome</th></tr></thead>
@@ -371,13 +381,16 @@ export function EnvironmentScreen(props: Props) {
             </div>
             <label className="fieldcell"><span className="label">Notes</span><input id="env-mon-notes" className="field field--sm" value={mon.notes} onChange={(e) => setMon({ ...mon, notes: e.target.value })} /></label>
             <button type="button" className="button" disabled={busy !== null || !mon.location.trim() || !mon.parameter.trim() || (numOrNull(mon.value) != null && !mon.unit.trim()) || (monAuto === 'exceedance' && !mon.action.trim())} onClick={() => void act('mon', async () => {
-              must((await createClient().from('env_monitoring_records').insert({
-                project_id: projectId, monitored_on: mon.on, kind: mon.kind, location: mon.location.trim(), parameter: mon.parameter.trim(),
+              const row = {
+                id: outbox.newId(), project_id: projectId, monitored_on: mon.on, kind: mon.kind, location: mon.location.trim(), parameter: mon.parameter.trim(),
                 value: numOrNull(mon.value), unit: mon.unit.trim() || null, limit_value: numOrNull(mon.limit), outcome: monAuto,
                 action_taken: mon.action.trim() || null, method: mon.method.trim() || null, equipment_id: mon.equipment || null, notes: mon.notes.trim() || null,
-              })).error);
+              };
+              const live = async () => { must((await createClient().from('env_monitoring_records').insert(row)).error); };
+              const queue = () => outbox.enqueue({ kind: 'env_monitoring', projectId, subjectId: row.id, payload: { row } }).then(() => undefined);
+              const outcome = await runOrQueue(live, queue);
               setMon({ ...mon, open: false, location: '', parameter: '', value: '', unit: '', limit: '', action: '', notes: '' });
-              return 'Recorded.';
+              return outcome === 'sent' ? 'Recorded.' : 'No signal — saved on this phone. It sends when you are back in range.';
             })}>Record it</button>
             <button type="button" className="linklike" onClick={() => setMon({ ...mon, open: false })}>Cancel</button>
             <p className="caption">Once recorded it cannot be changed.</p>

@@ -16,9 +16,9 @@ let running = false;
 
 const BUCKET = 'entry-photos';
 
-async function uploadIfMissing(path: string, blob: Blob, contentType: string) {
+async function uploadIfMissing(path: string, blob: Blob, contentType: string, bucket = BUCKET) {
   const supabase = createClient();
-  const { error } = await supabase.storage.from(BUCKET).upload(path, blob, { contentType, upsert: false });
+  const { error } = await supabase.storage.from(bucket).upload(path, blob, { contentType, upsert: false });
   if (error && !isAlreadyDone(error)) throw error;
 }
 
@@ -180,6 +180,36 @@ async function replay(item: OutboxItem): Promise<void> {
         if (!row || row.status === 'open' || row.status === 'ordered') {
           throw Object.assign(new Error('The change could not be recorded from this account.'), { code: '42501' });
         }
+      }
+      return;
+    }
+    // README R76: the subcontractor's site forms, kept on the phone with no signal like the rest.
+    case 'hc_notice': {
+      // Waits behind its incident (same subject), so a report made offline lands first.
+      const { error } = await supabase.from('incident_notices').insert(p.row as Record<string, unknown>);
+      if (error && !isAlreadyDone(error)) throw error;
+      return;
+    }
+    case 'swms_review': {
+      // In the order recorded on the phone: the database refuses "accepted" before "submitted".
+      const { error } = await supabase.from('swms_reviews').insert(p.row as Record<string, unknown>);
+      if (error && !isAlreadyDone(error)) throw error;
+      return;
+    }
+    case 'env_monitoring': {
+      const { error } = await supabase.from('env_monitoring_records').insert(p.row as Record<string, unknown>);
+      if (error && !isAlreadyDone(error)) throw error;
+      return;
+    }
+    case 'hc_document': {
+      // The copy first, then the row that names it, then the older copy marked superseded.
+      if (p.path && blobs.file) await uploadIfMissing(p.path as string, blobs.file, (p.contentType as string) ?? 'application/pdf', 'head-contractor-docs');
+      const { error } = await supabase.from('head_contractor_documents').insert(p.row as Record<string, unknown>);
+      if (error && !isAlreadyDone(error)) throw error;
+      if (p.supersedes) {
+        const { error: se } = await supabase.from('head_contractor_documents').update({ superseded_by: item.subjectId }).eq('id', p.supersedes as string);
+        // Already superseded by another copy while this waited: that copy stands, this one is kept alongside.
+        if (se && !isFrozen(se)) throw se;
       }
       return;
     }

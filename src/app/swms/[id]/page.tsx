@@ -47,7 +47,7 @@ export default async function SwmsPage({ params }: { params: Promise<{ id: strin
       <p className="label"><BrandMark size={18} /> {project.name}</p>
       <OutboxStatus />
       {job && !job.is_principal_contractor && role !== 'labourer' && (
-        <SwmsReviewPanel swmsId={s.id} status={s.status} contractor={(job.principal_contractor as string | null) ?? null} reviews={(reviews ?? []) as SwmsReview[]} canWrite={canAuthorEntries(role)} today={perthToday()} />
+        <SwmsReviewPanel swmsId={s.id} projectId={s.project_id} status={s.status} contractor={(job.principal_contractor as string | null) ?? null} reviews={(reviews ?? []) as SwmsReview[]} canWrite={canAuthorEntries(role)} today={perthToday()} />
       )}
       <SwmsScreen swms={view} crew={(crew ?? []).map((c) => String(c.name))} canWrite={canAuthorEntries(role)} canSign={canRunTalks(role)} userId={userId} />
     </main>

@@ -90,7 +90,8 @@ improvising; the register once shipped dead because a live smoke test was skippe
   per job. The plant form refuses missing/expired, warns on none recorded; the prestart marks the un-inducted
 - `src/lib/outbox/` — the forms' offline queue (prestart create/edit/sign-on/finish, toolbox sign-on/finish, plant
   check). Any new form write goes through `runOrQueue(live, queue)` with phone-chosen ids, and its replay in
-  `sync.ts`; the PDFs print `completed_on_device_at` alongside arrival via `src/lib/pdf/finished-at.ts`
+  `sync.ts` (also `hc_notice`, `swms_review`, `env_monitoring`, `hc_document` — README R76; show queued items with `usePending`, and never
+  `router.refresh()` after a queued save — offline it blanks the screen); the PDFs print `completed_on_device_at` alongside arrival via `src/lib/pdf/finished-at.ts`
 - `src/lib/plant/` — plant prestarts: `checklist.ts` (per-kind checks, frozen labels), `pdf.tsx`, `on-job.ts`
   (the machines on a job: `project_plant` → `plant_register`, the ONE plant vocabulary — there is no per-job
   plant list any more). Tables `plant_register` (org-wide fleet), `project_plant`, `plant_prestarts` (signed =

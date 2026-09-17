@@ -1943,6 +1943,17 @@ id reads as nothing. Every role that reads the record is unchanged. The screen c
 labourer, and so does the link on their home. The chemicals page speaks to a labourer as a reader, not as the person who
 keeps the register: an empty register tells them to ask their supervisor to add what they use. Suite 33.
 
+**R76. The subcontractor's site forms work with no signal.** R74 and R73 added forms filled in on site: telling the head
+contractor about an incident, a SWMS submitted, accepted or returned, an environmental monitoring reading, and a head contractor's
+plan received with its copy. Each wrote straight to the database, so with no signal it failed, breaking non-negotiable 6. They now
+go through `runOrQueue` like every other site form, with ids chosen on the phone, as outbox kinds `hc_notice`, `swms_review`,
+`env_monitoring` and `hc_document` (the copy travels as a blob, is uploaded before the row, and supersedes the older plan on
+replay). A notice waits behind its incident, since both share the subject, so a report made offline lands first. SWMS steps wait
+behind earlier steps on the same phone, so "accepted" never reaches the database before "submitted". Each screen shows what is
+still on the phone (`usePending`), marked as not yet sent, and the waiting banner is on the incident, Construction and
+Environment screens. A save with no signal no longer refreshes the page, which offline blanked it. Drilled with the signal cut on
+all four, then restored: each landed once, in order, the plan with its file, superseding the older copy.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;

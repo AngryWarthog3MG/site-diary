@@ -3,6 +3,9 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
+import * as outbox from '@/lib/outbox/store';
+import { runOrQueue } from '@/lib/outbox/sync';
+import { usePending } from '@/lib/outbox/use-pending';
 import { fmtDate } from '@/lib/pdf/dates';
 import { headContractorName, swmsReviewStatus, SWMS_REVIEW_LABEL, type SwmsReview, type SwmsReviewKind } from '@/lib/subcontract/model';
 
@@ -13,9 +16,12 @@ const STEP_LABEL: Record<SwmsReviewKind, string> = { submitted: 'Submitted', acc
  * with what to change. Each step is its own dated row, never changed. A revision is a new SWMS,
  * so it goes to them again.
  */
-export function SwmsReviewPanel({ swmsId, status: swmsStatus, contractor, reviews, canWrite, today }: { swmsId: string; status: string; contractor: string | null; reviews: SwmsReview[]; canWrite: boolean; today: string }) {
+export function SwmsReviewPanel({ swmsId, projectId, status: swmsStatus, contractor, reviews: saved, canWrite, today }: { swmsId: string; projectId: string; status: string; contractor: string | null; reviews: SwmsReview[]; canWrite: boolean; today: string }) {
   const router = useRouter();
   const name = headContractorName(contractor);
+  // Steps recorded with no signal count at once, in the order they were made; the replay keeps that order.
+  const pending = usePending('swms_review', swmsId).map((q) => ({ ...(q.payload.row as Omit<SwmsReview, 'created_at'>), created_at: `~${q.createdAt}`, queued: true }));
+  const reviews: Array<SwmsReview & { queued?: boolean }> = [...saved, ...pending];
   const { status, latest } = swmsReviewStatus(reviews);
   const [adding, setAdding] = useState<SwmsReviewKind | null>(null);
   const [on, setOn] = useState(today);
@@ -31,10 +37,16 @@ export function SwmsReviewPanel({ swmsId, status: swmsStatus, contractor, review
     if (!adding) return;
     setBusy(true); setError(null);
     try {
-      const { error: e } = await createClient().from('swms_reviews').insert({ swms_id: swmsId, kind: adding, happened_on: on, person_name: person.trim() || null, reference: ref.trim() || null, comments: comments.trim() || null });
-      if (e) throw new Error(e.message);
+      const row = { id: outbox.newId(), swms_id: swmsId, kind: adding, happened_on: on, person_name: person.trim() || null, reference: ref.trim() || null, comments: comments.trim() || null };
+      const live = async () => {
+        const { error: e } = await createClient().from('swms_reviews').insert(row);
+        if (e) throw new Error(e.message);
+      };
+      const queue = () => outbox.enqueue({ kind: 'swms_review', projectId, subjectId: swmsId, payload: { row } }).then(() => undefined);
+      // A step after one still waiting on the phone must wait behind it, or the database would see "accepted" before "submitted".
+      const outcome = pending.length > 0 ? (await queue(), 'queued' as const) : await runOrQueue(live, queue);
       setAdding(null); setPerson(''); setRef(''); setComments('');
-      router.refresh();
+      if (outcome === 'sent') router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'That did not save.');
     } finally {
@@ -46,7 +58,7 @@ export function SwmsReviewPanel({ swmsId, status: swmsStatus, contractor, review
     <div className={`item regpanel${status === 'returned' || (status === 'not_submitted' && swmsStatus === 'active') ? ' item--warn' : ''}`} style={{ margin: '0.9rem 0' }}>
       <p className="label">Review by {name}</p>
       <p className={`caption${status === 'returned' ? ' vr-missing' : ''}`}>
-        <strong>{SWMS_REVIEW_LABEL[status]}</strong>{latest ? ` · ${fmtDate(latest.happened_on)}${latest.person_name ? ` · ${latest.person_name}` : ''}` : ''}
+        <strong>{SWMS_REVIEW_LABEL[status]}</strong>{latest ? ` · ${fmtDate(latest.happened_on)}${latest.person_name ? ` · ${latest.person_name}` : ''}` : ''}{pending.length > 0 ? ' · saved on this phone, sends when there is signal' : ''}
         {status === 'returned' && latest?.comments ? ` — ${latest.comments}` : ''}
       </p>
       {reviews.length > 1 && (
@@ -54,7 +66,7 @@ export function SwmsReviewPanel({ swmsId, status: swmsStatus, contractor, review
           <summary>Every step</summary>
           <ul className="gaplist">
             {[...reviews].sort((a, b) => a.happened_on.localeCompare(b.happened_on) || a.created_at.localeCompare(b.created_at)).map((r) => (
-              <li key={r.id} className="caption">{fmtDate(r.happened_on)} · {STEP_LABEL[r.kind]}{r.person_name ? ` · ${r.person_name}` : ''}{r.reference ? ` · ref ${r.reference}` : ''}{r.comments ? ` — ${r.comments}` : ''}</li>
+              <li key={r.id} className="caption">{fmtDate(r.happened_on)} · {STEP_LABEL[r.kind]}{r.person_name ? ` · ${r.person_name}` : ''}{r.reference ? ` · ref ${r.reference}` : ''}{r.comments ? ` — ${r.comments}` : ''}{r.queued ? <strong> · on this phone, not yet sent</strong> : null}</li>
             ))}
           </ul>
         </details>

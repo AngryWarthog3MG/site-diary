@@ -11,6 +11,7 @@ import { PrincipalToggle, WhsPlanForm } from './whs-plan-form';
 import { ExcavationForm } from './excavation-form';
 import { PlansLink } from './plans-link';
 import { HeadContractorSection } from './head-contractor-section';
+import { OutboxStatus } from '@/components/outbox-status';
 import type { HcDoc } from '@/lib/subcontract/model';
 
 export const dynamic = 'force-dynamic';
@@ -63,6 +64,7 @@ export default async function ConstructionPage({ searchParams }: { searchParams:
         services and trench record for every dig, and the white cards on the crew list.
       </p>
 
+      <OutboxStatus />
       {!isPC && (
         <HeadContractorSection
           projectId={current.project_id}

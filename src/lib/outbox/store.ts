@@ -30,7 +30,11 @@ export type OutboxKind =
   | 'permit_close'
   | 'doc_ack'
   | 'order_raise'
-  | 'order_status';
+  | 'order_status'
+  | 'hc_notice'
+  | 'swms_review'
+  | 'env_monitoring'
+  | 'hc_document';
 
 export type OutboxState = 'queued' | 'syncing' | 'blocked' | 'failed';
 
@@ -69,6 +73,10 @@ export const KIND_LABEL: Record<OutboxKind, string> = {
   doc_ack: 'a read-and-understood signature',
   order_raise: 'an order or plant issue',
   order_status: 'an order update',
+  hc_notice: 'a note that the head contractor was told',
+  swms_review: 'a SWMS review step',
+  env_monitoring: 'a monitoring reading',
+  hc_document: 'a head contractor plan received',
 };
 
 const CHANGED = 'outbox-changed';

@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 import { requireUser, canReport } from '@/lib/auth';
 import { canAuthorEntries, canRunTalks } from '@/lib/roles';
 import { BrandMark } from '@/components/brand-mark';
+import { OutboxStatus } from '@/components/outbox-status';
 import { perthToday } from '@/lib/push/decide';
 import { IncidentScreen, type IncidentView } from './incident-screen';
 import { RegulatorPanel } from './regulator-panel';
@@ -65,6 +66,7 @@ export default async function IncidentPage({ params }: { params: Promise<{ id: s
   return (
     <main className="sheet">
       <p className="label"><BrandMark size={18} /> {project.name}</p>
+      <OutboxStatus />
       <IncidentScreen
         incident={view}
         crew={(crew ?? []).map((c) => String(c.name))}
@@ -77,6 +79,7 @@ export default async function IncidentPage({ params }: { params: Promise<{ id: s
           {underHeadContractor && (
             <HeadContractorPanel
               incidentId={r.id}
+              projectId={r.project_id}
               occurredAt={r.occurred_at}
               contractor={jobRow!.principal_contractor}
               hours={jobRow!.head_contractor_incident_hours}

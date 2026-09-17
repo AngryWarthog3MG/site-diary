@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 import { requireUser, resolveProject, guardScreen } from '@/lib/auth';
 import { sees, canAuthorEntries, canRunTalks } from '@/lib/roles';
 import { BrandMark } from '@/components/brand-mark';
+import { OutboxStatus } from '@/components/outbox-status';
 import { perthToday } from '@/lib/push/decide';
 import { rainPrompts } from '@/lib/environment/model';
 import { EnvironmentScreen, type AspectRow, type LegalRow, type EvaluationRow, type MonitoringRow, type Criteria, type JobSettings } from './environment-screen';
@@ -71,6 +72,7 @@ export default async function EnvironmentPage({ searchParams }: { searchParams: 
         How the work affects the environment and which effects matter, the laws and contract clauses that apply and how, whether
         the job complies, what was measured, and the checks heavy rain calls for.
       </p>
+      <OutboxStatus />
       <EnvironmentScreen
         orgId={org}
         projectId={p}

@@ -3,6 +3,9 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
+import * as outbox from '@/lib/outbox/store';
+import { runOrQueue } from '@/lib/outbox/sync';
+import { usePending } from '@/lib/outbox/use-pending';
 import { fmtDate } from '@/lib/pdf/dates';
 import { awstClock } from '@/lib/signin/register';
 import { perthDay } from '@/lib/incidents/regulator';
@@ -16,12 +19,13 @@ const fromPerthLocal = (v: string) => new Date(`${v}:00+08:00`).toISOString();
  * incident goes to them — usually within a time their site rules set — whatever else is owed to
  * WorkSafe. Each time they are told is its own dated row, never changed.
  */
-export function HeadContractorPanel({ incidentId, occurredAt, contractor, hours, notices, canRecord, defaultName, now }: {
-  incidentId: string; occurredAt: string; contractor: string | null; hours: number | null; notices: IncidentNotice[]; canRecord: boolean; defaultName: string; now: string;
+export function HeadContractorPanel({ incidentId, projectId, occurredAt, contractor, hours, notices, canRecord, defaultName, now }: {
+  incidentId: string; projectId: string; occurredAt: string; contractor: string | null; hours: number | null; notices: IncidentNotice[]; canRecord: boolean; defaultName: string; now: string;
 }) {
   const router = useRouter();
   const name = headContractorName(contractor);
-  const st = noticeState(occurredAt, notices, hours, now);
+  const pending = usePending('hc_notice', incidentId).map((q) => ({ ...(q.payload.row as IncidentNotice), queued: true }));
+  const st = noticeState(occurredAt, [...notices, ...pending], hours, now);
   const [open, setOpen] = useState(false);
   const [at, setAt] = useState(perthLocalNow());
   const [method, setMethod] = useState<NoticeMethod>('phone');
@@ -36,13 +40,18 @@ export function HeadContractorPanel({ incidentId, occurredAt, contractor, hours,
   async function save() {
     setBusy(true); setError(null);
     try {
-      const { error: e } = await createClient().from('incident_notices').insert({
-        incident_id: incidentId, notified_at: fromPerthLocal(at), method, told_by_name: by.trim(),
+      const row = {
+        id: outbox.newId(), incident_id: incidentId, notified_at: fromPerthLocal(at), method, told_by_name: by.trim(),
         recipient_name: to.trim() || null, reference: ref.trim() || null, detail: detail.trim() || null,
-      });
-      if (e) throw new Error(e.message);
+      };
+      const live = async () => {
+        const { error: e } = await createClient().from('incident_notices').insert(row);
+        if (e) throw new Error(e.message);
+      };
+      const queue = () => outbox.enqueue({ kind: 'hc_notice', projectId, subjectId: incidentId, payload: { row } }).then(() => undefined);
+      const outcome = await runOrQueue(live, queue);
       setOpen(false); setTo(''); setRef(''); setDetail('');
-      router.refresh();
+      if (outcome === 'sent') router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'That did not save.');
     } finally {
@@ -50,7 +59,7 @@ export function HeadContractorPanel({ incidentId, occurredAt, contractor, hours,
     }
   }
 
-  const sorted = [...notices].sort((a, b) => a.notified_at.localeCompare(b.notified_at));
+  const sorted = [...notices.map((n) => ({ ...n, queued: false })), ...pending].sort((a, b) => a.notified_at.localeCompare(b.notified_at));
   return (
     <div className={`item regpanel${!st.toldAt ? ' item--warn' : ''}`} style={{ marginTop: '0.9rem' }}>
       <p className="label">Reported to {name}</p>
@@ -67,6 +76,7 @@ export function HeadContractorPanel({ incidentId, occurredAt, contractor, hours,
             <li key={n.id} className="caption">
               <strong>{when(n.notified_at)}</strong> · {NOTICE_METHOD_LABEL[n.method]} · by {n.told_by_name}
               {n.recipient_name ? ` to ${n.recipient_name}` : ''}{n.reference ? ` · their ref ${n.reference}` : ''}{n.detail ? ` · ${n.detail}` : ''}
+              {n.queued ? <strong> · saved on this phone, sends when there is signal</strong> : null}
             </li>
           ))}
         </ul>
