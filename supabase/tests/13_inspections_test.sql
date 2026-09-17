@@ -59,12 +59,12 @@ select tests.expect_error($q$
   update public.inspections set signature_path = 'bbbbbbbb-0000-0000-0000-000000000001/prestart/x/sig.png' where id = 'dddddddd-0000-0000-0000-000000000001'
 $q$, 'own folder');
 update public.inspections set signature_path = 'bbbbbbbb-0000-0000-0000-000000000001/inspection/dddddddd-0000-0000-0000-000000000001/signature.png',
-       completed_on_device_at = timestamptz '2026-09-14 10:05+08'
+       completed_on_device_at = ((current_date::timestamp + interval '10 hours 5 minutes') at time zone 'Australia/Perth')
  where id = 'dddddddd-0000-0000-0000-000000000001';
 do $$ declare i public.inspections; begin
   select * into i from public.inspections where id = 'dddddddd-0000-0000-0000-000000000001';
   assert i.completed_at >= now() - interval '1 minute', 'the signature did not complete it';
-  assert i.completed_on_device_at = timestamptz '2026-09-14 10:05+08', 'the phone''s time was lost';
+  assert i.completed_on_device_at = ((current_date::timestamp + interval '10 hours 5 minutes') at time zone 'Australia/Perth'), 'the phone''s time was lost';
   raise notice 'PASS  the signature completes it, over answers, from its own folder';
 end $$;
 -- Frozen: the policy withholds the row (zero rows); the trigger refuses anyone who is let through.
