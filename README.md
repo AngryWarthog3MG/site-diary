@@ -1934,6 +1934,15 @@ that assumed a Main Roads head contract was reworded: Superintendent became head
 and deadlines are offered where the head contract requires them. The environmental incident panel says the s. 72 DWER duty
 is the occupier's, usually the head contractor on their site. Suite 32.
 
+**R75. A labourer sees only their own reports.** Mitchell asked for it after seeing the labourer's screens. Until then a
+labourer could read the job's whole hazard and incident list, including injury reports marked notifiable and their updates,
+actions and photos. Now the database lets a labourer read a report only if they made it (RESTRICTIVE policies on
+`incidents`, `incident_updates` and `incident_actions` via `app.incident_readable`). The photo rule sits in the existing
+`"record media reads by role"` storage policy through `app.incident_photo_readable`, where a folder that is not an incident
+id reads as nothing. Every role that reads the record is unchanged. The screen calls the list "Your hazard reports" for a
+labourer, and so does the link on their home. The chemicals page speaks to a labourer as a reader, not as the person who
+keeps the register: an empty register tells them to ask their supervisor to add what they use. Suite 33.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;

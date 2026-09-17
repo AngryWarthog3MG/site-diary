@@ -20,7 +20,7 @@ interface Row {
 
 /** The register: open first, the oldest open at the top, closed below. */
 export default async function IncidentsPage({ searchParams }: { searchParams: Promise<{ project?: string }> }) {
-  const { memberships } = await requireUser();
+  const { memberships, userId } = await requireUser();
   const { project } = await searchParams;
   const current = resolveProject(memberships, project);
   if (!current) {
@@ -28,12 +28,14 @@ export default async function IncidentsPage({ searchParams }: { searchParams: Pr
   }
   if (!sees(current, 'incidents')) redirect(`/?project=${current.project_id}`);
   const supabase = await createClient();
-  const { data } = await supabase
+  // A labourer reads only their own reports — the database enforces it (README R75); the filter says so here too.
+  const ownOnly = current.role === 'labourer';
+  let query = supabase
     .from('incidents')
     .select('id, seq, kind, status, notifiable, occurred_at, location, description, injured_name, incident_actions(due_on, done_at)')
-    .eq('project_id', current.project_id)
-    .order('occurred_at', { ascending: false })
-    .limit(200);
+    .eq('project_id', current.project_id);
+  if (ownOnly) query = query.eq('reported_by', userId);
+  const { data } = await query.order('occurred_at', { ascending: false }).limit(200);
   const rows = (data ?? []) as Row[];
   const today = perthToday();
   const open = rows.filter((r) => r.status !== 'closed').sort((a, b) => a.occurred_at.localeCompare(b.occurred_at));
@@ -64,10 +66,11 @@ export default async function IncidentsPage({ searchParams }: { searchParams: Pr
   return (
     <main className="sheet">
       <p className="label"><BrandMark size={18} /> {current.project.name}</p>
-      <h1 className="page-title">Hazards &amp; incidents</h1>
+      <h1 className="page-title">{ownOnly ? 'Your hazard reports' : <>Hazards &amp; incidents</>}</h1>
       <p className="page-subtitle">
-        Report it in a minute, on the phone, with photos. The report is frozen as the first account; what is
-        learned goes on as updates, and corrective actions stay open until they are done.
+        {ownOnly
+          ? 'See something unsafe or someone gets hurt? Report it here with a photo. Below are the reports you have made and where each one is up to.'
+          : 'Report it in a minute, on the phone, with photos. The report is frozen as the first account; what is learned goes on as updates, and corrective actions stay open until they are done.'}
       </p>
       {canReport(current.role) && <Link className="button" href={`/incidents/new${q}`}>Report a hazard or incident</Link>}
       <OutboxStatus />
@@ -78,7 +81,7 @@ export default async function IncidentsPage({ searchParams }: { searchParams: Pr
       </section>
       <hr className="rule" />
       <p className="label">Open</p>
-      {open.length === 0 ? <p className="nil">Nothing open.</p> : open.map(card)}
+      {ownOnly && rows.length === 0 ? <p className="nil">You have not reported anything yet.</p> : open.length === 0 ? <p className="nil">Nothing open.</p> : open.map(card)}
       {closed.length > 0 && (<><p className="label" style={{ marginTop: '1rem' }}>Closed</p>{closed.map(card)}</>)}
     </main>
   );

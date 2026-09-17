@@ -41,9 +41,9 @@ export default async function ChemicalsPage({ searchParams }: { searchParams: Pr
       <p className="label"><BrandMark size={18} /> {current.project.name}</p>
       <h1 className="page-title">Chemicals on site</h1>
       <p className="page-subtitle">
-        Everything hazardous used, handled or stored here, and the safety data sheet for each. Keep it current
-        and keep it where the crew can reach it — that is what the law asks of this page. Print it for the
-        smoko hut so it is still readable when the network is not.
+        {canPutOnSite
+          ? 'Everything hazardous used, handled or stored here, and the safety data sheet for each. Keep it current and keep it where the crew can reach it — that is what the law asks of this page. Print it for the smoko hut so it is still readable when the network is not.'
+          : 'Everything hazardous on this site, and its safety data sheet. Tap a chemical to read how to use it safely, what to wear, and what to do if it spills or gets on you.'}
       </p>
 
       <div className="chemreg__stats">
@@ -57,8 +57,9 @@ export default async function ChemicalsPage({ searchParams }: { searchParams: Pr
 
       {data.register.length === 0 ? (
         <p className="nil">
-          Nothing recorded on this site yet. Add the diesel, the degreaser, the weedkiller, the two-stroke —
-          anything with a hazard on the label.
+          {canPutOnSite
+            ? 'Nothing recorded on this site yet. Add the diesel, the degreaser, the weedkiller, the two-stroke — anything with a hazard on the label.'
+            : 'Nothing recorded on this site yet. If you are using fuel, degreaser, weedkiller or anything with a hazard on the label, ask your supervisor to add it and its safety data sheet.'}
         </p>
       ) : (
         <div className="chemreg__list">
