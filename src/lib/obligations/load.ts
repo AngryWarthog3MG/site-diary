@@ -328,7 +328,8 @@ export async function loadObligations(
       items.push({ key: `hc-notice:${inc.id}`, source: 'incident', title: `Tell ${hcName} — ${incidentRef(inc.seq)}`, basis: hours ? `Their rules: within ${hours} hour${hours === 1 ? '' : 's'}` : 'Reporting up to the head contractor', dueOn: st.dueAt ? dayOf(st.dueAt) : dayOf(inc.occurred_at), status: st.overdue || !st.dueAt ? 'overdue' : 'due_soon', href: `/incidents/${inc.id}` });
     }
     for (const kind of HC_DOC_EXPECTED) {
-      if (hcCurrent.has(kind)) continue;
+      // The emergency plan already has its own item above, worded for a head contractor's site.
+      if (kind === 'emergency_plan' || hcCurrent.has(kind)) continue;
       items.push({ key: `hc-doc:${kind}`, source: 'construction', title: `${hcName}'s ${HC_DOC_LABEL[kind].toLowerCase()} — get a copy`, basis: kind === 'whs_management_plan' ? 'WHS (General) Regs 2022 (WA) regs 309–311 · the principal contractor\'s plan, made available to the businesses on site' : 'WHS (General) Regs 2022 (WA) reg. 43 · the site\'s plan', dueOn: today, status: 'due_soon', href: hcHref });
     }
     for (const sw of (swmsRows ?? []) as Array<{ id: string; title: string; version: number; swms_reviews: SwmsReview[] }>) {
