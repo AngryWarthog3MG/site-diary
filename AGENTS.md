@@ -250,6 +250,15 @@ improvising; the register once shipped dead because a live smoke test was skippe
 - `src/lib/people/name.ts` — the name on the sheets (README R70): `cleanName`, `needsName`. `requireUser` redirects a nameless
   account to `/name` (which must never call `requireUser`); admins set names via PATCH `/api/projects/[id]/members` `{ userId, name }`.
   DB constraint `profiles_full_name_is_a_name`. Never print an email where a person's name belongs. Suite 30
+- `src/lib/environment/` — environmental management (README R73): `model.ts` (`significance`, `evaluationProblems` / `inScope` —
+  TS half of `app.compliance_scope_missing`, `envIncidentState` — Spec 204 clocks from `projects.env_report_hours_*` / `env_investigation_days`
+  (null = none, never hard-code) and EP Act s. 72, `rainPrompts` — `projects.env_rain_inspection_mm` against `project_weather_days`, a
+  prompt only, `monitoringOutcome`). Tables `env_significance_criteria` (versioned by the DB, frozen), `env_aspects` (org; significance
+  stamped by the DB; history in `env_register_history`; never deleted), `project_env_aspects`, `env_legal_obligations` (org or job) +
+  `env_obligation_aspects`, `compliance_evaluations` + `compliance_evaluation_results` (audits pattern: issue needs every obligation in
+  scope answered, discharges the schedule), `incident_environment_events` (environmental incidents only, frozen), `env_monitoring_records`
+  (DB judges value against limit; exceedance needs action; frozen). `/environment`, `/environment/evaluation/[id]`, panel on
+  `/incidents/[id]`; What's due source `environment`. Labourer reads none. Suite 31
 - `src/lib/safety/` — the dashboard: `stats.ts` (pure: `classify` injuries MTI/FAI, `injurySummary` with the
   rate per million labour hours, `daysSinceLastInjury`, `monthBuckets`, `overdue`), `load.ts` (one gather under the
   caller's RLS across sign-ins, prestarts, plant, permits, incidents, inspections, tickets, subcontractors, SWMS,

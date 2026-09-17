@@ -8,6 +8,7 @@ import { loadEmergency } from '@/lib/emergency/load';
 import { withoutWhiteCard } from '@/lib/construction/model';
 import { registerInForce, planReviewDue, notBriefed } from '@/lib/asbestos/model';
 import { programmesDue } from '@/lib/health/model';
+import { envIncidentState, rainPrompts, type EnvEvent } from '@/lib/environment/model';
 import { ncrRef, lotRef, ncrReportState, holdsAwaitingRelease, calibrationStatus, CALIBRATION_LABEL, type PointType, type Result } from '@/lib/quality/model';
 import { nextInspection, registrationStatus, REGISTRATION_LABEL, type InspectionBasis, type RecordKind, type Outcome } from '@/lib/plant/inspections';
 import {
@@ -43,6 +44,12 @@ export interface ObligationsData {
   scheduled: ScheduledRow[];
 }
 
+function addDaysIso(date: string, days: number): string {
+  const d = new Date(`${date}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + days);
+  return d.toISOString().slice(0, 10);
+}
+
 export async function loadObligations(
   supabase: SupabaseClient,
   projectId: string,
@@ -50,7 +57,7 @@ export async function loadObligations(
   today: string,
 ): Promise<ObligationsData> {
   const q = `?project=${projectId}`;
-  const [{ data: schedRows }, chemicals, { data: crewRows }, { data: ticketRows }, { data: notifiableRows }, { data: regRows }, emergency, { data: plantRows }, { data: pcRow }, { data: whsPlanRows }, { data: whiteCards }, { data: ncrRows }, { data: openLots }, { data: equipRows }, { data: findingRows }, { data: reviewActionRows }, { data: asbestosRows }, { data: healthRows }] = await Promise.all([
+  const [{ data: schedRows }, chemicals, { data: crewRows }, { data: ticketRows }, { data: notifiableRows }, { data: regRows }, emergency, { data: plantRows }, { data: pcRow }, { data: whsPlanRows }, { data: whiteCards }, { data: ncrRows }, { data: openLots }, { data: equipRows }, { data: findingRows }, { data: reviewActionRows }, { data: asbestosRows }, { data: healthRows }, { data: envApplies }, { data: envIncidents }, { data: envSettings }, { data: envWeather }, { data: envChecks }, { data: envActions }] = await Promise.all([
     supabase
       .from('obligations')
       .select('id, project_id, kind, title, basis, interval_months, first_due_on, active, obligation_completions(id, due_on, done_on, evidence_note, evidence_ref, created_at, done_by)')
@@ -75,6 +82,13 @@ export async function loadObligations(
     supabase.from('asbestos_registers').select('id, register_date, superseded_by, asbestos_present, plan_date, plan_file_path, asbestos_acknowledgements(person_name)').eq('project_id', projectId),
     // Keepers only, under RLS: anyone else gets no rows, and so no health items.
     supabase.from('health_monitoring_records').select('program_id, person_name, monitored_on, next_due_on, program:health_monitoring_programs!inner(id, hazard, org_id, active)').eq('program.org_id', orgId).eq('program.active', true),
+    // Environment (README R73), under RLS like everything here.
+    supabase.from('project_env_aspects').select('aspect_id').eq('project_id', projectId).eq('applies', true),
+    supabase.from('incidents').select('id, seq, occurred_at, incident_environment_events(id, kind, happened_at, severity, serious, dwer_trigger, person_name, detail)').eq('project_id', projectId).eq('kind', 'environmental').neq('status', 'closed'),
+    supabase.from('projects').select('env_report_hours_serious, env_report_hours_minor, env_investigation_days, env_rain_inspection_mm').eq('id', projectId).maybeSingle(),
+    supabase.from('project_weather_days').select('day, rainfall_mm').eq('project_id', projectId).gte('day', addDaysIso(today, -15)),
+    supabase.from('inspections').select('inspection_date').eq('project_id', projectId).eq('kind', 'environmental').gte('inspection_date', addDaysIso(today, -15)),
+    supabase.from('compliance_evaluation_results').select('id, action, due_on, evaluation:compliance_evaluations!inner(id, org_id, project_id, status, evaluated_on)').eq('result', 'non_compliant').is('done_at', null).eq('evaluation.org_id', orgId).eq('evaluation.status', 'issued').or(`project_id.eq.${projectId},project_id.is.null`, { referencedTable: 'evaluation' }),
   ]);
 
   const scheduled = (schedRows ?? []) as ScheduledRow[];
@@ -290,6 +304,48 @@ export async function loadObligations(
   for (const due of programmesDue(healthList, today)) {
     const n = due.overdue + due.dueSoon;
     items.push({ key: `health:${due.programId}`, source: 'health', title: `Health monitoring — ${hazardOf.get(due.programId)}: ${n} ${n === 1 ? 'person' : 'people'} due`, basis: 'WHS (General) Regs 2022 (WA) Part 7.1 Div 6 · names are on the confidential record', dueOn: due.earliestDue ?? today, status: due.overdue > 0 ? 'overdue' : 'due_soon', href: `/health${q}` });
+  }
+
+  // Environment (README R73): aspects identified for the job, the environmental incident trail,
+  // checks after heavy rain, and actions from issued evaluations of compliance.
+  const envHref = `/environment${q}`;
+  if ((envApplies ?? []).length === 0) {
+    items.push({ key: 'env-aspects', source: 'environment', title: 'Identify the environmental aspects that apply to this job', basis: 'ISO 14001 cl. 6.1.2', dueOn: today, status: 'due_soon', href: `${envHref}#aspects` });
+  }
+  const settingsRow = envSettings as { env_report_hours_serious: number | null; env_report_hours_minor: number | null; env_investigation_days: number | null; env_rain_inspection_mm: number | string | null } | null;
+  const clocks = { seriousHours: settingsRow?.env_report_hours_serious ?? null, minorHours: settingsRow?.env_report_hours_minor ?? null, investigationDays: settingsRow?.env_investigation_days ?? null };
+  const envNow = new Date().toISOString();
+  const perth = (iso: string) => new Date(Date.parse(iso) + 8 * 3_600_000).toISOString().slice(0, 10);
+  for (const inc of (envIncidents ?? []) as Array<{ id: string; seq: number; occurred_at: string; incident_environment_events: EnvEvent[] }>) {
+    const st = envIncidentState(inc.occurred_at, inc.incident_environment_events ?? [], clocks, envNow);
+    const href = `/incidents/${inc.id}`;
+    if (st.dwerNotifiable && !st.dwerWrittenAt) {
+      items.push({ key: `env-dwer:${inc.id}`, source: 'environment', title: `Written notice to DWER — ${incidentRef(inc.seq)}`, basis: 'EP Act 1986 (WA) s. 72 · as soon as practicable; a phone call alone does not meet it', dueOn: today, status: 'overdue', href });
+    }
+    if (st.reportDueAt && !st.reportGivenAt) {
+      items.push({ key: `env-report:${inc.id}`, source: 'environment', title: `Environmental incident report — ${incidentRef(inc.seq)}`, basis: 'Contract clock (MRWA Spec 204 cl. 204.28)', dueOn: perth(st.reportDueAt), status: st.reportOverdue ? 'overdue' : 'due_soon', href });
+    }
+    if (st.investigationDueAt && !st.investigationGivenAt) {
+      items.push({ key: `env-investigation:${inc.id}`, source: 'environment', title: `Investigation report, Serious incident — ${incidentRef(inc.seq)}`, basis: 'Contract clock (MRWA Spec 204 cl. 204.28)', dueOn: perth(st.investigationDueAt), status: st.investigationOverdue ? 'overdue' : dueStatus(perth(st.investigationDueAt), today), href });
+    }
+    if (!st.severity) {
+      items.push({ key: `env-assess:${inc.id}`, source: 'environment', title: `Assess the environmental incident's severity — ${incidentRef(inc.seq)}`, basis: 'Starts the contract reporting clock', dueOn: perth(inc.occurred_at), status: 'overdue', href });
+    }
+  }
+  const rain = rainPrompts(
+    ((envWeather ?? []) as Array<{ day: string; rainfall_mm: number | string | null }>).map((w) => ({ day: w.day, rainfall_mm: w.rainfall_mm == null ? null : Number(w.rainfall_mm) })),
+    ((envChecks ?? []) as Array<{ inspection_date: string }>).map((c) => c.inspection_date),
+    settingsRow?.env_rain_inspection_mm == null ? null : Number(settingsRow.env_rain_inspection_mm),
+    today,
+  );
+  for (const r of rain) {
+    items.push({ key: `env-rain:${r.day}`, source: 'environment', title: `Environmental check after ${r.rainfallMm} mm of rain`, basis: 'ISO 14001 cl. 8.1 · rain from 9 am on the day, by the Bureau; the job sets the trigger', dueOn: r.dueOn, status: dueStatus(r.dueOn, today), href: `/inspections${q}` });
+  }
+  type EvalRef = { id: string; evaluated_on: string };
+  for (const a of (envActions ?? []) as Array<{ id: string; action: string; due_on: string | null; evaluation: EvalRef | EvalRef[] }>) {
+    const ev = Array.isArray(a.evaluation) ? a.evaluation[0] : a.evaluation;
+    if (!ev) continue;
+    items.push({ key: `env-action:${a.id}`, source: 'environment', title: `Compliance action — ${a.action}`, basis: `From the evaluation of compliance of ${ev.evaluated_on.slice(8, 10)}/${ev.evaluated_on.slice(5, 7)}/${ev.evaluated_on.slice(0, 4)}`, dueOn: a.due_on ?? ev.evaluated_on, status: a.due_on ? dueStatus(a.due_on, today) : 'due_soon', href: `/environment/evaluation/${ev.id}${q}` });
   }
 
   const sorted = sortItems(items);

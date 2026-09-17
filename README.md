@@ -1893,6 +1893,30 @@ counted separately, never added as nought. Dayworks on days not yet signed are c
 schedule" returns the same content as an A4 PDF (`/api/dayworks/pdf`), rendered on demand, stored nowhere, with no AI text.
 Checked on Curtin: 12 items and 106 hours for the whole job, matching an independent count of the signed record.
 
+**R73. Environmental management: what the ISO 14001 report found missing.** The research (ISO 14001 on Site, 17/09/2026)
+found the app already kept most of the evidence ISO 14001 asks to be retained, and nothing it asks to be maintained. `/environment`
+(Safety in the menu, the `environment` screen, every role but the labourer) now holds it. The **aspects register** (cl. 6.1.2) is
+company-wide, with a yes or no per job, judged by the database against **significance criteria** that are versioned and frozen.
+Likelihood times consequence at or over the threshold is significant, and every change to an aspect keeps the row as it was.
+The **legal register** (cl. 6.1.3) holds each obligation's source, reference, requirement and how it applies, company-wide or
+for one job's contract or approvals, linked to aspects. An **evaluation of compliance** (cl. 9.1.2) cannot be issued until every
+obligation in scope has a result, every result but "not applicable" has evidence, and every non-compliance has an action. It
+also needs a summary. Issuing it freezes it and discharges its schedule in the same transaction, like audits (R67). Its actions
+stay on What's due until done. **Monitoring** (cl. 9.1.1) records dust, noise, vibration, water and waste readings. The database
+judges a reading against its limit, refuses an exceedance without the action taken, and freezes the row.
+
+The clocks come from contract and law, not ISO. An **environmental incident** carries its own frozen trail beside the WorkSafe one
+(R62): severity on Spec 204's five-level scale and whether it is Serious, the Superintendent notified, the report within the job's
+hours (moderate or worse, or minor or less) counted from when it happened, the investigation within the job's days of notifying the
+Superintendent, and EP Act s. 72. That is DWER-notifiable and why; a phone call to Environment WAtch, which the panel and What's due
+both say does not meet s. 72 on its own; and the written notice. The clocks are per job and blank means none, following
+`ncr_report_hours`; "Fill in Spec 204's" sets 24 hours, 72 hours and 28 days. **After heavy rain**, the Bureau's rainfall for the
+job at or over the job's trigger (10 mm by default, the M12 West CEMP figure, which a contract may change) with no environmental
+check dated from that day to two days after puts a check on What's due for the next day. It is a prompt; the check is the record.
+A Spec 204 environmental audit preset (three-monthly, cl. 204.32) joins the schedule presets. Environmental nonconformities go to
+evaluation actions, audit findings or incident actions. The quality NCR stays tied to lots. Not built, because the research refuted
+them: a prescribed register format, and daily dust-control evidence as an ISO requirement. Suite 31.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;

@@ -34,6 +34,7 @@ export const PRESETS: ReadonlyArray<{ kind: ObligationKind; title: string; inter
   { kind: 'management_review', title: 'Management review of this job', intervalMonths: 3, basis: 'Main Roads WA Spec 201 cl. 201.13', scope: 'project' },
   { kind: 'management_review', title: 'Company management review', intervalMonths: 12, basis: 'ISO 9001, 45001, 14001 cl. 9.3', scope: 'org' },
   { kind: 'compliance_evaluation', title: 'Evaluation of compliance with legal obligations', intervalMonths: 12, basis: 'ISO 45001 cl. 9.1.2 · ISO 14001 cl. 9.1.2', scope: 'org' },
+  { kind: 'internal_audit', title: 'Environmental audit of this job (EMP operational controls)', intervalMonths: 3, basis: 'Main Roads WA Spec 204 cl. 204.32 · first within a month of starting, then at least three-monthly · ISO 14001 cl. 9.2', scope: 'project' },
   { kind: 'plan_review', title: 'Asbestos management plan reviewed', intervalMonths: 60, basis: 'WHS (General) Regs 2022 (WA) reg. 429', scope: 'project' },
 ];
 
@@ -123,7 +124,7 @@ export function daysLate(completion: CompletionFacts): number {
 }
 
 /** Where an item came from. Only 'scheduled' is stored as an obligation; the rest are read off their records. */
-export type ItemSource = 'scheduled' | 'sds' | 'ticket' | 'incident' | 'emergency' | 'plant' | 'construction' | 'quality' | 'audits' | 'asbestos' | 'health';
+export type ItemSource = 'scheduled' | 'sds' | 'ticket' | 'incident' | 'emergency' | 'plant' | 'construction' | 'quality' | 'audits' | 'asbestos' | 'health' | 'environment';
 
 export interface ObligationItem {
   key: string;

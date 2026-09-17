@@ -7,6 +7,8 @@ import { perthToday } from '@/lib/push/decide';
 import { IncidentScreen, type IncidentView } from './incident-screen';
 import { RegulatorPanel } from './regulator-panel';
 import type { RegulatorEvent } from '@/lib/incidents/regulator';
+import { EnvironmentPanel } from './environment-panel';
+import type { EnvEvent } from '@/lib/environment/model';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Incident · KBS Daily Diary' };
@@ -26,11 +28,19 @@ export default async function IncidentPage({ params }: { params: Promise<{ id: s
   if (!r) notFound();
   const membership = memberships.find((m) => m.project_id === r.project_id);
   const role = membership?.role ?? 'pm';
-  const [{ data: crew }, { data: regRows }] = await Promise.all([
+  const environmental = r.kind === 'environmental' && role !== 'labourer';
+  const [{ data: crew }, { data: regRows }, { data: envRows }, { data: clocks }] = await Promise.all([
     supabase.from('crew').select('name').eq('project_id', r.project_id).eq('active', true).order('sort_order').order('name'),
     // Read under RLS: a labourer, who does not read the record, gets none and no panel is drawn for them.
     supabase.from('incident_regulator_events').select('id, kind, happened_at, method, person_name, detail').eq('incident_id', r.id),
+    environmental
+      ? supabase.from('incident_environment_events').select('id, kind, happened_at, severity, serious, dwer_trigger, person_name, detail').eq('incident_id', r.id)
+      : Promise.resolve({ data: [] }),
+    environmental
+      ? supabase.from('projects').select('env_report_hours_serious, env_report_hours_minor, env_investigation_days').eq('id', r.project_id).maybeSingle()
+      : Promise.resolve({ data: null }),
   ]);
+  const clockRow = clocks as { env_report_hours_serious: number | null; env_report_hours_minor: number | null; env_investigation_days: number | null } | null;
   const project = Array.isArray(r.project) ? r.project[0] : r.project;
   const who = (p: unknown) => { const x = (Array.isArray(p) ? p[0] : p) as { full_name?: string | null; email?: string | null } | null; return x?.full_name ?? x?.email ?? '—'; };
   const view: IncidentView = {
@@ -56,6 +66,17 @@ export default async function IncidentPage({ params }: { params: Promise<{ id: s
         userId={userId}
         today={perthToday()}
         regulator={role === 'labourer' ? null : (
+          <>
+          {environmental && (
+            <EnvironmentPanel
+              incidentId={r.id}
+              occurredAt={r.occurred_at}
+              events={(envRows ?? []) as EnvEvent[]}
+              clocks={{ seriousHours: clockRow?.env_report_hours_serious ?? null, minorHours: clockRow?.env_report_hours_minor ?? null, investigationDays: clockRow?.env_investigation_days ?? null }}
+              canManage={canAuthorEntries(role)}
+              now={new Date().toISOString()}
+            />
+          )}
           <RegulatorPanel
             incidentId={r.id}
             notifiable={Boolean(r.notifiable)}
@@ -63,6 +84,7 @@ export default async function IncidentPage({ params }: { params: Promise<{ id: s
             canManage={canAuthorEntries(role)}
             now={new Date().toISOString()}
           />
+          </>
         )}
       />
     </main>
