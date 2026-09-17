@@ -73,11 +73,14 @@ export function TodayPanel({
   canRecord,
   canPrestart,
   roleLabel,
+  doors = { prestart: true, permits: true, incidents: true, signin: true, plant: true },
 }: {
   projectId: string;
   canRecord: boolean;
   canPrestart: boolean;
   roleLabel: string;
+  /** Which of the screens this panel links to are ticked for this person (README R57). A row for a closed screen is not drawn. */
+  doors?: { prestart: boolean; permits: boolean; incidents: boolean; signin: boolean; plant: boolean };
 }) {
   const router = useRouter();
   const [date, setDate] = useState('');
@@ -561,7 +564,7 @@ export function TodayPanel({
         </Link>
       )}
 
-      {!loading && canPrestart && (
+      {!loading && canPrestart && doors.prestart && (
         <div className={`prestart-row ${prestart?.done ? 'prestart-row--done' : prestart ? 'prestart-row--open' : ''}`}>
           <span>
             {prestart?.done
@@ -579,25 +582,25 @@ export function TodayPanel({
           )}
         </div>
       )}
-      {!loading && (permits.live > 0 || permits.expired > 0) && (
+      {!loading && doors.permits && (permits.live > 0 || permits.expired > 0) && (
         <div className={`prestart-row ${permits.expired > 0 ? 'prestart-row--open' : 'prestart-row--done'}`}>
           <span>{permits.live > 0 ? `${permits.live} permit${permits.live === 1 ? '' : 's'} to work live` : ''}{permits.live > 0 && permits.expired > 0 ? ' · ' : ''}{permits.expired > 0 ? `${permits.expired} past ${permits.expired === 1 ? 'its' : 'their'} window, not closed` : ''}</span>
           <Link href={`/permits?project=${projectId}`}>Permits</Link>
         </div>
       )}
-      {!loading && (safety.open > 0 || safety.overdue > 0) && (
+      {!loading && doors.incidents && (safety.open > 0 || safety.overdue > 0) && (
         <div className={`prestart-row ${safety.overdue > 0 ? 'prestart-row--open' : ''}`}>
           <span>{safety.open} safety report{safety.open === 1 ? '' : 's'} open{safety.overdue > 0 ? ` · ${safety.overdue} action${safety.overdue === 1 ? '' : 's'} overdue` : ''}</span>
           <Link href={`/incidents?project=${projectId}`}>Open</Link>
         </div>
       )}
-      {!loading && (
+      {!loading && doors.signin && (
         <div className={`prestart-row ${onSite > 0 ? 'prestart-row--done' : ''}`}>
           <span>{onSite > 0 ? `On site now · ${onSite}` : 'Nobody signed in at the gate yet'}</span>
           <Link href={`/signin?project=${projectId}`}>{canPrestart ? 'Sign-in' : 'Look'}</Link>
         </div>
       )}
-      {!loading && canPrestart && tomorrowPrestart && (
+      {!loading && canPrestart && doors.prestart && tomorrowPrestart && (
         <div className="prestart-row prestart-row--done">
           <span>Tomorrow&rsquo;s prestart is ready · {fmtDate(tomorrowPrestart.date)}</span>
           <Link href={`/prestart/${tomorrowPrestart.id}`}>Look it over</Link>
@@ -607,7 +610,7 @@ export function TodayPanel({
       {taggedOut.length > 0 && (
         <div className="prestart-row prestart-row--open home-tagged">
           <span>Not to be used today: {taggedOut.join(', ')}</span>
-          <Link href={`/plant?project=${projectId}`}>Plant</Link>
+          {doors.plant && <Link href={`/plant?project=${projectId}`}>Plant</Link>}
         </div>
       )}
       {covered.size > 0 && (

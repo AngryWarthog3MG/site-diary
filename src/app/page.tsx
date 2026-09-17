@@ -8,7 +8,7 @@ import {
   resolveProject,
   canAuthorEntries,
 } from '@/lib/auth';
-import { canRunTalks, canReport, ROLE_LABEL } from '@/lib/roles';
+import { canRunTalks, canReport, sees, ROLE_LABEL, type Screen } from '@/lib/roles';
 import { navFor, viewerFor } from '@/lib/nav';
 import { SignOutButton } from '@/components/sign-out-button';
 import { TodayPanel } from './today-panel';
@@ -64,6 +64,8 @@ export default async function TodayPage({
   const talks = canRunTalks(current.role);
   const reports = canReport(current.role);
   const authors = canAuthorEntries(current.role);
+  // A quick button is a door like any other: the role must allow it AND the screen must be ticked for this person (README R57).
+  const opens = (screen: Screen) => sees(current, screen);
 
   return (
     <main className="app-shell home-shell dash">
@@ -89,14 +91,14 @@ export default async function TodayPage({
       <SectionBar groups={groups} q={q} />
       <FirstRun role={current.role} />
 
-      {(talks || authors || reports) && (
+      {((reports && opens('incidents')) || (!talks && reports && opens('signin')) || (talks && (opens('inspections') || opens('prestart') || opens('orders'))) || (authors && opens('permits'))) && (
         <div className="dash-actions">
-          {reports && <Link className="dash-action" href={`/incidents/new${q}`}><span aria-hidden>⚠</span> New hazard</Link>}
-          {!talks && reports && <Link className="dash-action" href={`/signin${q}`}><span aria-hidden>⇥</span> Sign in / out</Link>}
-          {talks && <Link className="dash-action" href={`/inspections/new${q}`}><span aria-hidden>☑</span> New inspection</Link>}
-          {authors && <Link className="dash-action" href={`/permits/new${q}`}><span aria-hidden>▤</span> New permit</Link>}
-          {talks && <Link className="dash-action" href={`/prestart/new${q}`}><span aria-hidden>☀</span> New prestart</Link>}
-          {talks && <Link className="dash-action" href={`/orders${q}#raise`}><span aria-hidden>▣</span> Order / plant issue</Link>}
+          {reports && opens('incidents') && <Link className="dash-action" href={`/incidents/new${q}`}><span aria-hidden>⚠</span> New hazard</Link>}
+          {!talks && reports && opens('signin') && <Link className="dash-action" href={`/signin${q}`}><span aria-hidden>⇥</span> Sign in / out</Link>}
+          {talks && opens('inspections') && <Link className="dash-action" href={`/inspections/new${q}`}><span aria-hidden>☑</span> New inspection</Link>}
+          {authors && opens('permits') && <Link className="dash-action" href={`/permits/new${q}`}><span aria-hidden>▤</span> New permit</Link>}
+          {talks && opens('prestart') && <Link className="dash-action" href={`/prestart/new${q}`}><span aria-hidden>☀</span> New prestart</Link>}
+          {talks && opens('orders') && <Link className="dash-action" href={`/orders${q}#raise`}><span aria-hidden>▣</span> Order / plant issue</Link>}
         </div>
       )}
 
@@ -106,6 +108,7 @@ export default async function TodayPage({
             projectId={current.project_id}
             canRecord={authors}
             canPrestart={talks}
+            doors={{ prestart: opens('prestart'), permits: opens('permits'), incidents: opens('incidents'), signin: opens('signin'), plant: opens('plant') }}
             roleLabel={ROLE_LABEL[current.role].toLowerCase() === 'project manager' ? 'the project manager' : `the ${ROLE_LABEL[current.role].toLowerCase()}`}
           />
         </section>
