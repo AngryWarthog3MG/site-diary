@@ -107,8 +107,9 @@ select set_config('request.jwt.claims', '{"sub":"55555555-5555-5555-5555-5555555
 set local role authenticated;
 do $$ begin
   assert (select count(*) from public.incident_regulator_events) = 0, 'a labourer read the WorkSafe trail';
-  assert (select count(*) from public.incidents) = 1, 'a labourer lost the reports';
-  raise notice 'PASS  a labourer keeps the reports and does not read the WorkSafe trail';
+  -- README R75: a labourer reads only the reports they made; this one is the supervisor's.
+  assert (select count(*) from public.incidents) = 0, 'a labourer read a report they did not make';
+  raise notice 'PASS  a labourer reads neither someone else''s report nor the WorkSafe trail';
 end $$;
 
 reset role;
