@@ -310,7 +310,9 @@ improvising; the register once shipped dead because a live smoke test was skippe
   for the button (`POST /api/reports/monthly` plan, then `&part=N`) and the monthly email (builds nightly through the first week).
   A new PDF route must be added to `outputFileTracingIncludes` in `next.config.ts` or Chromium is missing on Vercel (501) `weekly/photos.ts` gathers the week's photographs (embedded,
   one print per photo per day, capped); `img[data-shrink]` in `src/lib/pdf/render.ts` re-encodes marked images
-  before printing — never mark an image in the daily docket, its bytes must not change
+  before printing — never mark an image in the daily docket, its bytes must not change. A report carrying more than a
+  handful of photographs must put them in `data-src`, NOT `src` (README R84): `setContent` waits for every `src` to load,
+  and two dozen decoded phone photographs kill Chromium on Vercel — `data-src` is decoded one at a time
 - `supabase/migrations/` — append only; never edit an applied migration
 - `README.md` — the design record, including why each decision went the way it did.
   Read the relevant section before changing behaviour in that area.
