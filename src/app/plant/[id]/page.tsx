@@ -8,7 +8,7 @@ import { readChecks, PLANT_KIND_LABEL, isPlantKind } from '@/lib/plant/checklist
 import { PdfLink } from './pdf-link';
 
 export const dynamic = 'force-dynamic';
-export const metadata = { title: 'Plant prestart · KBS Daily Diary' };
+export const metadata = { title: 'Plant prestart · Kooboolong IMS' };
 
 export default async function PlantPrestartPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;

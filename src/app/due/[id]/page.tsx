@@ -10,7 +10,7 @@ import type { ObligationKind } from '@/lib/obligations/model';
 import { ScheduleScreen } from './schedule-screen';
 
 export const dynamic = 'force-dynamic';
-export const metadata = { title: 'Schedule · KBS Daily Diary' };
+export const metadata = { title: 'Schedule · Kooboolong IMS' };
 
 /**
  * One schedule: when the next occurrence is due, and every past occurrence

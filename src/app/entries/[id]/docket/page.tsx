@@ -9,7 +9,7 @@ import { DayNav } from '@/components/day-nav';
 import { loadDayNeighbours } from '@/lib/entries/neighbours';
 
 export const dynamic = 'force-dynamic';
-export const metadata = { title: 'Docket · Site Diary' };
+export const metadata = { title: 'Docket · Kooboolong IMS' };
 
 /**
  * The docket on screen.

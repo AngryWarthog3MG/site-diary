@@ -7,7 +7,7 @@ import { readSteps, type SwmsKind } from '@/lib/swms/model';
 import { SwmsForm, type SwmsFormValues } from './swms-form';
 
 export const dynamic = 'force-dynamic';
-export const metadata = { title: 'New SWMS · KBS Daily Diary' };
+export const metadata = { title: 'New SWMS · Kooboolong IMS' };
 
 /**
  * A new method statement — blank, or started from an existing one (`from`),

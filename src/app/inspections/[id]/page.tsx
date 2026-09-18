@@ -8,7 +8,7 @@ import { readItems, type InspectionKind } from '@/lib/inspections/model';
 import { InspectionScreen, type InspectionView } from './inspection-screen';
 
 export const dynamic = 'force-dynamic';
-export const metadata = { title: 'Inspection · KBS Daily Diary' };
+export const metadata = { title: 'Inspection · Kooboolong IMS' };
 
 export default async function InspectionPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;

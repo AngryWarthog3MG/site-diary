@@ -5,7 +5,7 @@ import { needsName } from '@/lib/people/name';
 import { NameForm } from './name-form';
 
 export const dynamic = 'force-dynamic';
-export const metadata = { title: 'Your name · KBS Daily Diary' };
+export const metadata = { title: 'Your name · Kooboolong IMS' };
 
 /**
  * The name that goes on the sheets. Anyone signed in without one is sent here
@@ -23,7 +23,7 @@ export default async function NamePage() {
 
   return (
     <main className="sheet">
-      <p className="label"><BrandMark size={18} /> KBS Daily Diary</p>
+      <p className="label"><BrandMark size={18} /> Kooboolong IMS</p>
       <h1 className="page-title">{first ? 'What is your name?' : 'Your name'}</h1>
       <p className="page-subtitle">
         {first

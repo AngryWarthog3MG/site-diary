@@ -10,7 +10,7 @@ import { readRange, type RangeKey } from '@/lib/dayworks/schedule';
 import { loadDayworksSchedule, type DayworksScheduleData } from '@/lib/dayworks/load';
 
 export const dynamic = 'force-dynamic';
-export const metadata = { title: 'Dayworks schedule · KBS Daily Diary' };
+export const metadata = { title: 'Dayworks schedule · Kooboolong IMS' };
 
 const hrs = (n: number) => (Number.isInteger(n) ? String(n) : n.toFixed(2).replace(/0$/, ''));
 

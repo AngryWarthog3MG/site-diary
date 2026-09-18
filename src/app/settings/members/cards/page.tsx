@@ -8,7 +8,7 @@ import type { MemberRole } from '@/types/database';
 import { BrandMark } from '@/components/brand-mark';
 
 export const dynamic = 'force-dynamic';
-export const metadata = { title: 'Sign-in cards · KBS Daily Diary' };
+export const metadata = { title: 'Sign-in cards · Kooboolong IMS' };
 
 /**
  * Rollout day. One card per person with a QR code that signs them in — the

@@ -8,7 +8,7 @@ import { registerInForce, notBriefed } from '@/lib/asbestos/model';
 import { AsbestosScreen, type RegisterRow, type RemovalRow } from './asbestos-screen';
 
 export const dynamic = 'force-dynamic';
-export const metadata = { title: 'Asbestos · KBS Daily Diary' };
+export const metadata = { title: 'Asbestos · Kooboolong IMS' };
 
 /**
  * Asbestos on this workplace: the register in force — usually received from

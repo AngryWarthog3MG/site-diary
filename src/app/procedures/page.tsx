@@ -9,7 +9,7 @@ import { fmtDate, fmtPerthDate } from '@/lib/pdf/dates';
 import { KIND_LABEL, coverage, type ControlledKind } from '@/lib/documents-control/model';
 
 export const dynamic = 'force-dynamic';
-export const metadata = { title: 'Policies & procedures · KBS Daily Diary' };
+export const metadata = { title: 'Policies & procedures · Kooboolong IMS' };
 
 interface Row {
   id: string; title: string; kind: ControlledKind; doc_number: string | null; requires_acknowledgement: boolean; active: boolean;

@@ -10,7 +10,7 @@ import { loadSafety } from '@/lib/safety/load';
 import { VERDICT_LABEL, type Verdict } from '@/lib/subcontractors/model';
 
 export const dynamic = 'force-dynamic';
-export const metadata = { title: 'Safety · KBS Daily Diary' };
+export const metadata = { title: 'Safety · Kooboolong IMS' };
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 

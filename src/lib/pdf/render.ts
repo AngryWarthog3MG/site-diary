@@ -348,8 +348,8 @@ async function normalise(raw: Uint8Array, meta: DocumentMeta): Promise<Uint8Arra
   pdf.setAuthor(meta.author);
   pdf.setSubject(meta.subject);
   pdf.setKeywords(meta.keywords);
-  pdf.setProducer('Site Diary');
-  pdf.setCreator('Site Diary');
+  pdf.setProducer('Kooboolong IMS');
+  pdf.setCreator('Kooboolong IMS');
   pdf.setCreationDate(meta.instant);
   pdf.setModificationDate(meta.instant);
 

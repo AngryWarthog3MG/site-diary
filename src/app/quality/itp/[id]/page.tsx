@@ -9,7 +9,7 @@ import { itpRef, lotRef, LOT_STATUS_LABEL, type LotStatus, type PointType } from
 import { ItpScreen } from './itp-screen';
 
 export const dynamic = 'force-dynamic';
-export const metadata = { title: 'ITP · KBS Daily Diary' };
+export const metadata = { title: 'ITP · Kooboolong IMS' };
 
 export default async function ItpPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ project?: string }> }) {
   const { memberships } = await requireUser();

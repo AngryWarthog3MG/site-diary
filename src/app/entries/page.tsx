@@ -7,7 +7,7 @@ import { RegisterList, type RegisterRow } from './register-list';
 import { canAuthorEntries } from '@/lib/roles';
 
 export const dynamic = 'force-dynamic';
-export const metadata = { title: 'Daily Diary · KBS Daily Diary' };
+export const metadata = { title: 'Daily Diary · Kooboolong IMS' };
 
 /**
  * The register: every entry on the project, newest first.

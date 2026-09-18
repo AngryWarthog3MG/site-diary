@@ -7,7 +7,7 @@ import { DEFAULT_RULES, gateUrl } from '@/lib/gate/model';
 import { GateAdmin } from './gate-admin';
 
 export const dynamic = 'force-dynamic';
-export const metadata = { title: 'Gate code · KBS Daily Diary' };
+export const metadata = { title: 'Gate code · Kooboolong IMS' };
 
 /** The gate code for this job: the QR to print, the rules a visitor accepts, and a new code when the old one is compromised. */
 export default async function GatePage({ searchParams }: { searchParams: Promise<{ project?: string }> }) {

@@ -2041,6 +2041,33 @@ where the browser's own undo is better and is left alone. Fifty steps are kept (
 Undoing away a photograph leaves its file in storage with nothing pointing at it until it is put back or the nightly
 `orphans=1` check reports it — the same as removing the photograph by hand, which is what undo is undoing.
 
+**R80. The app is Kooboolong IMS.** It began as a site diary and is now the company's integrated management
+system: the diary is one section of it, beside safety, quality, environment, plant, people and the registers. So the
+name on the brand row, the home screen, the browser tab, the push notification and the From line of every email it
+sends is Kooboolong IMS, and `/entries` keeps the name Daily Diary as what it is — the section. The repository, the npm
+package and the Vercel project stay `site-diary`; renaming those moves the deployment and buys nothing.
+
+The one place the change reaches a document is the PDF's internal Producer and Creator metadata, which now names the
+software that made the file. Dockets already stored are the record and are never regenerated (non-negotiable 2) — the
+PDF route reuses the stored file and never renders over it — so nothing that exists changes. A docket exported for the
+first time after today differs by that one string from what the same entry would have produced yesterday; determinism
+is unchanged, because it is a promise that the same entry renders the same way, not that the software never changes.
+
+**R81. Work that belongs to a variation goes in variations, not dayworks.** The vac trailer on Curtin is variation
+V-001, "Excavate for mainline using Vac", raised on 2026-08-31 and priced. Several days recorded it under dayworks
+instead — the same work, filed as day labour, where a progress claim would never find it and the register would never
+add up the hours. Mitchell asked for it moved, on every day, signed or not.
+
+Signed days are not edited. 2026-09-10 and 2026-09-15 had already been corrected — each carries a superseding entry
+whose vac work sits under variations — and the original stays exactly as it was signed, which is the point of it.
+2026-09-16 and 2026-09-17 each had a correction already open, and 2026-09-18 was still the day's own draft; the move
+was made on those three. A variation has no plant field, so the daywork's plant text was carried into the description
+rather than dropped: "Vac Truck" on the 17th is not on that day's plant list, and a variation claim that loses a
+machine loses money. Hours moved across as recorded and nowhere invented — the 18th had none stated, so it has none.
+
+A variation reaches the register only through its number (`variations.register_seq`), and the insert trigger links it.
+Every moved row carries 1, so V-001 now collects each vac day.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;

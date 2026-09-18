@@ -1,6 +1,6 @@
 import { LoginForm } from './login-form';
 
-export const metadata = { title: 'Sign in · KBS Daily Diary' };
+export const metadata = { title: 'Sign in · Kooboolong IMS' };
 
 export default async function LoginPage({
   searchParams,
@@ -16,7 +16,7 @@ export default async function LoginPage({
         <div className="brand">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img className="brand__frog" src="/brand/frog.png" alt="" width={34} height={38} />
-          <span className="brand__name">KBS Daily Diary</span>
+          <span className="brand__name">Kooboolong IMS</span>
         </div>
         <h1 className="page-title">Sign in</h1>
         <p className="page-subtitle">

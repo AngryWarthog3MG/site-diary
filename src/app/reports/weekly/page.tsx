@@ -10,7 +10,7 @@ import { GenerateWeeklyPdf, MonthlyBundleButton } from './generate-button';
 import { fmtDate } from '@/lib/pdf/dates';
 
 export const dynamic = 'force-dynamic';
-export const metadata = { title: 'Weekly report · KBS Daily Diary' };
+export const metadata = { title: 'Weekly report · Kooboolong IMS' };
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 

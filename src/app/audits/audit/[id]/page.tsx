@@ -9,7 +9,7 @@ import { fmtDate } from '@/lib/pdf/dates';
 import { AuditScreen } from './audit-screen';
 
 export const dynamic = 'force-dynamic';
-export const metadata = { title: 'Audit · KBS Daily Diary' };
+export const metadata = { title: 'Audit · Kooboolong IMS' };
 
 export default async function AuditPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ project?: string }> }) {
   const { memberships } = await requireUser();

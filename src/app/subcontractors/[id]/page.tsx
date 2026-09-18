@@ -8,7 +8,7 @@ import { compliance, type DocKind } from '@/lib/subcontractors/model';
 import { SubcontractorScreen, type SubcontractorView } from './subcontractor-screen';
 
 export const dynamic = 'force-dynamic';
-export const metadata = { title: 'Subcontractor · KBS Daily Diary' };
+export const metadata = { title: 'Subcontractor · Kooboolong IMS' };
 
 export default async function SubcontractorPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ project?: string }> }) {
   const { id } = await params;

@@ -7,7 +7,7 @@ import { perthToday } from '@/lib/push/decide';
 import { OrderScreen, type OrderView } from './order-screen';
 
 export const dynamic = 'force-dynamic';
-export const metadata = { title: 'Order · KBS Daily Diary' };
+export const metadata = { title: 'Order · Kooboolong IMS' };
 
 export default async function OrderPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;

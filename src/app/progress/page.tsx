@@ -9,7 +9,7 @@ import { ProgressChart } from './progress-chart';
 import { fmtDate } from '@/lib/pdf/dates';
 
 export const dynamic = 'force-dynamic';
-export const metadata = { title: 'Progress · KBS Daily Diary' };
+export const metadata = { title: 'Progress · Kooboolong IMS' };
 
 /** Percent-complete per area across the project's life, from the signed record. */
 export default async function ProgressPage({

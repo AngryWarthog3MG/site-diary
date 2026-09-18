@@ -9,7 +9,7 @@ import { rainPrompts } from '@/lib/environment/model';
 import { EnvironmentScreen, type AspectRow, type LegalRow, type EvaluationRow, type MonitoringRow, type Criteria, type JobSettings } from './environment-screen';
 
 export const dynamic = 'force-dynamic';
-export const metadata = { title: 'Environment · KBS Daily Diary' };
+export const metadata = { title: 'Environment · Kooboolong IMS' };
 
 function addDays(date: string, days: number): string {
   const d = new Date(`${date}T00:00:00Z`);

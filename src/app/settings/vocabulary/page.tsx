@@ -5,7 +5,7 @@ import { canAuthorEntries, requireUser, resolveProject } from '@/lib/auth';
 import { VocabularyForm, type KeywordRow } from './vocabulary-form';
 
 export const dynamic = 'force-dynamic';
-export const metadata = { title: 'Vocabulary · Site Diary' };
+export const metadata = { title: 'Vocabulary · Kooboolong IMS' };
 
 export default async function VocabularyPage({
   searchParams,

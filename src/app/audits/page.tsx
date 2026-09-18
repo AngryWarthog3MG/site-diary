@@ -9,7 +9,7 @@ import { fmtDate } from '@/lib/pdf/dates';
 import { NewAuditForm, NewReviewForm } from './audit-forms';
 
 export const dynamic = 'force-dynamic';
-export const metadata = { title: 'Audits and reviews · KBS Daily Diary' };
+export const metadata = { title: 'Audits and reviews · Kooboolong IMS' };
 
 /**
  * Internal audits and management reviews: the reports, their findings, and the

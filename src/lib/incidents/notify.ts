@@ -41,7 +41,7 @@ export async function notifyOffice(incidentId: string): Promise<NotifyOutcome> {
     signal: AbortSignal.timeout(20_000),
     headers: { Authorization: `Bearer ${process.env.SMTP_PASS?.trim()}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      from: `Site Diary <${process.env.SMTP_SENDER ?? 'diary@kbsdailydiary.me'}>`,
+      from: `Kooboolong IMS <${process.env.SMTP_SENDER ?? 'diary@kbsdailydiary.me'}>`,
       to: list,
       subject: `${r.notifiable ? 'NOTIFIABLE — ' : ''}${kindLabel} ${ref} — ${project.name}`,
       html:

@@ -7,7 +7,7 @@ import { fmtDate } from '@/lib/pdf/dates';
 import { isRestDay } from '@/lib/calendar';
 
 export const dynamic = 'force-dynamic';
-export const metadata = { title: 'All jobs · KBS Daily Diary' };
+export const metadata = { title: 'All jobs · Kooboolong IMS' };
 
 /**
  * The owner's screen: every active job at a glance — the week's rhythm, the

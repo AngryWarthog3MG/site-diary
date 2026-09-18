@@ -11,7 +11,7 @@ import { KIND_LABEL, orderRef, statusLabel, summarise, isFinished, type OrderKin
 import { RaiseOrder } from './raise-order';
 
 export const dynamic = 'force-dynamic';
-export const metadata = { title: 'Orders & plant issues · KBS Daily Diary' };
+export const metadata = { title: 'Orders & plant issues · Kooboolong IMS' };
 
 interface Row {
   id: string; seq: number; kind: OrderKind; status: OrderStatus; item: string; quantity: string | null; plant: string | null;

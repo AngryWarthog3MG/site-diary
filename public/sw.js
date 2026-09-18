@@ -22,7 +22,7 @@
 // app with no signal was handed a page shell from weeks ago and kept it.
 // Bumped alongside the update check in sw-register.tsx, which is the real fix.
 // v10: /health is confidential and is never cached — a revoked keeper's phone must not still show it offline.
-const VERSION = 'v10';
+const VERSION = 'v11';
 const PAGES = `pages-${VERSION}`;
 const ASSETS = `assets-${VERSION}`;
 const OFFLINE_URL = '/offline.html';
@@ -127,7 +127,7 @@ self.addEventListener('push', (event) => {
     data = {};
   }
   event.waitUntil(
-    self.registration.showNotification(data.title || 'Site Diary', {
+    self.registration.showNotification(data.title || 'Kooboolong IMS', {
       body: data.body || 'No diary entry for today yet.',
       tag: data.tag || 'knock-off',
       data: { url: data.url || '/' },

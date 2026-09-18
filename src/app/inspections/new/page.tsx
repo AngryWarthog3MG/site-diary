@@ -7,7 +7,7 @@ import { readTemplateItems, type InspectionKind } from '@/lib/inspections/model'
 import { InspectionForm, type TemplateChoice } from './inspection-form';
 
 export const dynamic = 'force-dynamic';
-export const metadata = { title: 'New inspection · KBS Daily Diary' };
+export const metadata = { title: 'New inspection · Kooboolong IMS' };
 
 export default async function NewInspectionPage({ searchParams }: { searchParams: Promise<{ project?: string }> }) {
   const { userId, memberships } = await requireUser();

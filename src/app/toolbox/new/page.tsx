@@ -3,7 +3,7 @@ import { requireUser, resolveProject, canRunTalks } from '@/lib/auth';
 import { NewTalkForm } from './new-talk-form';
 
 export const dynamic = 'force-dynamic';
-export const metadata = { title: 'New toolbox talk · KBS Daily Diary' };
+export const metadata = { title: 'New toolbox talk · Kooboolong IMS' };
 
 export default async function NewTalkPage({
   searchParams,

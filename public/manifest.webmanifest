@@ -1,7 +1,7 @@
 {
-  "name": "KBS Daily Diary",
-  "short_name": "KBS Diary",
-  "description": "Kooboolong Services daily site record.",
+  "name": "Kooboolong IMS",
+  "short_name": "Kooboolong IMS",
+  "description": "Kooboolong Services integrated management system — the site diary and the records around it.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

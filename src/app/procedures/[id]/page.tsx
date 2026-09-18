@@ -8,7 +8,7 @@ import { type ControlledKind } from '@/lib/documents-control/model';
 import { ProcedureScreen, type ProcedureView } from './procedure-screen';
 
 export const dynamic = 'force-dynamic';
-export const metadata = { title: 'Document · KBS Daily Diary' };
+export const metadata = { title: 'Document · Kooboolong IMS' };
 
 export default async function ProcedurePage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ project?: string }> }) {
   const { id } = await params;

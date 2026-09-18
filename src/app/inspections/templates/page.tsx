@@ -7,7 +7,7 @@ import { readTemplateItems, type InspectionKind } from '@/lib/inspections/model'
 import { TemplatesEditor } from './templates-editor';
 
 export const dynamic = 'force-dynamic';
-export const metadata = { title: 'Inspection templates · KBS Daily Diary' };
+export const metadata = { title: 'Inspection templates · Kooboolong IMS' };
 
 export default async function TemplatesPage({ searchParams }: { searchParams: Promise<{ project?: string }> }) {
   const { userId, memberships } = await requireUser();

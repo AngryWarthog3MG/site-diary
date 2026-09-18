@@ -15,7 +15,7 @@ import { OutboxStatus } from '@/components/outbox-status';
 import type { HcDoc } from '@/lib/subcontract/model';
 
 export const dynamic = 'force-dynamic';
-export const metadata = { title: 'Construction records · KBS Daily Diary' };
+export const metadata = { title: 'Construction records · Kooboolong IMS' };
 
 interface WhsPlan {
   id: string; version: number; responsibilities: string; consultation_arrangements: string; incident_arrangements: string;

@@ -23,10 +23,10 @@ const plexMono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'Site Diary',
-  description: 'Daily site record.',
+  title: 'Kooboolong IMS',
+  description: 'Kooboolong Services integrated management system.',
   manifest: '/manifest.webmanifest',
-  appleWebApp: { capable: true, title: 'Diary', statusBarStyle: 'default' },
+  appleWebApp: { capable: true, title: 'Kooboolong IMS', statusBarStyle: 'default' },
   icons: {
     icon: [{ url: '/icon-192.png', sizes: '192x192', type: 'image/png' }],
     apple: [{ url: '/icon-180.png', sizes: '180x180', type: 'image/png' }],

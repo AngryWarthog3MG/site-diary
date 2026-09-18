@@ -10,7 +10,7 @@ import { perthToday } from '@/lib/push/decide';
 import { KIND_LABEL, readItems, findings, actionOverdue, type InspectionKind } from '@/lib/inspections/model';
 
 export const dynamic = 'force-dynamic';
-export const metadata = { title: 'Inspections · KBS Daily Diary' };
+export const metadata = { title: 'Inspections · Kooboolong IMS' };
 
 interface Row {
   id: string; template_name: string; kind: InspectionKind; inspection_date: string; area: string | null; inspector_name: string;

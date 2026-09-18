@@ -5,7 +5,7 @@ import { requireUser, guardScreen } from '@/lib/auth';
 import { TalkScreen } from './talk-screen';
 
 export const dynamic = 'force-dynamic';
-export const metadata = { title: 'Toolbox talk · KBS Daily Diary' };
+export const metadata = { title: 'Toolbox talk · Kooboolong IMS' };
 
 export default async function TalkPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;

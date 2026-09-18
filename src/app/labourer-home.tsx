@@ -41,7 +41,7 @@ export async function LabourerHome({ current, name }: { current: Membership; nam
         <div className="dash-head__brand">
           <BrandMark size={34} />
           <div>
-            <p className="dash-head__app">KBS Daily Diary</p>
+            <p className="dash-head__app">Kooboolong IMS</p>
             <p className="dash-head__job">{current.project.name}</p>
           </div>
         </div>

@@ -72,8 +72,8 @@ export async function renderMonthlyBundle(
   merged.setAuthor(data.project.name);
   merged.setSubject(`${data.project.name} — site diary, ${monthTitle(data.month)}`);
   merged.setKeywords([data.project.orgCode, data.project.code, data.month]);
-  merged.setProducer('Site Diary');
-  merged.setCreator('Site Diary');
+  merged.setProducer('Kooboolong IMS');
+  merged.setCreator('Kooboolong IMS');
   merged.setCreationDate(at);
   merged.setModificationDate(at);
 

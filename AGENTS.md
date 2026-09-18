@@ -8,9 +8,15 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 <!-- END:nextjs-agent-rules -->
 
-# Site Diary
+# Kooboolong IMS
 
-A daily site diary for construction supervisors. Voice in, structured record out.
+Kooboolong Services' integrated management system, built around a daily site diary for
+construction supervisors. Voice in, structured record out.
+
+The product is called **Kooboolong IMS** everywhere a person reads it — brand row, home,
+tab title, push, the From line of its emails, and the PDF Producer (README R80). The diary
+itself keeps the name Daily Diary, as one section of the app. The repository, the npm
+package and the Vercel project stay `site-diary`.
 
 The output is **evidentiary** — it is what an EOT or variation claim stands on months
 later. That is the whole reason this app is shaped the way it is, and it is why several

@@ -6,7 +6,7 @@ import { BrandMark } from '@/components/brand-mark';
 import { DocumentsManager, type DocumentRow } from './documents-manager';
 
 export const dynamic = 'force-dynamic';
-export const metadata = { title: 'Job documents · KBS Daily Diary' };
+export const metadata = { title: 'Job documents · Kooboolong IMS' };
 
 /**
  * The job's papers: specification, scope, contract, drawings register, safety

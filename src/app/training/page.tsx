@@ -10,7 +10,7 @@ import type { TicketFacts } from '@/lib/crew/tickets';
 import { Matrix } from './matrix';
 
 export const dynamic = 'force-dynamic';
-export const metadata = { title: 'Training matrix · KBS Daily Diary' };
+export const metadata = { title: 'Training matrix · Kooboolong IMS' };
 
 /** Who holds what, what each role needs, what is expiring — this job's crew, or the whole company. */
 export default async function TrainingPage({ searchParams }: { searchParams: Promise<{ project?: string; scope?: string }> }) {

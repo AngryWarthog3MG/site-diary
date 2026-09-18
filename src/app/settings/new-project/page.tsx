@@ -3,7 +3,7 @@ import { requireUser, resolveProject } from '@/lib/auth';
 import { NewProjectForm } from './new-project-form';
 
 export const dynamic = 'force-dynamic';
-export const metadata = { title: 'New project · KBS Daily Diary' };
+export const metadata = { title: 'New project · Kooboolong IMS' };
 
 /** A new job for the org — admins only; the RPC enforces it again underneath. */
 export default async function NewProjectPage({

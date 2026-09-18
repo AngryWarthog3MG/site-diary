@@ -9,7 +9,7 @@ import { fmtDate } from '@/lib/pdf/dates';
 import { ReviewScreen } from './review-screen';
 
 export const dynamic = 'force-dynamic';
-export const metadata = { title: 'Management review · KBS Daily Diary' };
+export const metadata = { title: 'Management review · Kooboolong IMS' };
 
 export default async function ReviewPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ project?: string }> }) {
   const { memberships } = await requireUser();

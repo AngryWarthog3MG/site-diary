@@ -10,7 +10,7 @@ import type { InspectionBasis, RecordKind, Outcome } from '@/lib/plant/inspectio
 import { MachineScreen } from './machine-screen';
 
 export const dynamic = 'force-dynamic';
-export const metadata = { title: 'Machine · KBS Daily Diary' };
+export const metadata = { title: 'Machine · Kooboolong IMS' };
 
 /**
  * One machine on the company's fleet: on what basis it is inspected and when it

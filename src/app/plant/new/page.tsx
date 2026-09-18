@@ -5,7 +5,7 @@ import { PlantCheckForm } from './plant-check-form';
 import type { RegisterRow } from '../plant-register';
 
 export const dynamic = 'force-dynamic';
-export const metadata = { title: 'Plant prestart · KBS Daily Diary' };
+export const metadata = { title: 'Plant prestart · Kooboolong IMS' };
 
 export default async function NewPlantPrestartPage({ searchParams }: { searchParams: Promise<{ project?: string; plant?: string }> }) {
   const { memberships, profile, email } = await requireUser();

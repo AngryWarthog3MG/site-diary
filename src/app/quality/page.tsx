@@ -13,7 +13,7 @@ import {
 import { NewItpForm, OpenLotForm, RaiseNcrForm, NcrClockSetting } from './quality-forms';
 
 export const dynamic = 'force-dynamic';
-export const metadata = { title: 'Quality · KBS Daily Diary' };
+export const metadata = { title: 'Quality · Kooboolong IMS' };
 
 /**
  * The job's quality record: its inspection and test plans, the lots worked to

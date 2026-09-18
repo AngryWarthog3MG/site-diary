@@ -7,7 +7,7 @@ import { readControls, type PermitKind, type PermitStatus } from '@/lib/permits/
 import { PermitScreen, type PermitView } from './permit-screen';
 
 export const dynamic = 'force-dynamic';
-export const metadata = { title: 'Permit · KBS Daily Diary' };
+export const metadata = { title: 'Permit · Kooboolong IMS' };
 
 export default async function PermitPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;

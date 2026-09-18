@@ -4,7 +4,7 @@ import { sees } from '@/lib/roles';
 import { AskScreen } from './ask-screen';
 
 export const dynamic = 'force-dynamic';
-export const metadata = { title: 'Ask · Site Diary' };
+export const metadata = { title: 'Ask · Kooboolong IMS' };
 
 export default async function AskPage({
   searchParams,

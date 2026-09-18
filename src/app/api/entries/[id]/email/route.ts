@@ -94,21 +94,21 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
       <p style="font-size:11px;letter-spacing:.08em;color:#1f5c33;font-weight:bold;text-transform:uppercase">${entry.org_name} — Dayworks and variations</p>
       <h2 style="margin:.25em 0">${entry.project_name} · ${entry.entry_date}</h2>
       <p style="margin:.25em 0;color:#555">The dayworks and variations recorded on this day, drawn from signed site diary ${entry.entry_no}, are attached as a PDF with a sign-off block for your representative.</p>
-      <p style="margin:1em 0 0;font-size:11px;color:#888">The underlying diary entry is immutable and can be verified at kbsdailydiary.me/verify against the content hash printed in the document. Sent from KBS Daily Diary by ${user.email ?? 'a project member'}.</p>
+      <p style="margin:1em 0 0;font-size:11px;color:#888">The underlying diary entry is immutable and can be verified at kbsdailydiary.me/verify against the content hash printed in the document. Sent from Kooboolong IMS by ${user.email ?? 'a project member'}.</p>
     </div>` : `
     <div style="font-family:Arial,sans-serif;max-width:560px">
       <p style="font-size:11px;letter-spacing:.08em;color:#1f5c33;font-weight:bold;text-transform:uppercase">${entry.org_name} — Daily site diary</p>
       <h2 style="margin:.25em 0">${entry.entry_no}</h2>
       <p style="margin:.25em 0">${entry.project_name} · ${entry.entry_date}</p>
       <p style="margin:.25em 0;color:#555">Signed by ${entry.author_name}. The signed docket is attached as a PDF.</p>
-      <p style="margin:1em 0 0;font-size:11px;color:#888">This entry is immutable; its integrity can be verified against the SHA-256 content hash printed in the document. Sent from KBS Daily Diary by ${user.email ?? 'a project member'}.</p>
+      <p style="margin:1em 0 0;font-size:11px;color:#888">This entry is immutable; its integrity can be verified against the SHA-256 content hash printed in the document. Sent from Kooboolong IMS by ${user.email ?? 'a project member'}.</p>
     </div>`;
 
   const send = await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: { Authorization: `Bearer ${senderKey}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      from: `Site Diary <${senderAddress}>`,
+      from: `Kooboolong IMS <${senderAddress}>`,
       to: recipients,
       reply_to: user.email ?? undefined,
       subject,

@@ -9,7 +9,7 @@ import { inScope } from '@/lib/environment/model';
 import { EvaluationScreen, type EvalView, type ObligationView, type ResultView } from './evaluation-screen';
 
 export const dynamic = 'force-dynamic';
-export const metadata = { title: 'Evaluation of compliance · KBS Daily Diary' };
+export const metadata = { title: 'Evaluation of compliance · Kooboolong IMS' };
 
 /** One evaluation of compliance (ISO 14001 cl. 9.1.2): a result against every obligation in scope, then issued and frozen. */
 export default async function EvaluationPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ project?: string }> }) {

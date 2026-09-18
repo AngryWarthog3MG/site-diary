@@ -11,7 +11,7 @@ import { DefectList, type DefectRow } from './defect-list';
 import { OutboxStatus } from '@/components/outbox-status';
 
 export const dynamic = 'force-dynamic';
-export const metadata = { title: 'Plant · KBS Daily Diary' };
+export const metadata = { title: 'Plant · Kooboolong IMS' };
 
 /**
  * Plant: which machines have been walked around this morning, what is

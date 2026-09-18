@@ -10,7 +10,7 @@ import { DayNav } from '@/components/day-nav';
 import { loadDayNeighbours } from '@/lib/entries/neighbours';
 
 export const dynamic = 'force-dynamic';
-export const metadata = { title: 'Signed · Site Diary' };
+export const metadata = { title: 'Signed · Kooboolong IMS' };
 
 /**
  * Screen 4 (brief §7.4): confirmation, entry serial, content hash.

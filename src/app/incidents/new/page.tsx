@@ -5,7 +5,7 @@ import { BrandMark } from '@/components/brand-mark';
 import { ReportForm } from './report-form';
 
 export const dynamic = 'force-dynamic';
-export const metadata = { title: 'Report · KBS Daily Diary' };
+export const metadata = { title: 'Report · Kooboolong IMS' };
 
 export default async function NewIncidentPage({ searchParams }: { searchParams: Promise<{ project?: string }> }) {
   const { userId, memberships } = await requireUser();

@@ -521,9 +521,9 @@ async function reconcileStorage(): Promise<Record<string, unknown>> {
       method: 'POST',
       headers: { Authorization: `Bearer ${process.env.SMTP_PASS?.trim()}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        from: `Site Diary <${process.env.SMTP_SENDER ?? 'diary@kbsdailydiary.me'}>`,
+        from: `Kooboolong IMS <${process.env.SMTP_SENDER ?? 'diary@kbsdailydiary.me'}>`,
         to: ['mitchell.vanzyl@gmail.com'],
-        subject: `KBS Daily Diary: storage check — ${attached.length} put back, ${fresh.length} to look at`,
+        subject: `Kooboolong IMS: storage check — ${attached.length} put back, ${fresh.length} to look at`,
         html: `<div style="font-family:Arial,sans-serif"><p>The nightly check compared every stored file against the diary.</p><ul>${lines}</ul></div>`,
       }),
     }).then((r) => r.ok).catch(() => false);
@@ -570,9 +570,9 @@ async function ticketDigest(): Promise<Record<string, unknown>> {
     method: 'POST',
     headers: { Authorization: `Bearer ${process.env.SMTP_PASS?.trim()}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      from: `Site Diary <${process.env.SMTP_SENDER ?? 'diary@kbsdailydiary.me'}>`,
+      from: `Kooboolong IMS <${process.env.SMTP_SENDER ?? 'diary@kbsdailydiary.me'}>`,
       to: ['mitchell.vanzyl@gmail.com'],
-      subject: `KBS Daily Diary: ${expired.length} ticket${expired.length === 1 ? '' : 's'} expired, ${soon.length} expiring within 30 days`,
+      subject: `Kooboolong IMS: ${expired.length} ticket${expired.length === 1 ? '' : 's'} expired, ${soon.length} expiring within 30 days`,
       html: `<div style="font-family:Arial,sans-serif"><p>Tickets on record:</p><ul>${expired.map((t) => line(t, 'expired')).join('')}${soon.map((t) => line(t, 'expires')).join('')}</ul><p>Update them under Settings → Crew → Tickets and inductions.</p></div>`,
     }),
   }).then((r) => r.ok).catch(() => false);
@@ -618,9 +618,9 @@ async function errorDigest(): Promise<Record<string, unknown>> {
     method: 'POST',
     headers: { Authorization: `Bearer ${process.env.SMTP_PASS?.trim()}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      from: `Site Diary <${process.env.SMTP_SENDER ?? 'diary@kbsdailydiary.me'}>`,
+      from: `Kooboolong IMS <${process.env.SMTP_SENDER ?? 'diary@kbsdailydiary.me'}>`,
       to: ['mitchell.vanzyl@gmail.com'],
-      subject: `KBS Daily Diary: ${recent.length} client error${recent.length === 1 ? '' : 's'} in the last 24h`,
+      subject: `Kooboolong IMS: ${recent.length} client error${recent.length === 1 ? '' : 's'} in the last 24h`,
       html: `<div style="font-family:Arial,sans-serif"><p>Phones reported these in the last 24 hours:</p><ul>${lines}</ul></div>`,
     }),
   }).catch(() => {});
@@ -707,7 +707,7 @@ async function sendMonthlyBundles(force = false): Promise<Record<string, unknown
         method: 'POST',
         headers: { Authorization: `Bearer ${process.env.SMTP_PASS?.trim()}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          from: `Site Diary <${process.env.SMTP_SENDER ?? 'diary@kbsdailydiary.me'}>`,
+          from: `Kooboolong IMS <${process.env.SMTP_SENDER ?? 'diary@kbsdailydiary.me'}>`,
           to: list,
           subject: `Monthly diary bundle — ${project.name}, ${previousMonth}`,
           html:
@@ -860,7 +860,7 @@ async function sendWeeklyReports(force = false): Promise<Record<string, unknown>
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          from: `Site Diary <${process.env.SMTP_SENDER ?? 'diary@kbsdailydiary.me'}>`,
+          from: `Kooboolong IMS <${process.env.SMTP_SENDER ?? 'diary@kbsdailydiary.me'}>`,
           to: list,
           subject: `Weekly site report — ${project.name}, ${monday} to ${sunday}`,
           html:
@@ -1242,9 +1242,9 @@ async function subcontractorDigest(): Promise<Record<string, unknown>> {
     method: 'POST',
     headers: { Authorization: `Bearer ${process.env.SMTP_PASS?.trim()}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      from: `Site Diary <${process.env.SMTP_SENDER ?? 'diary@kbsdailydiary.me'}>`,
+      from: `Kooboolong IMS <${process.env.SMTP_SENDER ?? 'diary@kbsdailydiary.me'}>`,
       to: ['mitchell.vanzyl@gmail.com'],
-      subject: `KBS Daily Diary: ${rows.length} subcontractor${rows.length === 1 ? '' : 's'} with paperwork to chase`,
+      subject: `Kooboolong IMS: ${rows.length} subcontractor${rows.length === 1 ? '' : 's'} with paperwork to chase`,
       html: `<div style="font-family:Arial,sans-serif;max-width:600px"><p>Subcontractor paperwork, as of ${today}:</p><ul>${lines.join('')}</ul></div>`,
     }),
   }).then((r) => r.ok).catch(() => false);
@@ -1279,9 +1279,9 @@ async function trainingGaps(): Promise<Record<string, unknown>> {
     method: 'POST',
     headers: { Authorization: `Bearer ${process.env.SMTP_PASS?.trim()}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      from: `Site Diary <${process.env.SMTP_SENDER ?? 'diary@kbsdailydiary.me'}>`,
+      from: `Kooboolong IMS <${process.env.SMTP_SENDER ?? 'diary@kbsdailydiary.me'}>`,
       to: ['mitchell.vanzyl@gmail.com'],
-      subject: `KBS Daily Diary: ${lines.length} ${lines.length === 1 ? 'person is' : 'people are'} short of a required competency`,
+      subject: `Kooboolong IMS: ${lines.length} ${lines.length === 1 ? 'person is' : 'people are'} short of a required competency`,
       html: `<div style="font-family:Arial,sans-serif;max-width:600px"><p>Training gaps against each role's requirements, as of ${today}:</p><ul>${lines.join('')}</ul></div>`,
     }),
   }).then((r) => r.ok).catch(() => false);

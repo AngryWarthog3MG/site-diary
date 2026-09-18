@@ -73,7 +73,7 @@ export default async function TodayPage({
         <div className="dash-head__brand">
           <BrandMark size={34} />
           <div>
-            <p className="dash-head__app">KBS Daily Diary</p>
+            <p className="dash-head__app">Kooboolong IMS</p>
             <p className="dash-head__job">{current.project.name} <span className="mono">{current.project.org.code}_{current.project.code}</span></p>
           </div>
         </div>

@@ -10,7 +10,7 @@ import { perthToday } from '@/lib/push/decide';
 import { KIND_LABEL, STATUS_LABEL, incidentRef, summarise, actionOverdue, type IncidentKind, type IncidentStatus } from '@/lib/incidents/model';
 
 export const dynamic = 'force-dynamic';
-export const metadata = { title: 'Hazards & incidents · KBS Daily Diary' };
+export const metadata = { title: 'Hazards & incidents · Kooboolong IMS' };
 
 interface Row {
   id: string; seq: number; kind: IncidentKind; status: IncidentStatus; notifiable: boolean; occurred_at: string;

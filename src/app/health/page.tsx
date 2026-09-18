@@ -7,7 +7,7 @@ import { perthToday } from '@/lib/push/decide';
 import { HealthScreen, type Program, type HealthRecord, type Keeper, type LeadNotice } from './health-screen';
 
 export const dynamic = 'force-dynamic';
-export const metadata = { title: 'Health monitoring · KBS Daily Diary' };
+export const metadata = { title: 'Health monitoring · Kooboolong IMS' };
 
 /**
  * Health monitoring (WHS (General) Regulations 2022 (WA) Part 7.1 Div 6 and

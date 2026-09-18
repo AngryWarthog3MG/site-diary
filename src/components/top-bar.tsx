@@ -25,7 +25,7 @@ export function TopBar() {
       <div className="topbar__row">
         <Link className="topbar__brand" href="/" aria-label="Home">
           <BrandMark size={22} />
-          <span>Daily Diary</span>
+          <span>Kooboolong IMS</span>
         </Link>
         <div className="topbar__actions">
           <Suspense fallback={null}>

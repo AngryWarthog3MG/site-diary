@@ -5,7 +5,7 @@ import { BrandMark } from '@/components/brand-mark';
 import { IssueForm } from './issue-form';
 
 export const dynamic = 'force-dynamic';
-export const metadata = { title: 'Issue a document · KBS Daily Diary' };
+export const metadata = { title: 'Issue a document · Kooboolong IMS' };
 
 export default async function NewProcedurePage({ searchParams }: { searchParams: Promise<{ project?: string }> }) {
   const { userId, memberships } = await requireUser();

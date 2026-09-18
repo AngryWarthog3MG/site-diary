@@ -14,7 +14,7 @@ import type { IncidentNotice } from '@/lib/subcontract/model';
 import type { EnvEvent } from '@/lib/environment/model';
 
 export const dynamic = 'force-dynamic';
-export const metadata = { title: 'Incident · KBS Daily Diary' };
+export const metadata = { title: 'Incident · Kooboolong IMS' };
 
 export default async function IncidentPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;

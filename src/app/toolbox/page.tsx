@@ -6,7 +6,7 @@ import { fmtDate } from '@/lib/pdf/dates';
 import { OutboxStatus } from '@/components/outbox-status';
 
 export const dynamic = 'force-dynamic';
-export const metadata = { title: 'Toolbox talks · KBS Daily Diary' };
+export const metadata = { title: 'Toolbox talks · Kooboolong IMS' };
 
 /** The weekly safety talk register: newest first, open talks flagged. */
 export default async function ToolboxPage({

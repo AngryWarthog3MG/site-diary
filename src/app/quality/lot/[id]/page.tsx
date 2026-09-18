@@ -10,7 +10,7 @@ import { itpRef, lotRef, type LotStatus, type PointType, type Result, type NcrSt
 import { LotScreen } from './lot-screen';
 
 export const dynamic = 'force-dynamic';
-export const metadata = { title: 'Lot · KBS Daily Diary' };
+export const metadata = { title: 'Lot · Kooboolong IMS' };
 
 export default async function LotPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ project?: string }> }) {
   const { memberships } = await requireUser();

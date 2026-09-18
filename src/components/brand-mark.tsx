@@ -14,7 +14,7 @@ export function BrandMark({ size = 22, withName = false }: { size?: number; with
         width={size}
         height={Math.round(size * 1.11)}
       />
-      {withName && <span className="brandrow__name">KBS Daily Diary</span>}
+      {withName && <span className="brandrow__name">Kooboolong IMS</span>}
     </span>
   );
 }

@@ -3,7 +3,7 @@ import { requireUser, resolveProject, canAuthorEntries, guardScreen } from '@/li
 import { RecordScreen } from './record-screen';
 
 export const dynamic = 'force-dynamic';
-export const metadata = { title: 'Recording · Site Diary' };
+export const metadata = { title: 'Recording · Kooboolong IMS' };
 
 export default async function RecordPage({
   searchParams,

@@ -11,7 +11,7 @@ import { SDS_STATUS_LABEL, hazardLabel, sdsNeedsAttention } from '@/lib/chemical
 import { ChemicalsScreen } from './chemicals-screen';
 
 export const dynamic = 'force-dynamic';
-export const metadata = { title: 'Chemicals · KBS Daily Diary' };
+export const metadata = { title: 'Chemicals · Kooboolong IMS' };
 
 /**
  * The hazardous chemicals register for this workplace: what is here, where it

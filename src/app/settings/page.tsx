@@ -9,7 +9,7 @@ import { CrewTickets, type TicketRow, type InductionRow } from './crew-tickets';
 import { perthToday } from '@/lib/push/decide';
 
 export const dynamic = 'force-dynamic';
-export const metadata = { title: 'Settings · Site Diary' };
+export const metadata = { title: 'Settings · Kooboolong IMS' };
 
 export default async function SettingsPage({
   searchParams,

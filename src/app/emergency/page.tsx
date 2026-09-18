@@ -13,7 +13,7 @@ import { PlanForm } from './plan-form';
 import { DrillForm } from './drill-form';
 
 export const dynamic = 'force-dynamic';
-export const metadata = { title: 'Emergency plan · KBS Daily Diary' };
+export const metadata = { title: 'Emergency plan · Kooboolong IMS' };
 
 /**
  * The emergency plan for this workplace, readable by everyone on it — in an

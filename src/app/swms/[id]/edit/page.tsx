@@ -7,7 +7,7 @@ import { readSteps, type SwmsKind } from '@/lib/swms/model';
 import { SwmsForm } from '../../new/swms-form';
 
 export const dynamic = 'force-dynamic';
-export const metadata = { title: 'Edit SWMS · KBS Daily Diary' };
+export const metadata = { title: 'Edit SWMS · Kooboolong IMS' };
 
 /** A draft, edited. Anything in use is revised instead — the page refuses. */
 export default async function EditSwmsPage({ params }: { params: Promise<{ id: string }> }) {

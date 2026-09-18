@@ -5,7 +5,7 @@ import { Suspense } from 'react';
 import { NewPrestartForm } from './new-prestart-form';
 
 export const dynamic = 'force-dynamic';
-export const metadata = { title: 'New prestart · KBS Daily Diary' };
+export const metadata = { title: 'New prestart · Kooboolong IMS' };
 
 export default async function NewPrestartPage({
   searchParams,

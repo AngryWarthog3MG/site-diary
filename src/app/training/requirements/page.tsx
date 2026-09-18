@@ -7,7 +7,7 @@ import { competencies } from '@/lib/training/model';
 import { RequirementsEditor } from './requirements-editor';
 
 export const dynamic = 'force-dynamic';
-export const metadata = { title: 'Role requirements · KBS Daily Diary' };
+export const metadata = { title: 'Role requirements · Kooboolong IMS' };
 
 export default async function RequirementsPage({ searchParams }: { searchParams: Promise<{ project?: string }> }) {
   const { userId, memberships } = await requireUser();

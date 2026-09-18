@@ -7,7 +7,7 @@ import { readSpecNotes } from '@/lib/prestart/spec-notes';
 import { PrestartScreen } from './prestart-screen';
 
 export const dynamic = 'force-dynamic';
-export const metadata = { title: 'Prestart · KBS Daily Diary' };
+export const metadata = { title: 'Prestart · Kooboolong IMS' };
 
 export default async function PrestartPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;

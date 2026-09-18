@@ -2,7 +2,7 @@ import { createClient } from '@supabase/supabase-js';
 import { BrandMark } from '@/components/brand-mark';
 
 export const dynamic = 'force-dynamic';
-export const metadata = { title: 'Verify a docket · KBS Daily Diary' };
+export const metadata = { title: 'Verify a docket · Kooboolong IMS' };
 
 /**
  * The public verification door. Anyone holding a docket PDF can check the
@@ -52,7 +52,7 @@ export default async function VerifyPage({
           <span className="brand__name">Verify a docket</span>
         </div>
         <p className="page-subtitle">
-          Every signed KBS Daily Diary docket prints its serial and SHA-256 content hash in
+          Every signed Kooboolong IMS docket prints its serial and SHA-256 content hash in
           the signature block. Enter both, exactly as printed, to check the document against
           the record.
         </p>

@@ -11,7 +11,7 @@ import { perthToday } from '@/lib/push/decide';
 import type { SwmsReview } from '@/lib/subcontract/model';
 
 export const dynamic = 'force-dynamic';
-export const metadata = { title: 'SWMS · KBS Daily Diary' };
+export const metadata = { title: 'SWMS · Kooboolong IMS' };
 
 /** One method statement: read it, put it into use, sign the crew on, print it. */
 export default async function SwmsPage({ params }: { params: Promise<{ id: string }> }) {

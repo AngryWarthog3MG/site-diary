@@ -8,7 +8,7 @@ import { perthToday } from '@/lib/push/decide';
 import { EquipmentScreen } from './equipment-screen';
 
 export const dynamic = 'force-dynamic';
-export const metadata = { title: 'Calibration register · KBS Daily Diary' };
+export const metadata = { title: 'Calibration register · Kooboolong IMS' };
 
 /**
  * The company's measuring equipment and its calibrations (ISO 9001 cl. 7.1.5).

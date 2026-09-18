@@ -11,7 +11,7 @@ import { STATUS_LABEL, type ObligationItem } from '@/lib/obligations/model';
 import { AddSchedule } from './add-schedule';
 
 export const dynamic = 'force-dynamic';
-export const metadata = { title: "What's due · KBS Daily Diary" };
+export const metadata = { title: "What's due · Kooboolong IMS" };
 
 const SOURCE_LABEL: Record<ObligationItem['source'], string> = {
   scheduled: 'Schedule',

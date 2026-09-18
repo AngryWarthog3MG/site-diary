@@ -6,7 +6,7 @@ import { BrandMark } from '@/components/brand-mark';
 import { PermitForm } from './permit-form';
 
 export const dynamic = 'force-dynamic';
-export const metadata = { title: 'Raise a permit · KBS Daily Diary' };
+export const metadata = { title: 'Raise a permit · Kooboolong IMS' };
 
 export default async function NewPermitPage({ searchParams }: { searchParams: Promise<{ project?: string }> }) {
   const { userId, memberships } = await requireUser();

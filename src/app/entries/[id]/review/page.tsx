@@ -11,7 +11,7 @@ import { parseRegisterNumber } from '@/lib/review/register-number';
 import { loadDayNeighbours } from '@/lib/entries/neighbours';
 
 export const dynamic = 'force-dynamic';
-export const metadata = { title: 'Diary entry · KBS Daily Diary' };
+export const metadata = { title: 'Diary entry · Kooboolong IMS' };
 
 type Row = Record<string, unknown>;
 

@@ -9,7 +9,7 @@ import { compliance, VERDICT_LABEL, DOC_LABEL, type DocFacts } from '@/lib/subco
 import { AddSubcontractor } from './add-subcontractor';
 
 export const dynamic = 'force-dynamic';
-export const metadata = { title: 'Subcontractors · KBS Daily Diary' };
+export const metadata = { title: 'Subcontractors · Kooboolong IMS' };
 
 interface Row { id: string; name: string; trade: string | null; active: boolean; subcontractor_documents: DocFacts[]; project_subcontractors: Array<{ project_id: string }> }
 

@@ -8,7 +8,7 @@ import { perthToday } from '@/lib/push/decide';
 import { VariationTracker } from './variation-tracker';
 
 export const dynamic = 'force-dynamic';
-export const metadata = { title: 'Variation tracker · KBS Daily Diary' };
+export const metadata = { title: 'Variation tracker · Kooboolong IMS' };
 
 /**
  * The variation register as a tracker: the pipeline up top, then one card per

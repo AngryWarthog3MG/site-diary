@@ -5,7 +5,7 @@ import { requireUser, resolveProject, guardScreen } from '@/lib/auth';
 import { MembersForm, type MemberRow } from './members-form';
 
 export const dynamic = 'force-dynamic';
-export const metadata = { title: 'Members · Site Diary' };
+export const metadata = { title: 'Members · Kooboolong IMS' };
 
 export default async function MembersPage({
   searchParams,

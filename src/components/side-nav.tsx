@@ -74,7 +74,7 @@ export function SideNav() {
     <nav className="rail" aria-label="Sections">
       <Link className="rail__brand" href={`/${q}`}>
         <BrandMark size={22} />
-        <span>Daily Diary</span>
+        <span>Kooboolong IMS</span>
       </Link>
 
       {me?.project && (

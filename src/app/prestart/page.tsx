@@ -8,7 +8,7 @@ import { OutboxStatus } from '@/components/outbox-status';
 import { LocalPrestarts } from './local-prestarts';
 
 export const dynamic = 'force-dynamic';
-export const metadata = { title: 'Prestarts · KBS Daily Diary' };
+export const metadata = { title: 'Prestarts · Kooboolong IMS' };
 
 /** Every prestart on the job, newest first; the unfinished ones flagged. */
 export default async function PrestartListPage({

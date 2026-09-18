@@ -11,7 +11,7 @@ import { RegisterSection } from './register-section';
 import { AddDocketButton } from './daywork-docket';
 
 export const dynamic = 'force-dynamic';
-export const metadata = { title: 'Claims · KBS Daily Diary' };
+export const metadata = { title: 'Claims · Kooboolong IMS' };
 
 /**
  * The claims register: the whole project's delays, variations and dayworks

@@ -10,7 +10,7 @@ import type { SdsFacts } from '@/lib/chemicals/model';
 import { ProductScreen } from './product-screen';
 
 export const dynamic = 'force-dynamic';
-export const metadata = { title: 'Chemical · KBS Daily Diary' };
+export const metadata = { title: 'Chemical · Kooboolong IMS' };
 
 /**
  * One chemical: what the label says, every safety data sheet it has ever had,

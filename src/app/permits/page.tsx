@@ -10,7 +10,7 @@ import { awstClock } from '@/lib/signin/register';
 import { KIND_LABEL, STATUS_LABEL, permitRef, expired, live, type PermitKind, type PermitStatus } from '@/lib/permits/model';
 
 export const dynamic = 'force-dynamic';
-export const metadata = { title: 'Permits to work · KBS Daily Diary' };
+export const metadata = { title: 'Permits to work · Kooboolong IMS' };
 
 interface Row { id: string; seq: number; kind: PermitKind; title: string; location: string | null; valid_from: string; valid_to: string; status: PermitStatus; holder_name: string }
 

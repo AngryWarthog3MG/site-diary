@@ -9,7 +9,7 @@ import { lotRef, ncrRef, type Disposition, type NcrStatus } from '@/lib/quality/
 import { NcrScreen } from './ncr-screen';
 
 export const dynamic = 'force-dynamic';
-export const metadata = { title: 'NCR · KBS Daily Diary' };
+export const metadata = { title: 'NCR · Kooboolong IMS' };
 
 export default async function NcrPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ project?: string }> }) {
   const { memberships } = await requireUser();

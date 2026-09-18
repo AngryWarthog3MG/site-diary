@@ -9,7 +9,7 @@ import { OutboxStatus } from '@/components/outbox-status';
 import { KIND_LABEL, type SwmsKind } from '@/lib/swms/model';
 
 export const dynamic = 'force-dynamic';
-export const metadata = { title: 'SWMS & JSA · KBS Daily Diary' };
+export const metadata = { title: 'SWMS & JSA · Kooboolong IMS' };
 
 interface Row {
   id: string;
