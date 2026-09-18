@@ -424,6 +424,10 @@ Change four of them and the app silently stops capturing what supervisors say. I
   balance twice and took writing-up and Ask down on site. Run the eval when the prompt or
   schema changed, once, not after every idea; treat invention (a value nobody said) as a
   harder failure than a miss. A full run is ~250k output tokens, about US$4.
+- **Never let a Playwright error reach the output.** A failed `request.get` / `request.post` dumps the request headers,
+  and those carry the signed-in session cookie — a live access and refresh token, in the transcript, twice now. Wrap every
+  request in a try/catch that prints the status and at most the first line of the message. The same goes for any drill
+  helper that logs an error object whole.
 - **Drills that write go to the sandbox (T001), never to a live job's draft.** Wake T001
   (`active=true`), run, put it back to sleep in a `finally`. Proving a fix on a real
   supervisor's day is how a real photo got deleted on 2026-09-10.
