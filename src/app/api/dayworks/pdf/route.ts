@@ -8,7 +8,7 @@ import { scheduleLines } from '@/lib/dayworks/schedule';
 import { loadDayworkPhotos } from '@/lib/dayworks/photos';
 import { dayworksScheduleHtml, dayworksSignoffHtml } from '@/lib/dayworks/pdf';
 
-export const maxDuration = 120;
+export const maxDuration = 300;
 export const runtime = 'nodejs';
 
 /**

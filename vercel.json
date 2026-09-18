@@ -17,6 +17,14 @@
     "src/app/api/reports/monthly/route.ts": {
       "memory": 2048,
       "maxDuration": 300
+    },
+    "src/app/api/reports/weekly/route.ts": {
+      "memory": 2048,
+      "maxDuration": 300
+    },
+    "src/app/api/dayworks/pdf/route.ts": {
+      "memory": 2048,
+      "maxDuration": 300
     }
   },
   "crons": [
