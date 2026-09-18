@@ -298,9 +298,15 @@ improvising; the register once shipped dead because a live smoke test was skippe
   `scheduleLines` — the order the sign-off sheet numbers items in; hours null is "not recorded", never 0), `load.ts`
   (diary.dayworks + `loadDocketsAdded`, unsigned days counted apart, `pendingCorrectionDays`), `photos.ts` (each item's
   photographs as data URIs under the caller's RLS, capped), `pdf.ts` (the schedule, and `dayworksSignoffHtml` — the sheet the
-  head contractor signs, README R83). `/dayworks` and `/api/dayworks/pdf` (`?signoff=1` for the sheet) are the `claims` screen
+  head contractor signs, README R83). `/dayworks` and `/api/dayworks/pdf` (`?signoff=1` for the sheet) are the `claims`
+  screen. `signoff.ts` + table `dayworks_signoffs`: the head contractor's signature on a sheet, with the countersigned
+  file and what the sheet said AT THE TIME — frozen, so a later correction cannot change what they signed; `driftFrom`
+  says when the schedule has moved since. `app.can_manage_registers` writes it; the labourer reads none of it. Suite 34,
+  README R86
 - `src/lib/claims/` — the claims register loader and the variation register (`register.ts`:
-  statuses, summary arithmetic). Status changes only via the `set_variation_status` RPC. A day's variation
+  statuses, summary arithmetic; `warnings.ts`: what the register is quietly getting wrong about money — a variation
+  valued at 0 with work behind it, days recorded against it with no hours, README R85. `load.ts` counts a corrected day
+  ONCE, superseded only by a signed correction — counting every version double-counted the hours a claim is built on). Status changes only via the `set_variation_status` RPC. A day's variation
   is identified by its register number alone (`variations.register_seq`, picked from a dropdown of
   1–50); the trigger registers by number, never by words or a client reference. Rows on days signed
   before the column existed carry theirs through the link (`public.variation_number`) — read that,

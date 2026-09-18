@@ -2,12 +2,14 @@ import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
 import { requireUser, resolveProject, guardScreen } from '@/lib/auth';
-import { sees } from '@/lib/roles';
+import { sees, canManageRegisters } from '@/lib/roles';
 import { BrandMark } from '@/components/brand-mark';
 import { fmtDate } from '@/lib/pdf/dates';
 import { perthToday } from '@/lib/push/decide';
 import { readRange, type RangeKey } from '@/lib/dayworks/schedule';
 import { loadDayworksSchedule, type DayworksScheduleData } from '@/lib/dayworks/load';
+import type { DayworkSignoff } from '@/lib/dayworks/signoff';
+import { SignoffBlock } from './signoff-block';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Dayworks schedule · Kooboolong IMS' };
@@ -33,6 +35,15 @@ export default async function DayworksPage({ searchParams }: { searchParams: Pro
   // Who signs the sheet: the head contractor we work under, when they are named.
   const { data: job } = await supabase.from('projects').select('principal_contractor').eq('id', current.project_id).maybeSingle();
   const clientName = (job?.principal_contractor as string | null)?.trim() || 'the head contractor';
+  // Every sheet this job's client has signed. Refused for a labourer by RLS,
+  // who does not reach this screen anyway.
+  const { data: signoffRows } = await supabase
+    .from('dayworks_signoffs')
+    .select('id, period_from, period_to, period_label, items, hours, hours_not_recorded, photos, signed_by_name, signed_by_position, signed_on, file_path, note')
+    .eq('project_id', current.project_id)
+    .order('signed_on', { ascending: false });
+  const signoffs = ((signoffRows ?? []) as unknown as DayworkSignoff[]).map((s) => ({ ...s, hours: Number(s.hours) }));
+
   let data: DayworksScheduleData | null = null;
   let loadError: string | null = null;
   try {
@@ -101,6 +112,16 @@ export default async function DayworksPage({ searchParams }: { searchParams: Pro
             <a className="button button--quiet" href={pdfHref} target="_blank" rel="noopener">Schedule only (PDF)</a>
             <Link className="button button--quiet" href={`/claims?project=${p}`}>Claims register</Link>
           </div>
+          <SignoffBlock
+            projectId={p}
+            period={{ from: range.from ?? null, to: range.to ?? null }}
+            periodLabel={range.label}
+            now={{ items: data.totals.items, hours: data.totals.hours, hoursNotRecorded: data.totals.hoursNotRecorded }}
+            signoffs={signoffs}
+            canRecord={canManageRegisters(current.role)}
+            clientName={clientName}
+          />
+
           <p className="caption">The sign-off sheet itemises every daywork with its labour, plant, materials, docket and photographs, and carries a block for {clientName} to sign. It acknowledges what was expended, not rates or value.</p>
 
           {data.truncated && (

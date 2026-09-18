@@ -210,7 +210,7 @@ export async function loadClaimsData(
 async function loadRegister(supabase: SupabaseClient, projectId: string): Promise<RegisterItem[]> {
   // Every item on the project, then every diary row that mentions one — draft
   // or signed — so a variation dictated this afternoon is already here.
-  const [{ data: items }, { data: links }] = await Promise.all([
+  const [{ data: items }, { data: links }, { data: versions }] = await Promise.all([
     supabase
       .from('variation_register')
       .select('id, seq, title, vr_ref, raised_on, status, estimated_cost, agreed_cost, submitted_on, decided_on, paid_on, notes')
@@ -219,7 +219,22 @@ async function loadRegister(supabase: SupabaseClient, projectId: string): Promis
       .from('variation_register_links')
       .select('register_id, variation:variations(id, crew, hours, description, entry:entries!inner(id, entry_no, entry_date, status, project_id))')
       .eq('variation.entry.project_id', projectId),
+    supabase.from('entries').select('id, status, supersedes_entry_id').eq('project_id', projectId),
   ]);
+  /**
+   * A corrected day counts once. A variation still sits on the version that
+   * was superseded, and counting both put 31/08 on V-001 twice and its hours
+   * in the total twice — the number a claim is built on (README R85).
+   *
+   * Superseded only by a SIGNED correction, the same rule the diary views and
+   * the weekly use: a correction still being written does not hide the day
+   * that stands.
+   */
+  const superseded = new Set(
+    ((versions ?? []) as Array<{ status: string; supersedes_entry_id: string | null }>)
+      .filter((e) => e.status === 'signed' && e.supersedes_entry_id)
+      .map((e) => e.supersedes_entry_id as string),
+  );
   const out = new Map<string, RegisterItem>();
   for (const row of (items ?? []) as Array<Omit<RegisterItem, 'mentions' | 'signed' | 'events' | 'crew' | 'hours'>>) {
     out.set(row.id, {
@@ -268,7 +283,7 @@ async function loadRegister(supabase: SupabaseClient, projectId: string): Promis
     const item = out.get(link.register_id);
     const variation = Array.isArray(link.variation) ? link.variation[0] : link.variation;
     const entry = variation ? (Array.isArray(variation.entry) ? variation.entry[0] : variation.entry) : null;
-    if (!item || !entry) continue;
+    if (!item || !entry || superseded.has(entry.id)) continue;
     const signed = entry.status === 'signed';
     item.mentions.push({
       date: entry.entry_date, entry_no: signed ? entry.entry_no : null, entry_id: entry.id, signed,

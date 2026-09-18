@@ -2130,6 +2130,38 @@ untouched and it stays byte-identical.
 The weekly still embeds its eighty photographs the old way. It has not fallen over yet because no week has carried
 enough, but it is the same fault and it should move to `images` too.
 
+**R85. A variation valued at nothing.** Curtin's V-001 — the vac trailer, the biggest thing on the job — sat on the
+register marked "priced", with eighty-four hours of crew and plant recorded against it and an estimated cost of **$0**.
+Nothing in the app said a word, because `waitingOn` asks whether a variation has a value and 0 is a value. A blank cost
+box saves as zero, and the register believed it.
+
+So `registerWarnings` (`src/lib/claims/warnings.ts`, pure and tested) says the two things the tracker could not:
+a variation valued at nothing with work behind it, and days recorded against it that state no hours — which are not in
+the total, so the claim reads short by however many they were. They are warnings, not gaps: nothing is refused. A
+variation genuinely worth nothing is allowed, it just has to have no work behind it, because a day of work is never
+worth nothing.
+
+Finding it turned up a second fault underneath. The register's `mentions` counted every version of a corrected day, so
+31/08 appeared on V-001 twice and its hours were added twice — the number a claim is built on. A day now counts once,
+superseded only by a SIGNED correction, the same rule the diary views and the weekly already used.
+
+**R86. The client's signature on a dayworks sheet.** The sheet (R83) went out, came back signed, and came back to
+nothing: it lived in an inbox. In three months, when the claim is argued, a countersigned dayworks sheet is the
+strongest document in the file.
+
+`dayworks_signoffs` records it against the job with the countersigned file and — this is the point — **what the sheet
+said at the time**: the period, the items, the hours. Frozen on insert, like every other signature here. What the
+client put their name to does not change because a day was corrected afterwards.
+
+Which means the schedule can drift away from it, so the screen says so: `driftFrom` compares what was signed with what
+the period reads now, and a correction landing after a signature is exactly the case where a subcontractor believes he
+is covered and is not. Only the items and the hours count as drift — a photograph added later is not a change to what
+was agreed.
+
+Written by whoever keeps the registers (`app.can_manage_registers`), read by whoever reads the record — not the
+labourer. The file goes up first and the row straight after, with the file removed if the row is refused, the same
+order as an issued procedure; the nightly `orphans=1` check reports either half without the other. Suite 34.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;

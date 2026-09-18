@@ -497,6 +497,15 @@ async function reconcileStorage(): Promise<Record<string, unknown>> {
   const subOrphans = subFiles.filter((f) => !subPaths.has(f.path)).map((f) => f.path);
   const subMissing = [...subPaths].filter((p) => !subFileSet.has(p));
 
+  // Countersigned dayworks sheets: a file with no sign-off row is a signature
+  // that never landed, and a row whose file is gone is worse.
+  const signoffFiles = await walk('dayworks-signoffs');
+  const { data: signoffRows } = await admin.from('dayworks_signoffs').select('file_path').not('file_path', 'is', null);
+  const signoffPaths = new Set((signoffRows ?? []).map((r) => r.file_path as string));
+  const signoffFileSet = new Set(signoffFiles.map((f) => f.path));
+  const signoffOrphans = signoffFiles.filter((f) => !signoffPaths.has(f.path)).map((f) => f.path);
+  const signoffMissing = [...signoffPaths].filter((p) => !signoffFileSet.has(p));
+
   // Controlled documents: a file with no version row is an issue that never landed.
   const docFiles = await walk('controlled-docs');
   const { data: versionRows } = await admin.from('document_versions').select('file_path');
@@ -514,6 +523,8 @@ async function reconcileStorage(): Promise<Record<string, unknown>> {
       ...ticketOrphans.map((p) => `<li><b>Ticket photo with no ticket:</b> <code>${p}</code></li>`),
       ...subOrphans.map((p) => `<li><b>Subcontractor file with no document:</b> <code>${p}</code></li>`),
       ...subMissing.map((p) => `<li><b>Subcontractor document whose file is gone:</b> <code>${p}</code></li>`),
+      ...signoffOrphans.map((p) => `<li><b>Countersigned dayworks sheet with no sign-off row:</b> <code>${p}</code></li>`),
+      ...signoffMissing.map((p) => `<li><b>Dayworks sign-off whose signed sheet is gone:</b> <code>${p}</code></li>`),
       ...docOrphans.map((p) => `<li><b>Controlled document file with no version:</b> <code>${p}</code></li>`),
       ...docMissing.map((p) => `<li><b>Document version whose file is gone:</b> <code>${p}</code></li>`),
     ].join('');
@@ -540,6 +551,8 @@ async function reconcileStorage(): Promise<Record<string, unknown>> {
     ticket_photo_orphans: ticketOrphans,
     subcontractor_file_orphans: subOrphans,
     subcontractor_files_missing: subMissing,
+    dayworks_signoff_orphans: signoffOrphans,
+    dayworks_signoff_files_missing: signoffMissing,
     document_file_orphans: docOrphans,
     document_files_missing: docMissing,
     emailed,

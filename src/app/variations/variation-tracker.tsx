@@ -8,6 +8,7 @@ import {
   STAGES, STATUS_LABEL, STATUS_HINT, itemValue, registerNumber, stageIndex, stageDates, waitingOn, nextFreeNumber, trackerOrder, perthDate,
   type RegisterItem, type VariationStatus,
 } from '@/lib/claims/register';
+import { registerWarnings } from '@/lib/claims/warnings';
 import { RecordOnDay, RemoveVariationButton, VariationStatusControl } from '@/app/claims/variation-status';
 
 /** Whole dollars when the figure is whole; cents when it has them — never rounded away. */
@@ -98,6 +99,11 @@ export function VariationTracker({ data, userId, canManage, today }: { data: Cla
                 </span>
                 <span className="vt-card__title">{item.title}</span>
                 <span className={`vt-wait vt-wait--${w.tone}`}>{w.text}</span>
+                {registerWarnings(item).map((warn) => (
+                  <span key={warn.kind} className="vt-warn">
+                    <strong>{warn.text}</strong> {warn.fix}
+                  </span>
+                ))}
                 <span className="vt-track" aria-label="Where it is">
                   {STAGES.map((st, i) => {
                     const state = item.status === 'rejected' ? (i < 2 ? 'done' : i === 2 ? 'stop' : 'todo') : i < reached ? 'done' : i === reached ? 'here' : 'todo';
