@@ -41,15 +41,19 @@ export async function GET(request: Request) {
   const signoff = url.searchParams.get('signoff') === '1';
   const common = { orgName: org.name, orgCode: org.code, projectName: project.name, projectCode: project.code, periodLabel: range.label, today };
   let html: string;
+  // Kept out of the HTML and handed to the page one at a time — README R84.
+  let images: Record<string, string> | undefined;
   if (signoff) {
     // The photographs run under the caller's RLS, like everything else here.
     const { data: me } = await supabase.from('profiles').select('full_name').eq('id', user.id).maybeSingle();
     const photos = await loadDayworkPhotos(supabase, scheduleLines(data));
-    html = dayworksSignoffHtml(data, photos, {
+    const built = dayworksSignoffHtml(data, photos, {
       ...common,
       clientName: (project.principal_contractor as string | null) ?? null,
       preparedBy: (me?.full_name as string | null) ?? '',
     });
+    html = built.html;
+    images = built.images;
   } else {
     html = dayworksScheduleHtml(data, common);
   }
@@ -58,7 +62,14 @@ export async function GET(request: Request) {
   try {
     const pdf = await renderPdfDocument(html, {
       title: `Dayworks ${kind} — ${project.name} — ${range.label}`, author: org.name, subject: `${project.name} — dayworks ${kind}`, keywords: [org.code, project.code, 'dayworks'],
-      instant: new Date(`${today}T00:00:00Z`), idSeed: createHash('sha256').update(html).digest('hex'), footerLeft: `${org.code}_${project.code} · DAYWORKS ${signoff ? 'SIGN-OFF' : 'SCHEDULE'} · ${range.label.toUpperCase()}`,
+      instant: new Date(`${today}T00:00:00Z`),
+      // The photographs are no longer in the html, so they join the seed by name and size.
+      idSeed: createHash('sha256').update(html).update(Object.entries(images ?? {}).map(([k, v]) => `${k}:${v.length}`).join('|')).digest('hex'),
+      images,
+      // 900px is legible evidence of what was done and keeps the sheet small
+      // enough to email from site (owner, 2026-09-18).
+      imageMax: 900,
+      footerLeft: `${org.code}_${project.code} · DAYWORKS ${signoff ? 'SIGN-OFF' : 'SCHEDULE'} · ${range.label.toUpperCase()}`,
     });
     return new Response(Buffer.from(pdf), { status: 200, headers: { 'content-type': 'application/pdf', 'content-disposition': `inline; filename="${org.code}_${project.code}_dayworks${signoff ? '_signoff' : ''}_${slug}.pdf"`, 'cache-control': 'private, no-store' } });
   } catch (err) {

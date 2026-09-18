@@ -177,6 +177,22 @@ export interface DocumentMeta {
   /** Hex-ish seed for the trailer /ID; same record, same identifier. */
   idSeed: string;
   footerLeft: string;
+  /**
+   * Photographs kept OUT of the HTML and handed to the page one at a time,
+   * keyed to an `<img data-photo="key">` placeholder (README R84). A document
+   * with two dozen phone photographs in `src` is a two-hundred-megabyte string
+   * that gets copied through Node, through JSON, and into Chromium before a
+   * pixel is drawn — which is what killed the sign-off sheet on Vercel with
+   * "instance was killed because it ran out of available memory". Passed this
+   * way, only one photograph is in flight and the page holds the small copies.
+   */
+  images?: Record<string, string>;
+  /**
+   * Longest side, in pixels, that a photograph in `images` is drawn at.
+   * Default 1000. A sheet that gets emailed around a site with bad signal is
+   * worth less if it will not download, so a document may ask for smaller.
+   */
+  imageMax?: number;
 }
 
 /**
@@ -239,6 +255,36 @@ async function shrinkMarkedImages(): Promise<void> {
   }
 }
 
+/**
+ * Runs inside Chromium, once per photograph: draw it small into its
+ * placeholder and let the big one go before the next arrives.
+ */
+async function placeImage({ key, src, max }: { key: string; src: string; max: number }): Promise<void> {
+  const img = document.querySelector<HTMLImageElement>(`img[data-photo="${key}"]`);
+  if (!img) return;
+  const settle = (target: HTMLImageElement, apply: () => void) =>
+    new Promise<void>((done) => {
+      const timer = setTimeout(done, 5000);
+      target.onload = target.onerror = () => { clearTimeout(timer); done(); };
+      apply();
+    });
+  const source = new Image();
+  await settle(source, () => { source.src = src; });
+  const w = source.naturalWidth, h = source.naturalHeight;
+  // Unreadable, or already small enough: use it as it is rather than lose it.
+  if (!w || !h || Math.max(w, h) <= max) { await settle(img, () => { img.src = src; }); source.src = ''; return; }
+  const scale = max / Math.max(w, h);
+  const canvas = document.createElement('canvas');
+  canvas.width = Math.round(w * scale);
+  canvas.height = Math.round(h * scale);
+  const ctx = canvas.getContext('2d');
+  if (!ctx) { await settle(img, () => { img.src = src; }); source.src = ''; return; }
+  ctx.drawImage(source, 0, 0, canvas.width, canvas.height);
+  const small = canvas.toDataURL('image/jpeg', 0.72);
+  await settle(img, () => { img.src = small; });
+  source.src = '';
+}
+
 /** A Chromium that died while the instance was frozen: the page opens and then nothing answers. */
 function isDeadBrowser(error: unknown): boolean {
   return /target (page, context or browser )?(has been )?closed|browser has (been )?(closed|disconnected)|protocol error/i.test(error instanceof Error ? error.message : String(error));
@@ -270,6 +316,12 @@ async function renderOnce(html: string, meta: DocumentMeta): Promise<Uint8Array>
     // photographs and would otherwise weigh what forty phone photos weigh.
     // The daily docket uses no such attribute, so its bytes are untouched.
     await page.evaluate(shrinkMarkedImages);
+
+    // One photograph at a time, so the document's own bytes never all exist at
+    // once — in Node, in the CDP message, or in the page.
+    for (const [key, src] of Object.entries(meta.images ?? {})) {
+      await page.evaluate(placeImage, { key, src, max: meta.imageMax ?? 1000 });
+    }
 
     const raw = await page.pdf({
       format: 'A4',

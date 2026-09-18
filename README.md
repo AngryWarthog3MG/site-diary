@@ -2115,11 +2115,20 @@ three megabytes on disk costs tens of megabytes decoded. Two dozen of them, all 
 memory than the function has. The shrink step that would have made them small runs afterwards, so it never got the
 chance.
 
-So a photograph that is going to be shrunk is carried in `data-src`, not `src`: nothing loads during `setContent`, and
-`shrinkMarkedImages` decodes each one, draws the small copy into `src`, and drops the big one before the next. Peak
-memory is one photograph rather than all of them. `src` is still honoured for pages carrying few enough to load
-outright, and the daily docket marks no image at all, so its bytes are untouched and it stays byte-identical. The
-weekly, which caps at eighty photographs, was one good week away from the same crash and is deferred too.
+Deferring the decode was not enough, and the logs said why: `instance was killed because it ran out of available
+memory`, even at 2 GB. The bytes themselves were the problem. Two dozen phone photographs as base64 is a two-hundred-
+megabyte HTML string, and it exists several times over before a pixel is drawn — the buffers, the base64, the assembled
+string, the JSON of the CDP message, and Chromium's copy.
+
+So a photograph never goes in the HTML at all. The document emits `<img data-photo="key">` and hands the bytes to
+`renderPdfDocument` in `meta.images`; after `setContent` the renderer walks them one at a time, draws each small into
+its placeholder and lets the big one go. Only one photograph exists at once, anywhere. `meta.imageMax` sets the longest
+side (the sign-off sheet asks for 900px — legible evidence that still emails from site), and `data-src`/`src` are still
+honoured for pages carrying few enough to load outright. The daily docket marks no image at all, so its bytes are
+untouched and it stays byte-identical.
+
+The weekly still embeds its eighty photographs the old way. It has not fallen over yet because no week has carried
+enough, but it is the same fault and it should move to `images` too.
 
 ## Not built, and deliberately so
 
