@@ -2106,6 +2106,21 @@ client signs it is the wrong thing to send — they would be signing off work al
 counts those days (`pendingCorrectionDays`) and the screen says so above the download, naming the head contractor. The
 sheet itself stays clean: a client document does not carry the subcontractor's own housekeeping.
 
+**R84. A page decodes its photographs one at a time, or Chromium dies.** The sign-off sheet (R83) rendered fine at
+nineteen photographs and then, at twenty-four, failed on Vercel every time with "target page, context or browser has
+been closed" — the render-once retry (R78) could not help, because the browser was not stale, it was being killed.
+
+`page.setContent(..., { waitUntil: 'load' })` waits for every `<img src>` to load, and a phone photograph that weighs
+three megabytes on disk costs tens of megabytes decoded. Two dozen of them, all decoded before `load` resolves, is more
+memory than the function has. The shrink step that would have made them small runs afterwards, so it never got the
+chance.
+
+So a photograph that is going to be shrunk is carried in `data-src`, not `src`: nothing loads during `setContent`, and
+`shrinkMarkedImages` decodes each one, draws the small copy into `src`, and drops the big one before the next. Peak
+memory is one photograph rather than all of them. `src` is still honoured for pages carrying few enough to load
+outright, and the daily docket marks no image at all, so its bytes are untouched and it stays byte-identical. The
+weekly, which caps at eighty photographs, was one good week away from the same crash and is deferred too.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;

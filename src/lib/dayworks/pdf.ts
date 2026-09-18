@@ -72,7 +72,7 @@ export function dayworksSignoffHtml(
     return [
       `<div class="dwp__item"><p class="dwp__head mono">Item ${n} · ${esc(fmtDate(l.date))} · ${esc(l.works)}</p>`,
       '<div class="photos__grid">',
-      pics.map((src) => `<figure><img src="${src}" alt="Item ${n}" data-shrink="1000" /></figure>`).join(''),
+      pics.map((src) => `<figure><img data-src="${src}" alt="Item ${n}" data-shrink="1000" /></figure>`).join(''),
       '</div></div>',
     ].join('');
   }).join('');

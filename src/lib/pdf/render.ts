@@ -179,34 +179,62 @@ export interface DocumentMeta {
   footerLeft: string;
 }
 
-/** Runs inside Chromium: draws each marked image onto a canvas and swaps in the smaller JPEG. */
+/**
+ * Runs inside Chromium: draws each marked image onto a canvas and swaps in the
+ * smaller JPEG.
+ *
+ * A photograph in `data-src` rather than `src` is decoded HERE, one at a time,
+ * and dropped as soon as the small copy is drawn. A phone photograph costs
+ * megabytes on disk and tens of megabytes decoded, so a page that put twenty
+ * of them in `src` had Chromium decode all twenty before `load` even
+ * resolved — which is how the dayworks sign-off sheet killed the browser on
+ * Vercel with "target page, context or browser has been closed" (README R84).
+ * `src` is still honoured, for pages that carry few enough to load outright.
+ */
 async function shrinkMarkedImages(): Promise<void> {
   const images = Array.from(document.querySelectorAll<HTMLImageElement>('img[data-shrink]'));
   for (const img of images) {
+    const deferred = img.dataset.src ?? null;
     try {
       const max = Number(img.dataset.shrink) || 1000;
       // Bounded: an image that never settles must not hold the print. It is
       // left as it is and the page prints with it.
-      const settle = (apply?: () => void) =>
+      const settle = (target: HTMLImageElement, apply?: () => void) =>
         new Promise<void>((done) => {
           const timer = setTimeout(done, 5000);
-          img.onload = img.onerror = () => { clearTimeout(timer); done(); };
+          target.onload = target.onerror = () => { clearTimeout(timer); done(); };
           apply?.();
         });
-      if (!img.complete) await settle();
-      const w = img.naturalWidth, h = img.naturalHeight;
-      if (!w || !h || Math.max(w, h) <= max) continue;
+
+      let source = img;
+      if (deferred) {
+        source = new Image();
+        await settle(source, () => { source.src = deferred; });
+      } else if (!img.complete) {
+        await settle(img);
+      }
+
+      const w = source.naturalWidth, h = source.naturalHeight;
+      const asIs = async () => {
+        if (deferred) await settle(img, () => { img.src = deferred; });
+      };
+      if (!w || !h || Math.max(w, h) <= max) { await asIs(); continue; }
+
       const scale = max / Math.max(w, h);
       const canvas = document.createElement('canvas');
       canvas.width = Math.round(w * scale);
       canvas.height = Math.round(h * scale);
       const ctx = canvas.getContext('2d');
-      if (!ctx) continue;
-      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      if (!ctx) { await asIs(); continue; }
+      ctx.drawImage(source, 0, 0, canvas.width, canvas.height);
       const small = canvas.toDataURL('image/jpeg', 0.72);
-      await settle(() => { img.src = small; });
+      await settle(img, () => { img.src = small; });
+      // Let the full-size bitmap and its bytes go before the next one arrives.
+      if (deferred) { source.src = ''; img.removeAttribute('data-src'); }
     } catch {
-      // Leave the original in place; a full-size photograph beats a missing one.
+      // A full-size photograph beats a missing one, and a missing one on a
+      // document a client signs is worse than a heavy page.
+      try { if (deferred && !img.getAttribute('src')) img.src = deferred; } catch { /* nothing else to try */ }
     }
   }
 }
