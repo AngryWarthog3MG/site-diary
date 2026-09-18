@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
+import { begin, record, undo as undoStep, redo as redoStep, canUndo, canRedo, depth, type History } from '@/lib/undo/history';
 import { SECTIONS, PHOTO_FIELDS, type FieldDef, type SectionDef } from '@/lib/review/fields';
 import {
   GAP_PROMPTS,
@@ -142,6 +143,13 @@ export function ReviewScreen(props: {
 }) {
   const router = useRouter();
   const [payload, setPayload] = useState<ReviewPayload>(props.initial);
+  // Undo and redo for the day being written up (README R79). A step is a whole snapshot of what the
+  // screen holds; putting one back saves the same way any other change does. Signing is not undoable
+  // — a signed day is immutable and a correction is a new entry — so this ends at the signature.
+  type Snapshot = { payload: ReviewPayload; nil: SectionKey[] };
+  const [history, setHistory] = useState<History<Snapshot>>(() => begin({ payload: props.initial, nil: [...props.initialNilConfirmed] }));
+  // A change made BY undo or redo is not itself a step.
+  const steppingRef = useRef(false);
   const [nilConfirmed, setNilConfirmed] = useState<Set<SectionKey>>(
     new Set(props.initialNilConfirmed),
   );
@@ -226,6 +234,43 @@ export function ReviewScreen(props: {
         retryRef.current.timer = window.setTimeout(() => flush(), delay);
       });
   }, [props.entryId]);
+  // One step per pause in the work, not one per keystroke: a burst of typing undoes in one tap.
+  useEffect(() => {
+    if (steppingRef.current) { steppingRef.current = false; return; }
+    const timer = window.setTimeout(() => {
+      setHistory((h) => {
+        // Opening the day is not a step, and neither is a change that left everything as it was.
+        const sameNil = h.present.nil.length === nilConfirmed.size && h.present.nil.every((k) => nilConfirmed.has(k));
+        if (h.present.payload === payload && sameNil) return h;
+        return record(h, { payload, nil: [...nilConfirmed] });
+      });
+    }, 700);
+    return () => window.clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [payload, nilConfirmed]);
+
+  const stepTo = useCallback((next: History<Snapshot>) => {
+    steppingRef.current = true;
+    setHistory(next);
+    setPayload(next.present.payload);
+    setNilConfirmed(new Set(next.present.nil));
+  }, []);
+  const stepBack = useCallback(() => { if (canUndo(history)) stepTo(undoStep(history)); }, [history, stepTo]);
+  const stepForward = useCallback(() => { if (canRedo(history)) stepTo(redoStep(history)); }, [history, stepTo]);
+
+  // The usual keys, but never over a text box's own undo: inside a field the browser's is better.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (!(e.metaKey || e.ctrlKey) || e.key.toLowerCase() !== 'z') return;
+      const el = document.activeElement;
+      if (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement || (el as HTMLElement | null)?.isContentEditable) return;
+      e.preventDefault();
+      if (e.shiftKey) stepForward(); else stepBack();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [stepBack, stepForward]);
+
   useEffect(() => {
     if (skipFirstAutosave.current) {
       skipFirstAutosave.current = false;
@@ -550,6 +595,27 @@ export function ReviewScreen(props: {
             )}
           </div>
         </header>
+        <div className="review-undo" role="group" aria-label="Undo and redo">
+          <button
+            type="button"
+            className="button button--quiet"
+            onClick={stepBack}
+            disabled={!canUndo(history) || busy !== null}
+            title={canUndo(history) ? `Undo the last change to this day (${depth(history).back} to go back through)` : 'Nothing to undo on this day yet'}
+          >
+            ↶ Undo
+          </button>
+          <button
+            type="button"
+            className="button button--quiet"
+            onClick={stepForward}
+            disabled={!canRedo(history) || busy !== null}
+            title={canRedo(history) ? `Put back what you just undid (${depth(history).forward})` : 'Nothing to put back'}
+          >
+            ↷ Redo
+          </button>
+          <span className="caption">Your changes to this day, until you sign it.</span>
+        </div>
         {props.neighbours && <DayNav neighbours={props.neighbours} target="day" />}
         {saveState === 'failed' && (
           <p className="alert savestate" role="status">

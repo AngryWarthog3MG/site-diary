@@ -2025,6 +2025,22 @@ acceptance". A save kept on the phone refreshed the page whenever the device cla
 bar; the outcome of the save decides now. A replay whose file had been lost from the phone would have written a row naming
 a file that was never uploaded.
 
+**R79. Undo and redo, on the day being written up.** Mitchell asked for undo and redo buttons. They belong to the one place
+the app is a place of editing rather than a record: the day's review screen, where the supervisor works on an unsigned draft.
+Everything else the app holds is immutable or frozen by design — a signed entry, a finished prestart, an issued document, a
+recorded reading — and the way back from those is a correction that supersedes, not an undo (non-negotiable 2). So the
+buttons sit at the top of the day's diary, and the day's signature ends what they can reach.
+
+A step is a whole snapshot of what the screen holds — the review payload and which sections are confirmed nil — so undo puts
+back exactly what was there, including a row removed or a section confirmed by mistake. Steps are recorded 700 ms after the
+last change, so a burst of typing undoes in one tap rather than letter by letter, and opening the day records nothing.
+Putting a snapshot back goes through the screen's own autosave, which is how every other change reaches the draft; the
+server ends up with what the screen shows. Cmd or Ctrl+Z and Shift+Cmd or Ctrl+Z do the same, except inside a text box,
+where the browser's own undo is better and is left alone. Fifty steps are kept (`src/lib/undo/history.ts`, pure and tested).
+
+Undoing away a photograph leaves its file in storage with nothing pointing at it until it is put back or the nightly
+`orphans=1` check reports it — the same as removing the photograph by hand, which is what undo is undoing.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;

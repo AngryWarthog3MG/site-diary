@@ -280,6 +280,8 @@ improvising; the register once shipped dead because a live smoke test was skippe
   is computed anywhere the Safety screen does not also compute it. A card is drawn only when it has something
   in it; the rest fold into one "Nothing needs attention" line naming what was checked (README R56). A new card
   declares its own `attention` test
+- `src/lib/undo/history.ts` — undo/redo for the day's review screen only (README R79): pure `begin`/`record`/`undo`/`redo`,
+  50 steps, snapshots of the whole review payload. Never offer undo over a signed entry or a frozen row — that is a correction
 - `src/lib/calendar.ts` — `isRestDay`: weekends with nothing recorded are rest days, not holes. One definition for
   the screens, the weekly and the reminder
 - `src/lib/dayworks/` — the dayworks schedule (README R72): `schedule.ts` (pure: `readRange`, `buildSchedule` by Monday weeks;

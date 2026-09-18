@@ -4031,3 +4031,21 @@ a.dash-row:hover { background: var(--teal-tint); }
 /* Quality: ITP points and lot points. A hold point is marked, because work stops at it. */
 .itp__points { display: grid; gap: 0.6rem; }
 .itp__point--hold { border-left: 3px solid #9A2B2B; }
+
+/* Undo and redo on the day being written up (README R79). */
+.review-undo {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-top: 0.75rem;
+}
+.review-undo .button {
+  flex: 0 0 auto;
+  width: auto;
+  min-width: 0;
+  padding: 0.45rem 0.9rem;
+  font-size: 0.95rem;
+}
+.review-undo .caption { flex: 1 1 100%; }
+.review-undo .caption { margin: 0; }
