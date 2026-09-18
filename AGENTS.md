@@ -294,9 +294,11 @@ improvising; the register once shipped dead because a live smoke test was skippe
   no move the other way, on purpose
 - `src/lib/calendar.ts` — `isRestDay`: weekends with nothing recorded are rest days, not holes. One definition for
   the screens, the weekly and the reminder
-- `src/lib/dayworks/` — the dayworks schedule (README R72): `schedule.ts` (pure: `readRange`, `buildSchedule` by Monday weeks;
-  hours null is "not recorded", never 0), `load.ts` (diary.dayworks + `loadDocketsAdded`, unsigned days counted apart), `pdf.ts`.
-  `/dayworks` and `/api/dayworks/pdf` are the `claims` screen
+- `src/lib/dayworks/` — the dayworks schedule (README R72): `schedule.ts` (pure: `readRange`, `buildSchedule` by Monday weeks,
+  `scheduleLines` — the order the sign-off sheet numbers items in; hours null is "not recorded", never 0), `load.ts`
+  (diary.dayworks + `loadDocketsAdded`, unsigned days counted apart, `pendingCorrectionDays`), `photos.ts` (each item's
+  photographs as data URIs under the caller's RLS, capped), `pdf.ts` (the schedule, and `dayworksSignoffHtml` — the sheet the
+  head contractor signs, README R83). `/dayworks` and `/api/dayworks/pdf` (`?signoff=1` for the sheet) are the `claims` screen
 - `src/lib/claims/` — the claims register loader and the variation register (`register.ts`:
   statuses, summary arithmetic). Status changes only via the `set_variation_status` RPC. A day's variation
   is identified by its register number alone (`variations.register_seq`, picked from a dropdown of

@@ -12,6 +12,8 @@ export interface DayworkLine {
   date: string;
   entryNo: string;
   entryId: string | null;
+  /** The daywork row itself, for pulling its photographs onto the sign-off sheet. */
+  dayworkId: string | null;
   works: string;
   labour: string | null;
   plant: string | null;
@@ -141,4 +143,13 @@ export function buildSchedule(lines: readonly DayworkLine[], range: Pick<Range, 
       toChase: inRange.filter((l) => !l.docket).length,
     },
   };
+}
+
+/**
+ * Every line in schedule order, week by week. The item number a sign-off
+ * sheet prints beside a row is its place in this list, so the schedule and
+ * the photographs agree on which item is which.
+ */
+export function scheduleLines(s: DayworksSchedule): DayworkLine[] {
+  return s.weeks.flatMap((w) => w.lines);
 }

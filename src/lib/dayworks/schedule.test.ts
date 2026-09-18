@@ -1,9 +1,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { buildSchedule, readRange, weekStart, type DayworkLine } from './schedule.ts';
+import { buildSchedule, readRange, scheduleLines, weekStart, type DayworkLine } from './schedule.ts';
 
 const line = (date: string, works: string, hours: number | null, docket: string | null = null): DayworkLine =>
-  ({ date, entryNo: `KBL-${date}`, entryId: null, works, labour: null, plant: null, materials: null, hours, docket, docketAddedOn: null });
+  ({ date, entryNo: `KBL-${date}`, entryId: null, dayworkId: `dw-${date}-${works}`, works, labour: null, plant: null, materials: null, hours, docket, docketAddedOn: null });
 
 test('weeks start on Monday', () => {
   assert.equal(weekStart('2026-09-17'), '2026-09-14'); // Thursday
@@ -42,4 +42,15 @@ test('periods read from the address', () => {
   assert.deepEqual(readRange({ range: 'last-month' }, '2026-01-05'), { key: 'last-month', from: '2025-12-01', to: '2025-12-31', label: 'December 2025' });
   assert.equal(readRange({ range: 'custom', from: '2026-09-20', to: '2026-09-01' }, today).from, '2026-09-01');
   assert.equal(readRange({ range: 'custom', from: 'nonsense' }, today).key, 'all');
+});
+
+test('the sign-off sheet numbers items in schedule order, week by week', () => {
+  const s = buildSchedule([
+    line('2026-09-15', 'Relocate kerb', 6),
+    line('2026-09-08', 'Clear spoil', 4.5),
+    line('2026-09-09', 'Extra trench', 3.25),
+  ], { from: null, to: null });
+  assert.deepEqual(scheduleLines(s).map((l) => l.works), ['Clear spoil', 'Extra trench', 'Relocate kerb']);
+  // Item 1 on the sheet is the first line of the first week, whatever order they arrived in.
+  assert.equal(scheduleLines(s).length, s.totals.items);
 });

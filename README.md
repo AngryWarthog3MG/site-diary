@@ -2084,6 +2084,28 @@ There is no move the other way. Dayworks and variations are not two labels for t
 head contractor pays by the hour, the other is directed work that changes the contract — and the mistake only ever
 runs in one direction.
 
+**R83. The dayworks sheet the client signs.** The schedule (R72) is a register: dense, internal, the thing a claim is
+built from. What Mitchell hands Lendlease is a different document — the same dayworks, itemised and numbered, with the
+labour, plant, materials, docket and hours recorded against each, the photographs taken on them, and a block for the
+head contractor to sign. `?signoff=1` on the same route, so there is one loader, one set of figures and one place a
+number can be wrong.
+
+The declaration says what a signature there means and what it does not: it acknowledges the labour, plant and materials
+expended on the dates shown, and leaves rates, entitlement and value to the contract. That is what a dayworks sheet is
+for, and saying it protects both sides — a client who signs has not agreed a price, and a subcontractor who is signed
+has proof the resources were there. The head contractor is named from `projects.principal_contractor` and falls back to
+"the head contractor" rather than inventing one, and the preparer is the signed-in person's own name (R70).
+
+Photographs are embedded as data URIs and re-encoded at print time (`data-shrink`), like the weekly's, so the sheet is a
+document rather than a page of links that expire; they are keyed to the item number so a photograph can be tied to the
+line it belongs to. A hundred is the cap, and what is past it is reported and stays in the daily dockets.
+
+The trap this document has, that the register does not: a day whose correction is written but not yet signed still shows
+its old rows, because the schedule reads the signed record and that is the right answer for a register. On a sheet the
+client signs it is the wrong thing to send — they would be signing off work already moved to a variation. So the loader
+counts those days (`pendingCorrectionDays`) and the screen says so above the download, naming the head contractor. The
+sheet itself stays clean: a client document does not carry the subcontractor's own housekeeping.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;

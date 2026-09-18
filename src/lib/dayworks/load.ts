@@ -11,6 +11,13 @@ export interface DayworksScheduleData extends DayworksSchedule {
   /** Dayworks on days not yet signed in the period — not in the schedule, which is the signed record. */
   unsignedItems: number;
   unsignedDays: number;
+  /**
+   * Days on the schedule whose correction is written but not yet signed. The
+   * rows shown for them are the version that stands, which is the right answer
+   * for a record and a trap for a sheet the client signs — so it is counted
+   * and said out loud rather than left to be noticed.
+   */
+  pendingCorrectionDays: number;
 }
 
 async function diaryQuery(supabase: SupabaseClient, sql: string): Promise<Array<Record<string, unknown>>> {
@@ -37,10 +44,22 @@ export async function loadDayworksSchedule(supabase: SupabaseClient, projectId: 
   if (range.from) unsigned = unsigned.gte('entry.entry_date', range.from);
   if (range.to) unsigned = unsigned.lte('entry.entry_date', range.to);
 
-  const [rows, entries, { data: open, error: openError }] = await Promise.all([
+  // A correction written but not signed: the day on the schedule is the one it
+  // replaces, so the schedule is right and the supervisor still has a tap to make.
+  let pending = supabase
+    .from('entries')
+    .select('entry_date')
+    .eq('project_id', projectId)
+    .eq('status', 'draft')
+    .not('supersedes_entry_id', 'is', null);
+  if (range.from) pending = pending.gte('entry_date', range.from);
+  if (range.to) pending = pending.lte('entry_date', range.to);
+
+  const [rows, entries, { data: open, error: openError }, { data: pendingRows }] = await Promise.all([
     diaryQuery(supabase, `select entry_no, entry_date, description, labour, plant, materials, hours, docket_ref, daywork_id from diary.dayworks where ${where} order by entry_date`),
     diaryQuery(supabase, `select entry_no, entry_id from diary.entries where ${where}`),
     unsigned,
+    pending,
   ]);
   if (openError) throw new Error(`Could not check unsigned days: ${openError.message}`);
 
@@ -55,6 +74,7 @@ export async function loadDayworksSchedule(supabase: SupabaseClient, projectId: 
       date: String(row.entry_date),
       entryNo: String(row.entry_no),
       entryId: entryIds.get(String(row.entry_no)) ?? null,
+      dayworkId: id,
       works: String(row.description ?? ''),
       labour: ((row.labour as string | null) ?? '').trim() || null,
       plant: ((row.plant as string | null) ?? '').trim() || null,
@@ -69,5 +89,12 @@ export async function loadDayworksSchedule(supabase: SupabaseClient, projectId: 
   const openRows = (open ?? []) as unknown as OpenRow[];
   const openDays = new Set(openRows.map((r) => (Array.isArray(r.entry) ? r.entry[0]?.entry_date : r.entry?.entry_date)).filter(Boolean));
 
-  return { ...buildSchedule(lines, range), truncated: rows.length >= 1000, unsignedItems: openRows.length, unsignedDays: openDays.size };
+  const pendingDays = new Set(((pendingRows ?? []) as Array<{ entry_date: string }>).map((r) => r.entry_date));
+  return {
+    ...buildSchedule(lines, range),
+    truncated: rows.length >= 1000,
+    unsignedItems: openRows.length,
+    unsignedDays: openDays.size,
+    pendingCorrectionDays: pendingDays.size,
+  };
 }

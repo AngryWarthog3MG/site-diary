@@ -29,10 +29,14 @@ export default async function DayworksPage({ searchParams }: { searchParams: Pro
 
   const today = perthToday();
   const range = readRange(params, today);
+  const supabase = await createClient();
+  // Who signs the sheet: the head contractor we work under, when they are named.
+  const { data: job } = await supabase.from('projects').select('principal_contractor').eq('id', current.project_id).maybeSingle();
+  const clientName = (job?.principal_contractor as string | null)?.trim() || 'the head contractor';
   let data: DayworksScheduleData | null = null;
   let loadError: string | null = null;
   try {
-    data = await loadDayworksSchedule(await createClient(), current.project_id, range);
+    data = await loadDayworksSchedule(supabase, current.project_id, range);
   } catch (err) {
     loadError = err instanceof Error ? err.message : 'Could not load the schedule.';
   }
@@ -84,10 +88,20 @@ export default async function DayworksPage({ searchParams }: { searchParams: Pro
             </div>
           </div>
 
+          {data.pendingCorrectionDays > 0 && (
+            <p className="alert">
+              {data.pendingCorrectionDays} day{data.pendingCorrectionDays === 1 ? '' : 's'} in this period {data.pendingCorrectionDays === 1 ? 'has a correction' : 'have corrections'} written but not signed.
+              The rows below are the signed record, so {data.pendingCorrectionDays === 1 ? 'that day still reads' : 'those days still read'} the old way.
+              Sign {data.pendingCorrectionDays === 1 ? 'it' : 'them'} before you send the sheet, or {clientName} will be signing off work you have already moved.
+            </p>
+          )}
+
           <div className="claims-actions">
-            <a className="button" href={pdfHref} target="_blank" rel="noopener">Print schedule (PDF)</a>
+            <a className="button" href={`${pdfHref}&signoff=1`} target="_blank" rel="noopener">Sign-off sheet for the client (PDF)</a>
+            <a className="button button--quiet" href={pdfHref} target="_blank" rel="noopener">Schedule only (PDF)</a>
             <Link className="button button--quiet" href={`/claims?project=${p}`}>Claims register</Link>
           </div>
+          <p className="caption">The sign-off sheet itemises every daywork with its labour, plant, materials, docket and photographs, and carries a block for {clientName} to sign. It acknowledges what was expended, not rates or value.</p>
 
           {data.truncated && (
             <p className="alert">More than 1,000 dayworks in this period — only the first 1,000 are shown and totalled. Choose a shorter period.</p>
