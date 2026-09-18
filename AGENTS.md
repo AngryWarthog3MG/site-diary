@@ -288,6 +288,10 @@ improvising; the register once shipped dead because a live smoke test was skippe
   declares its own `attention` test
 - `src/lib/undo/history.ts` — undo/redo for the day's review screen only (README R79): pure `begin`/`record`/`undo`/`redo`,
   50 steps, snapshots of the whole review payload. Never offer undo over a signed entry or a frozen row — that is a correction
+- `src/lib/review/move.ts` — moving a daywork row onto its variation (README R82): pure, so it is an ordinary payload
+  change that autosaves and that Undo reverses. It will not move without a register number, and what a variation has no
+  field for (labour, plant, materials, docket) is kept in the description verbatim — never parsed into `crew`. There is
+  no move the other way, on purpose
 - `src/lib/calendar.ts` — `isRestDay`: weekends with nothing recorded are rest days, not holes. One definition for
   the screens, the weekly and the reminder
 - `src/lib/dayworks/` — the dayworks schedule (README R72): `schedule.ts` (pure: `readRange`, `buildSchedule` by Monday weeks;

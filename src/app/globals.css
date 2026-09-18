@@ -1876,6 +1876,49 @@ body {
   flex: 0 0 auto;
 }
 
+/* Remove, and — on a daywork — moving the row onto its variation. */
+.itemhead__actions {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: start;
+  gap: 0.375rem;
+}
+
+/*
+ * Work filed under dayworks that belongs to a variation (README R81). Opens
+ * under the row's heading, asks the one question that matters — which
+ * variation — and will not move until it is answered.
+ */
+.itemmove {
+  display: grid;
+  gap: 0.625rem;
+  margin-bottom: 0.875rem;
+  padding: 0.75rem 0.875rem;
+  background: var(--paper-dim);
+  border: 1px solid var(--ink-12);
+  border-radius: var(--r-ui);
+}
+
+.itemmove .label {
+  margin: 0;
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.itemmove .fieldcell {
+  margin: 0;
+}
+
+.itemmove .button {
+  justify-self: start;
+  width: auto;
+  min-width: 0;
+  padding: 0.45rem 0.9rem;
+  font-size: 0.95rem;
+}
+
 .photo-review-grid {
   display: grid;
   gap: 0.875rem;
@@ -3028,6 +3071,8 @@ body {
 .review-sheet .item { position: relative; }
 .review-sheet .itemhead { position: absolute; top: 0.55rem; right: 0.7rem; margin: 0; }
 .review-sheet .itemhead > div { display: none; }
+/* …except the row's own buttons, which the rule above would hide with the heading. */
+.review-sheet .itemhead > .itemhead__actions { display: flex; }
 .review-sheet .itemhead .quotebtn { font-size: 0.7rem; }
 .review-sheet .item--low .itemhead > div { display: block; }
 .review-sheet .item--low .itemhead { position: static; margin-bottom: 0.5rem; display: flex; justify-content: space-between; }

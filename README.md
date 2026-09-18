@@ -2068,6 +2068,22 @@ machine loses money. Hours moved across as recorded and nowhere invented — the
 A variation reaches the register only through its number (`variations.register_seq`), and the insert trigger links it.
 Every moved row carries 1, so V-001 now collects each vac day.
 
+**R82. Moving a daywork onto its variation, in the app.** R81 was fixed by hand in the database, which is no use the
+next time it happens — and it had already happened twice. So each daywork row on an unsigned day carries "Move to
+variations": it asks the one question that matters, which variation, and will not move until that is answered, because
+a variation with no number never reaches the register and the day cannot be signed with one (`variation_missing_number`).
+
+The move is an ordinary change to the payload (`src/lib/review/move.ts`, pure and tested), which means it autosaves like
+any edit, the day's Undo puts it back, and a signed day is untouched — the way back from one of those is still a
+correction. Nothing is invented and nothing is dropped: hours and photos travel as they are, and the labour, plant,
+materials and docket a variation has no field for are kept in the description in the words that were typed. The crew
+list is deliberately left empty, because splitting free text like "2x Marcus Hayden , Evan Burke" into names invents a
+person called "2x Marcus Hayden"; the names are one tap each on the row itself.
+
+There is no move the other way. Dayworks and variations are not two labels for the same thing — one is day labour the
+head contractor pays by the hour, the other is directed work that changes the contract — and the mistake only ever
+runs in one direction.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;

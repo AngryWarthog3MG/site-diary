@@ -20,6 +20,7 @@ import {
   type ReviewWeatherReading,
   type ReviewPayload,
 } from '@/lib/review/schema';
+import { moveDayworkToVariations } from '@/lib/review/move';
 import { SECTION_KEYS, type SectionKey } from '@/lib/extraction/schema';
 import {
   reconcilePour,
@@ -355,6 +356,24 @@ export function ReviewScreen(props: {
       ...prev,
       [group]: (prev[group] as Item[]).filter((_, i) => i !== index),
     }));
+  }, []);
+
+  /**
+   * Work filed under dayworks that belongs to a variation (README R81). One
+   * tap moves the row, carrying its hours, photos and everything a variation
+   * has no field for; the day's undo puts it back like any other change.
+   */
+  const moveToVariations = useCallback((index: number, registerSeq: number | null) => {
+    setPayload((prev) => moveDayworkToVariations(prev, index, registerSeq) as ReviewPayload);
+    // A variation now exists, so "no variations today" is no longer the answer.
+    setNilConfirmed((prev) => {
+      const next = new Set(prev);
+      for (const [key, group] of Object.entries(REQUIRED_GROUP)) {
+        if (group === 'variations') next.delete(key as SectionKey);
+      }
+      return next;
+    });
+    setActiveTab('variations');
   }, []);
 
   /**
@@ -723,6 +742,7 @@ export function ReviewScreen(props: {
             onAdd={addItem}
             onBulkAdd={bulkAdd}
             onRemove={removeItem}
+            onMoveToVariations={moveToVariations}
           />
         )}
 
@@ -1228,6 +1248,7 @@ function DocketSection({
   onAdd,
   onBulkAdd,
   onRemove,
+  onMoveToVariations,
 }: {
   section: SectionDef;
   reasons: string[];
@@ -1240,6 +1261,7 @@ function DocketSection({
   onAdd: (section: SectionDef) => void;
   onBulkAdd: (group: ItemGroup, items: Item[]) => void;
   onRemove: (group: ItemGroup, index: number) => void;
+  onMoveToVariations: (index: number, registerSeq: number | null) => void;
 }) {
   return (
     <section>
@@ -1295,6 +1317,7 @@ function DocketSection({
           onChange={onChange}
           onPatch={onPatch}
           onRemove={onRemove}
+          onMoveToVariations={onMoveToVariations}
         />
       ))}
     </section>
@@ -1315,6 +1338,7 @@ function ItemCard({
   onChange,
   onPatch,
   onRemove,
+  onMoveToVariations,
 }: {
   section: SectionDef;
   item: Item;
@@ -1324,9 +1348,13 @@ function ItemCard({
   onChange: (group: ItemGroup, index: number, key: string, value: unknown) => void;
   onPatch: (group: ItemGroup, index: number, patch: Item) => void;
   onRemove: (group: ItemGroup, index: number) => void;
+  onMoveToVariations: (index: number, registerSeq: number | null) => void;
 }) {
   const [showQuote, setShowQuote] = useState(false);
   const [docket, setDocket] = useState<DocketState | null>(null);
+  // Moving this row into variations: open, and the number it is going to.
+  const [moving, setMoving] = useState(false);
+  const [moveSeq, setMoveSeq] = useState<number | null>(null);
   const quote = item.source_quote as string | null;
   const low = item.confidence === 'low';
   const heading = String(item[section.identity] ?? '').trim() || `${section.noun} ${index + 1}`;
@@ -1374,14 +1402,47 @@ function ItemCard({
         <div>
           <h3>{heading}</h3>
         </div>
-        <button
-          type="button"
-          className="quotebtn quotebtn--remove"
-          onClick={() => onRemove(section.group, index)}
-        >
-          Remove
-        </button>
+        <div className="itemhead__actions">
+          {section.group === 'dayworks' && (
+            <button type="button" className="quotebtn" onClick={() => setMoving((open) => !open)}>
+              {moving ? 'Leave it here' : 'Move to variations'}
+            </button>
+          )}
+          <button
+            type="button"
+            className="quotebtn quotebtn--remove"
+            onClick={() => onRemove(section.group, index)}
+          >
+            Remove
+          </button>
+        </div>
       </header>
+
+      {moving && (
+        <div className="itemmove">
+          <p className="label">
+            Work directed as a variation belongs on the variation — that is where the register adds up its
+            hours and where a claim finds it. Everything on this row comes across; Undo puts it back.
+          </p>
+          <RegisterNumberField
+            field={{ key: 'register_seq', label: 'Which variation is it?', kind: 'regno' }}
+            value={moveSeq}
+            projectId={projectId}
+            onChange={(value) => setMoveSeq((value as number | null) ?? null)}
+          />
+          <button
+            type="button"
+            className="button button--quiet"
+            disabled={moveSeq == null}
+            onClick={() => {
+              setMoving(false);
+              onMoveToVariations(index, moveSeq);
+            }}
+          >
+            {moveSeq == null ? 'Pick the variation first' : `Move to V-${String(moveSeq).padStart(3, '0')}`}
+          </button>
+        </div>
+      )}
 
       {low && (
         <p className="label" style={{ color: 'var(--amber)' }}>
