@@ -2127,8 +2127,16 @@ side (the sign-off sheet asks for 900px — legible evidence that still emails f
 honoured for pages carrying few enough to load outright. The daily docket marks no image at all, so its bytes are
 untouched and it stays byte-identical.
 
-The weekly still embeds its eighty photographs the old way. It has not fallen over yet because no week has carried
-enough, but it is the same fault and it should move to `images` too.
+The weekly was left embedding its eighty photographs the old way, on the grounds that no week had carried enough to
+fall over. Three days later a week had: **Download PDF on the weekly report came back as `internal.json`** — a plain
+`<a href>` to the route, so when the route 500s the browser saves the error body under the last path segment. Behind it
+was the same "target page, context or browser has been closed". The lesson is the one this repo keeps learning: a known
+fault left in place is a fault with a date on it, not a risk. The weekly's photographs now travel in `images` too.
+
+Two things fell out of fixing it. The eighty downloads from storage ran one after another, which was most of the two
+and a half minutes a weekly took — six at a time, in print order so the keys stay stable, brought the whole render from
+147s to 57s. And at 800px rather than 1000 the report went from 13.3 MB to 7.5 MB, which is the difference between a
+PM opening it on site and not.
 
 **R85. A variation valued at nothing.** Curtin's V-001 — the vac trailer, the biggest thing on the job — sat on the
 register marked "priced", with eighty-four hours of crew and plant recorded against it and an estimated cost of **$0**.

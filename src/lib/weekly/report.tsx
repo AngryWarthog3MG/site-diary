@@ -521,7 +521,7 @@ export function WeeklyReport({ data, narrative, narrativeNote, audience = 'recor
                 {day.photos.map((photo, index) => (
                   <figure key={index}>
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img data-src={photo.src} alt={photo.caption ?? photo.context} data-shrink="1000" />
+                    <img data-photo={photo.key} alt={photo.caption ?? photo.context} />
                     <figcaption className="mono">
                       {photo.context}
                       {photo.caption ? ` — ${photo.caption}` : ''}

@@ -1,29 +1,43 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-import type { PhotoImage } from '@/lib/pdf/docket';
 import { PHOTO_BUCKET, PHOTO_CONTEXT } from '@/lib/pdf/photos';
 
 /**
  * The week's photographs, day by day, for the weekly report.
  *
  * Every photograph a day carries — the day's own, and the ones on its
- * variations, dayworks and concrete dockets — embedded as data URIs like the
- * daily docket's appendix, so the weekly stays a document rather than a page
- * of links that expire. The images are re-encoded smaller at print time
- * (`data-shrink` in the renderer): a week can carry forty photographs, and a
- * report a PM emails on should not weigh twenty megabytes.
+ * variations, dayworks and concrete dockets — embedded in the finished PDF, so
+ * the weekly stays a document rather than a page of links that expire.
+ *
+ * The bytes travel BESIDE the HTML, not inside it (README R84): the report
+ * renders `<img data-photo="key">` and the renderer draws each photograph in,
+ * one at a time, at print size. Eighty phone photographs as base64 inside the
+ * markup is a several-hundred-megabyte string that exists five times over
+ * before a pixel is drawn, and it killed the weekly on Vercel with "target
+ * page, context or browser has been closed" — the download the PM clicked came
+ * back as a JSON error instead of a report.
  *
  * Days are the current version only — a corrected day shows the correction —
  * and drafts are included when the report includes them, marked as such.
  */
+/** A photograph's place on the page. Its bytes are in `WeeklyPhotos.images`. */
+export interface WeeklyPhoto {
+  /** Matches `<img data-photo>` and a key in `images`. */
+  key: string;
+  caption: string | null;
+  context: string;
+}
+
 export interface WeeklyPhotoDay {
   date: string;
   entry_no: string | null;
   signed: boolean;
-  photos: PhotoImage[];
+  photos: WeeklyPhoto[];
 }
 
 export interface WeeklyPhotos {
   days: WeeklyPhotoDay[];
+  /** key → data URI, handed to the renderer rather than written into the HTML. */
+  images: Record<string, string>;
   /** Photographs beyond the cap, left in the daily dockets. */
   omitted: number;
   total: number;
@@ -41,6 +55,7 @@ export async function loadWeeklyPhotos(
   end: string,
   options: { includeUnsigned?: boolean } = {},
 ): Promise<WeeklyPhotos> {
+  const images: Record<string, string> = {};
   const { data } = await supabase
     .from('entries')
     .select(
@@ -103,12 +118,31 @@ export async function loadWeeklyPhotos(
   });
   const total = distinct.length;
   const take = distinct.slice(0, MAX_WEEKLY_PHOTOS);
-  for (const item of take) {
-    const { data: file } = await supabase.storage.from(PHOTO_BUCKET).download(item.path);
-    if (!file) continue;
-    const bytes = Buffer.from(await file.arrayBuffer());
-    const type = file.type && file.type.startsWith('image/') ? file.type : 'image/jpeg';
-    item.day.photos.push({ src: `data:${type};base64,${bytes.toString('base64')}`, caption: item.caption, context: item.context });
+
+  // Eighty round trips to Tokyo, one after another, was most of the two and a
+  // half minutes a weekly took to render. A few at a time, in the order the
+  // report prints them, so the keys stay stable for the same week.
+  const BATCH = 6;
+  const fetched = new Map<number, { type: string; bytes: Buffer }>();
+  for (let i = 0; i < take.length; i += BATCH) {
+    const slice = take.slice(i, i + BATCH);
+    await Promise.all(slice.map(async (item, k) => {
+      const { data: file } = await supabase.storage.from(PHOTO_BUCKET).download(item.path);
+      if (!file) return;
+      fetched.set(i + k, {
+        type: file.type && file.type.startsWith('image/') ? file.type : 'image/jpeg',
+        bytes: Buffer.from(await file.arrayBuffer()),
+      });
+    }));
   }
-  return { days: days.filter((d) => d.photos.length > 0), omitted: total - take.length, total };
+
+  let n = 0;
+  take.forEach((item, i) => {
+    const got = fetched.get(i);
+    if (!got) return;
+    const key = `w${(n += 1)}`;
+    images[key] = `data:${got.type};base64,${got.bytes.toString('base64')}`;
+    item.day.photos.push({ key, caption: item.caption, context: item.context });
+  });
+  return { days: days.filter((d) => d.photos.length > 0), images, omitted: total - take.length, total };
 }

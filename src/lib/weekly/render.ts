@@ -48,8 +48,17 @@ export async function renderWeeklyPdf(props: WeeklyReportProps): Promise<Uint8Ar
     keywords: [data.project.orgCode, data.project.code, data.start, data.end],
     instant: weeklyInstant(data),
     // The weekly artifact has no single content hash; hash what it renders so
-    // an unchanged report keeps its identifier.
-    idSeed: createHash('sha256').update(html).digest('hex'),
+    // an unchanged report keeps its identifier. The photographs are no longer
+    // in the html, so they join the seed by name and size.
+    idSeed: createHash('sha256')
+      .update(html)
+      .update(Object.entries(props.photos?.images ?? {}).map(([k, v]) => `${k}:${v.length}`).join('|'))
+      .digest('hex'),
+    // Drawn in one at a time at print, never written into the markup — README R84.
+    images: props.photos?.images,
+    // A week's evidence still has to arrive on a site connection: 800px is
+    // legible proof of what was done and keeps the report emailable.
+    imageMax: 800,
     footerLeft: `${data.project.orgCode}_${data.project.code} · WEEKLY · ${data.start} to ${data.end}`,
   });
 }
