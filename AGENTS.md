@@ -310,6 +310,10 @@ improvising; the register once shipped dead because a live smoke test was skippe
   change that autosaves and that Undo reverses. It will not move without a register number, and what a variation has no
   field for (labour, plant, materials, docket) is kept in the description verbatim — never parsed into `crew`. There is
   no move the other way, on purpose
+- `src/lib/templates/` — the company's template library (README R91): `template_modules` (six shells per company; core is
+  every job) and `template_items` (kind, module, tier, priority, owner, par level, folder; `origin` for the closeout
+  loop; retired never deleted). Read by every member of the company, written by `app.is_org_office` (pm/admin anywhere
+  in it). `/templates` is screen `templates`, pm/admin, company scope. Stamping a job from it is NOT built. Suite 38
 - `src/lib/notices/` — notices to the head contractor and the site events they stand on (README R90). Table
   `site_events` is the diary's SEVENTH SECTION (`entry_section` value `site_events`; nil question; conditional key in
   the hash; child of the day like dayworks — rewritten on save, frozen at signing). Tables `notices` (office-only via

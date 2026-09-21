@@ -3279,6 +3279,20 @@ body {
 .swms-sign__body { padding: 0 1rem 1rem; display: grid; gap: 0.75rem; }
 .swms-sign__body .item { margin: 0; }
 
+/* The company's template library (README R91). */
+.templates { margin-top: 0.5rem; }
+.templates__kinds { display: flex; flex-wrap: wrap; gap: 0.35rem; margin: 0.75rem 0 0.25rem; }
+.templates > .button { width: auto; min-width: 0; margin: 0.5rem 0; padding: 0.45rem 0.9rem; }
+.templates__list { margin-top: 0.75rem; }
+.templates__row { display: flex; gap: 0.75rem; align-items: flex-start; padding: 0.6rem 0; border-bottom: 1px solid var(--ink-08); }
+.templates__row--retired { opacity: 0.6; }
+.templates__main { flex: 1 1 auto; display: grid; gap: 0.15rem; min-width: 0; }
+.templates__title { font-weight: 600; }
+.templates__meta { font-size: 0.85rem; color: var(--ink-60); }
+.templates__detail { font-size: 0.9rem; }
+.templates__actions { display: flex; gap: 0.35rem; flex: 0 0 auto; }
+.templates__form { width: 100%; margin: 0.5rem 0; }
+
 /* Notices and the events they stand on (README R90). */
 .notices { display: grid; gap: 1rem; margin-top: 1rem; }
 .notices__event, .notices__draft { margin: 0.5rem 0 0; }

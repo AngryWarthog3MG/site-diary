@@ -2281,6 +2281,23 @@ was, a late answer never an early one — because the contract wants prompt noti
 but for voiding; office-only (`app.is_office` = pm and admin). Supervisors keep the claims screens they have (Mitchell,
 2026-09-21) and read no notices. Suite 37.
 
+**R91. The company's templates, and the editor to fill them.** The Project Control brief's Phase 1 stamps a new job
+from company templates — 374 items across core, earthworks, FRP and remote, in a seed file that never arrived. Rather
+than invent Kooboolong's own knowledge, this is the library and its editor, so it can be filled by hand while the rest
+is built, and later so the closeout loop has somewhere to promote a job's one-off items to.
+
+Two tables. `template_modules` — core, earthworks, frp, remote, landscape, irrigation, given to every company as
+shells; core is every job, the rest are attached per job. `template_items` — a start gate item, a hold point, a
+submittal, a SWMS to have, a consumable with a par level, a risk, an expected document or one of the twelve folders;
+each with a module, a tier (`light` for the ten things a purchase-order job needs; `full` for the whole module), a
+priority and owner where they mean something, and an `origin` (template, manual, contract) for the closeout loop.
+Company data: read by every member of the company, written by its office (`app.is_org_office` = pm or admin on any of
+its jobs). Retired, never deleted. The database checks what the editor checks: a document names its folder, a par level
+needs a unit, an item stays with its company.
+
+`/templates` is a company screen for pm and admin: pick a module, pick a kind, add, change, retire, restore. The
+stamping of a job from these (`instantiate_project`) is Phase 1 proper and is not here yet. Suite 38.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;

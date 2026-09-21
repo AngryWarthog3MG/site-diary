@@ -26,6 +26,7 @@ const SCREEN_OF_PATH: Array<[prefix: string, screen: Screen]> = [
   ['/toolbox', 'toolbox'], ['/api/toolbox', 'toolbox'],
   ['/plant', 'plant'], ['/api/plant', 'plant'],
   ['/notices', 'notices'],
+  ['/templates', 'templates'],
   ['/swms', 'swms'], ['/api/swms', 'swms'],
   ['/swms/sign', 'swms_sign'],
   ['/incidents', 'incidents'], ['/api/incidents', 'incidents'],
