@@ -93,7 +93,11 @@ improvising; the register once shipped dead because a live smoke test was skippe
 - `src/lib/prestart/` — prestart checklist, PDF, spec notes; `dictate.ts` turns a spoken briefing into the
   form's fields (Deepgram → model, never stores, never ticks a check); `dictation-merge.ts` folds it into typed text
 - `src/lib/crew/tickets.ts` — tickets (org-wide, by person name) and what each plant kind needs; `crew_inductions`
-  per job. The plant form refuses missing/expired, warns on none recorded; the prestart marks the un-inducted
+  per job. The plant form refuses missing/expired, warns on none recorded; the prestart marks the un-inducted.
+  `crew/inductions.ts` (`peopleOnJob` = members + roster by name, `inductionRows`, `notInducted`) backs the
+  inductions block on `/settings/members`, where an induction is recorded by hand — any day up to today, with
+  notes; `app.crew_inductions_before_write` tidies the name and refuses a future date. Suite 35, README R88.
+  Add member (`POST /api/projects/[id]/members`) makes the account when none exists, like the bulk add
 - `src/lib/outbox/` — the forms' offline queue (prestart create/edit/sign-on/finish, toolbox sign-on/finish, plant
   check). Any new form write goes through `runOrQueue(live, queue)` with phone-chosen ids, and its replay in
   `sync.ts` (also `hc_notice`, `swms_review`, `env_monitoring`, `hc_document` — README R76; show queued items with `usePending`, and never

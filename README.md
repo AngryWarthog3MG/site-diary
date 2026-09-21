@@ -2208,6 +2208,25 @@ Not done, on purpose: a company-level home. Home is still the job you are on; Al
 company-wide crew — access and screen ticks stay per job, which is right for a subbie crew that changes site to site;
 if the core crew turns out to work across everything, that is a separate decision.
 
+**R88. Adding someone by email, and inducting them by hand.** Two things Mitchell asked for in one breath, both about
+getting a person onto a job without ceremony.
+
+*By email.* Add member took an address and refused it if no account existed — "create it with the QR/onboarding
+operator flow, then add them here" — while the bulk add, three lines away, made the account itself. Now the single add
+does what the bulk add did: an address is enough; no account yet and one is made, confirmed, no email sent; they sign
+in with that address on their own phone, by the link the login screen sends them, and land on the job. A name given
+with it goes on the sheets from the first day (R70) — it fills a blank, never overwrites the person's own.
+
+*By hand.* An induction was recorded only on the day, by the button on a sign-on or a ticket row: today's date, no
+notes, only a name already on the roster. A supervisor who inducted a subbie on Monday and wrote it up on Wednesday, or
+inducted a visitor on no roster, had nowhere to put it. "Who is on this job" now carries the inductions: everyone on the
+job by name — members and roster together, since the gate and the prestart speak in names and a subbie may have no
+account — inducted or not, and a form for recording one: a name picked or typed, the day it happened (any day up to
+today; the database refuses one after), and what was covered. Whoever runs the talks records it. The table is unchanged;
+the rule at the door (`app.crew_inductions_before_write`) tidies the name so the unique index's one-per-person holds
+across casing and spacing, and stamps the recorder. Suite 35. Not frozen, deliberately: a name typed wrong wants
+correcting, and an induction is not a signed record — the sign-on that cites it is.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;

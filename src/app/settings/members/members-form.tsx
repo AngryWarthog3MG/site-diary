@@ -114,6 +114,7 @@ export function MembersForm({
 }) {
   const router = useRouter();
   const [email, setEmail] = useState('');
+  const [name, setName] = useState('');
   const [role, setRole] = useState<MemberRole>('supervisor');
   const [lines, setLines] = useState('');
   const [bulkRole, setBulkRole] = useState<MemberRole>('labourer');
@@ -167,8 +168,8 @@ export function MembersForm({
   }
 
   async function addMember() {
-    const added = await request('POST', { email, role }, 'add');
-    if (added) setEmail('');
+    const added = await request('POST', { email, name, role }, 'add');
+    if (added) { setEmail(''); setName(''); }
   }
 
   return (
@@ -258,6 +259,21 @@ export function MembersForm({
         <>
           <hr className="rule" />
           <p className="label">Add member</p>
+          <p style={{ margin: '0.5rem 0 0', color: 'var(--ink-60)', fontSize: '0.875rem' }}>
+            An email address is enough. If they have no account yet one is made for them, and they sign in with that
+            address on their own phone — nothing to send. Their name goes on the sheets; put it in now, or they will be
+            asked for it the first time they open the app.
+          </p>
+          <label className="fieldcell" style={{ marginTop: '0.75rem' }}>
+            <span className="label">Name</span>
+            <input
+              className="field field--sm"
+              autoComplete="name"
+              value={name}
+              onChange={(event) => setName(event.target.value)}
+              placeholder="As it should print on the sheets"
+            />
+          </label>
           <label className="fieldcell" style={{ marginTop: '0.75rem' }}>
             <span className="label">Email</span>
             <input

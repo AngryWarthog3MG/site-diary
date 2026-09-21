@@ -3267,6 +3267,17 @@ body {
 .dws-block__past summary { cursor: pointer; }
 .plainlist { list-style: none; margin: 0.5rem 0 0; padding: 0; display: grid; gap: 0.5rem; }
 .plainlist li { font-size: 0.9rem; line-height: 1.5; }
+
+/* Who is inducted onto this job (README R88). */
+.inductions { margin: 0.25rem 0 0; }
+.inductions > .button { width: auto; min-width: 0; margin: 0.5rem 0 0.25rem; padding: 0.45rem 0.9rem; }
+.inductions .item { margin-top: 0.5rem; }
+.inductions__list { margin-top: 0.75rem; }
+.inductions__row { display: flex; flex-wrap: wrap; gap: 0.25rem 0.75rem; align-items: baseline; padding: 0.35rem 0; border-bottom: 1px solid var(--ink-08); }
+.inductions__name { font-weight: 600; }
+.inductions__meta { color: var(--ink-60); font-size: 0.875rem; }
+.inductions__meta .vr-note { display: block; }
+.inductions__meta--waiting { color: var(--amber); }
 .claims-actions .button { width: auto; margin: 0; flex: 0 1 auto; min-width: 15rem; }
 @media (max-width: 560px) { .claims-actions .button { flex: 1 1 100%; } }
 .claims-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 0.75rem; margin: 1.4rem 0 0.4rem; }

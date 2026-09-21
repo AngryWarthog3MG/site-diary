@@ -59,24 +59,33 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
 
   const body = await readJson(request);
   const email = String(body?.email ?? '').trim().toLowerCase();
+  const name = String(body?.name ?? '').replace(/\s+/g, ' ').trim() || null;
   const role = body?.role;
   if (!EMAIL_RE.test(email)) return fail('bad_request', 'Enter a valid email address.', 400);
   if (typeof role !== 'string' || !ROLES.has(role as MemberRole)) {
-    return fail('bad_request', 'Role must be supervisor, pm, or admin.', 400);
+    return fail('bad_request', 'Pick a role.', 400);
   }
 
+  // An email is enough (README R88). No account yet: one is made, confirmed,
+  // with no email sent — they sign in with the address, by the link the login
+  // screen sends them or a printed card. A name given here goes on the sheets
+  // from the first day (R70); it fills a blank, never overwrites the person's own.
   let userId: string | null;
+  let made = false;
   try {
     userId = await findUserIdByEmail(email);
+    const admin = createAdminClient();
+    if (!userId) {
+      const { data: created, error: cErr } = await admin.auth.admin.createUser({ email, email_confirm: true, user_metadata: name ? { full_name: name } : {} });
+      if (cErr || !created.user) throw new Error(cErr?.message ?? 'Could not create the account.');
+      userId = created.user.id;
+      await admin.from('profiles').upsert({ id: userId, email, full_name: name });
+      made = true;
+    } else if (name) {
+      await admin.from('profiles').update({ full_name: name }).eq('id', userId).is('full_name', null);
+    }
   } catch (error) {
     return fail('server_error', error instanceof Error ? error.message : 'Could not look up that account.', 500);
-  }
-  if (!userId) {
-    return fail(
-      'not_found',
-      'That email has no account yet. Create it with the QR/onboarding operator flow, then add them here.',
-      404,
-    );
   }
 
   // Adding is adding, never a disguised role change. An upsert here would let
@@ -102,7 +111,11 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
     .insert({ project_id: projectId, user_id: userId, role: role as MemberRole });
   if (error) return fail('server_error', error.message, 500);
 
-  return ok({ message: `${email} is now a ${role}.` });
+  return ok({
+    message: made
+      ? `${name ?? email} is on the job as ${role}. They sign in with ${email} — no link to send.`
+      : `${email} is now a ${role}.`,
+  });
 }
 
 export async function PATCH(request: Request, context: { params: Promise<{ id: string }> }) {
