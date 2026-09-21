@@ -2227,6 +2227,30 @@ the rule at the door (`app.crew_inductions_before_write`) tidies the name so the
 across casing and spacing, and stamps the recorder. Suite 35. Not frozen, deliberately: a name typed wrong wants
 correcting, and an induction is not a signed record — the sign-on that cites it is.
 
+**R89. A SWMS you already have, and signing on to it from your own phone.** Mitchell: "add an option to add SWMS,
+then let people sign on to it digitally." Two gaps in one sentence.
+
+*Adding one.* The app could only write a method statement, step by step, with the eighteen high-risk categories and
+the risk matrix. That is the right tool for a JSA thought up on the day; it is the wrong door for the SWMS a
+subcontractor already has — from a safety consultant, from the head contractor's template, reviewed by Lendlease last
+month. So `/swms/new` offers the document itself: a file, a title, and it is in use the moment it lands. A filed SWMS is
+complete on its own terms — the document IS the method statement — and `swms_problems` asks nothing more of it, in both
+halves. The file is as frozen as every other content column once in use (`app.swms_file_guard`); a change is a new
+version, as ever. The export for a filed SWMS is the sign-on register: who put their name to that document, and when.
+
+*Signing on.* A sign-on was recorded by whoever runs the talks, every signature drawn on the supervisor's phone at the
+toolbox; a labourer could not open a SWMS at all. Now any member of the job signs on to an ACTIVE SWMS as themselves,
+from `/swms/sign` — their own door, on the labourer's home — reading the document or the steps first, then a signature.
+"As themselves" is the database's rule, not the screen's: `app.can_sign_own_swms` accepts an attendee name only when it
+is the name on the caller's own profile (R70), so a labourer can sign for nobody else. The supervisor's way of signing
+the crew on is untouched, and the two land in the same table, once per person per version, frozen. It goes through the
+same offline queue (`swms_signon`), so a sign-on drawn in a trench with no signal arrives when the phone does.
+
+Reads had to move for this: an active SWMS on a job is every member's to read — a worker must be able to read what
+they are signing (WHS Regulations r. 299, r. 300) — and their own sign-on is theirs to see. Drafts and superseded
+versions keep the record lock, and the rest of the sign-ons stay the crew's. Bucket `swms-docs` `{project}/{swms}.ext`
+follows the same line: readable by every member of the job, written by whoever writes SWMS. Suite 36.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;

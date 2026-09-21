@@ -27,6 +27,8 @@ export interface SwmsPdfData {
   reviewed_by: string | null;
   activatedAwst: string | null;
   steps: SwmsStep[];
+  /** The filed document, when the SWMS was uploaded rather than written (README R89): this print is its sign-on register. */
+  filed: { name: string } | null;
   signons: Array<{ name: string; src: string; date: string }>;
   printedAwst: string;
 }
@@ -52,14 +54,22 @@ export function SwmsDoc({ data }: { data: SwmsPdfData }): ReactElement {
         {data.activity && <p>{data.activity}</p>}
       </section>
 
-      {data.kind === 'swms' && (
+      {data.filed && (
+        <section className="sect">
+          <p className="lbl">The method statement</p>
+          <p>{data.filed.name}</p>
+          <p className="src">Filed as a document rather than written here. It is the method statement the crew read and signed on to; this sheet is the register of who did.</p>
+        </section>
+      )}
+
+      {!data.filed && data.kind === 'swms' && (
         <section className="sect">
           <p className="lbl">High-risk construction work (WHS Regulations r.291)</p>
           {data.hrcw.length === 0 ? <p className="nil">None named</p> : <ul>{data.hrcw.map((k) => <li key={k}>{hrcwLabel(k)}</li>)}</ul>}
         </section>
       )}
 
-      <section className="sect">
+      {!data.filed && <section className="sect">
         <p className="lbl">Steps, hazards and controls</p>
         <table>
           <thead>
@@ -87,9 +97,9 @@ export function SwmsDoc({ data }: { data: SwmsPdfData }): ReactElement {
             ))}
           </tbody>
         </table>
-      </section>
+      </section>}
 
-      <section className="sect">
+      {!data.filed && <section className="sect">
         <div className="grid-2">
           <div>
             <p className="lbl">PPE</p>
@@ -105,7 +115,7 @@ export function SwmsDoc({ data }: { data: SwmsPdfData }): ReactElement {
           </div>
         </div>
         <p className="src">Prepared by {data.prepared_by ?? '—'}{data.reviewed_by ? ` · reviewed by ${data.reviewed_by}` : ''}.</p>
-      </section>
+      </section>}
 
       <section className="sect sig">
         <p className="lbl">Signed on to version {data.version} — “I have read and understood this and will work to it”</p>

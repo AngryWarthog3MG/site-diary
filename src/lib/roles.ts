@@ -64,11 +64,11 @@ export function canExportReports(role: MemberRole): boolean {
 }
 
 export type Screen =
-  | 'today' | 'entries' | 'weekly' | 'prestart' | 'plant' | 'toolbox' | 'signin' | 'swms' | 'incidents' | 'inspections' | 'permits' | 'subcontractors' | 'procedures' | 'training' | 'safety' | 'orders' | 'chemicals' | 'obligations' | 'emergency' | 'construction' | 'quality' | 'audits' | 'asbestos' | 'health' | 'environment'
+  | 'today' | 'entries' | 'weekly' | 'prestart' | 'plant' | 'toolbox' | 'signin' | 'swms' | 'swms_sign' | 'incidents' | 'inspections' | 'permits' | 'subcontractors' | 'procedures' | 'training' | 'safety' | 'orders' | 'chemicals' | 'obligations' | 'emergency' | 'construction' | 'quality' | 'audits' | 'asbestos' | 'health' | 'environment'
   | 'claims' | 'variations' | 'progress' | 'ask' | 'documents' | 'settings';
 
 /** Every screen there is, in the order the Members screen lists them. */
-export const SCREENS: Screen[] = ['today', 'entries', 'weekly', 'signin', 'claims', 'variations', 'progress', 'quality', 'audits', 'safety', 'obligations', 'emergency', 'incidents', 'inspections', 'permits', 'swms', 'chemicals', 'asbestos', 'environment', 'construction', 'prestart', 'toolbox', 'plant', 'orders', 'training', 'health', 'subcontractors', 'procedures', 'documents', 'ask', 'settings'];
+export const SCREENS: Screen[] = ['today', 'entries', 'weekly', 'signin', 'claims', 'variations', 'progress', 'quality', 'audits', 'safety', 'obligations', 'emergency', 'incidents', 'inspections', 'permits', 'swms', 'swms_sign', 'chemicals', 'asbestos', 'environment', 'construction', 'prestart', 'toolbox', 'plant', 'orders', 'training', 'health', 'subcontractors', 'procedures', 'documents', 'ask', 'settings'];
 
 /** A membership as the gates read it: the role, and the screens ticked for this person (null = the role's list). */
 export interface Access { role: MemberRole; screens?: readonly string[] | null }
@@ -107,9 +107,11 @@ export function canSee(role: MemberRole, screen: Screen): boolean {
   // the chemical, and that worker is very often the labourer holding the drum.
   // And the emergency plan: reg. 43(1)(c) is about the workers knowing it, and in an emergency
   // the labourer is the one who needs the muster point (README R63).
-  if (role === 'labourer') return screen === 'today' || screen === 'signin' || screen === 'incidents' || screen === 'chemicals' || screen === 'emergency';
+  // And signing on to a SWMS as themselves (README R89): a worker must be able to read the
+  // method statement for their work and put their own name to it — r. 299, r. 300.
+  if (role === 'labourer') return screen === 'today' || screen === 'signin' || screen === 'incidents' || screen === 'chemicals' || screen === 'emergency' || screen === 'swms_sign';
   if (role === 'leading_hand') {
-    return screen === 'today' || screen === 'entries' || screen === 'weekly' || screen === 'prestart' || screen === 'plant' || screen === 'toolbox' || screen === 'signin' || screen === 'swms' || screen === 'incidents' || screen === 'inspections' || screen === 'permits' || screen === 'procedures' || screen === 'safety' || screen === 'orders' || screen === 'chemicals' || screen === 'obligations' || screen === 'emergency' || screen === 'construction' || screen === 'quality' || screen === 'audits' || screen === 'asbestos' || screen === 'environment';
+    return screen === 'today' || screen === 'entries' || screen === 'weekly' || screen === 'prestart' || screen === 'plant' || screen === 'toolbox' || screen === 'signin' || screen === 'swms' || screen === 'swms_sign' || screen === 'incidents' || screen === 'inspections' || screen === 'permits' || screen === 'procedures' || screen === 'safety' || screen === 'orders' || screen === 'chemicals' || screen === 'obligations' || screen === 'emergency' || screen === 'construction' || screen === 'quality' || screen === 'audits' || screen === 'asbestos' || screen === 'environment';
   }
   if (screen === 'settings') return canAuthorEntries(role);
   return true;

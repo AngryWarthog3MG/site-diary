@@ -39,3 +39,9 @@ test('the eighteen high-risk categories are all there', () => {
   assert.equal(HRCW_CATEGORIES.length, 18);
   assert.equal(new Set(HRCW_CATEGORIES.map((c) => c.key)).size, 18);
 });
+
+test('a filed document is the method statement — nothing else is asked of it', () => {
+  assert.deepEqual(swmsProblems({ kind: 'swms', hrcw: [], prepared_by: null, steps: [], file_path: 'job/swms.pdf' }), []);
+  // And without the file the same facts are as incomplete as ever.
+  assert.ok(swmsProblems({ kind: 'swms', hrcw: [], prepared_by: null, steps: [] }).length >= 3);
+});

@@ -39,6 +39,7 @@ export default async function SwmsPage({ params }: { params: Promise<{ id: strin
     hrcw: s.hrcw ?? [], ppe: s.ppe ?? [], permits: s.permits ?? null, plant: s.plant ?? null, legislation: s.legislation ?? null,
     prepared_by: s.prepared_by ?? null, reviewed_by: s.reviewed_by ?? null, version: s.version, status: s.status,
     activated_at: s.activated_at ?? null, steps: readSteps(s.steps),
+    file_path: (s.file_path as string | null) ?? null, file_name: (s.file_name as string | null) ?? null,
     signons: ((s.swms_signons ?? []) as SwmsView['signons']).slice().sort((a, b) => a.signed_on_device_at.localeCompare(b.signed_on_device_at)),
     newer: newer ? { id: newer.id as string, version: newer.version as number, status: newer.status as string } : null,
   };

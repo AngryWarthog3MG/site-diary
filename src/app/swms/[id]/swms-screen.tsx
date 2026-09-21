@@ -28,8 +28,36 @@ export interface SwmsView {
   status: 'draft' | 'active' | 'superseded' | 'archived';
   activated_at: string | null;
   steps: SwmsStep[];
+  /** The filed document, when it was uploaded rather than written here (README R89). */
+  file_path: string | null;
+  file_name: string | null;
   signons: Array<{ id: string; attendee_name: string; signature_path: string; signed_on_device_at: string; created_at: string }>;
   newer: { id: string; version: number; status: string } | null;
+}
+
+/** The filed method statement: opened by a link minted when asked for, since the bucket is private. */
+export function FiledDocument({ path, name }: { path: string; name: string | null }) {
+  const [busy, setBusy] = useState(false);
+  return (
+    <div className="item">
+      <p className="label">The method statement</p>
+      <p>{name ?? 'The filed document'}</p>
+      <p className="caption">Uploaded as a document; the crew read it and sign on to it. Every signature below is to this file.</p>
+      <button
+        type="button"
+        className="button"
+        disabled={busy}
+        onClick={async () => {
+          setBusy(true);
+          const { data } = await createClient().storage.from('swms-docs').createSignedUrl(path, 600);
+          if (data?.signedUrl) window.open(data.signedUrl, '_blank', 'noopener');
+          setBusy(false);
+        }}
+      >
+        {busy ? 'Opening…' : 'Open the document'}
+      </button>
+    </div>
+  );
 }
 
 interface Props {
@@ -170,13 +198,14 @@ export function SwmsScreen({ swms, crew, canWrite, canSign, userId }: Props) {
       {tab === 'doc' && (
         <div className="swms__doc">
           {swms.activity && <p className="swms__activity">{swms.activity}</p>}
-          {swms.kind === 'swms' && (
+          {swms.file_path && <FiledDocument path={swms.file_path} name={swms.file_name} />}
+          {!swms.file_path && swms.kind === 'swms' && (
             <div className="item">
               <p className="label">High-risk construction work</p>
               {swms.hrcw.length === 0 ? <p className="nil">None named</p> : <ul className="swms__hrcw">{swms.hrcw.map((k) => <li key={k}>{hrcwLabel(k)}</li>)}</ul>}
             </div>
           )}
-          <div className="item">
+          {!swms.file_path && <div className="item">
             <p className="label">Steps, hazards and controls</p>
             {swms.steps.length === 0 ? <p className="nil">No steps yet</p> : swms.steps.map((s, i) => (
               <div key={i} className="swms__step">
@@ -187,15 +216,15 @@ export function SwmsScreen({ swms, crew, canWrite, canSign, userId }: Props) {
                 {s.who && <p className="caption">Responsible: {s.who}</p>}
               </div>
             ))}
-          </div>
-          <div className="item">
+          </div>}
+          {!swms.file_path && <div className="item">
             <p className="label">PPE, permits, plant</p>
             <p>{swms.ppe.length ? swms.ppe.join(', ') : 'No PPE listed'}</p>
             {swms.permits && <p><span className="label">Permits</span> {swms.permits}</p>}
             {swms.plant && <p><span className="label">Plant</span> {swms.plant}</p>}
             {swms.legislation && <p><span className="label">Legislation</span> {swms.legislation}</p>}
             <p className="caption">Prepared by {swms.prepared_by ?? '—'}{swms.reviewed_by ? ` · reviewed by ${swms.reviewed_by}` : ''}</p>
-          </div>
+          </div>}
 
           {swms.status === 'draft' && canWrite && (
             <>

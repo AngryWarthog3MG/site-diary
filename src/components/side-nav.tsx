@@ -72,7 +72,17 @@ export function SideNav() {
   const jobId = me?.project?.id ?? projectParam ?? null;
   const q = jobId ? `?project=${jobId}` : '';
   const see = (screen: 'settings') => showNav({ href: '/settings', name: '', what: '', screen }, viewer);
-  const here = (href: string) => (href === '/' ? pathname === '/' : pathname.startsWith(href));
+  // The longest section address that prefixes the path is where you are — so /swms/sign lights
+  // "Sign on" and not "SWMS & JSA" as well.
+  const hereHref = (() => {
+    let best = pathname === '/' ? '/' : '';
+    for (const g of groups) for (const it of g.items) {
+      if (it.href !== '/' && (pathname === it.href || pathname.startsWith(`${it.href}/`)) && it.href.length > best.length) best = it.href;
+    }
+    if (!best && pathname.startsWith('/settings')) best = '/settings';
+    return best;
+  })();
+  const here = (href: string) => href === hereHref;
   const isOpen = (label: string) => open[label] ?? isHereGroup(label);
 
   return (

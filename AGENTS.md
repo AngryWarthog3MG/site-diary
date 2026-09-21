@@ -128,7 +128,12 @@ improvising; the register once shipped dead because a live smoke test was skippe
   (born a draft; `active` only when complete, then frozen; a revision has `supersedes_id` and supersedes on
   activation) and `swms_signons` (only on an active version, once per person, never changed or removed —
   by anyone, service role included; the drill archives instead). Authoring = `app.can_write_swms`
-  (supervisor/admin); sign-on = `app.can_run_talks`. Outbox kind `swms_signon`
+  (supervisor/admin); signing the crew on = `app.can_run_talks`; signing on AS YOURSELF = any member of the job,
+  `app.can_sign_own_swms` — the attendee name must be the caller's own profile name (README R89). A SWMS may be
+  FILED rather than written: `swms.file_path` in bucket `swms-docs` `{project}/{swms}.ext`, complete on its own
+  terms (`swms_problems` asks nothing of it), frozen once active. An active SWMS is readable by every member
+  (r. 299/300) — `swms_reads_record` says so; drafts keep the lock. `/swms/sign` is the labourer's door
+  (screen `swms_sign`). Outbox kind `swms_signon`. Suite 36
 - `src/lib/incidents/` — hazards, near misses, incidents: `model.ts` (kinds, severities, `incidentRef` INC-001,
   `actionOverdue`, `summarise`, `urgent`), `pdf.tsx`. Tables `incidents` (numbered per job by the DB under an
   advisory lock; the first account is frozen; closes only when every action is done; closed = frozen),

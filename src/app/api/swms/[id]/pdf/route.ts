@@ -63,6 +63,7 @@ export async function POST(_request: Request, context: { params: Promise<{ id: s
     reviewed_by: row.reviewed_by ?? null,
     activatedAwst: row.activated_at ? finishedAtAwst(row.activated_at as string, null) : null,
     steps: readSteps(row.steps), signons, printedAwst: finishedAtAwst(instant.toISOString(), null),
+    filed: row.file_path ? { name: (row.file_name as string | null) ?? 'the filed document' } : null,
   };
 
   let pdf: Uint8Array;

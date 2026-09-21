@@ -497,6 +497,14 @@ async function reconcileStorage(): Promise<Record<string, unknown>> {
   const subOrphans = subFiles.filter((f) => !subPaths.has(f.path)).map((f) => f.path);
   const subMissing = [...subPaths].filter((p) => !subFileSet.has(p));
 
+  // Filed method statements: a file no SWMS names, or a SWMS whose document is gone.
+  const swmsFiles = await walk('swms-docs');
+  const { data: swmsRows } = await admin.from('swms').select('file_path').not('file_path', 'is', null);
+  const swmsPaths = new Set((swmsRows ?? []).map((r) => r.file_path as string));
+  const swmsFileSet = new Set(swmsFiles.map((f) => f.path));
+  const swmsOrphans = swmsFiles.filter((f) => !swmsPaths.has(f.path)).map((f) => f.path);
+  const swmsMissing = [...swmsPaths].filter((p) => !swmsFileSet.has(p));
+
   // Countersigned dayworks sheets: a file with no sign-off row is a signature
   // that never landed, and a row whose file is gone is worse.
   const signoffFiles = await walk('dayworks-signoffs');
@@ -523,6 +531,8 @@ async function reconcileStorage(): Promise<Record<string, unknown>> {
       ...ticketOrphans.map((p) => `<li><b>Ticket photo with no ticket:</b> <code>${p}</code></li>`),
       ...subOrphans.map((p) => `<li><b>Subcontractor file with no document:</b> <code>${p}</code></li>`),
       ...subMissing.map((p) => `<li><b>Subcontractor document whose file is gone:</b> <code>${p}</code></li>`),
+      ...swmsOrphans.map((p) => `<li><b>SWMS document with no SWMS:</b> <code>${p}</code></li>`),
+      ...swmsMissing.map((p) => `<li><b>SWMS whose filed document is gone:</b> <code>${p}</code></li>`),
       ...signoffOrphans.map((p) => `<li><b>Countersigned dayworks sheet with no sign-off row:</b> <code>${p}</code></li>`),
       ...signoffMissing.map((p) => `<li><b>Dayworks sign-off whose signed sheet is gone:</b> <code>${p}</code></li>`),
       ...docOrphans.map((p) => `<li><b>Controlled document file with no version:</b> <code>${p}</code></li>`),
@@ -551,6 +561,8 @@ async function reconcileStorage(): Promise<Record<string, unknown>> {
     ticket_photo_orphans: ticketOrphans,
     subcontractor_file_orphans: subOrphans,
     subcontractor_files_missing: subMissing,
+    swms_document_orphans: swmsOrphans,
+    swms_documents_missing: swmsMissing,
     dayworks_signoff_orphans: signoffOrphans,
     dayworks_signoff_files_missing: signoffMissing,
     document_file_orphans: docOrphans,

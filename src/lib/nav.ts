@@ -74,7 +74,8 @@ export const NAV_GROUPS: NavGroup[] = [
       { href: '/incidents', name: 'Hazards & incidents', what: 'Report it in a minute; actions until it is closed', screen: 'incidents' },
       { href: '/inspections', name: 'Inspections', what: 'Site walks, environmental and quality checks', screen: 'inspections' },
       { href: '/permits', name: 'Permits to work', what: 'Hot work, excavation, confined space, heights, electrical', screen: 'permits' },
-      { href: '/swms', name: 'SWMS & JSA', what: 'Method statements and who has signed on', screen: 'swms' },
+      { href: '/swms', name: 'SWMS & JSA', what: 'Method statements — written here or filed as documents — and who has signed on', screen: 'swms' },
+      { href: '/swms/sign', name: 'Sign on to a SWMS', short: 'Sign on', what: 'Read the method statement for your work and sign on from your own phone', screen: 'swms_sign' },
       { href: '/asbestos', name: 'Asbestos', what: 'The site register, its management plan, the crew briefed, and any removal', screen: 'asbestos' },
       { href: '/environment', name: 'Environment', what: 'Aspects and impacts, legal register, compliance checks, monitoring, after-rain checks', screen: 'environment' },
       { href: '/chemicals', name: 'Chemicals & SDS', short: 'Chemicals', what: 'What is on site, and a current safety data sheet for each', screen: 'chemicals' },
@@ -123,7 +124,7 @@ export const NAV_GROUPS: NavGroup[] = [
  * drawer and rail learn it a moment after they open), so nobody sees a door
  * that closes on them; the pages refuse anything a role should not reach anyway.
  */
-export const EVERY_ROLE: Screen[] = ['today', 'entries', 'weekly', 'prestart', 'plant', 'toolbox', 'signin', 'swms', 'incidents', 'inspections', 'permits', 'procedures', 'safety', 'orders', 'chemicals', 'obligations', 'emergency', 'construction', 'quality', 'audits', 'asbestos', 'environment'];
+export const EVERY_ROLE: Screen[] = ['today', 'entries', 'weekly', 'prestart', 'plant', 'toolbox', 'signin', 'swms', 'swms_sign', 'incidents', 'inspections', 'permits', 'procedures', 'safety', 'orders', 'chemicals', 'obligations', 'emergency', 'construction', 'quality', 'audits', 'asbestos', 'environment'];
 
 export interface NavViewer { role: MemberRole | null; screens?: readonly string[] | null; canRecord: boolean; multiJob: boolean }
 

@@ -87,6 +87,8 @@ export function readSteps(json: unknown): SwmsStep[] {
 }
 
 export interface SwmsFacts {
+  /** The filed document, when the SWMS was uploaded rather than written here. */
+  file_path?: string | null;
   kind: SwmsKind;
   hrcw: string[];
   prepared_by: string | null;
@@ -96,6 +98,8 @@ export interface SwmsFacts {
 /** What stops a draft being put into use. Mirrors app.swms_problems. */
 export function swmsProblems(s: SwmsFacts): string[] {
   const problems: string[] = [];
+  // A filed document IS the method statement (README R89); nothing else is asked of it. The DB agrees.
+  if (s.file_path) return problems;
   if (s.steps.length === 0) problems.push('no steps');
   s.steps.forEach((st, i) => {
     if (!st.step.trim()) problems.push(`step ${i + 1} has no description`);

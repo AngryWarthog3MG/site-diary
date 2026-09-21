@@ -1,9 +1,11 @@
 import { redirect } from 'next/navigation';
+import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
 import { requireUser, resolveProject } from '@/lib/auth';
 import { canAuthorEntries } from '@/lib/roles';
 import { BrandMark } from '@/components/brand-mark';
 import { readSteps, type SwmsKind } from '@/lib/swms/model';
+import { UploadSwmsForm } from './upload-form';
 import { SwmsForm, type SwmsFormValues } from './swms-form';
 
 export const dynamic = 'force-dynamic';
@@ -16,10 +18,10 @@ export const metadata = { title: 'New SWMS · Kooboolong IMS' };
 export default async function NewSwmsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ project?: string; kind?: string; from?: string; revise?: string }>;
+  searchParams: Promise<{ project?: string; kind?: string; from?: string; revise?: string; mode?: string }>;
 }) {
   const { userId, memberships } = await requireUser();
-  const { project, kind, from, revise } = await searchParams;
+  const { project, kind, from, revise, mode } = await searchParams;
   const current = resolveProject(memberships, project);
   if (!current) redirect('/');
   if (!canAuthorEntries(current.role)) redirect(`/swms?project=${current.project_id}`);
@@ -51,14 +53,24 @@ export default async function NewSwmsPage({
   return (
     <main className="sheet sheet--wide">
       <p className="label"><BrandMark size={18} /> {current.project.name}</p>
-      <h1 className="page-title">{supersedes ? `Revise: ${supersedes.title}` : `New ${initial.kind === 'jsa' ? 'JSA' : 'SWMS'}`}</h1>
+      <h1 className="page-title">{supersedes ? `Revise: ${supersedes.title}` : mode === 'upload' ? 'File a SWMS you already have' : `New ${initial.kind === 'jsa' ? 'JSA' : 'SWMS'}`}</h1>
       {supersedes && (
         <p className="notice">
           This will be version {supersedes.version + 1}. Version {supersedes.version} stays in use, with its sign-ons,
           until this one is put into use; then it is superseded and everyone signs on again.
         </p>
       )}
-      <SwmsForm projectId={current.project_id} userId={userId} initial={initial} crew={(crew ?? []).map((c) => String(c.name))} supersedesId={supersedes?.id ?? null} />
+      {!supersedes && (
+        <nav className="chips" aria-label="How" style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', margin: '0.75rem 0 1rem' }}>
+          <Link href={`/swms/new?project=${current.project_id}${kind === 'jsa' ? '&kind=jsa' : ''}`} className={`chip chip--link${mode !== 'upload' ? ' chip--on' : ''}`} aria-current={mode !== 'upload' ? 'page' : undefined}>Write it here</Link>
+          <Link href={`/swms/new?project=${current.project_id}&mode=upload`} className={`chip chip--link${mode === 'upload' ? ' chip--on' : ''}`} aria-current={mode === 'upload' ? 'page' : undefined}>File the one you have</Link>
+        </nav>
+      )}
+      {mode === 'upload' && !supersedes ? (
+        <UploadSwmsForm projectId={current.project_id} userId={userId} preparedBy={initial.prepared_by} />
+      ) : (
+        <SwmsForm projectId={current.project_id} userId={userId} initial={initial} crew={(crew ?? []).map((c) => String(c.name))} supersedesId={supersedes?.id ?? null} />
+      )}
     </main>
   );
 }
