@@ -31,12 +31,14 @@ insert into public.organisations (id, name, code) values
   ('aaaaaaaa-7777-0000-0000-000000000002', 'Other Stamp', 'OSC');
 insert into public.projects (id, org_id, name, code, tier) values
   ('bbbbbbbb-7777-0000-0000-000000000001', 'aaaaaaaa-7777-0000-0000-000000000001', 'Stamp Job', 'S101', 'light'),
-  ('bbbbbbbb-7777-0000-0000-000000000002', 'aaaaaaaa-7777-0000-0000-000000000002', 'Other Job', 'O201', 'full');
+  ('bbbbbbbb-7777-0000-0000-000000000002', 'aaaaaaaa-7777-0000-0000-000000000002', 'Other Job', 'O201', 'full'),
+  ('bbbbbbbb-7777-0000-0000-000000000003', 'aaaaaaaa-7777-0000-0000-000000000001', 'Born Full', 'S103', 'full');
 insert into public.project_members (project_id, user_id, role) values
   ('bbbbbbbb-7777-0000-0000-000000000001', '11111111-7777-0000-0000-000000000001', 'pm'),
   ('bbbbbbbb-7777-0000-0000-000000000001', '11111111-7777-0000-0000-000000000002', 'supervisor'),
   ('bbbbbbbb-7777-0000-0000-000000000001', '11111111-7777-0000-0000-000000000003', 'labourer'),
   ('bbbbbbbb-7777-0000-0000-000000000001', '11111111-7777-0000-0000-000000000005', 'admin'),
+  ('bbbbbbbb-7777-0000-0000-000000000003', '11111111-7777-0000-0000-000000000001', 'pm'),
   ('bbbbbbbb-7777-0000-0000-000000000002', '11111111-7777-0000-0000-000000000004', 'admin');
 insert into public.template_modules (org_id, key, name, sort) values
   ('aaaaaaaa-7777-0000-0000-000000000001', 'core', 'Core', 10),
@@ -101,6 +103,23 @@ begin
   if t <> 'full' then raise exception 'TESTFAIL: a tier never lowers'; end if;
 end; $$;
 
+-- 3b. A job that has never been set up carries 'full' from birth; its first stamping takes the tier it is given.
+do $$
+declare r jsonb; t text;
+begin
+  r := public.instantiate_project('bbbbbbbb-7777-0000-0000-000000000003', '{}', 'light');
+  select tier into t from public.projects where id = 'bbbbbbbb-7777-0000-0000-000000000003';
+  if t <> 'light' then raise exception 'TESTFAIL: the first stamping should set the tier to light, is %', t; end if;
+  if (r->>'added')::integer <> 4 then raise exception 'TESTFAIL: light core = 4 items, added %', r->>'added'; end if;
+  -- Now it is set up: light again is a no-op, full raises.
+  r := public.instantiate_project('bbbbbbbb-7777-0000-0000-000000000003', '{}', 'full');
+  select tier into t from public.projects where id = 'bbbbbbbb-7777-0000-0000-000000000003';
+  if t <> 'full' or (r->>'added')::integer <> 2 then raise exception 'TESTFAIL: raising to full should add core''s 2 full items, added % tier %', r->>'added', t; end if;
+  r := public.instantiate_project('bbbbbbbb-7777-0000-0000-000000000003', '{}', 'light');
+  select tier into t from public.projects where id = 'bbbbbbbb-7777-0000-0000-000000000003';
+  if t <> 'full' then raise exception 'TESTFAIL: once set up, a tier never lowers'; end if;
+end; $$;
+
 -- 4. A module the company does not have; a tier that is not a tier.
 select tests.expect_error($$ select public.instantiate_project('bbbbbbbb-7777-0000-0000-000000000001', '{plumbing}', null) $$, 'no module called');
 select tests.expect_error($$ select public.instantiate_project('bbbbbbbb-7777-0000-0000-000000000001', '{}', 'medium') $$, 'light or full');
@@ -124,20 +143,20 @@ declare who uuid; at_ timestamptz; st text;
 begin
   update public.project_setup_items set status = 'done', done_by = '11111111-7777-0000-0000-000000000004', done_at = '2001-01-01'
    where project_id = 'bbbbbbbb-7777-0000-0000-000000000001' and template_item_id = 'cccccccc-7777-0000-0000-000000000001';
-  select done_by, done_at into who, at_ from public.project_setup_items where template_item_id = 'cccccccc-7777-0000-0000-000000000001';
+  select done_by, done_at into who, at_ from public.project_setup_items where project_id = 'bbbbbbbb-7777-0000-0000-000000000001' and template_item_id = 'cccccccc-7777-0000-0000-000000000001';
   if who <> '11111111-7777-0000-0000-000000000001' then raise exception 'TESTFAIL: done_by should be the caller, is %', who; end if;
   if at_ < now() - interval '1 minute' then raise exception 'TESTFAIL: done_at should be now, is %', at_; end if;
-  update public.project_setup_items set status = 'open' where template_item_id = 'cccccccc-7777-0000-0000-000000000001';
-  select done_by, done_at into who, at_ from public.project_setup_items where template_item_id = 'cccccccc-7777-0000-0000-000000000001';
+  update public.project_setup_items set status = 'open' where project_id = 'bbbbbbbb-7777-0000-0000-000000000001' and template_item_id = 'cccccccc-7777-0000-0000-000000000001';
+  select done_by, done_at into who, at_ from public.project_setup_items where project_id = 'bbbbbbbb-7777-0000-0000-000000000001' and template_item_id = 'cccccccc-7777-0000-0000-000000000001';
   if who is not null or at_ is not null then raise exception 'TESTFAIL: reopen should clear the stamp'; end if;
-  update public.project_setup_items set status = 'not_applicable', status_note = ' No camp: day trips ' where template_item_id = 'cccccccc-7777-0000-0000-000000000003';
-  select status into st from public.project_setup_items where template_item_id = 'cccccccc-7777-0000-0000-000000000003';
+  update public.project_setup_items set status = 'not_applicable', status_note = ' No camp: day trips ' where project_id = 'bbbbbbbb-7777-0000-0000-000000000001' and template_item_id = 'cccccccc-7777-0000-0000-000000000003';
+  select status into st from public.project_setup_items where project_id = 'bbbbbbbb-7777-0000-0000-000000000001' and template_item_id = 'cccccccc-7777-0000-0000-000000000003';
   if st <> 'not_applicable' then raise exception 'TESTFAIL: not applicable did not take'; end if;
   -- A finished item keeps its date when the start moves.
   perform public.set_project_start('bbbbbbbb-7777-0000-0000-000000000001', date '2026-10-12');
-  if (select due_on from public.project_setup_items where template_item_id = 'cccccccc-7777-0000-0000-000000000003') <> date '2026-10-19' then
+  if (select due_on from public.project_setup_items where project_id = 'bbbbbbbb-7777-0000-0000-000000000001' and template_item_id = 'cccccccc-7777-0000-0000-000000000003') <> date '2026-10-19' then
     raise exception 'TESTFAIL: a not-applicable item should keep the due date it had'; end if;
-  if (select due_on from public.project_setup_items where template_item_id = 'cccccccc-7777-0000-0000-000000000002') <> date '2026-10-05' then
+  if (select due_on from public.project_setup_items where project_id = 'bbbbbbbb-7777-0000-0000-000000000001' and template_item_id = 'cccccccc-7777-0000-0000-000000000002') <> date '2026-10-05' then
     raise exception 'TESTFAIL: an open item follows the start date'; end if;
 end; $$;
 

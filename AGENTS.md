@@ -317,7 +317,7 @@ improvising; the register once shipped dead because a live smoke test was skippe
 - `src/lib/setup/` — the job's SETUP BOARD (README R92): `project_modules` (attached, never detached; core always) and
   `project_setup_items` (a snapshot of the template items at stamping; open → done | not_applicable, the DB stamps
   done_by/done_at; kind/origin/job fixed; never deleted). `public.instantiate_project(project, modules[], tier)` is
-  additive and idempotent; a tier only rises; `create_project` calls it, so a new job is born stamped; `set_project_start`
+  additive and idempotent; the first stamping sets the tier, after that it only rises; `create_project` calls it, so a new job is born stamped; `set_project_start`
   fills due dates from `projects.start_on` + `due_offset_days` for OPEN items. `model.ts` (`summarise`, `orderSetup`,
   `dueOn`, `isOverdue`), `load.ts` (the home card). `/start-gate` is screen `start_gate`, pm/admin only — the brief keeps
   start gate items, risks and submittals from site roles. Not built: filing a document ticking its item; the closeout

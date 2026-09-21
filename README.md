@@ -2303,7 +2303,9 @@ gives it a consumer. `instantiate_project(project, modules[], tier)` attaches mo
 every active template item those modules hold, at the job's tier, onto the job's SETUP BOARD (`project_setup_items`):
 start gate items, hold points, submittals, SWMS to have, consumables with par levels, risks, expected documents, the
 folders. It adds only what is missing — a second run, a module added mid-job, a library that grew since: all additive,
-nothing removed — and a job's tier only ever rises, because lowering it would mean taking things off the board. A
+nothing removed — and once a job is set up its tier only ever rises, because lowering it would mean taking things off
+the board (the FIRST stamping takes the tier it is given: every job carries `full` from birth and an empty board has
+nothing to take off — found on the sandbox drill, migration 20260921160000). A
 stamped item is a snapshot; the library changing later does not rewrite a job (the same rule as inspection templates).
 `create_project` grew a tier, modules and a start date and calls it, so a job born in the app is born stamped.
 
