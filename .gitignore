@@ -14,3 +14,9 @@ supabase/.temp
 .pdfbuild/
 .vercel
 .env*
+
+# Project Control brief: contract-derived seeds carry a head contractor's Letter of Intent.
+# They are run directly against the database and kept outside the repository.
+*CONFIDENTIAL*
+003_seed_job_*
+job_*_CONFIDENTIAL.json
