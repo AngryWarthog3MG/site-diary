@@ -280,7 +280,16 @@ improvising; the register once shipped dead because a live smoke test was skippe
 - `src/lib/nav.ts` — the ONE list of the app's sections (`NAV_GROUPS` under seven headings, `showNav`, `navFor`).
   The home page draws it as the heading bar (`src/components/section-bar.tsx`), the phone's Menu drawer as a
   list, the desktop rail as links. A section is added, renamed or moved there and nowhere else; each drawing
-  filters it by role through `canSee`
+  filters it by role through `canSee`. `scope: 'company'` on a section puts it under the Company heading that
+  `navFor` draws after the job's (README R87) — a screen whose record is the organisation's, not the job's. A
+  screen that is both (Plant, Chemicals) stays with the job and names the company on its company half. The
+  file imports `./roles.ts` with the extension because `src/lib/jobs.ts` is node-tested and loads it directly
+- `src/lib/jobs.ts` — which job you are looking at, and how it sticks (README R87): cookie `kbl-job`;
+  `preferJob` puts the chosen job first in the memberships `requireUser` and `/api/me` return, so every screen
+  that falls back to "the first active job" opens on it; `switchTarget` is where a switch lands (the section,
+  never another job's detail page); `onJob` writes a screen's address. The middleware writes the cookie from
+  `?project=`. The cookie is a preference, never a credential — only a job the account holds, and awake, moves.
+  `src/components/job-switcher.tsx` draws it in the rail and the drawer
 - `src/lib/home/dashboard.ts` — the home page's cards (`src/app/dashboard-cards.tsx`, streamed in under Suspense):
   `loadDashboard` = `loadSafety` plus the open reports and the latest issued documents. No number on the home
   is computed anywhere the Safety screen does not also compute it. A card is drawn only when it has something

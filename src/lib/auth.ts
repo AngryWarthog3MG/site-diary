@@ -1,10 +1,12 @@
 import 'server-only';
 
 import { redirect } from 'next/navigation';
+import { cookies } from 'next/headers';
 import { sees, type Screen } from '@/lib/roles';
 import { createClient } from '@/lib/supabase/server';
 import type { MemberRole, Profile } from '@/types/database';
 import { needsName } from '@/lib/people/name';
+import { JOB_COOKIE, preferJob, readJobCookie } from '@/lib/jobs';
 
 export interface Membership {
   project_id: string;
@@ -71,11 +73,17 @@ export async function requireUser(): Promise<SessionContext> {
     redirect('/name');
   }
 
+  // The job the person last chose comes first, so every screen that falls back
+  // to "the first active job" opens on it (README R87). Only a job this account
+  // holds ever moves; the cookie is a preference, not a credential.
+  const jar = await cookies();
+  const chosen = readJobCookie(jar.get(JOB_COOKIE)?.value);
+
   return {
     userId: user.id,
     email: user.email ?? null,
     profile: (profile as Profile | null) ?? null,
-    memberships: (memberships ?? []) as unknown as Membership[],
+    memberships: preferJob((memberships ?? []) as unknown as Membership[], chosen),
   };
 }
 

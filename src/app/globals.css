@@ -2870,6 +2870,31 @@ body {
 .topbar .menu-drawer { max-height: calc(100vh - 6rem); overflow-y: auto; }
 @keyframes drawer-open { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
 .menu-drawer .navgroup { margin-top: 0.9rem; }
+/* The job you are looking at, and the way to another, at the top of the drawer. */
+.menu-drawer__job { margin-bottom: 0.75rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--ink-08); }
+/* A caption where the scope changes: the job's sections, then the company's (README R87). */
+.navscope {
+  margin: 0.25rem 0 0.15rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--teal-deep);
+}
+.menu-drawer .navgroup--company { padding-top: 0.75rem; border-top: 1px solid var(--ink-08); }
+.navgroup--company > .label { color: var(--teal-deep); font-weight: 700; }
+.navgroup--company .navitem { border-color: rgba(31, 92, 51, 0.28); }
+.secbar__item--company { color: var(--teal-deep); font-weight: 650; }
+
+/* The job switcher: one job reads as a label; more than one is a picker (README R87). */
+.jobswitch { display: grid; gap: 0.15rem; }
+.jobswitch .label { margin: 0; }
+.jobswitch__name { font-size: 0.95rem; font-weight: 600; line-height: 1.25; }
+.jobswitch__code { font-size: 0.75rem; color: var(--ink-40); }
+.jobswitch__select { width: 100%; min-width: 0; font-size: 0.9rem; padding: 0.45rem 0.6rem; }
+.jobswitch--compact { grid-template-columns: auto 1fr; align-items: center; gap: 0.6rem; }
+.jobswitch--compact .jobswitch__name { font-size: 1rem; }
+.jobswitch--compact .jobswitch__code { font-size: 0.8rem; }
 .menu-drawer .navgroup:first-of-type { margin-top: 0; }
 .menu-drawer a, .menu-drawer .navitem, .menu-drawer .navitem__name { color: var(--ink, #16211f); }
 .menu-drawer .label, .menu-drawer .navitem__what, .menu-drawer .menu-drawer__who { color: var(--ink-60, #5a6469); }
@@ -3297,6 +3322,15 @@ main.sheet--wide .vr-list { grid-template-columns: repeat(auto-fill, minmax(22re
   }
   .rail__jobname { font-size: 0.95rem; font-weight: 600; line-height: 1.25; }
   .rail__jobcode { font-size: 0.75rem; color: var(--ink-40); }
+  /* Where the rail's scope changes: the job's headings, then the company's (README R87). */
+  .rail__scope {
+    margin: 0.9rem 0.6rem 0.25rem;
+    font-size: 0.68rem;
+    letter-spacing: 0.08em;
+    color: var(--ink-40);
+  }
+  .rail__group--company { margin-top: 0.6rem; padding-top: 0.5rem; border-top: 1px solid var(--ink-08); }
+  .rail__group--company .rail__head { color: var(--teal-deep); }
   .rail__list { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.1rem; }
   .rail__item {
     display: block; padding: 0.5rem 0.6rem; border-radius: 0.45rem;

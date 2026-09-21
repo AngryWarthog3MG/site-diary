@@ -126,7 +126,7 @@ export default async function PlantPage({ searchParams }: { searchParams: Promis
       )}
 
       <hr className="rule" />
-      <p className="label">Plant register · the whole company</p>
+      <p className="label">Plant register · the whole company ({current.project.org.name})</p>
       <p className="caption">
         One list for every job. Tick <b>On this job</b> for the machines here — that is what the diary, the
         review screen and today&rsquo;s prestarts read. Anyone who runs prestarts can add a machine; one no

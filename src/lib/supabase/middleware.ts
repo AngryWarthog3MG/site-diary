@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from 'next/server';
+import { JOB_COOKIE, readJobCookie } from '@/lib/jobs';
 import { createServerClient } from '@supabase/ssr';
 import { sees, type Screen } from '@/lib/roles';
 import type { MemberRole } from '@/types/database';
@@ -118,6 +119,17 @@ export async function updateSession(request: NextRequest) {
     url.pathname = '/login';
     url.searchParams.set('next', pathname);
     return NextResponse.redirect(url);
+  }
+
+  // A link that names a job is a choice of job: remember it, so the next
+  // screen that names none opens on the same one (README R87). Only a
+  // well-formed id is kept, and requireUser honours it only for a job this
+  // account actually holds.
+  if (user) {
+    const named = readJobCookie(request.nextUrl.searchParams.get('project'));
+    if (named && request.cookies.get(JOB_COOKIE)?.value !== named) {
+      response.cookies.set(JOB_COOKIE, named, { path: '/', maxAge: 60 * 60 * 24 * 365, sameSite: 'lax' });
+    }
   }
 
   if (user && pathname === '/login') {

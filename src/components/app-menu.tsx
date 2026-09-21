@@ -3,18 +3,20 @@
 import { useCallback, useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import Link from 'next/link';
-import { HOME_ITEM, NAV_GROUPS, showNav, type NavItem } from '@/lib/nav';
+import { COMPANY_LABEL, HOME_ITEM, navFor, type NavItem } from '@/lib/nav';
+import { onJob } from '@/lib/jobs';
+import { JobSwitcher, type SwitchableJob } from '@/components/job-switcher';
 import type { MemberRole } from '@/types/database';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { SignOutButton } from '@/components/sign-out-button';
 
 interface Me {
   name: string | null;
-  project: { id: string; name: string; code: string } | null;
+  project: (SwitchableJob & { org: { name: string; code: string } }) | null;
   role: string | null;
   screens?: string[] | null;
   canRecord: boolean;
-  projects: Array<{ id: string; name: string; code: string }>;
+  projects: SwitchableJob[];
 }
 
 /**
@@ -63,15 +65,16 @@ export function AppMenu({ slotId }: { slotId: string }) {
 
   if (/^\/(signin|login|auth|verify|offline)/.test(pathname)) return null;
 
-  const q = me?.project ? `?project=${me.project.id}` : projectParam ? `?project=${projectParam}` : '';
+  const jobId = me?.project?.id ?? projectParam ?? null;
   // The same list the home page and the rail draw. Until the role is known
   // only the doors every role has are drawn, so nobody sees one close on them.
   const viewer = { role: (me?.role as MemberRole | null) ?? null, screens: me?.screens ?? null, canRecord: Boolean(me?.canRecord), multiJob: (me?.projects.length ?? 0) > 1 };
+  const groups = navFor(viewer);
   const item = (it: NavItem, variant?: 'wide') => (
     <Link
       key={it.href}
       className={`navitem${variant === 'wide' ? ' navitem--wide' : ''}`}
-      href={it.href === '/portfolio' ? it.href : `${it.href}${q}`}
+      href={onJob(it.href, jobId)}
       onClick={() => setOpen(false)}
     >
       <span className="navitem__name">{it.name}</span>
@@ -81,15 +84,22 @@ export function AppMenu({ slotId }: { slotId: string }) {
 
   const drawer = (
     <nav id="app-menu" className="menu-drawer" aria-label="Everything else">
+      {me?.project && (
+        <div className="menu-drawer__job">
+          <JobSwitcher jobs={me.projects.length > 0 ? me.projects : [me.project]} currentId={me.project.id} compact />
+        </div>
+      )}
       {item(HOME_ITEM, 'wide')}
 
-      {NAV_GROUPS.map((group) => {
-        const items = group.items.filter((it) => showNav(it, viewer));
-        if (items.length === 0) return null;
+      {groups.map((group, i) => {
+        // "This job" captions the job's headings; the company's one heading names the company itself (README R87).
+        const caption = i === 0 && group.scope !== 'company' ? 'This job' : null;
+        const heading = group.scope === 'company' && me?.project?.org ? `${COMPANY_LABEL} · ${me.project.org.name}` : group.label;
         return (
-          <section key={group.label} className="navgroup">
-            <p className="label">{group.label}</p>
-            <div className="navgrid">{items.map((it) => item(it))}</div>
+          <section key={group.label} className={`navgroup${group.scope === 'company' ? ' navgroup--company' : ''}`}>
+            {caption && <p className="navscope">{caption}</p>}
+            <p className="label">{heading}</p>
+            <div className="navgrid">{group.items.map((it) => item(it))}</div>
           </section>
         );
       })}

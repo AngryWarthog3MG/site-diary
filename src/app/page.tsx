@@ -88,7 +88,7 @@ export default async function TodayPage({
       </header>
       <ProjectSwitcher memberships={memberships} currentId={current.project_id} />
 
-      <SectionBar groups={groups} q={q} />
+      <SectionBar groups={groups} q={q} jobId={current.project_id} orgName={current.project.org.name} />
       <FirstRun role={current.role} />
 
       {((reports && opens('incidents')) || (!talks && reports && opens('signin')) || (talks && (opens('inspections') || opens('prestart') || opens('orders'))) || (authors && opens('permits'))) && (

@@ -1,5 +1,7 @@
+import { cookies } from 'next/headers';
 import { fail, ok, requireApiUser } from '@/lib/api';
 import { resolveProject, canAuthorEntries, canRunTalks, type Membership } from '@/lib/auth';
+import { JOB_COOKIE, preferJob, readJobCookie } from '@/lib/jobs';
 
 export const dynamic = 'force-dynamic';
 
@@ -22,7 +24,9 @@ export async function GET(request: Request) {
     .order('project_id');
   if (error) return fail('server_error', `Could not load your projects: ${error.message}`, 500);
 
-  const rows = (memberships ?? []) as unknown as Membership[];
+  // The job last chosen comes first, exactly as requireUser orders it for the pages (README R87).
+  const jar = await cookies();
+  const rows = preferJob((memberships ?? []) as unknown as Membership[], readJobCookie(jar.get(JOB_COOKIE)?.value));
   const current = resolveProject(rows, searchParams.get('project') ?? undefined);
   const { data: profile } = await supabase
     .from('profiles')
@@ -34,7 +38,7 @@ export async function GET(request: Request) {
     {
       name: (profile?.full_name as string | null) ?? user.email ?? null,
       project: current
-        ? { id: current.project_id, name: current.project.name, code: current.project.code }
+        ? { id: current.project_id, name: current.project.name, code: current.project.code, org: { name: current.project.org.name, code: current.project.org.code } }
         : null,
       role: current?.role ?? null,
       screens: current?.screens ?? null,
@@ -42,7 +46,7 @@ export async function GET(request: Request) {
       canRunTalks: current ? canRunTalks(current.role) : false,
       projects: rows
         .filter((m) => m.project.active)
-        .map((m) => ({ id: m.project_id, name: m.project.name, code: m.project.code })),
+        .map((m) => ({ id: m.project_id, name: m.project.name, code: m.project.code, org: { name: m.project.org.name, code: m.project.org.code } })),
     },
     200,
   );

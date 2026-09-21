@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import type { NavGroup } from '@/lib/nav';
+import { onJob } from '@/lib/jobs';
 
 /**
  * The heading bar across the top of the home page: Home, then every section
@@ -12,7 +13,7 @@ import type { NavGroup } from '@/lib/nav';
  * pushes what follows down — nothing floats. The groups arrive already
  * filtered by role from the server, so the bar draws nothing it has to hide.
  */
-export function SectionBar({ groups, q }: { groups: NavGroup[]; q: string }) {
+export function SectionBar({ groups, q, jobId, orgName }: { groups: NavGroup[]; q: string; jobId?: string | null; orgName?: string | null }) {
   const pathname = usePathname();
   const [open, setOpen] = useState<number | null>(null);
   useEffect(() => { setOpen(null); }, [pathname]);
@@ -31,12 +32,12 @@ export function SectionBar({ groups, q }: { groups: NavGroup[]; q: string }) {
           <button
             key={g.label}
             type="button"
-            className={`secbar__item${open === i ? ' secbar__item--open' : ''}`}
+            className={`secbar__item${open === i ? ' secbar__item--open' : ''}${g.scope === 'company' ? ' secbar__item--company' : ''}`}
             aria-expanded={open === i}
             aria-controls="secbar-panel"
             onClick={() => setOpen(open === i ? null : i)}
           >
-            {g.label}<span className="secbar__caret" aria-hidden>▾</span>
+            {g.scope === 'company' && orgName ? `${g.label} · ${orgName}` : g.label}<span className="secbar__caret" aria-hidden>▾</span>
           </button>
         ))}
       </div>
@@ -44,7 +45,7 @@ export function SectionBar({ groups, q }: { groups: NavGroup[]; q: string }) {
         <div id="secbar-panel" className="secbar__panel">
           <div className="navgrid">
             {group.items.map((it) => (
-              <Link key={it.href} className="navitem" href={it.href === '/portfolio' ? it.href : `${it.href}${q}`} onClick={() => setOpen(null)}>
+              <Link key={it.href} className="navitem" href={jobId ? onJob(it.href, jobId) : it.href === '/portfolio' ? it.href : `${it.href}${q}`} onClick={() => setOpen(null)}>
                 <span className="navitem__name">{it.name}</span>
                 <span className="navitem__what">{it.what}</span>
               </Link>

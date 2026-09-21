@@ -1,4 +1,5 @@
-import { canAuthorEntries, sees, type Access, type Screen } from './roles';
+// `.ts` on purpose: `src/lib/jobs.ts` is node-tested and loads this file directly.
+import { canAuthorEntries, sees, type Access, type Screen } from './roles.ts';
 import type { MemberRole } from '@/types/database';
 
 /**
@@ -11,6 +12,14 @@ import type { MemberRole } from '@/types/database';
  * `screen` is what `canSee` judges; `when` covers the two doors that are not
  * a screen of their own: the crew pages (anyone who can write the diary) and
  * All jobs (anyone on more than one).
+ *
+ * `scope: 'company'` marks a section whose record belongs to the COMPANY, not
+ * the job you are standing on — the fleet's calibration register, the health
+ * records, the subcontractors, the procedures (README R87). `navFor` draws
+ * those under one Company heading, after the job's, so nobody edits the
+ * company's list believing it is this job's. A section that is honestly both
+ * (Plant: the machines here, and the fleet behind them) stays with the job
+ * and labels its company half on the page.
  */
 export interface NavItem {
   href: string;
@@ -20,9 +29,13 @@ export interface NavItem {
   what: string;
   screen?: Screen;
   when?: 'canRecord' | 'multiJob';
+  scope?: 'company';
 }
 
-export interface NavGroup { label: string; items: NavItem[] }
+export interface NavGroup { label: string; items: NavItem[]; scope?: 'job' | 'company' }
+
+/** The heading the company's sections are drawn under. */
+export const COMPANY_LABEL = 'Company';
 
 export const HOME_ITEM: NavItem = { href: '/', name: 'Home', what: 'Today’s diary — record it, or type it in', screen: 'today' };
 
@@ -49,7 +62,7 @@ export const NAV_GROUPS: NavGroup[] = [
     items: [
       { href: '/quality', name: 'Quality', what: 'Inspection and test plans, lots and hold points, non-conformances', screen: 'quality' },
       { href: '/audits', name: 'Audits and reviews', short: 'Audits', what: 'Internal audits, management reviews, and their actions until closed', screen: 'audits' },
-      { href: '/quality/equipment', name: 'Calibration register', short: 'Calibration', what: 'Measuring equipment and when each is due', screen: 'quality' },
+      { href: '/quality/equipment', name: 'Calibration register', short: 'Calibration', what: 'The company’s measuring equipment and when each is due', screen: 'quality', scope: 'company' },
     ],
   },
   {
@@ -80,16 +93,16 @@ export const NAV_GROUPS: NavGroup[] = [
   {
     label: 'People',
     items: [
-      { href: '/training', name: 'Training matrix', what: 'Who holds what, what each role needs, what is expiring', screen: 'training' },
-      { href: '/health', name: 'Health monitoring', short: 'Health', what: 'Confidential — blood lead, asbestos and Schedule 14 monitoring, for named record keepers only', screen: 'health' },
-      { href: '/subcontractors', name: 'Subcontractors', what: 'Insurances, SWMS and licences, chased before they lapse', screen: 'subcontractors' },
+      { href: '/training', name: 'Training matrix', what: 'Who holds what, what each role needs, what is expiring — the whole company or one job', screen: 'training', scope: 'company' },
+      { href: '/health', name: 'Health monitoring', short: 'Health', what: 'Confidential — blood lead, asbestos and Schedule 14 monitoring, for named record keepers only', screen: 'health', scope: 'company' },
+      { href: '/subcontractors', name: 'Subcontractors', what: 'Insurances, SWMS and licences, chased before they lapse', screen: 'subcontractors', scope: 'company' },
       { href: '/settings/members', name: 'Who is on this job', what: 'Crew and PM access', when: 'canRecord' },
     ],
   },
   {
     label: 'Library',
     items: [
-      { href: '/procedures', name: 'Policies & procedures', what: 'The company documents, versioned; who has read the current one', screen: 'procedures' },
+      { href: '/procedures', name: 'Policies & procedures', what: 'The company documents, versioned; who has read the current one', screen: 'procedures', scope: 'company' },
       { href: '/documents', name: 'Job documents', what: 'Spec, scope, contract, drawings', screen: 'documents' },
       { href: '/ask', name: 'Ask a question', short: 'Ask', what: 'From your diary and the job documents', screen: 'ask' },
     ],
@@ -100,7 +113,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { href: '/settings', name: 'Settings', what: 'Hours, emails, crew and plant lists', screen: 'settings' },
       { href: '/name', name: 'Your name', what: 'How your name prints on the sheets' },
       { href: '/settings/vocabulary', name: 'Words and names', what: 'Names and site terms', when: 'canRecord' },
-      { href: '/portfolio', name: 'All jobs', what: 'Every active site at once', when: 'multiJob' },
+      { href: '/portfolio', name: 'All jobs', what: 'Every active site at once', when: 'multiJob', scope: 'company' },
     ],
   },
 ];
@@ -114,9 +127,18 @@ export const EVERY_ROLE: Screen[] = ['today', 'entries', 'weekly', 'prestart', '
 
 export interface NavViewer { role: MemberRole | null; screens?: readonly string[] | null; canRecord: boolean; multiJob: boolean }
 
-/** The groups this viewer gets, each holding only the doors they get; empty groups dropped. */
+/**
+ * The groups this viewer gets, each holding only the doors they get; empty
+ * groups dropped. The job's headings first, then the company's sections
+ * gathered under one Company heading — the same split in the drawer, the rail
+ * and the home page's bar, because they all draw this.
+ */
 export function navFor(viewer: NavViewer): NavGroup[] {
-  return NAV_GROUPS.map((g) => ({ label: g.label, items: g.items.filter((it) => showNav(it, viewer)) })).filter((g) => g.items.length > 0);
+  const job: NavGroup[] = NAV_GROUPS
+    .map((g) => ({ label: g.label, scope: 'job' as const, items: g.items.filter((it) => it.scope !== 'company' && showNav(it, viewer)) }))
+    .filter((g) => g.items.length > 0);
+  const company = NAV_GROUPS.flatMap((g) => g.items.filter((it) => it.scope === 'company' && showNav(it, viewer)));
+  return company.length > 0 ? [...job, { label: COMPANY_LABEL, scope: 'company', items: company }] : job;
 }
 
 /** Whether this viewer gets this door. A null role means "not known yet". */

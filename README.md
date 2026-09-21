@@ -2170,6 +2170,38 @@ Written by whoever keeps the registers (`app.can_manage_registers`), read by who
 labourer. The file goes up first and the row straight after, with the file removed if the row is refused, the same
 order as an issued procedure; the nightly `orphans=1` check reports either half without the other. Suite 34.
 
+**R87. This job, and the company.** Mitchell, with a second job coming: "it needs to be split into job-specific
+things and then company-wide". The data already was — the fleet, tickets, subcontractors, procedures, chemical
+products, calibration, competencies and templates are keyed to the organisation and shared by every job on it, while
+the diary, incidents, variations, prestarts, sign-ins, permits, lots and dayworks are the job's. What was not split was
+the app: every screen, the company ones included, was reached through a job, worked the company out from that job, and
+showed the job's name at the top. With one job nobody notices. With four, the plant fleet opened from Curtin looks like
+Curtin's fleet, and there was no way to move between jobs at all — `resolveProject` took the first active membership
+and stayed there, the one thing the earlier record listed as deliberately not built.
+
+Two things, then. **A job switcher that sticks.** The job you pick goes in a cookie (`kbl-job`), and `requireUser`
+hands every screen its memberships with that job FIRST — the fifty-nine pages keep asking for "the first active job"
+and get the one you chose, without any of them learning about cookies. The middleware writes the same cookie from
+`?project=`, so a link and a pick agree, and `/api/me` orders the same way so the rail and the drawer show the job the
+pages will open on. The cookie is a preference, not a credential: `preferJob` moves only a job the account holds, and
+only one awake; a stale or forged id changes nothing. Switching keeps the section you are in and drops any detail page
+— a day belongs to one job, so `/entries/<id>/review` on Curtin becomes `/entries` on the next job, never that day
+there (`switchTarget`, which takes the longest section address that prefixes the path, so `/quality/equipment` stays and
+`/quality/lot/<id>` goes to `/quality`).
+
+**The menu split.** A section declares `scope: 'company'` in `nav.ts` — the one list — and `navFor` draws those under
+one Company heading after the job's, with "This job" and "Company · <the company>" captioned where the scope changes, in
+the drawer, the rail and the home bar alike. Company: the calibration register, health monitoring, subcontractors, the
+training matrix, policies and procedures, All jobs. A section that is honestly both — Plant is the machines here and the
+fleet behind them; Chemicals is what is on this site and the company's product list — stays with the job and names the
+company on its company half, because it opens on the job's part and that is what a supervisor is there for. Company
+screens show the company's name at the top, not a job's. Across two companies the switcher names the company with each
+job, because two jobs can both be numbered 001.
+
+Not done, on purpose: a company-level home. Home is still the job you are on; All jobs is the glance across them. Nor
+company-wide crew — access and screen ticks stay per job, which is right for a subbie crew that changes site to site;
+if the core crew turns out to work across everything, that is a separate decision.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;
