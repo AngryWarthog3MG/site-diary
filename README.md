@@ -2127,6 +2127,12 @@ side (the sign-off sheet asks for 900px — legible evidence that still emails f
 honoured for pages carrying few enough to load outright. The daily docket marks no image at all, so its bytes are
 untouched and it stays byte-identical.
 
+A correction to the record above: the deploy log says `Provided memory setting in vercel.json is ignored on Active
+CPU billing`. The 2 GB given to the photo-carrying routes never applied — the function's memory is whatever the plan
+gives it — and the "even at 2 GB" reasoning was wrong about why. The fix was, and only was, keeping the bytes out of the
+page and drawing them in one at a time. The `memory` entries in `vercel.json` are left as documentation of intent;
+`maxDuration` there still applies.
+
 The weekly was left embedding its eighty photographs the old way, on the grounds that no week had carried enough to
 fall over. Three days later a week had: **Download PDF on the weekly report came back as `internal.json`** — a plain
 `<a href>` to the route, so when the route 500s the browser saves the error body under the last path segment. Behind it
