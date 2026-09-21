@@ -8,6 +8,7 @@ import { KIND_LABEL, incidentRef, type IncidentKind } from '@/lib/incidents/mode
 import { VERDICT_LABEL, type Verdict } from '@/lib/subcontractors/model';
 import { loadDashboard, perthBadge, OPEN_LIST } from '@/lib/home/dashboard';
 import { loadObligations } from '@/lib/obligations/load';
+import { loadSetupCard } from '@/lib/setup/load';
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
@@ -48,9 +49,10 @@ interface Card { key: string; name: string; attention: boolean; node: React.Reac
 export async function DashboardCards({ projectId, orgId, member }: { projectId: string; orgId: string; member: Access }) {
   const supabase = await createClient();
   const today = perthToday();
-  const [d, due] = await Promise.all([
+  const [d, due, setup] = await Promise.all([
     loadDashboard(supabase, projectId, orgId, today),
     sees(member, 'obligations') ? loadObligations(supabase, projectId, orgId, today) : Promise.resolve(null),
+    sees(member, 'start_gate') ? loadSetupCard(supabase, projectId, orgId, today) : Promise.resolve(null),
   ]);
   const s = d.safety;
   const q = `?project=${projectId}`;
@@ -61,6 +63,27 @@ export async function DashboardCards({ projectId, orgId, member }: { projectId: 
   const reportsThisYear = s.incidents.months.reduce((acc, m) => acc + m.total, 0);
 
   const cards: Card[] = [];
+  // The setup board (README R92): what the job still needs before and as it starts. Only the office sees it,
+  // and a job never set up is only worth a nudge once the library has something to stamp.
+  if (setup && (setup.setUp || setup.libraryItems > 0)) cards.push({
+    key: 'setup', name: 'the start gate',
+    attention: setup.setUp ? setup.openStartGate > 0 || setup.overdue > 0 || setup.documentGaps > 0 : true,
+    node: setup.setUp ? (
+      <section className="dash-card">
+        <p className="dash-card__title">Start gate</p>
+        <Big n={setup.percent == null ? '—' : `${setup.percent}%`} tone={setup.overdue > 0 ? 'bad' : setup.openStartGate === 0 && setup.percent != null ? 'ok' : undefined} />
+        <p className="dash-card__sub">{`${setup.openStartGate} open · ${setup.priorityAOpen} priority A · ${setup.overdue} overdue · ${setup.documentGaps} document gap${setup.documentGaps === 1 ? '' : 's'}`}</p>
+        <Foot href={`/start-gate${q}`} label="Start gate" />
+      </section>
+    ) : (
+      <section className="dash-card">
+        <p className="dash-card__title">Start gate</p>
+        <Big n="—" />
+        <p className="dash-card__sub">Not set up from the templates yet</p>
+        <Foot href={`/start-gate${q}`} label="Set up from templates" />
+      </section>
+    ),
+  });
   if (see('training')) cards.push({
     key: 'tickets', name: 'tickets & licences', attention: s.tickets.expired.length > 0 || s.tickets.soon.length > 0,
     node: (

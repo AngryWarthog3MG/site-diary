@@ -113,6 +113,7 @@ export const NAV_GROUPS: NavGroup[] = [
   {
     label: 'Setup',
     items: [
+      { href: '/start-gate', name: 'Start gate', what: 'What this job needs before and as it starts — stamped from the company’s templates', screen: 'start_gate' },
       { href: '/settings', name: 'Settings', what: 'Hours, emails, crew and plant lists', screen: 'settings' },
       { href: '/name', name: 'Your name', what: 'How your name prints on the sheets' },
       { href: '/settings/vocabulary', name: 'Words and names', what: 'Names and site terms', when: 'canRecord' },

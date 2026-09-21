@@ -313,7 +313,15 @@ improvising; the register once shipped dead because a live smoke test was skippe
 - `src/lib/templates/` — the company's template library (README R91): `template_modules` (six shells per company; core is
   every job) and `template_items` (kind, module, tier, priority, owner, par level, folder; `origin` for the closeout
   loop; retired never deleted). Read by every member of the company, written by `app.is_org_office` (pm/admin anywhere
-  in it). `/templates` is screen `templates`, pm/admin, company scope. Stamping a job from it is NOT built. Suite 38
+  in it). `/templates` is screen `templates`, pm/admin, company scope. Suite 38
+- `src/lib/setup/` — the job's SETUP BOARD (README R92): `project_modules` (attached, never detached; core always) and
+  `project_setup_items` (a snapshot of the template items at stamping; open → done | not_applicable, the DB stamps
+  done_by/done_at; kind/origin/job fixed; never deleted). `public.instantiate_project(project, modules[], tier)` is
+  additive and idempotent; a tier only rises; `create_project` calls it, so a new job is born stamped; `set_project_start`
+  fills due dates from `projects.start_on` + `due_offset_days` for OPEN items. `model.ts` (`summarise`, `orderSetup`,
+  `dueOn`, `isOverdue`), `load.ts` (the home card). `/start-gate` is screen `start_gate`, pm/admin only — the brief keeps
+  start gate items, risks and submittals from site roles. Not built: filing a document ticking its item; the closeout
+  loop promoting manual items to the library. Suite 39
 - `src/lib/notices/` — notices to the head contractor and the site events they stand on (README R90). Table
   `site_events` is the diary's SEVENTH SECTION (`entry_section` value `site_events`; nil question; conditional key in
   the hash; child of the day like dayworks — rewritten on save, frozen at signing). Tables `notices` (office-only via

@@ -2298,6 +2298,27 @@ needs a unit, an item stays with its company.
 `/templates` is a company screen for pm and admin: pick a module, pick a kind, add, change, retire, restore. The
 stamping of a job from these (`instantiate_project`) is Phase 1 proper and is not here yet. Suite 38.
 
+**R92. A job stamped from the templates: `instantiate_project` and the start gate.** R91 built the library; this
+gives it a consumer. `instantiate_project(project, modules[], tier)` attaches modules to a job (core always) and stamps
+every active template item those modules hold, at the job's tier, onto the job's SETUP BOARD (`project_setup_items`):
+start gate items, hold points, submittals, SWMS to have, consumables with par levels, risks, expected documents, the
+folders. It adds only what is missing — a second run, a module added mid-job, a library that grew since: all additive,
+nothing removed — and a job's tier only ever rises, because lowering it would mean taking things off the board. A
+stamped item is a snapshot; the library changing later does not rewrite a job (the same rule as inspection templates).
+`create_project` grew a tier, modules and a start date and calls it, so a job born in the app is born stamped.
+
+The board is worked, not signed: open → done or not applicable (with a reason) → reopen. The DB stamps `done_by` and
+`done_at` and ignores what the client sends; kind, origin and job are fixed at birth; nothing is deleted. Due dates
+count from `projects.start_on` (`set_project_start`): an open item with an offset follows the start date, a finished
+one keeps the date it was finished against. Items can be added by hand (`origin = 'manual'`) — the closeout loop that
+promotes them back to the library is not built.
+
+Office only, as the brief asks — start gate items, risks and submittals never reach site roles; `app.is_office` reads
+and writes, the labourer lock applies on top. `/start-gate` is screen `start_gate` (pm/admin), under Setup. The home
+card shows start gate percent, priority A open, overdue and document gaps; a job never set up gets a nudge only once the
+library holds something. What is NOT here: the document gaps are read off the board's own document items (a document
+marked done), not off the job's documents table — filing a document does not tick the item yet. Suite 39.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;

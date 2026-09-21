@@ -65,10 +65,10 @@ export function canExportReports(role: MemberRole): boolean {
 
 export type Screen =
   | 'today' | 'entries' | 'weekly' | 'prestart' | 'plant' | 'toolbox' | 'signin' | 'swms' | 'swms_sign' | 'incidents' | 'inspections' | 'permits' | 'subcontractors' | 'procedures' | 'training' | 'safety' | 'orders' | 'chemicals' | 'obligations' | 'emergency' | 'construction' | 'quality' | 'audits' | 'asbestos' | 'health' | 'environment'
-  | 'claims' | 'variations' | 'notices' | 'templates' | 'progress' | 'ask' | 'documents' | 'settings';
+  | 'claims' | 'variations' | 'notices' | 'templates' | 'start_gate' | 'progress' | 'ask' | 'documents' | 'settings';
 
 /** Every screen there is, in the order the Members screen lists them. */
-export const SCREENS: Screen[] = ['today', 'entries', 'weekly', 'signin', 'claims', 'variations', 'notices', 'templates', 'progress', 'quality', 'audits', 'safety', 'obligations', 'emergency', 'incidents', 'inspections', 'permits', 'swms', 'swms_sign', 'chemicals', 'asbestos', 'environment', 'construction', 'prestart', 'toolbox', 'plant', 'orders', 'training', 'health', 'subcontractors', 'procedures', 'documents', 'ask', 'settings'];
+export const SCREENS: Screen[] = ['today', 'entries', 'weekly', 'signin', 'claims', 'variations', 'notices', 'templates', 'start_gate', 'progress', 'quality', 'audits', 'safety', 'obligations', 'emergency', 'incidents', 'inspections', 'permits', 'swms', 'swms_sign', 'chemicals', 'asbestos', 'environment', 'construction', 'prestart', 'toolbox', 'plant', 'orders', 'training', 'health', 'subcontractors', 'procedures', 'documents', 'ask', 'settings'];
 
 /** A membership as the gates read it: the role, and the screens ticked for this person (null = the role's list). */
 export interface Access { role: MemberRole; screens?: readonly string[] | null }
@@ -118,6 +118,9 @@ export function canSee(role: MemberRole, screen: Screen): boolean {
   if (screen === 'notices') return role === 'pm' || role === 'admin';
   // The company's templates are set up by the office (README R91).
   if (screen === 'templates') return role === 'pm' || role === 'admin';
+  // The job's setup board is the office's too (README R92): start gate items, risks and
+  // submittals stay away from site roles, as the brief asks.
+  if (screen === 'start_gate') return role === 'pm' || role === 'admin';
   if (screen === 'settings') return canAuthorEntries(role);
   return true;
 }
