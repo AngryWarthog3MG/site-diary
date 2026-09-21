@@ -148,6 +148,20 @@ const DayworkItem = z.object({
 });
 
 /**
+ * An instruction received, or an event outside the crew's control (README R90).
+ * `said_text` is the supervisor's own words, exactly as spoken — the prompt
+ * forbids tidying them, and the review screen shows the quote beside them.
+ */
+const SiteEventItem = z.object({
+  said_text: z.string().min(1),
+  location: nullableText,
+  directed_by: nullableText,
+  occurred_time: nullableTime,
+  source_quote: sourceQuote,
+  confidence,
+});
+
+/**
  * Per-section outcome (§4).
  *
  * `nil_confirmed` is the one that matters: a supervisor saying "no plant on
@@ -169,6 +183,7 @@ export {
   PourItem,
   QuantityItem,
   DayworkItem,
+  SiteEventItem,
   SectionOutcome,
 };
 
@@ -181,6 +196,7 @@ export const ExtractionProposal = z.object({
   pours: z.array(PourItem).default([]),
   quantities: z.array(QuantityItem).default([]),
   dayworks: z.array(DayworkItem).default([]),
+  site_events: z.array(SiteEventItem).default([]),
   weather_impact: nullableText,
 
   /**
@@ -196,6 +212,7 @@ export const ExtractionProposal = z.object({
     work_items: SectionOutcome,
     variations: SectionOutcome,
     delays: SectionOutcome,
+    site_events: SectionOutcome,
     weather: SectionOutcome,
   }),
 });
@@ -209,6 +226,7 @@ export type DelayItem = z.infer<typeof DelayItem>;
 export type PourItem = z.infer<typeof PourItem>;
 export type QuantityItem = z.infer<typeof QuantityItem>;
 export type DayworkItem = z.infer<typeof DayworkItem>;
+export type SiteEventItem = z.infer<typeof SiteEventItem>;
 export type SectionOutcome = z.infer<typeof SectionOutcome>;
 export type SectionKey = keyof ExtractionProposal['sections'];
 
@@ -218,6 +236,7 @@ export const SECTION_KEYS: SectionKey[] = [
   'work_items',
   'variations',
   'delays',
+  'site_events',
   'weather',
 ];
 
@@ -233,6 +252,7 @@ export function emptyProposal(): ExtractionProposal {
     pours: [],
     quantities: [],
     dayworks: [],
+    site_events: [],
     weather_impact: null,
     notes: null,
     sections: {
@@ -241,6 +261,7 @@ export function emptyProposal(): ExtractionProposal {
       work_items: gap,
       variations: gap,
       delays: gap,
+      site_events: gap,
       weather: gap,
     },
   };

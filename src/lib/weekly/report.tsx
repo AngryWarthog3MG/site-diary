@@ -367,6 +367,38 @@ export function WeeklyReport({ data, narrative, narrativeNote, audience = 'recor
       </section>
 
       <section className="sect">
+        <p className="lbl">Instructions received and events outside scope</p>
+        {data.site_events.rows.length === 0 ? (
+          <Nil>None recorded in this period</Nil>
+        ) : (
+          <table>
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th className="k">#</th>
+                <th className="w">In the supervisor’s words</th>
+                <th>Directed by</th>
+                <th>Where</th>
+                <th>When</th>
+              </tr>
+            </thead>
+            <tbody>
+              {data.site_events.rows.map((row, i) => (
+                <tr key={i}>
+                  <td className="k mono"><D date={row.date} /></td>
+                  <td className="k mono">{i + 1}</td>
+                  <td className="w">{row.said_text}</td>
+                  <td>{row.directed_by ?? '—'}</td>
+                  <td>{row.location ?? '—'}</td>
+                  <td className="mono">{row.occurred_time ? row.occurred_time.slice(0, 5) : '—'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </section>
+
+      <section className="sect">
         <p className="lbl">Delays &amp; standdown</p>
         {delays.rows.length === 0 ? (
           <Nil>No delays recorded in this period</Nil>

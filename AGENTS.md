@@ -310,6 +310,13 @@ improvising; the register once shipped dead because a live smoke test was skippe
   change that autosaves and that Undo reverses. It will not move without a register number, and what a variation has no
   field for (labour, plant, materials, docket) is kept in the description verbatim — never parsed into `crew`. There is
   no move the other way, on purpose
+- `src/lib/notices/` — notices to the head contractor and the site events they stand on (README R90). Table
+  `site_events` is the diary's SEVENTH SECTION (`entry_section` value `site_events`; nil question; conditional key in
+  the hash; child of the day like dayworks — rewritten on save, frozen at signing). Tables `notices` (office-only via
+  `app.is_office` = pm/admin; numbered per job; drafted only from an event on a SIGNED day; frozen once sent but for
+  voiding; NEVER sent by the app) and `site_event_triage` (a decision that no notice is needed, with its reason).
+  `model.ts`: `hoursSince` from the time said or knock-off, `draftFromEvent` (the words verbatim, nothing invented).
+  `/notices` is screen `notices`, pm/admin only. The prompt must never tidy `said_text`. Suite 37
 - `src/lib/calendar.ts` — `isRestDay`: weekends with nothing recorded are rest days, not holes. One definition for
   the screens, the weekly and the reminder
 - `src/lib/dayworks/` — the dayworks schedule (README R72): `schedule.ts` (pure: `readRange`, `buildSchedule` by Monday weeks,

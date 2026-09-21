@@ -56,6 +56,7 @@ const SECTION_QUESTIONS: Record<SectionKey, string> = {
   work_items: 'Nothing recorded as completed today — is that right?',
   variations: 'No variations today — is that right?',
   delays: 'No delays today — is that right?',
+  site_events: 'Any instructions from the head contractor today, or anything outside our scope? Say "none" if not.',
   weather: 'Did the weather affect the work today?',
 };
 
@@ -66,6 +67,7 @@ const REQUIRED_GROUP: Partial<Record<SectionKey, ItemGroup>> = {
   work_items: 'work_items',
   variations: 'variations',
   delays: 'delays',
+  site_events: 'site_events',
 };
 
 const PHOTO_BUCKET = 'entry-photos';

@@ -121,6 +121,17 @@ export const ReviewDaywork = z.object({
   confidence,
 });
 
+/** An instruction or an event outside scope, as confirmed on the day (README R90). */
+export const ReviewSiteEvent = z.object({
+  said_text: z.string().trim().min(1),
+  location: nullableText,
+  directed_by: nullableText,
+  occurred_time: timeOfDay,
+  photo_urls: urls,
+  source_quote: nullableText,
+  confidence,
+});
+
 export const PHOTO_CATEGORIES = [
   'progress',
   'works',
@@ -170,6 +181,7 @@ export const ReviewPayload = z.object({
   pours: z.array(ReviewPour).default([]),
   quantities: z.array(ReviewQuantity).default([]),
   dayworks: z.array(ReviewDaywork).default([]),
+  site_events: z.array(ReviewSiteEvent).default([]),
   photos: z.array(ReviewPhoto).default([]),
   weather: ReviewWeatherReading.default({
     temp_max: null,
@@ -193,6 +205,7 @@ export type ReviewDelay = z.infer<typeof ReviewDelay>;
 export type ReviewPour = z.infer<typeof ReviewPour>;
 export type ReviewQuantity = z.infer<typeof ReviewQuantity>;
 export type ReviewDaywork = z.infer<typeof ReviewDaywork>;
+export type ReviewSiteEvent = z.infer<typeof ReviewSiteEvent>;
 export type ReviewPhoto = z.infer<typeof ReviewPhoto>;
 export type ReviewWeatherReading = z.infer<typeof ReviewWeatherReading>;
 export type PhotoCategory = (typeof PHOTO_CATEGORIES)[number];
@@ -205,7 +218,8 @@ export type ItemGroup =
   | 'delays'
   | 'pours'
   | 'quantities'
-  | 'dayworks';
+  | 'dayworks'
+  | 'site_events';
 
 /**
  * The four gates from §4, evaluated against what is on screen right now.
@@ -326,6 +340,7 @@ export function reviewQualityWarnings(payload: ReviewPayload, context: ReviewCon
       ...payload.pours,
       ...payload.quantities,
       ...payload.dayworks,
+      ...payload.site_events,
     ].some((item) => item.confidence === 'low')
   ) {
     warnings.add('low_confidence_items');

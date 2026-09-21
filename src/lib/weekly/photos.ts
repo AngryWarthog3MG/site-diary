@@ -63,6 +63,7 @@ export async function loadWeeklyPhotos(
        photos(url, caption, category, created_at),
        variations(register_seq, description, photo_urls),
        dayworks(description, photo_urls),
+       site_events(said_text, photo_urls),
        pours(location, docket_photo_urls)`,
     )
     .eq('project_id', projectId)
@@ -94,6 +95,9 @@ export async function loadWeeklyPhotos(
     }
     for (const d of list(entry.dayworks)) {
       for (const path of (d.photo_urls as string[] | null) ?? []) wanted.push({ day, path, context: 'Dayworks', caption: (d.description as string | null) ?? null });
+    }
+    for (const ev of list(entry.site_events)) {
+      for (const path of (ev.photo_urls as string[] | null) ?? []) wanted.push({ day, path, context: 'Instruction or event', caption: (ev.said_text as string | null) ?? null });
     }
     for (const p of list(entry.pours)) {
       for (const path of (p.docket_photo_urls as string[] | null) ?? []) wanted.push({ day, path, context: `Concrete docket — ${(p.location as string | null) ?? 'pour'}`, caption: null });

@@ -113,6 +113,20 @@ export interface ProjectWeatherDay {
   fetched_at: string;
 }
 
+/** An instruction received or an event outside scope, in the supervisor's words (README R90). */
+export interface SiteEvent {
+  id: string;
+  entry_id: string;
+  said_text: string;
+  location: string | null;
+  directed_by: string | null;
+  occurred_time: string | null;
+  photo_urls: string[];
+  source_quote: string | null;
+  confidence: Confidence | null;
+  created_at: string;
+}
+
 export interface Daywork {
   id: string;
   entry_id: string;

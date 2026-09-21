@@ -78,6 +78,17 @@ export interface WeeklyData {
       percent_complete: number | null;
     }>;
   };
+  /** Instructions received and events outside scope, in the supervisor's words (README R90). */
+  site_events: {
+    rows: Array<{
+      date: string;
+      entry_no: string;
+      said_text: string;
+      location: string | null;
+      directed_by: string | null;
+      occurred_time: string | null;
+    }>;
+  };
   dayworks: {
     rows: Array<{
       date: string;
@@ -515,6 +526,23 @@ export function aggregateWorkItems(
  * whole purpose is to be rolled up and claimed, so its absence from a weekly
  * report is money leaking, not tidiness.
  */
+/** The week's instructions and events, in date order, the words as they were said. */
+export function aggregateSiteEvents(rows: Array<Record<string, unknown>>): WeeklyData['site_events'] {
+  return {
+    rows: rows
+      .slice()
+      .sort((a, b) => String(a.entry_date).localeCompare(String(b.entry_date)) || String(a.occurred_time ?? '').localeCompare(String(b.occurred_time ?? '')))
+      .map((row) => ({
+        date: String(row.entry_date ?? ''),
+        entry_no: String(row.entry_no ?? ''),
+        said_text: String(row.said_text ?? ''),
+        location: (row.location as string | null) ?? null,
+        directed_by: (row.directed_by as string | null) ?? null,
+        occurred_time: (row.occurred_time as string | null) ?? null,
+      })),
+  };
+}
+
 export function aggregateDayworks(
   rows: Array<Record<string, unknown>>,
   added: ReadonlyMap<string, { ref: string; on: string }> = new Map(),
@@ -597,7 +625,7 @@ export async function loadWeeklyData(
     `select ${cols} from diary.${view} where project_id = '${project.id}' ` +
     `and entry_date >= '${start}' and entry_date <= '${end}' order by entry_date`;
 
-  const [entries, labour, plant, pours, quantities, delays, weather, variations, workItems, dayworks] =
+  const [entries, labour, plant, pours, quantities, delays, weather, variations, workItems, dayworks, siteEvents] =
     await Promise.all([
       diaryQuery(supabase, scope('entries', 'entry_no, entry_date, author_name, signed_at, notes')),
       diaryQuery(supabase, scope('labour', 'entry_no, entry_date, person_name, role, hours, overtime_hours, start_time, finish_time')),
@@ -636,6 +664,7 @@ export async function loadWeeklyData(
         supabase,
         scope('dayworks', 'entry_no, entry_date, description, labour, plant, materials, hours, docket_ref, daywork_id'),
       ),
+      diaryQuery(supabase, scope('site_events', 'entry_no, entry_date, said_text, location, directed_by, occurred_time')),
     ]);
 
   const entryRows: WeeklyEntryRow[] = entries.map((row) => ({
@@ -664,6 +693,7 @@ export async function loadWeeklyData(
          pours(location, volume_m3, mix_spec, supplier),
          quantities(item_type, area, quantity, unit),
          dayworks(id, description, labour, plant, materials, hours, docket_ref),
+         site_events(said_text, location, directed_by, occurred_time),
          weather(temp_min, temp_max, rainfall_mm, wind_dir, wind_kmh, source, observed_impact)`,
       )
       .eq('project_id', project.id)
@@ -694,7 +724,7 @@ export async function loadWeeklyData(
       for (let i = entryRows.length - 1; i >= 0; i -= 1) {
         if (correctedDates.has(entryRows[i].entry_date)) entryRows.splice(i, 1);
       }
-      for (const list of [labour, plant, workItems, variations, delays, pours, quantities, dayworks, weather]) {
+      for (const list of [labour, plant, workItems, variations, delays, pours, quantities, dayworks, siteEvents, weather]) {
         const kept = dropCorrected(list);
         list.length = 0;
         list.push(...kept);
@@ -740,6 +770,7 @@ export async function loadWeeklyData(
       pours.push(...stamp(draft.pours));
       quantities.push(...stamp(draft.quantities));
       dayworks.push(...stamp((draft.dayworks as Array<Record<string, unknown>>).map((d) => ({ ...d, daywork_id: d.id }))));
+      siteEvents.push(...stamp(draft.site_events));
       weather.push(...stamp(draft.weather));
     }
     entryRows.sort((a, b) => a.entry_date.localeCompare(b.entry_date));
@@ -777,6 +808,7 @@ export async function loadWeeklyData(
     pours: poursAgg,
     workItems: aggregateWorkItems(workItems),
     dayworks: aggregateDayworks(dayworks, await loadDocketsAdded(supabase, dayworks)),
+    site_events: aggregateSiteEvents(siteEvents),
     quantities: aggregateQuantities(quantities),
     delays: delaysAgg,
     weather: aggregateWeather(weatherRows, station),

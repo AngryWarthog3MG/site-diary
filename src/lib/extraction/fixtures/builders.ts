@@ -6,6 +6,7 @@ import type {
   PourItem,
   QuantityItem,
   SectionOutcome,
+  SiteEventItem,
   VariationItem,
   WorkItem,
 } from '../schema.ts';
@@ -110,6 +111,17 @@ const captured: SectionOutcome = { state: 'captured', source_quote: null };
 const nil: SectionOutcome = { state: 'nil_confirmed', source_quote: null };
 const gap: SectionOutcome = { state: 'gap', source_quote: null };
 
+/** An instruction or event: the words are the whole point, so they come first. */
+export const E = (said_text: string, over: Partial<SiteEventItem> = {}): SiteEventItem => ({
+  said_text,
+  location: null,
+  directed_by: null,
+  occurred_time: null,
+  source_quote: '',
+  confidence: 'high',
+  ...over,
+});
+
 export const S = { captured, nil, gap };
 
 type Sections = ExtractionProposal['sections'];
@@ -127,6 +139,7 @@ export function proposal(
   const work_items = parts.work_items ?? [];
   const variations = parts.variations ?? [];
   const delays = parts.delays ?? [];
+  const site_events = parts.site_events ?? [];
   const weather_impact = parts.weather_impact ?? null;
   const notes = parts.notes ?? null;
 
@@ -141,6 +154,7 @@ export function proposal(
     pours: parts.pours ?? [],
     quantities: parts.quantities ?? [],
     dayworks: parts.dayworks ?? [],
+    site_events,
     weather_impact,
     notes,
     sections: {
@@ -149,6 +163,7 @@ export function proposal(
       work_items: derive(work_items.length),
       variations: derive(variations.length),
       delays: derive(delays.length),
+      site_events: parts.sections?.site_events ?? derive(site_events.length),
       weather: derive(weather_impact ? 1 : 0),
       ...parts.sections,
     },

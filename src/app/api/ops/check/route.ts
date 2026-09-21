@@ -441,7 +441,7 @@ async function reconcileStorage(): Promise<Record<string, unknown>> {
   };
   const sources: Array<[string, string[]]> = [
     ['photos', ['url']], ['entry_signatures', ['image_path']], ['pours', ['docket_photo_urls']],
-    ['variations', ['photo_urls']], ['dayworks', ['photo_urls']], ['daywork_dockets', ['photo_urls']],
+    ['variations', ['photo_urls']], ['dayworks', ['photo_urls']], ['site_events', ['photo_urls']], ['daywork_dockets', ['photo_urls']],
     ['prestart_attendees', ['signature_path']], ['toolbox_attendees', ['signature_path']], ['swms_signons', ['signature_path']], ['incidents', ['photo_urls']], ['incident_updates', ['photo_urls']], ['orders', ['photo_urls']], ['inspections', ['signature_path', 'items']], ['permits', ['issuer_signature_path', 'holder_signature_path', 'closeout_signature_path']], ['site_signins', ['signature_path']], ['document_acknowledgements', ['signature_path']],
     ['plant_prestarts', ['signature_path']], ['plant_defects', ['photo_path']],
   ];
@@ -1174,7 +1174,7 @@ async function probeBrowser() {
         project_name: 'Probe', project_code: 'P001', principal_contractor: null,
         author_name: 'Probe', labour: [], plant: [], work_items: [], variations: [], signatures: [],
         signer_name: 'Probe',
-        delays: [], pours: [], quantities: [], dayworks: [], photos: [], weather: null, sections: {},
+        delays: [], pours: [], quantities: [], dayworks: [], site_events: [], photos: [], weather: null, sections: {},
       },
       photos: [],
     });

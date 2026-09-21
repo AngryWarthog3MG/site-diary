@@ -23,6 +23,7 @@ const QUESTIONS: Record<SectionKey, string> = {
   work_items: 'Nothing recorded as completed today — is that right?',
   variations: 'No variations today — is that right?',
   delays: 'No delays today — is that right?',
+  site_events: 'Any instructions from the head contractor today, or anything outside our scope? Say "none" if not.',
   weather: 'Did the weather affect the work today?',
 };
 
@@ -44,6 +45,8 @@ export function itemCount(proposal: ExtractionProposal, section: SectionKey): nu
       return proposal.variations.length;
     case 'delays':
       return proposal.delays.length;
+    case 'site_events':
+      return proposal.site_events.length;
     case 'weather':
       return proposal.weather_impact ? 1 : 0;
   }

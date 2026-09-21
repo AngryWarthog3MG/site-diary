@@ -54,6 +54,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { href: '/claims', name: 'Claims', what: 'Delays, variations, dayworks', screen: 'claims' },
       { href: '/dayworks', name: 'Dayworks schedule', short: 'Dayworks', what: 'Works completed under daywork and the total hours, by period — printable', screen: 'claims' },
       { href: '/variations', name: 'Variation tracker', what: 'Each one walked from raised to paid — where it is, what it waits on', screen: 'variations' },
+      { href: '/notices', name: 'Notices', what: 'Instructions and events from the diary, and the notices we send about them', screen: 'notices' },
       { href: '/progress', name: 'Progress', what: 'How far along each area is', screen: 'progress' },
     ],
   },

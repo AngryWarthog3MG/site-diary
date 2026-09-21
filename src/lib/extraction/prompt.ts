@@ -28,8 +28,9 @@ An empty field is a question the app will ask the supervisor. A guess is a numbe
 
 The diary is a record of what happened. It is not a plan for what will.
 
-Extract only work, labour, plant, delays, pours, quantities and dayworks the
-supervisor describes as having **already happened**. Anything said as intention, schedule
+Extract only work, labour, plant, delays, pours, quantities, dayworks, and
+instructions or events outside scope that the supervisor describes as having
+**already happened**. Anything said as intention, schedule
 or forecast is not the record and must not be extracted:
 
 - "we'll be excavating", "we're going to pour", "tomorrow we're back on the kerb"
@@ -152,6 +153,17 @@ Dayworks (also said as "day labour", "on dayworks", "T and M", "time and materia
 - docket_ref: a dayworks docket number ONLY if the supervisor read one out (e.g. "docket DW-114"); never invented
 
 "Two blokes on dayworks exposing the Telstra conduit, four hours" is one daywork item — the people are NOT also duplicated into labour unless the supervisor separately accounts for their day there. Ordinary contract work is never a daywork; when in doubt, it is a work_item.
+
+# Instructions received, and anything outside our scope
+
+Listen for any instruction from the head contractor or client, any work the crew was asked to do that may be extra, and anything that stopped or slowed the work that was outside the crew's control: late access, other trades, missing information, drawing changes, unexpected ground, weather stoppages, plant standing. Each one goes in the **site_events** array:
+
+- said_text: the supervisor's own words about it, exactly as spoken. Do not summarise, correct, tidy or complete them. When the words are broken up by an aside, keep the words that are about the event and nothing else.
+- location, directed_by, occurred_time: only if they were actually said; otherwise empty. occurred_time is a time of day.
+
+An instruction is a site event even when the work it directed also appears as a variation or a daywork — the event is the record that it was said; the variation or daywork is the record of the work. Ordinary contract work, and delays the crew caused themselves, are not site events.
+
+When there were none and the supervisor says so ("nothing from Lendlease today", "no instructions"), sections.site_events is nil_confirmed with the quote. When they said nothing about it either way, it is a gap.
 
 # Things that are never invented
 

@@ -45,6 +45,7 @@ export interface DocketEntry {
   pours: Row[];
   quantities: Row[];
   dayworks: Row[];
+  site_events: Row[];
   photos: Row[];
   signatures: Row[];
   weather: Row | null;
@@ -86,7 +87,7 @@ export async function loadDocketEntry(
        project:projects!inner(name, code, principal_contractor,
                               org:organisations!inner(name, code)),
        labour(*), plant(*), work_items(*), variations(*, variation_number), delays(*), pours(*),
-       quantities(*), dayworks(*, docket_added:daywork_dockets(docket_ref, received_on)), photos(*), entry_signatures(*), weather(*), entry_sections(*)`,
+       quantities(*), dayworks(*, docket_added:daywork_dockets(docket_ref, received_on)), site_events(*), photos(*), entry_signatures(*), weather(*), entry_sections(*)`,
     )
     .eq('id', entryId)
     .maybeSingle();
@@ -164,6 +165,7 @@ export async function loadDocketEntry(
     pours: list('pours'),
     quantities: list('quantities'),
     dayworks: list('dayworks'),
+    site_events: list('site_events'),
     photos: list('photos'),
     signatures: list('entry_signatures'),
     weather: first(row.weather),

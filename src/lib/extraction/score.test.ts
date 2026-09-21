@@ -155,7 +155,8 @@ test('a nil mistaken for a gap is scored as a wrong section state', () => {
   const score = scoreProposal(expected, predicted);
 
   assert.equal(score.sectionStates.wrong, 1);
-  assert.equal(score.sectionStates.correct, 5);
+  // Seven sections now: the six, and instructions received (README R90).
+  assert.equal(score.sectionStates.correct, 6);
 });
 
 test('failures carry enough detail to act on', () => {

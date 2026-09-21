@@ -66,6 +66,17 @@ export function collectPhotoPaths(entry: DocketEntry): PhotoPath[] {
     }
   });
 
+  entry.site_events.forEach((event, index) => {
+    for (const path of (event.photo_urls as string[] | null) ?? []) {
+      wanted.push({
+        bucket: PHOTO_BUCKET,
+        path,
+        context: `Instruction or event ${index + 1}`,
+        caption: null,
+      });
+    }
+  });
+
   for (const photo of entry.photos) {
     const category = typeof photo.category === 'string' ? photo.category : 'general';
     wanted.push({

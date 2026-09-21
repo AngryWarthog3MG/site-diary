@@ -14,13 +14,15 @@ import {
 import { emptyProposal } from './schema.ts';
 import { C, D, L, P, S, V, proposal } from './fixtures/builders.ts';
 
-test('an empty entry asks about all six sections', () => {
+test('an empty entry asks about all seven sections', () => {
   const questions = followUpQuestions(emptyProposal());
-  assert.equal(questions.length, 6);
+  assert.equal(questions.length, 7);
   assert.deepEqual(
     questions.map((q) => q.section),
-    ['labour', 'plant', 'work_items', 'variations', 'delays', 'weather'],
+    ['labour', 'plant', 'work_items', 'variations', 'delays', 'site_events', 'weather'],
   );
+  // The seventh asks in the brief's words, and invites the explicit "none" that makes it a nil (README R90).
+  assert.match(questions.find((q) => q.section === 'site_events')!.question, /instructions from the head contractor.*outside our scope.*"none"/);
 });
 
 test('a confirmed nil is an answer and is not asked about again', () => {

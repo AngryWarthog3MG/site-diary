@@ -16,6 +16,19 @@ test('every fixture has a unique id', () => {
   assert.equal(new Set(FIXTURES.map((f) => f.id)).size, FIXTURES.length);
 });
 
+test('a buried instruction comes back as one site event, in the words that were said', () => {
+  const f = FIXTURES.find((x) => x.id === '23-buried-instruction')!;
+  assert.equal(f.expected.site_events.length, 1);
+  const words = f.expected.site_events[0].said_text;
+  assert.ok(f.transcript.includes(words), 'the expected words must appear verbatim in the transcript');
+  assert.equal(f.expected.sections.site_events.state, 'captured');
+  // Nothing was priced or directed as extra work in so many words: no variation.
+  assert.equal(f.expected.variations.length, 0);
+  // And a day with nothing said about it leaves the section a gap.
+  const brief = FIXTURES.find((x) => x.id === '21-morning-brief')!;
+  assert.equal(brief.expected.sections.site_events.state, 'gap');
+});
+
 test('a morning brief records nothing — the diary is not a plan', () => {
   // Every other fixture is a knock-off report in past tense, which is exactly
   // why the first real recording caught the app out: it was a morning brief,

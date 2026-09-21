@@ -2251,6 +2251,36 @@ they are signing (WHS Regulations r. 299, r. 300) — and their own sign-on is t
 versions keep the record lock, and the rest of the sign-ons stay the crew's. Bucket `swms-docs` `{project}/{swms}.ext`
 follows the same line: readable by every member of the job, written by whoever writes SWMS. Suite 36.
 
+**R90. Instructions received, and anything outside our scope — the diary's seventh section.** The most valuable
+change in the Project Control brief, and the one it got exactly right: a diary field that asks, every day, *"Any
+instructions from the head contractor today, or anything outside our scope? Say 'none' if not."* What the head
+contractor directed, what the crew was asked to do that may be extra, and whatever stopped or slowed the work from
+outside the crew's control — late access, other trades, missing information, drawing changes, unexpected ground, plant
+standing. In the supervisor's own words. It is the record a notice stands on, and months later the record a claim
+stands on when the notice is argued over.
+
+It is a true section, not an extra: `site_events` joins the `entry_section` enum, has the nil question, and prints
+NIL or NOT RECORDED like labour and plant do. Six places, in order: the table, the hash (a conditional key, so every
+entry signed before today still verifies), the extraction (the prompt is told to return the supervisor's words exactly
+and never to tidy them, and to fill where, who and when only if they were said), the review screen (straight after
+the work, while the day is fresh, with the source quote beside the words), the docket (a numbered section, and the
+photographs in the appendix), and the weekly. The brief said five; this repo's record says money leaks through the
+sixth.
+
+One place the brief and this app disagree, and the app wins: the brief makes `said_text` immutable on insert. Here a
+section is proposed by extraction and *confirmed* by the supervisor — non-negotiable 1 — so the words are editable on
+the review screen until the day is signed, and frozen with it. The verbatim rule is enforced where it matters: the model
+may not rewrite them, and the supervisor sees the quote they came from.
+
+*Notices.* The office's inbox is every event on a SIGNED day with no notice and no decision. "Draft a notice"
+pre-fills Form 1 with the words verbatim and the date, where and who beneath — and nothing else, because why it is
+outside scope is an opinion and the app holds none. "No notice needed" takes a reason, on the record. A notice is
+written by a person and sent by a person; the app records that it went and how, **and never sends one itself**. Every
+unsent draft shows how long ago the thing happened — from the time the supervisor said, or from knock-off when none
+was, a late answer never an early one — because the contract wants prompt notice. Numbered per job; frozen once sent
+but for voiding; office-only (`app.is_office` = pm and admin). Supervisors keep the claims screens they have (Mitchell,
+2026-09-21) and read no notices. Suite 37.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;

@@ -34,7 +34,7 @@ export default async function ReviewPage({ params }: { params: Promise<{ id: str
       `id, project_id, entry_date, status, author_id, transcript_raw, entry_no, notes,
        project:projects!inner(id, name, code, org:organisations!inner(code)),
        labour(*), plant(*), work_items(*), variations(*), delays(*), pours(*),
-       quantities(*), dayworks(*), photos(*), entry_signatures(*), entry_sections(*), weather(*)`,
+       quantities(*), dayworks(*), site_events(*), photos(*), entry_signatures(*), entry_sections(*), weather(*)`,
     )
     .eq('id', id)
     .maybeSingle();
@@ -90,6 +90,7 @@ export default async function ReviewPage({ params }: { params: Promise<{ id: str
       'pours',
       'quantities',
       'dayworks',
+      'site_events',
       'photos',
     ].some((key) => rows(key).length > 0);
 
@@ -124,6 +125,8 @@ export default async function ReviewPage({ params }: { params: Promise<{ id: str
       'dayworks',
       ((proposal?.dayworks ?? []) as Array<Record<string, unknown>>).map((d) => ({ ...d, docket_ref: null })),
     ),
+    // The words as the model heard them; the supervisor confirms or corrects them on the screen.
+    site_events: pick('site_events', proposal?.site_events ?? []),
     photos: pick('photos', proposal?.photos ?? []),
     // Only a reading the supervisor entered by hand seeds the editable form.
     // BOM numbers are shown read-only from the stored row; putting them in

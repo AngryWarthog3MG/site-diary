@@ -140,6 +140,30 @@ export const SECTIONS: SectionDef[] = [
     }),
   },
   {
+    // Instructions received and events outside scope (README R90) — asked
+    // straight after the work, while the day is fresh. The words are the
+    // supervisor's; the other three are filled only if they were said.
+    group: 'site_events',
+    title: 'Instructions & events',
+    noun: 'instruction or event',
+    identity: 'said_text',
+    fields: [
+      { key: 'said_text', label: 'What was said, in your words', kind: 'textarea' },
+      { key: 'directed_by', label: 'Who directed it', kind: 'text', placeholder: 'The head contractor’s site manager, by name' },
+      { key: 'location', label: 'Where', kind: 'text' },
+      { key: 'occurred_time', label: 'When', kind: 'time', narrow: true },
+      { key: 'photo_urls', label: 'Photos', kind: 'list' },
+    ],
+    blank: () => ({
+      said_text: '',
+      location: null,
+      directed_by: null,
+      occurred_time: null,
+      photo_urls: [],
+      ...CONFIDENCE_BLANK,
+    }),
+  },
+  {
     group: 'variations',
     title: 'Variations',
     noun: 'variation',

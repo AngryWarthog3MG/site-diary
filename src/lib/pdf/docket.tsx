@@ -24,6 +24,7 @@ const SECTION_LABELS: Record<string, string> = {
   work_items: 'Works completed',
   variations: 'Variations',
   delays: 'Delays',
+  site_events: 'Instructions received and events outside scope',
   weather: 'Weather',
 };
 
@@ -37,6 +38,9 @@ export function DailyDocket({
   signatures?: SignatureImage[];
 }) {
   const dayworks = entry.dayworks ?? [];
+  // Numbered on the page so a notice can cite "event 2 on the 18th". Rows arrive
+  // in canonical order, so the numbers are as stable as the record.
+  const siteEvents = (entry.site_events ?? []).map((r, i) => ({ ...r, n: i + 1 }));
   return (
     <article className="docket">
       <Header entry={entry} />
@@ -79,6 +83,20 @@ export function DailyDocket({
           ['Area', (r) => text(r.area)],
           ['Description', (r) => text(r.description), 'w'],
           ['%', (r) => (r.percent_complete == null ? '—' : num(r.percent_complete, 0)), 'n'],
+        ]}
+      />
+
+      <Table
+        section="site_events"
+        entry={entry}
+        rows={siteEvents}
+        columns={[
+          ['#', (r) => String(r.n), 'k'],
+          ['In the supervisor’s words', (r) => text(r.said_text), 'w'],
+          ['Directed by', (r) => text(r.directed_by)],
+          ['Where', (r) => text(r.location)],
+          ['When', (r) => timeOnly(r.occurred_time), 'n'],
+          ['Photos', (r) => String(((r.photo_urls as string[] | null) ?? []).length), 'n'],
         ]}
       />
 

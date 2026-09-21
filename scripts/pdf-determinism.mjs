@@ -64,6 +64,9 @@ const entry = {
     { item_type: 'topsoil', area: 'Area B North', quantity: 400, unit: 'm2' },
     { item_type: 'subsoil drain', area: null, quantity: 80, unit: 'm' },
   ],
+  site_events: [
+    { said_text: 'Lendlease told us to hold the west kerb till the survey pegs are re-set, so the boys moved onto the drainage', location: 'Chainage 4200', directed_by: 'Dave Keane', occurred_time: '10:15:00', photo_urls: [] },
+  ],
   photos: [],
   weather: {
     temp_min: 9.8, temp_max: 21.1, rainfall_mm: 12.6, wind_dir: 'NNW', wind_kmh: 7,
@@ -78,6 +81,7 @@ const entry = {
     work_items: { state: 'captured', note: null },
     variations: { state: 'captured', note: null },
     delays: { state: 'captured', note: null },
+    site_events: { state: 'captured', note: null },
     weather: { state: 'captured', note: null },
   },
 };
@@ -86,13 +90,14 @@ const nilEntry = {
   ...entry,
   entry_no: 'KBS_C001_DD_143',
   labour: [], plant: [], work_items: [], variations: [], delays: [],
-  pours: [], quantities: [],
+  pours: [], quantities: [], site_events: [],
   sections: {
     labour: { state: 'captured', note: null },
     plant: { state: 'nil_confirmed', note: 'No plant on site today' },
     work_items: { state: 'gap', note: null },
     variations: { state: 'nil_confirmed', note: null },
     delays: { state: 'nil_confirmed', note: null },
+    site_events: { state: 'gap', note: null },
     weather: { state: 'gap', note: null },
   },
 };

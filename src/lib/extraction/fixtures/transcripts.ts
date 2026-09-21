@@ -1,5 +1,5 @@
 import type { ExtractionProposal } from '../schema.ts';
-import { C, D, L, P, Q, S, V, W, proposal } from './builders.ts';
+import { C, D, E, L, P, Q, S, V, W, proposal } from './builders.ts';
 
 /**
  * The fixture set (brief §10).
@@ -544,6 +544,37 @@ export const FIXTURES: Fixture[] = [
         }),
       ],
       sections: { plant: S.gap, work_items: S.gap, variations: S.gap, delays: S.gap, weather: S.gap },
+    }),
+  },
+  {
+    id: '23-buried-instruction',
+    tests:
+      'One instruction from the head contractor, buried in a rambling day. It must come back as ONE site event, in the supervisor’s own words, untouched — and not as a variation, because nobody priced anything.',
+    entryDate: '2026-09-18',
+    vocabulary: VOCAB,
+    transcript: `Righto. Danny and Sam on the kerb at Area B North most of the day, Kel on the Kobelco doing the drainage trench, we got about sixty metres of the subsoil drain in. Bit of a mess this morning actually, the water cart didn't turn up till nine. Oh and Dave from Lendlease came past about ten fifteen and said to hold the west kerb till the survey pegs are re-set, so the boys moved onto the drainage instead, don't know how long that'll be. Anyway, knocked off at half three, nothing else.`,
+    expected: proposal({
+      labour: [
+        L('Danny Rowe', { area: 'Area B North', source_quote: 'Danny and Sam on the kerb at Area B North most of the day' }),
+        L('Sam Whitely', { area: 'Area B North', source_quote: 'Danny and Sam on the kerb at Area B North most of the day' }),
+        L('Kel Brady', { source_quote: 'Kel on the Kobelco doing the drainage trench' }),
+      ],
+      plant: [P('Kobelco 35', { source_quote: 'Kel on the Kobelco doing the drainage trench' })],
+      work_items: [
+        W('Kerb at Area B North', { area: 'Area B North', source_quote: 'Danny and Sam on the kerb at Area B North most of the day' }),
+        W('Drainage trench', { source_quote: 'Kel on the Kobelco doing the drainage trench' }),
+      ],
+      quantities: [Q('subsoil drain', { quantity: 60, unit: 'm', confidence: 'low', source_quote: 'we got about sixty metres of the subsoil drain in' })],
+      site_events: [
+        E('Dave from Lendlease came past about ten fifteen and said to hold the west kerb till the survey pegs are re-set, so the boys moved onto the drainage instead', {
+          directed_by: 'Dave from Lendlease',
+          occurred_time: '10:15',
+          confidence: 'high',
+          source_quote: 'Dave from Lendlease came past about ten fifteen and said to hold the west kerb till the survey pegs are re-set, so the boys moved onto the drainage instead',
+        }),
+      ],
+      // The water cart is a delay with no times and no minutes said; the pegs are the head contractor's.
+      sections: { variations: S.gap, delays: S.gap, weather: S.gap },
     }),
   },
 ];
