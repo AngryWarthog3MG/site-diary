@@ -4073,6 +4073,7 @@ a.dash-row:hover { background: var(--teal-tint); }
 
 /* Home at the foot of every screen: one solid button, centred, clear of the thumb's edge. */
 .homefoot { display: flex; justify-content: center; padding: 0.5rem 1rem calc(1.75rem + env(safe-area-inset-bottom)); }
+.homefoot--top { justify-content: flex-start; padding: 0 0 1rem; }
 .homefoot__button {
   display: inline-flex; align-items: center; gap: 0.5rem; min-height: var(--touch, 56px); padding: 0 1.75rem;
   border-radius: 999px; background: var(--teal); color: #fff; font-weight: 700; font-size: 1rem; text-decoration: none;

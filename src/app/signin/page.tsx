@@ -1,3 +1,5 @@
+import { Suspense } from 'react';
+import { HomeFoot } from '@/components/home-foot';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
 import { requireUser, resolveProject, canRunTalks, canSignIn } from '@/lib/auth';
@@ -64,6 +66,9 @@ export default async function SignInPage({
   const q = `?project=${current.project_id}`;
   return (
     <main className="sheet">
+      <Suspense fallback={null}>
+        <HomeFoot at="top" />
+      </Suspense>
       <p className="label">
         <BrandMark size={18} /> {current.project.name}
       </p>
