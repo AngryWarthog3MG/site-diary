@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { HomeFoot } from '@/components/home-foot';
+import { Suspense, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
@@ -275,6 +276,9 @@ export function PrestartScreen(props: {
 
   return (
     <main className="sheet">
+      <Suspense fallback={null}>
+        <HomeFoot at="top" />
+      </Suspense>
       <p className="label">
         <BrandMark size={18} /> {projectName}
       </p>

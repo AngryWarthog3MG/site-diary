@@ -1,3 +1,5 @@
+import { HomeFoot } from '@/components/home-foot';
+import { Suspense } from 'react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
 import { requireUser, resolveProject, canRunTalks, guardScreen } from '@/lib/auth';
@@ -23,6 +25,9 @@ export default async function PrestartListPage({
   if (!current) {
     return (
       <main className="sheet">
+        <Suspense fallback={null}>
+          <HomeFoot at="top" />
+        </Suspense>
         <p className="notice gap">You are not on an active project.</p>
       </main>
     );
@@ -42,6 +47,9 @@ export default async function PrestartListPage({
 
   return (
     <main className="sheet">
+      <Suspense fallback={null}>
+        <HomeFoot at="top" />
+      </Suspense>
       <p className="label">
         <BrandMark size={18} /> {current.project.name}
       </p>
