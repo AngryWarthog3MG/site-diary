@@ -515,6 +515,13 @@ async function reconcileStorage(): Promise<Record<string, unknown>> {
   const signoffMissing = [...signoffPaths].filter((p) => !signoffFileSet.has(p));
 
   // Controlled documents: a file with no version row is an issue that never landed.
+  // The programme: a file no upload names, or an upload whose file is gone (README R95).
+  const programmeFiles = await walk('programmes');
+  const { data: programmeRows } = await admin.from('project_programmes').select('file_path');
+  const programmePaths = new Set((programmeRows ?? []).map((r) => r.file_path as string));
+  const programmeOrphans = programmeFiles.filter((f) => !programmePaths.has(f.path)).map((f) => f.path);
+  const programmeMissing = [...programmePaths].filter((p) => !programmeFiles.some((f) => f.path === p));
+
   const docFiles = await walk('controlled-docs');
   const { data: versionRows } = await admin.from('document_versions').select('file_path');
   const versionPaths = new Set((versionRows ?? []).map((r) => r.file_path as string));
@@ -523,7 +530,7 @@ async function reconcileStorage(): Promise<Record<string, unknown>> {
 
   const fresh = unrecoverable.filter((u) => u.recent);
   let emailed = false;
-  if (attached.length > 0 || fresh.length > 0 || audioOrphans.length > 0 || ticketOrphans.length > 0 || subOrphans.length > 0 || subMissing.length > 0 || docOrphans.length > 0 || docMissing.length > 0) {
+  if (attached.length > 0 || fresh.length > 0 || audioOrphans.length > 0 || ticketOrphans.length > 0 || subOrphans.length > 0 || subMissing.length > 0 || docOrphans.length > 0 || docMissing.length > 0 || programmeOrphans.length > 0 || programmeMissing.length > 0) {
     const lines = [
       ...attached.map((p) => `<li>Put back on its day: <code>${p.split('/').pop()}</code> (${entries.get(p.split('/')[1])?.entry_date ?? '?'})</li>`),
       ...fresh.map((u) => `<li><b>Cannot be recovered:</b> ${u.reason} — <code>${u.path.split('/').pop()}</code> (${u.entryDate ?? '?'})</li>`),
@@ -537,6 +544,8 @@ async function reconcileStorage(): Promise<Record<string, unknown>> {
       ...signoffMissing.map((p) => `<li><b>Dayworks sign-off whose signed sheet is gone:</b> <code>${p}</code></li>`),
       ...docOrphans.map((p) => `<li><b>Controlled document file with no version:</b> <code>${p}</code></li>`),
       ...docMissing.map((p) => `<li><b>Document version whose file is gone:</b> <code>${p}</code></li>`),
+      ...programmeOrphans.map((p) => `<li><b>Programme file with no upload row:</b> <code>${p}</code></li>`),
+      ...programmeMissing.map((p) => `<li><b>Programme upload whose file is gone:</b> <code>${p}</code></li>`),
     ].join('');
     emailed = await fetch('https://api.resend.com/emails', {
       method: 'POST',
@@ -567,6 +576,8 @@ async function reconcileStorage(): Promise<Record<string, unknown>> {
     dayworks_signoff_files_missing: signoffMissing,
     document_file_orphans: docOrphans,
     document_files_missing: docMissing,
+    programme_file_orphans: programmeOrphans,
+    programme_files_missing: programmeMissing,
     emailed,
   };
 }

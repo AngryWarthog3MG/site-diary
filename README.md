@@ -2346,6 +2346,17 @@ when the address changes, or after 25 s if nothing ever arrives. And `src/app/lo
 on its way — Next draws it the instant a route is asked for and swaps the page in when it lands — grey bars and
 "Loading…", no words that could be read as the record. Reduced motion keeps the bar and the skeleton still.
 
+**R95. The programme: as issued, and the two-week look-aheads.** A job runs to two documents nobody in the app could
+see: the construction programme the head contractor issued (and re-issued), and Kooboolong's own fortnightly
+look-ahead. `/programme` keeps both, under Site in the menu. Table `project_programmes` — one row per upload, kind
+`baseline` (revision, issued date; the newest issued is "in force", the rest kept beneath it) or `lookahead` (the
+fortnight it covers; the next one is offered starting the day after the latest, never in the past). A programme is
+never rewritten: the trigger refuses every change but voiding, with a reason, once. Files live in bucket `programmes`
+under the job's folder — file first, then the row, a refused row clearing its file; the orphan check walks the bucket.
+Kept by the supervisor and the office (`app.can_keep_programme`); read by every member of the job including the
+leading hand, behind the record read lock — the programme is what the crew works to. Nothing reads the file's
+contents: it opens as uploaded, by a signed link minted when tapped. Suite 41.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;

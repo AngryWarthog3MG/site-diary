@@ -336,6 +336,12 @@ improvising; the register once shipped dead because a live smoke test was skippe
   link tap (capture-phase listener; `navPending.start()` for a navigation from code), a "Loading…" pill after 700 ms, both
   cleared when the address changes; the root `loading.tsx` skeleton draws while a page is on its way. A new segment that
   wants its own shape adds its own `loading.tsx`; nothing in a skeleton may read as a number or a record
+- `src/lib/programme/` — the programme (README R95): `model.ts` (`currentBaseline` newest issued live, `lookaheads`,
+  `currentLookahead`, `nextLookaheadStart`, `periodLabel`, `fileLabel`). Table `project_programmes` (kind baseline |
+  lookahead; one row per upload; the trigger allows voiding only, once, with a reason; a file sits in its own job's
+  folder), bucket `programmes` `{project}/{id}.ext` (file first then row; a refused row clears its file; the orphan
+  check walks it). Keeping = `app.can_keep_programme` (supervisor/pm/admin); reads = every member behind `reads_record`,
+  leading hand included. `/programme` is screen `programme`, under Site. Suite 41
 - `src/lib/calendar.ts` — `isRestDay`: weekends with nothing recorded are rest days, not holes. One definition for
   the screens, the weekly and the reminder
 - `src/lib/dayworks/` — the dayworks schedule (README R72): `schedule.ts` (pure: `readRange`, `buildSchedule` by Monday weeks,
