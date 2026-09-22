@@ -39,7 +39,7 @@ export default async function CloseoutPage({ searchParams }: { searchParams: Pro
         What this job added itself — by hand, or read from its contract — that the company&rsquo;s templates never had.
         Decide each one: promote it into a module, reworded so it names no client and no site, or leave it as a one-off.
         A promoted item reaches every job set up after this; it is never stamped back onto this one.
-        {' '}<Link href={`/start-gate?project=${current.project_id}`}>Back to the start gate</Link>
+        {' '}<Link href={`/mobilisation?project=${current.project_id}`}>Back to Mobilisation</Link>
       </p>
       <CloseoutScreen
         projectId={current.project_id}

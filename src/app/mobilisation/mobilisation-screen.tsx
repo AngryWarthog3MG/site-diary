@@ -34,7 +34,7 @@ const fmt = (d: string | null) => (d ? d.split('-').reverse().join('/') : '');
  * items of the job's own added by hand. Every write is one row under the
  * office's RLS; the DB stamps who finished what and when.
  */
-export function StartGateScreen({ projectId, tier, startOn, attached, modules, items, libraryItems, today }: Props) {
+export function MobilisationScreen({ projectId, tier, startOn, attached, modules, items, libraryItems, today }: Props) {
   const router = useRouter();
   const [kind, setKind] = useState<TemplateKind>('start_gate');
   const [onlyOpen, setOnlyOpen] = useState(true);
@@ -134,7 +134,7 @@ export function StartGateScreen({ projectId, tier, startOn, attached, modules, i
             {ownItems > 0 && (
               <label className="fieldcell"><span className="label">Closeout</span>
                 <span className="setup__inline">
-                  <Link className="quotebtn" href={`/start-gate/closeout?project=${projectId}`}>{toDecide > 0 ? `Review ${toDecide} of this job’s own items for the templates` : 'Closeout review — all decided'}</Link>
+                  <Link className="quotebtn" href={`/mobilisation/closeout?project=${projectId}`}>{toDecide > 0 ? `Review ${toDecide} of this job’s own items for the templates` : 'Closeout review — all decided'}</Link>
                 </span></label>
             )}
             <label className="fieldcell"><span className="label">The library grew?</span>
@@ -144,7 +144,7 @@ export function StartGateScreen({ projectId, tier, startOn, attached, modules, i
               </span></label>
           </div>
           <div className="setup__progress">
-            <div className="setup__stat"><span className="setup__big mono">{summary.startGate.percent == null ? '—' : `${summary.startGate.percent}%`}</span><span className="caption">start gate done</span></div>
+            <div className="setup__stat"><span className="setup__big mono">{summary.startGate.percent == null ? '—' : `${summary.startGate.percent}%`}</span><span className="caption">mobilisation done</span></div>
             <div className="setup__stat"><span className={`setup__big mono${summary.priorityAOpen > 0 ? ' setup__big--bad' : ''}`}>{summary.priorityAOpen}</span><span className="caption">priority A open</span></div>
             <div className="setup__stat"><span className={`setup__big mono${summary.overdue > 0 ? ' setup__big--bad' : ''}`}>{summary.overdue}</span><span className="caption">overdue</span></div>
             <div className="setup__stat"><span className={`setup__big mono${summary.documentGaps > 0 ? ' setup__big--bad' : ''}`}>{summary.documentGaps}</span><span className="caption">document gaps</span></div>

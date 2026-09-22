@@ -53,7 +53,7 @@ export function NewProjectForm({
         p_start_on: startOn || null,
       });
       if (rpcError) throw new Error(rpcError.message);
-      router.push(`/start-gate?project=${(data as { project_id: string }).project_id}`);
+      router.push(`/mobilisation?project=${(data as { project_id: string }).project_id}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'The project was not created.');
       setBusy(false);

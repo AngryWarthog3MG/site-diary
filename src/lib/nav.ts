@@ -105,7 +105,7 @@ export const NAV_GROUPS: NavGroup[] = [
     label: 'Library',
     items: [
       { href: '/procedures', name: 'Policies & procedures', what: 'The company documents, versioned; who has read the current one', screen: 'procedures', scope: 'company' },
-      { href: '/templates', name: 'Templates', what: 'What every job starts with — start gate, hold points, submittals, consumables, risks, folders — by module', screen: 'templates', scope: 'company' },
+      { href: '/templates', name: 'Templates', what: 'What every job starts with — mobilisation items, hold points, submittals, consumables, risks, folders — by module', screen: 'templates', scope: 'company' },
       { href: '/documents', name: 'Job documents', what: 'Spec, scope, contract, drawings', screen: 'documents' },
       { href: '/ask', name: 'Ask a question', short: 'Ask', what: 'From your diary and the job documents', screen: 'ask' },
     ],
@@ -113,7 +113,7 @@ export const NAV_GROUPS: NavGroup[] = [
   {
     label: 'Setup',
     items: [
-      { href: '/start-gate', name: 'Start gate', what: 'What this job needs before and as it starts — stamped from the company’s templates', screen: 'start_gate' },
+      { href: '/mobilisation', name: 'Mobilisation', what: 'What this job needs before and as it starts — stamped from the company’s templates', screen: 'start_gate' },
       { href: '/settings', name: 'Settings', what: 'Hours, emails, crew and plant lists', screen: 'settings' },
       { href: '/name', name: 'Your name', what: 'How your name prints on the sheets' },
       { href: '/settings/vocabulary', name: 'Words and names', what: 'Names and site terms', when: 'canRecord' },

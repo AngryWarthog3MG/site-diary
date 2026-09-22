@@ -118,7 +118,7 @@ export function canSee(role: MemberRole, screen: Screen): boolean {
   if (screen === 'notices') return role === 'pm' || role === 'admin';
   // The company's templates are set up by the office (README R91).
   if (screen === 'templates') return role === 'pm' || role === 'admin';
-  // The job's setup board is the office's too (README R92): start gate items, risks and
+  // The job's setup board is the office's too (README R92): mobilisation items, risks and
   // submittals stay away from site roles, as the brief asks.
   if (screen === 'start_gate') return role === 'pm' || role === 'admin';
   if (screen === 'settings') return canAuthorEntries(role);

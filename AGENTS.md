@@ -319,9 +319,9 @@ improvising; the register once shipped dead because a live smoke test was skippe
   done_by/done_at; kind/origin/job fixed; never deleted). `public.instantiate_project(project, modules[], tier)` is
   additive and idempotent; the first stamping sets the tier, after that it only rises; `create_project` calls it, so a new job is born stamped; `set_project_start`
   fills due dates from `projects.start_on` + `due_offset_days` for OPEN items. `model.ts` (`summarise`, `orderSetup`,
-  `dueOn`, `isOverdue`), `load.ts` (the home card). `/start-gate` is screen `start_gate`, pm/admin only — the brief keeps
+  `dueOn`, `isOverdue`), `load.ts` (the home card). `/mobilisation` (was `/start-gate`; it redirects) is screen `start_gate`, called Mobilisation on screen, pm/admin only — the brief keeps
   start gate items, risks and submittals from site roles. Not built: filing a document ticking its item. Suite 39.
-  The CLOSEOUT LOOP (README R93): `closeout.ts` (`undecided`, `suggestGeneric`, `jobSpecifics`); `/start-gate/closeout`;
+  The CLOSEOUT LOOP (README R93): `closeout.ts` (`undecided`, `suggestGeneric`, `jobSpecifics`); `/mobilisation/closeout`;
   `promote_setup_item` (inserts the template_items row, origin carried, refuses the head contractor's or the job's name,
   stamps `promotion_decision`/`promoted_template_item_id`) and `leave_setup_item`; the trigger refuses a direct write of
   those columns (`app.closeout` setting); `instantiate_project` skips what the job itself promoted. Suite 40

@@ -66,21 +66,21 @@ export async function DashboardCards({ projectId, orgId, member }: { projectId: 
   // The setup board (README R92): what the job still needs before and as it starts. Only the office sees it,
   // and a job never set up is only worth a nudge once the library has something to stamp.
   if (setup && (setup.setUp || setup.libraryItems > 0)) cards.push({
-    key: 'setup', name: 'the start gate',
+    key: 'setup', name: 'mobilisation',
     attention: setup.setUp ? setup.openStartGate > 0 || setup.overdue > 0 || setup.documentGaps > 0 : true,
     node: setup.setUp ? (
       <section className="dash-card">
-        <p className="dash-card__title">Start gate</p>
+        <p className="dash-card__title">Mobilisation</p>
         <Big n={setup.percent == null ? '—' : `${setup.percent}%`} tone={setup.overdue > 0 ? 'bad' : setup.openStartGate === 0 && setup.percent != null ? 'ok' : undefined} />
         <p className="dash-card__sub">{`${setup.openStartGate} open · ${setup.priorityAOpen} priority A · ${setup.overdue} overdue · ${setup.documentGaps} document gap${setup.documentGaps === 1 ? '' : 's'}`}</p>
-        <Foot href={`/start-gate${q}`} label="Start gate" />
+        <Foot href={`/mobilisation${q}`} label="Mobilisation" />
       </section>
     ) : (
       <section className="dash-card">
-        <p className="dash-card__title">Start gate</p>
+        <p className="dash-card__title">Mobilisation</p>
         <Big n="—" />
         <p className="dash-card__sub">Not set up from the templates yet</p>
-        <Foot href={`/start-gate${q}`} label="Set up from templates" />
+        <Foot href={`/mobilisation${q}`} label="Set up from templates" />
       </section>
     ),
   });

@@ -2318,7 +2318,9 @@ promotes them back to the library is not built.
 Office only, as the brief asks — start gate items, risks and submittals never reach site roles; `app.is_office` reads
 and writes, the labourer lock applies on top. `/start-gate` is screen `start_gate` (pm/admin), under Setup. The home
 card shows start gate percent, priority A open, overdue and document gaps; a job never set up gets a nudge only once the
-library holds something. What is NOT here: the document gaps are read off the board's own document items (a document
+library holds something. **Renamed on screen to Mobilisation** (22 September 2026, Mitchell): the page is `/mobilisation`
+(`/start-gate` redirects, query kept), the menu says Mobilisation, the kind reads "Mobilisation item"; the code keeps
+`start_gate` as the screen key and the item kind, and this record keeps the brief's words. What is NOT here: the document gaps are read off the board's own document items (a document
 marked done), not off the job's documents table — filing a document does not tick the item yet. Suite 39.
 
 **R93. The closeout loop: a job's own items become the company's.** R92 stamps a job from the library; this is the

@@ -38,7 +38,7 @@ export default async function TemplatesPage({ searchParams }: { searchParams: Pr
       <p className="label"><BrandMark size={18} /> {current.project.org.name}</p>
       <h1 className="page-title">Templates</h1>
       <p className="page-subtitle">
-        What every job of this company starts with: start gate items, hold points, submittals, method statements,
+        What every job of this company starts with: mobilisation items, hold points, submittals, method statements,
         consumables and their par levels, risks, expected documents and the twelve folders — by module. Core is every
         job; the rest are attached per job. Fill it here; a job set up from it inherits the lot.
       </p>

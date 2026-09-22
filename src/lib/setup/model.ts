@@ -57,7 +57,7 @@ export interface KindCount { open: number; done: number; not_applicable: number 
 export interface CategoryProgress { category: string; total: number; done: number; percent: number }
 export interface SetupSummary {
   byKind: Record<TemplateKind, KindCount>;
-  /** Start gate progress: done over what applies (not-applicable items are out of the denominator). */
+  /** Mobilisation progress: done over what applies (not-applicable items are out of the denominator). */
   startGate: { applies: number; done: number; percent: number | null; byCategory: CategoryProgress[] };
   priorityAOpen: number;
   /** Expected documents nothing has been filed against — the brief's v_document_gaps, read off the board. */

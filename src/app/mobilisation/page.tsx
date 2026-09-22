@@ -5,17 +5,17 @@ import { BrandMark } from '@/components/brand-mark';
 import { perthToday } from '@/lib/push/decide';
 import type { SetupItem } from '@/lib/setup/model';
 import type { TemplateModule } from '@/app/templates/templates-screen';
-import { StartGateScreen } from './start-gate-screen';
+import { MobilisationScreen } from './mobilisation-screen';
 
 export const dynamic = 'force-dynamic';
-export const metadata = { title: 'Start gate · Kooboolong IMS' };
+export const metadata = { title: 'Mobilisation · Kooboolong IMS' };
 
 /**
  * The job's setup board (README R92): what it starts with, stamped from the
- * company's templates — start gate items, hold points, submittals, SWMS to
+ * company's templates — mobilisation items, hold points, submittals, SWMS to
  * have, consumables, risks, expected documents, folders. Office only.
  */
-export default async function StartGatePage({ searchParams }: { searchParams: Promise<{ project?: string }> }) {
+export default async function MobilisationPage({ searchParams }: { searchParams: Promise<{ project?: string }> }) {
   const { memberships } = await requireUser();
   const { project } = await searchParams;
   const current = resolveProject(memberships, project);
@@ -37,13 +37,13 @@ export default async function StartGatePage({ searchParams }: { searchParams: Pr
   return (
     <main className="sheet sheet--wide">
       <p className="label"><BrandMark size={18} /> {current.project.name} · {current.project.code}</p>
-      <h1 className="page-title">Start gate</h1>
+      <h1 className="page-title">Mobilisation</h1>
       <p className="page-subtitle">
-        What this job starts with, stamped from the company&rsquo;s templates: the start gate itself, hold points,
+        What this job needs to mobilise and run, stamped from the company&rsquo;s templates: the mobilisation items, hold points,
         submittals, method statements to have, consumables and their par levels, risks, the documents expected in
         each folder. Tick things off as they land; mark what does not apply. Nothing here is deleted.
       </p>
-      <StartGateScreen
+      <MobilisationScreen
         projectId={current.project_id}
         tier={jobRow.tier}
         startOn={jobRow.start_on}

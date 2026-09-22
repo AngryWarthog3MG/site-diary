@@ -7,6 +7,14 @@ const CHROMIUM = [
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+  // The setup board was "Start gate" for a day; Mitchell renamed it Mobilisation (README R92).
+  // Bookmarks and the phone's history keep working; the query string travels with the redirect.
+  async redirects() {
+    return [
+      { source: '/start-gate', destination: '/mobilisation', permanent: true },
+      { source: '/start-gate/:path*', destination: '/mobilisation/:path*', permanent: true },
+    ];
+  },
   // The running build's identity, so an installed phone app can tell it is
   // behind. On Vercel this is the deployment id (set for CLI deploys as well
   // as git ones); locally a constant, so dev never reloads itself.

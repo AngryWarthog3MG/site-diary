@@ -8,7 +8,7 @@ export const TEMPLATE_KINDS = ['start_gate', 'hold_point', 'submittal', 'swms', 
 export type TemplateKind = (typeof TEMPLATE_KINDS)[number];
 
 export const KIND_LABEL: Record<TemplateKind, string> = {
-  start_gate: 'Start gate',
+  start_gate: 'Mobilisation item',
   hold_point: 'Hold point',
   submittal: 'Submittal',
   swms: 'SWMS to have',
