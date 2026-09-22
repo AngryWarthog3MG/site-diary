@@ -1,3 +1,5 @@
+import { Suspense } from 'react';
+import { HomeFoot } from '@/components/home-foot';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { requireUser, resolveProject, guardScreen } from '@/lib/auth';
@@ -36,6 +38,9 @@ export default async function MobilisationPage({ searchParams }: { searchParams:
 
   return (
     <main className="sheet sheet--wide">
+      <Suspense fallback={null}>
+        <HomeFoot at="top" />
+      </Suspense>
       <p className="label"><BrandMark size={18} /> {current.project.name} · {current.project.code}</p>
       <h1 className="page-title">Mobilisation</h1>
       <p className="page-subtitle">

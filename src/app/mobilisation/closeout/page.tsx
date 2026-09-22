@@ -1,3 +1,5 @@
+import { Suspense } from 'react';
+import { HomeFoot } from '@/components/home-foot';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
@@ -33,6 +35,9 @@ export default async function CloseoutPage({ searchParams }: { searchParams: Pro
 
   return (
     <main className="sheet sheet--wide">
+      <Suspense fallback={null}>
+        <HomeFoot at="top" />
+      </Suspense>
       <p className="label"><BrandMark size={18} /> {current.project.name} · {current.project.code}</p>
       <h1 className="page-title">Closeout review</h1>
       <p className="page-subtitle">
