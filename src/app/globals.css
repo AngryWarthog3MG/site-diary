@@ -3293,6 +3293,8 @@ body {
 .setup__stat { display: grid; gap: 0.1rem; padding: 0.5rem 0.65rem; border: 1px solid var(--ink-08); border-radius: 6px; }
 .setup__big { font-size: 1.6rem; font-weight: 600; line-height: 1.1; }
 .setup__big--bad { color: var(--bad, #b42318); }
+.setup__big--ok { color: var(--ink-60); }
+a.quotebtn { text-decoration: none; display: inline-block; }
 .setup__cats { display: grid; gap: 0.3rem; margin: 0.25rem 0 0.5rem; }
 .setup__cat { display: grid; grid-template-columns: minmax(6rem, 1fr) 3fr auto; gap: 0.6rem; align-items: center; font-size: 0.9rem; }
 .setup__bar { display: block; height: 0.5rem; background: var(--ink-08); border-radius: 999px; overflow: hidden; }

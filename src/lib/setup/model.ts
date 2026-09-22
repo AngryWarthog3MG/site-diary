@@ -32,6 +32,10 @@ export interface SetupItem {
   evidence: string | null;
   done_at: string | null;
   done_by: string | null;
+  /** The closeout decision (README R93): promoted into the templates, or left as a one-off. Null until decided. */
+  promotion_decision: 'promoted' | 'one_off' | null;
+  promoted_template_item_id: string | null;
+  decided_at: string | null;
 }
 
 type Counted = Pick<SetupItem, 'kind' | 'status' | 'priority' | 'due_on' | 'category'>;

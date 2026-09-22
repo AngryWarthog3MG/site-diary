@@ -9,6 +9,7 @@ import {
   type Priority, type TemplateKind, type Tier,
 } from '@/lib/templates/model';
 import { STATUS_LABEL, isOverdue, orderSetup, summarise, type SetupItem, type SetupStatus } from '@/lib/setup/model';
+import { undecided } from '@/lib/setup/closeout';
 import type { TemplateModule } from '@/app/templates/templates-screen';
 
 interface Props {
@@ -56,6 +57,8 @@ export function StartGateScreen({ projectId, tier, startOn, attached, modules, i
   const ofKind = items.filter((i) => i.kind === kind);
   const list = orderSetup(ofKind.filter((i) => (!onlyOpen || i.status === 'open') && (!priority || i.priority === priority)));
   const unattached = modules.filter((m) => !attached.includes(m.key));
+  const toDecide = undecided(items).length;
+  const ownItems = items.filter((i) => i.origin !== 'template').length;
   const moduleName = (key: string) => modules.find((m) => m.key === key)?.name ?? key;
 
   async function run(label: string, fn: () => PromiseLike<{ error: { message: string } | null; data?: unknown }>, done?: (data: unknown) => void) {
@@ -127,6 +130,12 @@ export function StartGateScreen({ projectId, tier, startOn, attached, modules, i
               <label className="fieldcell"><span className="label">Add a module</span>
                 <span className="setup__inline"><select className="field field--sm" value={addMod} onChange={(e) => setAddMod(e.target.value)}><option value="">Pick one…</option>{unattached.map((m) => <option key={m.key} value={m.key}>{m.name}</option>)}</select>
                   <button type="button" className="quotebtn" disabled={busy != null || !addMod} onClick={() => void stamp([addMod], null)}>Attach</button></span></label>
+            )}
+            {ownItems > 0 && (
+              <label className="fieldcell"><span className="label">Closeout</span>
+                <span className="setup__inline">
+                  <Link className="quotebtn" href={`/start-gate/closeout?project=${projectId}`}>{toDecide > 0 ? `Review ${toDecide} of this job’s own items for the templates` : 'Closeout review — all decided'}</Link>
+                </span></label>
             )}
             <label className="fieldcell"><span className="label">The library grew?</span>
               <span className="setup__inline">

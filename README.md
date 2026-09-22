@@ -2321,6 +2321,21 @@ card shows start gate percent, priority A open, overdue and document gaps; a job
 library holds something. What is NOT here: the document gaps are read off the board's own document items (a document
 marked done), not off the job's documents table — filing a document does not tick the item yet. Suite 39.
 
+**R93. The closeout loop: a job's own items become the company's.** R92 stamps a job from the library; this is the
+way back. Every setup item a job added by hand or read from its contract (`origin` manual or contract) is one the
+library never had. On `/start-gate/closeout` the office decides each one, once: PROMOTE it into a module, at a tier,
+reworded — or LEAVE it as a one-off. `promote_setup_item` inserts the `template_items` row with the item's origin
+carried (so the library remembers an item came from a contract), and stamps the setup item with what it became;
+`leave_setup_item` records the one-off. A one-off can still be promoted later; a promotion is final (retire the
+template item if it was wrong). The decision columns are written by those two functions alone — the trigger refuses a
+direct write, even from the office.
+
+Two rules the DB holds. A template is generic: a promoted title or detail that names the head contractor
+(`projects.principal_contractor`) or the job is refused; the screen prefills a rewording (`suggestGeneric`: the head
+contractor becomes "the head contractor", possessives kept) and warns before the DB does. And a promoted item is never
+stamped back onto the job that gave it: `instantiate_project` skips template items this job promoted, so a re-stamp
+does not double it — while the next job set up from the library gets it as an ordinary template item. Suite 40.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;

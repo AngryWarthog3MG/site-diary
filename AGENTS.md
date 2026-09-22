@@ -320,8 +320,11 @@ improvising; the register once shipped dead because a live smoke test was skippe
   additive and idempotent; the first stamping sets the tier, after that it only rises; `create_project` calls it, so a new job is born stamped; `set_project_start`
   fills due dates from `projects.start_on` + `due_offset_days` for OPEN items. `model.ts` (`summarise`, `orderSetup`,
   `dueOn`, `isOverdue`), `load.ts` (the home card). `/start-gate` is screen `start_gate`, pm/admin only — the brief keeps
-  start gate items, risks and submittals from site roles. Not built: filing a document ticking its item; the closeout
-  loop promoting manual items to the library. Suite 39
+  start gate items, risks and submittals from site roles. Not built: filing a document ticking its item. Suite 39.
+  The CLOSEOUT LOOP (README R93): `closeout.ts` (`undecided`, `suggestGeneric`, `jobSpecifics`); `/start-gate/closeout`;
+  `promote_setup_item` (inserts the template_items row, origin carried, refuses the head contractor's or the job's name,
+  stamps `promotion_decision`/`promoted_template_item_id`) and `leave_setup_item`; the trigger refuses a direct write of
+  those columns (`app.closeout` setting); `instantiate_project` skips what the job itself promoted. Suite 40
 - `src/lib/notices/` — notices to the head contractor and the site events they stand on (README R90). Table
   `site_events` is the diary's SEVENTH SECTION (`entry_section` value `site_events`; nil question; conditional key in
   the hash; child of the day like dayworks — rewritten on save, frozen at signing). Tables `notices` (office-only via
