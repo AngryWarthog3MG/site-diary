@@ -20,3 +20,6 @@ supabase/.temp
 *CONFIDENTIAL*
 003_seed_job_*
 job_*_CONFIDENTIAL.json
+
+# One-off drill scripts written during a session, and the " 2" copies the desktop sync makes of them.
+tmp-*

@@ -46,6 +46,7 @@ export const viewport: Viewport = {
 import { ErrorReporter } from '@/components/error-reporter';
 import { SideNav } from '@/components/side-nav';
 import { TopBar } from '@/components/top-bar';
+import { NavProgress } from '@/components/nav-progress';
 import { HomeFoot } from '@/components/home-foot';
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -60,6 +61,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <SideNav />
         </Suspense>
         <TopBar />
+        <Suspense fallback={null}>
+          <NavProgress />
+        </Suspense>
         {children}
         <Suspense fallback={null}>
           <HomeFoot />

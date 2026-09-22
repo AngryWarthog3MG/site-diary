@@ -332,6 +332,10 @@ improvising; the register once shipped dead because a live smoke test was skippe
   voiding; NEVER sent by the app) and `site_event_triage` (a decision that no notice is needed, with its reason).
   `model.ts`: `hoursSince` from the time said or knock-off, `draftFromEvent` (the words verbatim, nothing invented).
   `/notices` is screen `notices`, pm/admin only. The prompt must never tidy `said_text`. Suite 37
+- `src/components/nav-progress.tsx` + `src/app/loading.tsx` — the loading signal (README R94): a top bar on any same-site
+  link tap (capture-phase listener; `navPending.start()` for a navigation from code), a "Loading…" pill after 700 ms, both
+  cleared when the address changes; the root `loading.tsx` skeleton draws while a page is on its way. A new segment that
+  wants its own shape adds its own `loading.tsx`; nothing in a skeleton may read as a number or a record
 - `src/lib/calendar.ts` — `isRestDay`: weekends with nothing recorded are rest days, not holes. One definition for
   the screens, the weekly and the reminder
 - `src/lib/dayworks/` — the dayworks schedule (README R72): `schedule.ts` (pure: `readRange`, `buildSchedule` by Monday weeks,

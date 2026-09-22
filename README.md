@@ -2336,6 +2336,14 @@ contractor becomes "the head contractor", possessives kept) and warns before the
 stamped back onto the job that gave it: `instantiate_project` skips template items this job promoted, so a re-stamp
 does not double it — while the next job set up from the library gets it as an ordinary template item. Suite 40.
 
+**R94. Something is happening.** On one bar of signal a tap on a link could sit for seconds with the last screen
+unchanged, and the phone was tapped again, or the app closed, because "it isn't loading" — it was. Three things now
+say so. A bar starts across the top the moment a same-site link is tapped (`src/components/nav-progress.tsx`, a
+capture-phase click listener; the job switcher tells it directly), and after 700 ms a "Loading…" pill joins it; both go
+when the address changes, or after 25 s if nothing ever arrives. And `src/app/loading.tsx` is the page's shape while it is
+on its way — Next draws it the instant a route is asked for and swaps the page in when it lands — grey bars and
+"Loading…", no words that could be read as the record. Reduced motion keeps the bar and the skeleton still.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;

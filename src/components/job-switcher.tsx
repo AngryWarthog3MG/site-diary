@@ -1,6 +1,7 @@
 'use client';
 
 import { usePathname, useRouter } from 'next/navigation';
+import { navPending } from '@/components/nav-progress';
 import { JOB_COOKIE, onJob, switchTarget } from '@/lib/jobs';
 
 export interface SwitchableJob { id: string; name: string; code: string; org?: { name: string; code: string } }
@@ -48,6 +49,7 @@ export function JobSwitcher({ jobs, currentId, compact = false }: { jobs: Switch
           } catch {
             // No cookie jar (a private tab that refuses): the address still names the job.
           }
+          navPending.start();
           router.push(onJob(switchTarget(pathname), id));
         }}
       >

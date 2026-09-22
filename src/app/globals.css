@@ -3279,6 +3279,29 @@ body {
 .swms-sign__body { padding: 0 1rem 1rem; display: grid; gap: 0.75rem; }
 .swms-sign__body .item { margin: 0; }
 
+/* Something is happening (README R94): the bar across the top, the pill, the page taking shape. */
+.navbar-progress { position: fixed; top: 0; left: 0; height: 3px; width: 0; background: var(--ink); z-index: 1200; pointer-events: none; box-shadow: 0 0 8px rgba(22, 33, 31, 0.35); }
+.navbar-progress--going { animation: navbar-going 14s cubic-bezier(0.1, 0.7, 0.2, 1) forwards; }
+.navbar-progress--done { width: 100%; animation: navbar-done 0.45s ease-out forwards; }
+@keyframes navbar-going { 0% { width: 0; } 10% { width: 30%; } 40% { width: 65%; } 100% { width: 94%; } }
+@keyframes navbar-done { from { opacity: 1; } to { opacity: 0; } }
+.navpill { position: fixed; top: calc(env(safe-area-inset-top, 0px) + 0.6rem); left: 50%; transform: translateX(-50%); z-index: 1200; display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.4rem 0.85rem; border-radius: 999px; background: var(--ink); color: var(--paper, #fff); font-size: 0.85rem; font-weight: 600; letter-spacing: 0.02em; box-shadow: 0 4px 14px rgba(22, 33, 31, 0.25); pointer-events: none; animation: navpill-in 0.2s ease-out; }
+.navpill__spin { display: inline-block; animation: refresh-spin 1s linear infinite; }
+@keyframes navpill-in { from { opacity: 0; transform: translate(-50%, -6px); } to { opacity: 1; transform: translate(-50%, 0); } }
+.page-skeleton > div { display: grid; gap: 0.7rem; margin: 1rem 0; }
+.page-skeleton__bar, .page-skeleton__block { display: block; border-radius: 6px; background: linear-gradient(90deg, var(--ink-08) 0%, var(--ink-12) 40%, var(--ink-08) 80%); background-size: 200% 100%; animation: skeleton-shimmer 1.4s ease-in-out infinite; }
+.page-skeleton__bar { height: 0.9rem; width: 70%; }
+.page-skeleton__bar--title { height: 1.6rem; width: 45%; margin-bottom: 0.3rem; }
+.page-skeleton__bar--short { width: 40%; }
+.page-skeleton__block { height: 5.5rem; width: 100%; }
+.page-skeleton__block--short { height: 3.5rem; }
+.page-skeleton__note { display: flex; align-items: center; gap: 0.4rem; }
+@keyframes skeleton-shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+@media (prefers-reduced-motion: reduce) {
+  .navbar-progress--going { animation: none; width: 60%; }
+  .page-skeleton__bar, .page-skeleton__block, .navpill__spin { animation: none; }
+}
+
 /* The job's setup board (README R92). */
 .setup { margin-top: 0.5rem; }
 .setup__picker { margin: 1rem 0; }
