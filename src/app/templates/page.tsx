@@ -1,3 +1,5 @@
+import { Suspense } from 'react';
+import { HomeFoot } from '@/components/home-foot';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { requireUser, resolveProject, guardScreen } from '@/lib/auth';
@@ -35,6 +37,9 @@ export default async function TemplatesPage({ searchParams }: { searchParams: Pr
 
   return (
     <main className="sheet sheet--wide">
+      <Suspense fallback={null}>
+        <HomeFoot at="top" />
+      </Suspense>
       <p className="label"><BrandMark size={18} /> {current.project.org.name}</p>
       <h1 className="page-title">Templates</h1>
       <p className="page-subtitle">
