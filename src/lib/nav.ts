@@ -49,6 +49,16 @@ export const NAV_GROUPS: NavGroup[] = [
     ],
   },
   {
+    label: 'Site',
+    items: [
+      { href: '/prestart', name: 'Prestarts', what: 'Morning briefing and sign-on', screen: 'prestart' },
+      { href: '/toolbox', name: 'Toolbox talks', what: 'Weekly talk and sign-on', screen: 'toolbox' },
+      { href: '/construction', name: 'Construction records', short: 'Construction', what: 'WHS management plan, services and trenches for each dig, white cards', screen: 'construction' },
+      { href: '/plant', name: 'Plant', what: 'Machine prestarts, defects and the register', screen: 'plant' },
+      { href: '/orders', name: 'Orders & plant issues', short: 'Orders', what: 'Diesel, consumables, anything to order — and a light out on a machine', screen: 'orders' },
+    ],
+  },
+  {
     label: 'Claims',
     items: [
       { href: '/claims', name: 'Claims', what: 'Delays, variations, dayworks', screen: 'claims' },
@@ -80,16 +90,6 @@ export const NAV_GROUPS: NavGroup[] = [
       { href: '/asbestos', name: 'Asbestos', what: 'The site register, its management plan, the crew briefed, and any removal', screen: 'asbestos' },
       { href: '/environment', name: 'Environment', what: 'Aspects and impacts, legal register, compliance checks, monitoring, after-rain checks', screen: 'environment' },
       { href: '/chemicals', name: 'Chemicals & SDS', short: 'Chemicals', what: 'What is on site, and a current safety data sheet for each', screen: 'chemicals' },
-    ],
-  },
-  {
-    label: 'Site',
-    items: [
-      { href: '/prestart', name: 'Prestarts', what: 'Morning briefing and sign-on', screen: 'prestart' },
-      { href: '/toolbox', name: 'Toolbox talks', what: 'Weekly talk and sign-on', screen: 'toolbox' },
-      { href: '/construction', name: 'Construction records', short: 'Construction', what: 'WHS management plan, services and trenches for each dig, white cards', screen: 'construction' },
-      { href: '/plant', name: 'Plant', what: 'Machine prestarts, defects and the register', screen: 'plant' },
-      { href: '/orders', name: 'Orders & plant issues', short: 'Orders', what: 'Diesel, consumables, anything to order — and a light out on a machine', screen: 'orders' },
     ],
   },
   {
