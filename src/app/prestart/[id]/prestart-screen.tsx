@@ -118,6 +118,8 @@ export function PrestartScreen(props: {
   const signedCount = attendees.length + pending.length;
   const [name, setName] = useState('');
   const [fit, setFit] = useState(true);
+  // Bumped once a sign-on is in the record or the queue: the pad wipes the last person's ink with their name.
+  const [sigReset, setSigReset] = useState(0);
   const [saving, setSaving] = useState(false);
   const [finishing, setFinishing] = useState(false);
   const [pdfBusy, setPdfBusy] = useState(false);
@@ -190,6 +192,7 @@ export function PrestartScreen(props: {
       const outcome = props.local ? (await queue(), 'queued' as const) : await runOrQueue(live, queue);
       setName('');
       setFit(true);
+      setSigReset((n) => n + 1);
       if (outcome === 'sent') router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'That sign-on did not save.');
@@ -524,7 +527,7 @@ export function PrestartScreen(props: {
               </button>
             </div>
           </div>
-          <SignaturePad saving={saving} onSave={addAttendee} />
+          <SignaturePad saving={saving} onSave={addAttendee} resetToken={sigReset} />
         </div>
       )}
 

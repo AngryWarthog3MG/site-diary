@@ -53,6 +53,8 @@ export function TalkScreen({
   }, [talk.id]);
   const isDone = talk.completed || pendingFinish !== null;
   const [name, setName] = useState('');
+  // Bumped once a sign-on is in the record or the queue: the pad wipes the last person's ink with their name.
+  const [sigReset, setSigReset] = useState(0);
   const [saving, setSaving] = useState(false);
   const [completing, setCompleting] = useState(false);
   const [pdfBusy, setPdfBusy] = useState(false);
@@ -111,6 +113,7 @@ export function TalkScreen({
       const queue = () => outbox.enqueue({ kind: 'talk_attendee', projectId: talk.projectId, subjectId: talk.id, payload: { attendeeId, name: trimmed, path }, blobs: { signature: blob } }).then(() => undefined);
       const outcome = await runOrQueue(live, queue);
       setName('');
+      setSigReset((n) => n + 1);
       if (outcome === 'sent') router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'That sign-on did not save.');
@@ -323,7 +326,7 @@ export function TalkScreen({
             <input className="field field--sm" value={name} placeholder="Kel Brady"
               onChange={(e) => setName(e.target.value)} />
           </label>
-          <SignaturePad saving={saving} onSave={addAttendee} />
+          <SignaturePad saving={saving} onSave={addAttendee} resetToken={sigReset} />
         </div>
       )}
 

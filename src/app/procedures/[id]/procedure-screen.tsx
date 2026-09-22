@@ -22,6 +22,8 @@ export function ProcedureScreen({ doc, projectId, crew, canManage, canSign, user
   const current = doc.versions.find((v) => v.status === 'current') ?? null;
   const [urls, setUrls] = useState<Record<string, string>>({});
   const [name, setName] = useState('');
+  // Bumped once a sign-on is in the record or the queue: the pad wipes the last person's ink with their name.
+  const [sigReset, setSigReset] = useState(0);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState<string[]>([]);
@@ -64,6 +66,7 @@ export function ProcedureScreen({ doc, projectId, crew, canManage, canSign, user
       const outcome = await runOrQueue(live, queue);
       if (outcome !== 'sent') setPending((p) => [...p, trimmed]);
       setName('');
+      setSigReset((n) => n + 1);
       if (outcome === 'sent') router.refresh();
     } catch (err) { setError(err instanceof Error ? err.message : 'That signature did not save.'); } finally { setBusy(false); }
   }
@@ -100,7 +103,7 @@ export function ProcedureScreen({ doc, projectId, crew, canManage, canSign, user
                 <div className="crewchips">{crew.filter((c) => !signed.has(normalisePerson(c))).map((c) => <button key={c} type="button" className={`quotebtn crewchip${name === c ? ' crewchip--on' : ''}`} onClick={() => setName(c)}>+ {c}</button>)}</div>
               )}
               <label className="fieldcell"><span className="label">Name</span><input className="field field--sm" value={name} placeholder="Kel Brady" onChange={(e) => setName(e.target.value)} /></label>
-              <SignaturePad saving={busy} onSave={acknowledge} />
+              <SignaturePad saving={busy} onSave={acknowledge} resetToken={sigReset} />
             </div>
           )}
         </div>

@@ -72,6 +72,8 @@ export function SwmsScreen({ swms, crew, canWrite, canSign, userId }: Props) {
   const router = useRouter();
   const [tab, setTab] = useState<'doc' | 'signon'>('doc');
   const [name, setName] = useState('');
+  // Bumped once a sign-on is in the record or the queue: the pad wipes the last person's ink with their name.
+  const [sigReset, setSigReset] = useState(0);
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [urls, setUrls] = useState<Record<string, string>>({});
@@ -152,6 +154,7 @@ export function SwmsScreen({ swms, crew, canWrite, canSign, userId }: Props) {
       const outcome = await runOrQueue(live, queue);
       if (outcome !== 'sent') setPending((prev) => [...prev, { id: signonId, name: trimmed, previewUrl: URL.createObjectURL(blob) }]);
       setName('');
+      setSigReset((n) => n + 1);
       if (outcome === 'sent') router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'That sign-on did not save.');
@@ -289,7 +292,7 @@ export function SwmsScreen({ swms, crew, canWrite, canSign, userId }: Props) {
                 <span className="label">Name</span>
                 <input className="field field--sm" value={name} placeholder="Kel Brady" onChange={(e) => setName(e.target.value)} />
               </label>
-              <SignaturePad saving={busy === 'sign'} onSave={signOn} />
+              <SignaturePad saving={busy === 'sign'} onSave={signOn} resetToken={sigReset} />
             </div>
           )}
         </div>

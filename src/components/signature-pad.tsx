@@ -7,15 +7,21 @@ import { useEffect, useRef, useState } from 'react';
  * stylus and a mouse all draw; scaled by devicePixelRatio so the stroke is
  * crisp on the PDF, not just the screen. The pad hands back a PNG blob —
  * storage and the record are the caller's business.
+ *
+ * The pad does not know whether a save landed, so it never wipes itself:
+ * the caller bumps `resetToken` once the sign-on is in the record (or the
+ * queue), and the ink goes with the name — the next person gets a clean box.
  */
 export function SignaturePad({
   disabled,
   onSave,
   saving,
+  resetToken,
 }: {
   disabled?: boolean;
   saving?: boolean;
   onSave: (blob: Blob) => void;
+  resetToken?: number;
 }) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const drawing = useRef(false);
@@ -74,6 +80,10 @@ export function SignaturePad({
     if (canvas && context) context.clearRect(0, 0, canvas.width, canvas.height);
     setDirty(false);
   }
+
+  useEffect(() => {
+    if (resetToken !== undefined && resetToken > 0) clear();
+  }, [resetToken]);
 
   function save() {
     canvasRef.current?.toBlob((blob) => {
