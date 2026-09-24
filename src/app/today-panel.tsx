@@ -556,6 +556,8 @@ export function TodayPanel({
           ) : (
             <Link className="prestart-row__go" href={`/prestart/new?project=${projectId}`}>Start it</Link>
           )}
+        </div>
+      )}
       {!loading && canPrestart && doors.prestart && tomorrowPrestart && (
         <div className="prestart-row prestart-row--done">
           <span>Tomorrow&rsquo;s prestart is ready · {fmtDate(tomorrowPrestart.date)}</span>
@@ -613,8 +615,6 @@ export function TodayPanel({
 
 
 
-        </div>
-      )}
       {!loading && doors.permits && (permits.live > 0 || permits.expired > 0) && (
         <div className={`prestart-row ${permits.expired > 0 ? 'prestart-row--open' : 'prestart-row--done'}`}>
           <span>{permits.live > 0 ? `${permits.live} permit${permits.live === 1 ? '' : 's'} to work live` : ''}{permits.live > 0 && permits.expired > 0 ? ' · ' : ''}{permits.expired > 0 ? `${permits.expired} past ${permits.expired === 1 ? 'its' : 'their'} window, not closed` : ''}</span>

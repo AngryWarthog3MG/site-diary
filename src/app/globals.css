@@ -3683,8 +3683,8 @@ main.sheet--wide .vr-list { grid-template-columns: repeat(auto-fill, minmax(22re
 .dash-action span { font-size: 1rem; line-height: 1; }
 
 /* The cards. The diary is one of them, and the widest. */
-.dash-body { display: grid; grid-template-columns: 1fr; gap: 0.75rem; margin-top: 0.9rem; align-items: start; }
-.dash-grid { display: grid; grid-template-columns: 1fr; gap: 0.75rem; align-items: stretch; }
+.dash-body { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.75rem; margin-top: 0.9rem; align-items: start; }
+.dash-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.75rem; align-items: stretch; }
 .dash-card {
   padding: 1rem 1.1rem; background: var(--paper); border: 1px solid var(--ink-12); border-radius: 12px; box-shadow: var(--shadow-ui);
   display: flex; flex-direction: column; min-height: 9rem;
@@ -3748,6 +3748,26 @@ a.dash-row:hover { background: var(--teal-tint); }
   /* The quick actions as two tidy columns rather than a ragged wrap. */
   .dash-actions { display: grid; grid-template-columns: 1fr 1fr; }
   .dash-action { justify-content: center; padding: 0.65rem 0.6rem; }
+  /* On a phone the day comes first (README R97): the gate, the prestart and the diary sit straight under the
+     header, above the quick actions and the heading bar, so the three things to press are on the first screen. */
+  .dash { display: flex; flex-direction: column; }
+  .dash-body { display: contents; }
+  .dash > .dash-head { order: 0; }
+  .dash > .home-switcher { order: 1; }
+  .dash > .dash-body > .dash-card--diary { order: 2; margin-top: 0.25rem; }
+  .dash > .dash-actions { order: 3; margin-top: 0.75rem; }
+  .dash > .secbar { order: 4; margin-top: 0.75rem; }
+  .dash > .first-run, .dash > .notice { order: 5; }
+  .dash > .dash-body > .dash-grid { order: 6; margin-top: 0.75rem; }
+  /* Gloves: every row is a thumb high and its link is a button. */
+  .dash-card--diary { padding: 0.85rem 0.9rem; }
+  .home-today .home-date { font-size: 1.35rem; }
+  .home-today .today-status { font-size: 0.875rem; }
+  .home-today .prestart-row { min-height: 3.25rem; margin-top: 0.6rem; }
+  .home-today .prestart-row a { padding: 0.5rem 0.9rem; border: 1px solid var(--teal); border-radius: 8px; text-decoration: none; }
+  .home-today .prestart-row a.prestart-row__go { border-color: var(--teal); }
+  .home-today .home-actions { margin-top: 0.75rem; padding: 0.85rem; }
+  .home-today .button--record { min-height: 3.8rem; font-size: 1.1rem; }
 }
 @media (min-width: 1100px) {
   .dash-head .refresh-button { display: none; }

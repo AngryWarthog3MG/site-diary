@@ -2397,7 +2397,10 @@ block, just not the big button. Once talking has started, or the day is signed, 
 clock says. The end of the shift is `SHIFT_END_PERTH` in `src/lib/home/shift.ts` — 16:00 on site, the same clock as the
 knock-off reminder cron (08:00 UTC in vercel.json); change both together. Judged on the phone once mounted, from Perth's
 clock, not the device's. The diary's button says "Works today" (Mitchell's words, 24 September 2026), and the prestart row's
-button is green — the one thing to press at the start of the day.
+button is green — the one thing to press at the start of the day. On a phone (under 700 px) the today card sits straight
+under the header, above the quick actions and the heading bar, so the three things to press are on the first screen;
+every row is a thumb high and its link is drawn as a button; and the grid tracks are `minmax(0, 1fr)` so a wide child
+can never widen the page — the reorder had briefly left the diary block inside the prestart row, which did exactly that.
 
 ## Not built, and deliberately so
 
