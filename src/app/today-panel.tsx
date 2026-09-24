@@ -552,9 +552,9 @@ export function TodayPanel({
                 : 'No prestart yet today'}
           </span>
           {prestart ? (
-            <Link href={`/prestart/${prestart.id}`}>{prestart.done ? 'View' : prestart.signed === 0 ? 'Open it' : 'Finish it'}</Link>
+            <Link className="prestart-row__go" href={`/prestart/${prestart.id}`}>{prestart.done ? 'View' : prestart.signed === 0 ? 'Open it' : 'Finish it'}</Link>
           ) : (
-            <Link href={`/prestart/new?project=${projectId}`}>Start it</Link>
+            <Link className="prestart-row__go" href={`/prestart/new?project=${projectId}`}>Start it</Link>
           )}
       {!loading && canPrestart && doors.prestart && tomorrowPrestart && (
         <div className="prestart-row prestart-row--done">
@@ -585,7 +585,7 @@ export function TodayPanel({
           entry?.segments || afterTheShift ? (
             <>
               <Link className="button button--record" href={`/record?project=${projectId}`}>
-                {entry?.segments ? 'Talk some more' : 'Talk it through'}
+                {entry?.segments ? 'Works today · keep going' : 'Works today'}
               </Link>
               <button className="linklike home-typeit" type="button" disabled={writingOut} onClick={writeItOut}>
                 {writingOut ? 'Opening…' : 'Type it in instead'}
@@ -593,7 +593,7 @@ export function TodayPanel({
             </>
           ) : (
             <div className="prestart-row home-later">
-              <span>Talk it through after the shift · from {shiftEndLabel()}</span>
+              <span>Works today — after the shift · from {shiftEndLabel()}</span>
               <Link href={`/record?project=${projectId}`}>Start it now</Link>
             </div>
           )

@@ -2708,6 +2708,9 @@ body {
 .prestart-row--done { border-color: rgba(13, 90, 88, 0.3); background: var(--teal-tint, rgba(13,90,88,0.06)); }
 .prestart-row--open { border-color: rgba(240, 164, 31, 0.5); background: rgba(240, 164, 31, 0.1); }
 .prestart-row a { font-weight: 600; white-space: nowrap; }
+/* The prestart's button is green: the one thing to press at the start of the day. */
+.prestart-row a.prestart-row__go { display: inline-block; padding: 0.5rem 1rem; border-radius: 8px; background: var(--teal); color: #fff; text-decoration: none; }
+.prestart-row a.prestart-row__go:active { background: var(--teal-deep); }
 /* The diary before the shift is over (README R97): there, quiet, not the big button. */
 .home-later { border-style: dashed; color: var(--ink-60); }
 .home-later a { font-weight: 500; }

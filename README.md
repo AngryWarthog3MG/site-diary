@@ -2392,11 +2392,12 @@ and stopped for review before any screen, as the prompt asked. Suite 42.
 gate and the prestart beneath it — the end of the day above its start. Mitchell's order: sign-in first (who is on site),
 then the prestart, then the diary — and the diary only after the shift. So `today-panel.tsx` draws the gate row, the
 prestart row (and tomorrow's), then the diary block; and until the shift has ended the diary block is a quiet dashed
-row, "Talk it through after the shift · from 4 pm", with a small "Start it now" for the day that finishes early — never a
+row, "Works today — after the shift · from 4 pm", with a small "Start it now" for the day that finishes early — never a
 block, just not the big button. Once talking has started, or the day is signed, the diary shows as before whatever the
 clock says. The end of the shift is `SHIFT_END_PERTH` in `src/lib/home/shift.ts` — 16:00 on site, the same clock as the
 knock-off reminder cron (08:00 UTC in vercel.json); change both together. Judged on the phone once mounted, from Perth's
-clock, not the device's.
+clock, not the device's. The diary's button says "Works today" (Mitchell's words, 24 September 2026), and the prestart row's
+button is green — the one thing to press at the start of the day.
 
 ## Not built, and deliberately so
 
