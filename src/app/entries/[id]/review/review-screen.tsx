@@ -1412,16 +1412,22 @@ function ItemCard({
   // with Edit; a row that needs a look (low confidence, no name yet, just added) opens with its fields showing.
   const named = Boolean(String(item[section.identity] ?? '').trim());
   const [expanded, setExpanded] = useState<boolean>(low || !named);
-  const summary = section.fields
-    .filter((f) => f.key !== section.identity && !['list', 'textarea'].includes(f.kind))
-    .map((f) => {
-      const v = item[f.key];
-      if (v == null || v === '' || (Array.isArray(v) && v.length === 0)) return null;
-      const text = Array.isArray(v) ? v.join(', ') : String(v);
-      return f.kind === 'regno' ? `V-${String(v).padStart(3, '0')}` : f.suffix ? `${text} ${f.suffix}` : f.kind === 'number' ? `${f.label.toLowerCase()} ${text}` : text;
-    })
-    .filter((x): x is string => Boolean(x))
-    .slice(0, 5);
+  const clock = (v: unknown) => (typeof v === 'string' && /^\d\d:\d\d/.test(v) ? v.slice(0, 5) : null);
+  const span = clock(item.start_time) && clock(item.finish_time ?? item.end_time) ? `${clock(item.start_time)}–${clock(item.finish_time ?? item.end_time)}` : null;
+  const summary = [
+    ...(span ? [span] : []),
+    ...section.fields
+      .filter((f) => f.key !== section.identity && !['list', 'textarea'].includes(f.kind) && !(span && ['start_time', 'finish_time', 'end_time'].includes(f.key)))
+      .map((f) => {
+        const v = item[f.key];
+        if (v == null || v === '' || (Array.isArray(v) && v.length === 0)) return null;
+        const text = Array.isArray(v) ? v.join(', ') : clock(v) ?? String(v);
+        if (f.kind === 'regno') return `V-${String(v).padStart(3, '0')}`;
+        if (f.key === 'hours' || f.key === 'duration_mins') return f.key === 'hours' ? `${text} h` : `${text} min`;
+        return f.suffix ? `${text} ${f.suffix}` : f.kind === 'number' ? `${f.label.toLowerCase()} ${text}` : text;
+      })
+      .filter((x): x is string => Boolean(x)),
+  ].slice(0, 5);
 
   /**
    * A new docket photo on a pour gets read straight away (brief §4): OCR the
