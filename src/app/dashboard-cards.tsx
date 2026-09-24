@@ -9,6 +9,7 @@ import { VERDICT_LABEL, type Verdict } from '@/lib/subcontractors/model';
 import { loadDashboard, perthBadge, OPEN_LIST } from '@/lib/home/dashboard';
 import { loadObligations } from '@/lib/obligations/load';
 import { loadSetupCard } from '@/lib/setup/load';
+import { Fold } from '@/components/fold';
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
@@ -267,11 +268,17 @@ export async function DashboardCards({ projectId, orgId, member }: { projectId: 
 
   return (
     <>
-      {shown.map((c) => <Fragment key={c.key}>{c.node}</Fragment>)}
+      {shown.length > 0 && (
+        <Fold label="Needs attention" count={shown.length} phoneOnly>
+          <div className="dash-grid dash-grid--folded">
+            {shown.map((c) => <Fragment key={c.key}>{c.node}</Fragment>)}
+          </div>
+        </Fold>
+      )}
       {clear.length > 0 && (
         <section className="dash-clear">
           <p className="dash-clear__head"><i className="dash-dot dash-dot--ok" aria-hidden /> {shown.length === 0 ? 'Nothing needs attention' : 'Nothing else needs attention'}</p>
-          <p className="dash-clear__list">Checked today: {clear.map((c) => c.name).join(', ')}.</p>
+          <p className="dash-clear__list dash-clear__list--desk">Checked today: {clear.map((c) => c.name).join(', ')}.</p>
           {see('safety') && <p className="dash-card__foot"><Link href={`/safety${q}`}>Every figure, on the Safety dashboard</Link></p>}
         </section>
       )}

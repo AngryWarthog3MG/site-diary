@@ -3324,6 +3324,45 @@ body {
 .vreg__form { margin-top: 0.5rem; }
 .vreg__none { margin: 0.35rem 0 0.6rem; }
 
+/* Less on the screen (README R101). */
+/* A review row folded to one line of facts; Edit opens the fields. */
+.item__summary { display: block; width: 100%; margin: 0.35rem 0 0.2rem; padding: 0.55rem 0.7rem; background: var(--paper-dim, #f3f2ee); border: 1px solid var(--ink-08); border-radius: 8px; text-align: left; font: inherit; color: var(--ink); cursor: pointer; line-height: 1.35; }
+.item__summary:active { background: var(--ink-08); }
+.fieldgrid[hidden] { display: none; }
+/* A subtitle is two lines on a phone, with "more" only when it was cut. */
+.readmore { display: none; }
+@media (max-width: 699px) {
+  .page-subtitle:not(.page-subtitle--open) { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .readmore { display: inline-block; margin: -0.35rem 0 0.75rem; padding: 0; font-size: 0.875rem; font-weight: 600; }
+  /* One Home at the top: where a screen carries the big one, the bar's small one goes. */
+  body:has(.homefoot--top) .topbar .home-button { display: none; }
+  /* The drawer lists the sections by name; what each one is for waits until it is opened. */
+  .menu-drawer .navitem__what { display: none; }
+  .menu-drawer .navitem { padding: 0.55rem 0.7rem; }
+  /* The gate: the day's sign-in button comes before the QR sign and the day picker. */
+  .signin-lead { margin-top: 0.25rem; }
+}
+
+/* A fold (README R101): named, counted, one tap. */
+.fold { margin: 0.5rem 0; }
+.fold__head { display: flex; justify-content: space-between; align-items: center; width: 100%; min-height: 2.75rem; padding: 0.5rem 0.8rem; background: var(--paper); border: 1px solid var(--ink-12); border-radius: 10px; font: inherit; font-weight: 600; color: var(--ink); text-align: left; cursor: pointer; }
+.fold__act { font-weight: 600; color: var(--teal); font-size: 0.875rem; }
+.fold__body { display: none; margin-top: 0.5rem; }
+.fold--open > .fold__body { display: block; }
+.fold--open > .fold__head { border-bottom-left-radius: 0; border-bottom-right-radius: 0; }
+.home-unfinished .fold__head { margin-top: 0.25rem; }
+.signin-gate { margin: 0.5rem 0 0; }
+@media (min-width: 700px) {
+  /* On a desk a phone-only fold is not a fold: the head goes, the body shows. */
+  .fold--phone > .fold__head { display: none; }
+  .fold--phone > .fold__body { display: block; margin-top: 0; }
+  .dash-grid--folded { display: contents; }
+}
+@media (max-width: 699px) {
+  .dash-clear__list--desk { display: none; }
+  .dash-grid--folded { display: grid; gap: 0.75rem; }
+}
+
 /* The programme (README R95). */
 .programme__shelf { margin: 1.25rem 0 0.5rem; }
 .programme__shelf .section-title { margin-bottom: 0.25rem; }

@@ -8,6 +8,7 @@ import { createClient } from '@/lib/supabase/client';
 import { detectSections } from '@/lib/capture/sections';
 import { localDate } from '@/lib/capture/queue';
 import { afterShift, shiftEndLabel } from '@/lib/home/shift';
+import { Fold } from '@/components/fold';
 import * as sync from '@/lib/capture/sync';
 import { SectionChips } from '@/components/section-chips';
 import { QueueStatus } from '@/components/queue-status';
@@ -608,8 +609,8 @@ export function TodayPanel({
       </div>
 
       {doors.entries !== false && canRecord && entry && entry.status !== 'signed' && (entry.hasProposal || entry.hasRecord) && (
-        <Link className="button" href={`/entries/${entry.id}/review`}>
-          {entry.hasRecord ? 'Back to today’s entry' : 'Check it over and sign'}
+        <Link className="button button--quiet home-review" href={`/entries/${entry.id}/review`}>
+          {entry.hasRecord ? 'Check today’s entry over and sign' : 'Check it over and sign'}
         </Link>
       )}
 
@@ -664,7 +665,7 @@ export function TodayPanel({
 
       {doors.entries !== false && (unfinished.length > 0 || holes.length > 0) && (
         <div className="unfinished home-unfinished">
-          <p className="label">Not signed yet · {unfinished.length + holes.length}</p>
+          <Fold label="Not signed yet" count={unfinished.length + holes.length}>
           {holes.map((d) => (
             <div key={d} className="unfinished__row">
               <div>
@@ -703,6 +704,7 @@ export function TodayPanel({
               )}
             </div>
           ))}
+          </Fold>
         </div>
       )}
 

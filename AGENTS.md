@@ -339,6 +339,10 @@ improvising; the register once shipped dead because a live smoke test was skippe
   voiding; NEVER sent by the app) and `site_event_triage` (a decision that no notice is needed, with its reason).
   `model.ts`: `hoursSince` from the time said or knock-off, `draftFromEvent` (the words verbatim, nothing invented).
   `/notices` is screen `notices`, pm/admin only. The prompt must never tidy `said_text`. Suite 37
+- Less on the screen (README R101): one big action per screen; summary first, fields on Edit (review cards fold);
+  long lists behind `<Fold label count [phoneOnly]>` (`src/components/fold.tsx`) — named and counted, open on a desk
+  when phone-only; subtitles clamp to two lines on a phone with "more" (`src/components/read-more.tsx`); one Home at
+  the top. A new screen follows these before it ships
 - `src/components/nav-progress.tsx` + `src/app/loading.tsx` — the loading signal (README R94): a top bar on any same-site
   link tap (capture-phase listener; `navPending.start()` for a navigation from code), a "Loading…" pill after 700 ms, both
   cleared when the address changes; the root `loading.tsx` skeleton draws while a page is on its way. A new segment that

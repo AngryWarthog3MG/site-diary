@@ -1408,6 +1408,20 @@ function ItemCard({
   const quote = item.source_quote as string | null;
   const low = item.confidence === 'low';
   const heading = String(item[section.identity] ?? '').trim() || `${section.noun} ${index + 1}`;
+  // Less on the screen (README R101): a row that has its name and nothing flagged opens as one line of facts
+  // with Edit; a row that needs a look (low confidence, no name yet, just added) opens with its fields showing.
+  const named = Boolean(String(item[section.identity] ?? '').trim());
+  const [expanded, setExpanded] = useState<boolean>(low || !named);
+  const summary = section.fields
+    .filter((f) => f.key !== section.identity && !['list', 'textarea'].includes(f.kind))
+    .map((f) => {
+      const v = item[f.key];
+      if (v == null || v === '' || (Array.isArray(v) && v.length === 0)) return null;
+      const text = Array.isArray(v) ? v.join(', ') : String(v);
+      return f.kind === 'regno' ? `V-${String(v).padStart(3, '0')}` : f.suffix ? `${text} ${f.suffix}` : f.kind === 'number' ? `${f.label.toLowerCase()} ${text}` : text;
+    })
+    .filter((x): x is string => Boolean(x))
+    .slice(0, 5);
 
   /**
    * A new docket photo on a pour gets read straight away (brief §4): OCR the
@@ -1458,6 +1472,9 @@ function ItemCard({
               {moving ? 'Leave it here' : 'Move to variations'}
             </button>
           )}
+          <button type="button" className="quotebtn" aria-expanded={expanded} onClick={() => setExpanded((open) => !open)}>
+            {expanded ? 'Done' : 'Edit'}
+          </button>
           <button
             type="button"
             className="quotebtn quotebtn--remove"
@@ -1501,7 +1518,13 @@ function ItemCard({
         </p>
       )}
 
-      <div className="fieldgrid">
+      {!expanded && (
+        <button type="button" className="item__summary" onClick={() => setExpanded(true)}>
+          {summary.length > 0 ? summary.join(' · ') : 'Nothing else recorded — tap to add'}
+        </button>
+      )}
+
+      <div className="fieldgrid" hidden={!expanded}>
         {section.fields.map((field) => (
           <Field
             key={field.key}

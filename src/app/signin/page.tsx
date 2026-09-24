@@ -81,9 +81,6 @@ export default async function SignInPage({
           day&rsquo;s register is the attendance record.
         </p>
       )}
-      {canRunTalks(current.role) && current.role !== 'leading_hand' && (
-        <Link className="button button--quiet" href={`/signin/gate${q}`}>Gate code and sign</Link>
-      )}
       <nav className="daynav" aria-label="Other days">
         <Link className="daynav__link" href={`/signin${q}&date=${shiftDate(day, -1)}`} rel="prev">
           <span aria-hidden="true">‹</span> {fmtDate(shiftDate(day, -1)).slice(0, 5)}
@@ -97,6 +94,9 @@ export default async function SignInPage({
           <span className="daynav__link daynav__link--none daynav__link--next">Today</span>
         )}
       </nav>
+      {canRunTalks(current.role) && current.role !== 'leading_hand' && (
+        <p className="caption signin-gate"><Link href={`/signin/gate${q}`}>Gate QR code and the printed sign</Link></p>
+      )}
       <OutboxStatus />
       <SignInScreen
         projectId={current.project_id}

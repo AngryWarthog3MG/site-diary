@@ -2429,6 +2429,18 @@ value, the agreed value, the reference and notes, saved to the register through 
 estimate keeps it, so the tracker is unchanged — and now opens only to register keepers). Nothing is written to the
 day's row or the signed record. A number not yet on the register says so; it registers when the day is saved. Suite 44.
 
+**R101. Less on the screen.** Mitchell's brief for the crew: as easy as possible, for people who are not at home on a
+phone, and nothing they do not need straight away. The rules, so every screen follows them from here: (1) one big
+action per screen, the rest quiet; (2) the summary first, the fields on a tap — a review row that has its name and
+nothing flagged is one line of facts with Edit, and opens with its fields only when it needs a look (low confidence,
+no name yet); (3) what is long is folded and named — "Not signed yet · 3", "Needs attention · 2", "Earlier prestarts ·
+7" — a fold says what it holds and how many, and on a desk a phone-only fold is simply open; (4) the explaining
+paragraph under a title is two lines on a phone with "more" only when it was cut (`ReadMore` in the layout, a
+progressive enhancement over the same markup); (5) one Home at the top — where a screen carries the big one, the bar's
+small one goes; (6) the drawer lists sections by name, what each is for waits until it is opened. Nothing here changes
+what is recorded or who may see it; it changes how much is on the glass at once. The pieces: `src/components/fold.tsx`,
+`src/components/read-more.tsx`, the review card's `expanded` state, and the phone block in `globals.css`.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;

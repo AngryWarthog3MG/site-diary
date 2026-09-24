@@ -1,4 +1,5 @@
 import { HomeFoot } from '@/components/home-foot';
+import { Fold } from '@/components/fold';
 import { Suspense } from 'react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
@@ -87,7 +88,7 @@ export default async function PrestartListPage({
       )}
 
       <div className="talklist">
-        {(rows ?? []).map((row) => {
+        {(rows ?? []).slice(0, 5).map((row) => {
           const attendees = (row.prestart_attendees ?? []) as Array<{ fit_for_work: boolean }>;
           const notFit = attendees.filter((a) => !a.fit_for_work).length;
           const isToday = row.prestart_date === today;
@@ -111,6 +112,34 @@ export default async function PrestartListPage({
             </Link>
           );
         })}
+        {(rows ?? []).length > 5 && (
+          <Fold label="Earlier prestarts" count={(rows ?? []).length - 5}>
+            {(rows ?? []).slice(5).map((row) => {
+          const attendees = (row.prestart_attendees ?? []) as Array<{ fit_for_work: boolean }>;
+          const notFit = attendees.filter((a) => !a.fit_for_work).length;
+          const isToday = row.prestart_date === today;
+          const isFuture = row.prestart_date > today;
+          const state = row.completed_at
+            ? { label: 'Done', cls: 'status-pill--signed' }
+            : attendees.length === 0 && (isFuture || isToday)
+              ? { label: isFuture ? `Ready for ${fmtDate(row.prestart_date).slice(0, 5)}` : 'Ready', cls: 'status-pill--ready' }
+              : { label: 'Not finished', cls: 'status-pill--resume' };
+          return (
+            <Link key={row.id} className="talkcard" href={`/prestart/${row.id}`}>
+              <div>
+                <p className="mono talkcard__date">{fmtDate(row.prestart_date)}</p>
+                <p className="talkcard__topic">Run by {row.supervisor_name}</p>
+                <p className="talkcard__meta">
+                  {attendees.length === 0 ? (isFuture ? 'prepared the night before' : 'nobody signed on yet') : `${attendees.length} signed on`}
+                  {notFit > 0 ? ` · ${notFit} not fit for work` : ''}
+                </p>
+              </div>
+              <span className={`status-pill ${state.cls}`}>{state.label}</span>
+            </Link>
+          );
+        })}
+          </Fold>
+        )}
       </div>
 
       <hr className="rule" />

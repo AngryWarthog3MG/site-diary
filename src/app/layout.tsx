@@ -47,6 +47,7 @@ import { ErrorReporter } from '@/components/error-reporter';
 import { SideNav } from '@/components/side-nav';
 import { TopBar } from '@/components/top-bar';
 import { NavProgress } from '@/components/nav-progress';
+import { ReadMore } from '@/components/read-more';
 import { HomeFoot } from '@/components/home-foot';
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -64,6 +65,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Suspense fallback={null}>
           <NavProgress />
         </Suspense>
+        <ReadMore />
         {children}
         <Suspense fallback={null}>
           <HomeFoot />
