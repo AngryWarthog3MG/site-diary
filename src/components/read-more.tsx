@@ -8,12 +8,25 @@ import { useEffect } from 'react';
  * stylesheet clamps `.page-subtitle` to two lines under 700 px; this adds a
  * "more" tap to any subtitle that was actually cut, and nothing to the ones
  * that fit. Runs after each navigation; touches no page markup of its own.
+ *
+ * It only touches a paragraph React has finished hydrating. A page streamed in
+ * under the loading boundary lands in the DOM before React claims it; a button
+ * put beside it in that gap makes hydration fail and the whole page redraw on
+ * the client (seen on every screen with a long subtitle). React marks a node it
+ * owns with a fiber key, so an unclaimed one is left alone and looked at again
+ * a moment later.
  */
+const owned = (el: Element) => Object.keys(el).some((k) => k.startsWith('__reactFiber'));
+
 export function ReadMore() {
   useEffect(() => {
+    let retry: ReturnType<typeof setTimeout> | null = null;
+    let tries = 0;
     const apply = () => {
+      let waiting = false;
       for (const p of Array.from(document.querySelectorAll<HTMLParagraphElement>('.page-subtitle'))) {
         if (p.dataset.readmore) continue;
+        if (!owned(p)) { waiting = true; continue; }
         if (p.scrollHeight <= p.clientHeight + 2) continue;
         p.dataset.readmore = 'clamped';
         const b = document.createElement('button');
@@ -26,12 +39,15 @@ export function ReadMore() {
         });
         p.insertAdjacentElement('afterend', b);
       }
+      if (retry) { clearTimeout(retry); retry = null; }
+      if (waiting && tries < 100) { tries += 1; retry = setTimeout(apply, 50); } else tries = 0;
     };
     apply();
     const obs = new MutationObserver(() => apply());
     obs.observe(document.body, { childList: true, subtree: true });
     window.addEventListener('resize', apply);
-    return () => { obs.disconnect(); window.removeEventListener('resize', apply); };
+    window.addEventListener('load', apply);
+    return () => { obs.disconnect(); if (retry) clearTimeout(retry); window.removeEventListener('resize', apply); window.removeEventListener('load', apply); };
   }, []);
   return null;
 }

@@ -2436,7 +2436,7 @@ nothing flagged is one line of facts with Edit, and opens with its fields only w
 no name yet); (3) what is long is folded and named — "Not signed yet · 3", "Needs attention · 2", "Earlier prestarts ·
 7" — a fold says what it holds and how many, and on a desk a phone-only fold is simply open; (4) the explaining
 paragraph under a title is two lines on a phone with "more" only when it was cut (`ReadMore` in the layout, a
-progressive enhancement over the same markup); (5) one Home at the top — where a screen carries the big one, the bar's
+progressive enhancement over the same markup — it touches a paragraph only once React has hydrated it, because a button put beside a streamed-in paragraph before that made hydration fail and the page redraw on every screen with a long subtitle); (5) one Home at the top — where a screen carries the big one, the bar's
 small one goes; (6) the drawer lists sections by name, what each is for waits until it is opened. Nothing here changes
 what is recorded or who may see it; it changes how much is on the glass at once. The pieces: `src/components/fold.tsx`,
 `src/components/read-more.tsx`, the review card's `expanded` state, and the phone block in `globals.css`.
