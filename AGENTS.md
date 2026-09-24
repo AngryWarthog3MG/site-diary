@@ -299,6 +299,10 @@ improvising; the register once shipped dead because a live smoke test was skippe
   never another job's detail page); `onJob` writes a screen's address. The middleware writes the cookie from
   `?project=`. The cookie is a preference, never a credential — only a job the account holds, and awake, moves.
   `src/components/job-switcher.tsx` draws it in the rail and the drawer
+- `src/lib/home/shift.ts` — the end of the shift (README R97): `SHIFT_END_PERTH` 16:00 on site, the same clock as the
+  knock-off reminder cron in vercel.json (08:00 UTC) — change both together; `afterShift`, `perthClock`. The home's today
+  panel draws sign-in, then prestart, then the diary; before the shift ends the diary is a quiet row with "Start it now",
+  never the big button
 - `src/lib/home/dashboard.ts` — the home page's cards (`src/app/dashboard-cards.tsx`, streamed in under Suspense):
   `loadDashboard` = `loadSafety` plus the open reports and the latest issued documents. No number on the home
   is computed anywhere the Safety screen does not also compute it. A card is drawn only when it has something

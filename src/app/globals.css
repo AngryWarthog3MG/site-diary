@@ -2708,6 +2708,9 @@ body {
 .prestart-row--done { border-color: rgba(13, 90, 88, 0.3); background: var(--teal-tint, rgba(13,90,88,0.06)); }
 .prestart-row--open { border-color: rgba(240, 164, 31, 0.5); background: rgba(240, 164, 31, 0.1); }
 .prestart-row a { font-weight: 600; white-space: nowrap; }
+/* The diary before the shift is over (README R97): there, quiet, not the big button. */
+.home-later { border-style: dashed; color: var(--ink-60); }
+.home-later a { font-weight: 500; }
 
 /* Top of every screen: send what is waiting, load the latest. Fixed so it
    is there whatever you are looking at; light so it never reads as the

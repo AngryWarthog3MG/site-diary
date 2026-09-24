@@ -7,6 +7,7 @@ import type { EntrySection } from '@/types/database';
 import { createClient } from '@/lib/supabase/client';
 import { detectSections } from '@/lib/capture/sections';
 import { localDate } from '@/lib/capture/queue';
+import { afterShift, shiftEndLabel } from '@/lib/home/shift';
 import * as sync from '@/lib/capture/sync';
 import { SectionChips } from '@/components/section-chips';
 import { QueueStatus } from '@/components/queue-status';
@@ -94,6 +95,14 @@ export function TodayPanel({
   const [taggedOut, setTaggedOut] = useState<string[]>([]);
   const [prestart, setPrestart] = useState<{ id: string; done: boolean; signed: number } | null>(null);
   const [tomorrowPrestart, setTomorrowPrestart] = useState<{ id: string; date: string } | null>(null);
+  // The diary opens after the shift (README R97). False on the server so the first paint matches; the clock ticks once a minute.
+  const [afterTheShift, setAfterTheShift] = useState(false);
+  useEffect(() => {
+    const tick = () => setAfterTheShift(afterShift(new Date()));
+    tick();
+    const id = window.setInterval(tick, 60_000);
+    return () => window.clearInterval(id);
+  }, []);
   const [onSite, setOnSite] = useState(0);
   const [safety, setSafety] = useState({ open: 0, overdue: 0 });
   const [permits, setPermits] = useState({ live: 0, expired: 0 });
@@ -525,6 +534,35 @@ export function TodayPanel({
       </h1>
       {status && <p className="today-status">{status}</p>}
 
+      {!loading && doors.signin && (
+        <div className={`prestart-row ${onSite > 0 ? 'prestart-row--done' : ''}`}>
+          <span>{onSite > 0 ? `On site now · ${onSite}` : 'Nobody signed in at the gate yet'}</span>
+          <Link href={`/signin?project=${projectId}`}>{canPrestart ? 'Sign-in' : 'Look'}</Link>
+        </div>
+      )}
+      {!loading && canPrestart && doors.prestart && (
+        <div className={`prestart-row ${prestart?.done ? 'prestart-row--done' : prestart ? 'prestart-row--open' : ''}`}>
+          <span>
+            {prestart?.done
+              ? `Prestart done · ${prestart.signed} signed on`
+              : prestart
+                ? prestart.signed === 0
+                  ? 'Prestart ready · read it out and sign the crew on'
+                  : `Prestart open · ${prestart.signed} signed on so far`
+                : 'No prestart yet today'}
+          </span>
+          {prestart ? (
+            <Link href={`/prestart/${prestart.id}`}>{prestart.done ? 'View' : prestart.signed === 0 ? 'Open it' : 'Finish it'}</Link>
+          ) : (
+            <Link href={`/prestart/new?project=${projectId}`}>Start it</Link>
+          )}
+      {!loading && canPrestart && doors.prestart && tomorrowPrestart && (
+        <div className="prestart-row prestart-row--done">
+          <span>Tomorrow&rsquo;s prestart is ready · {fmtDate(tomorrowPrestart.date)}</span>
+          <Link href={`/prestart/${tomorrowPrestart.id}`}>Look it over</Link>
+        </div>
+      )}
+
       <div className="home-actions">
         {doors.entries === false ? (
           <p className="notice">The diary is not one of your screens on this job.</p>
@@ -544,14 +582,21 @@ export function TodayPanel({
             <Link href={`/entries/${othersToday.id}/${canRecord ? 'review' : 'signed'}`}>{canRecord ? 'Open it' : 'Look'}</Link>
           </div>
         ) : canRecord ? (
-          <>
-            <Link className="button button--record" href={`/record?project=${projectId}`}>
-              {entry?.segments ? 'Talk some more' : 'Talk it through'}
-            </Link>
-            <button className="linklike home-typeit" type="button" disabled={writingOut} onClick={writeItOut}>
-              {writingOut ? 'Opening…' : 'Type it in instead'}
-            </button>
-          </>
+          entry?.segments || afterTheShift ? (
+            <>
+              <Link className="button button--record" href={`/record?project=${projectId}`}>
+                {entry?.segments ? 'Talk some more' : 'Talk it through'}
+              </Link>
+              <button className="linklike home-typeit" type="button" disabled={writingOut} onClick={writeItOut}>
+                {writingOut ? 'Opening…' : 'Type it in instead'}
+              </button>
+            </>
+          ) : (
+            <div className="prestart-row home-later">
+              <span>Talk it through after the shift · from {shiftEndLabel()}</span>
+              <Link href={`/record?project=${projectId}`}>Start it now</Link>
+            </div>
+          )
         ) : (
           <p className="notice">
             You are on this job as {roleLabel}. Recording the diary is the site supervisor&rsquo;s;
@@ -566,22 +611,8 @@ export function TodayPanel({
         </Link>
       )}
 
-      {!loading && canPrestart && doors.prestart && (
-        <div className={`prestart-row ${prestart?.done ? 'prestart-row--done' : prestart ? 'prestart-row--open' : ''}`}>
-          <span>
-            {prestart?.done
-              ? `Prestart done · ${prestart.signed} signed on`
-              : prestart
-                ? prestart.signed === 0
-                  ? 'Prestart ready · read it out and sign the crew on'
-                  : `Prestart open · ${prestart.signed} signed on so far`
-                : 'No prestart yet today'}
-          </span>
-          {prestart ? (
-            <Link href={`/prestart/${prestart.id}`}>{prestart.done ? 'View' : prestart.signed === 0 ? 'Open it' : 'Finish it'}</Link>
-          ) : (
-            <Link href={`/prestart/new?project=${projectId}`}>Start it</Link>
-          )}
+
+
         </div>
       )}
       {!loading && doors.permits && (permits.live > 0 || permits.expired > 0) && (
@@ -594,18 +625,6 @@ export function TodayPanel({
         <div className={`prestart-row ${safety.overdue > 0 ? 'prestart-row--open' : ''}`}>
           <span>{safety.open} safety report{safety.open === 1 ? '' : 's'} open{safety.overdue > 0 ? ` · ${safety.overdue} action${safety.overdue === 1 ? '' : 's'} overdue` : ''}</span>
           <Link href={`/incidents?project=${projectId}`}>Open</Link>
-        </div>
-      )}
-      {!loading && doors.signin && (
-        <div className={`prestart-row ${onSite > 0 ? 'prestart-row--done' : ''}`}>
-          <span>{onSite > 0 ? `On site now · ${onSite}` : 'Nobody signed in at the gate yet'}</span>
-          <Link href={`/signin?project=${projectId}`}>{canPrestart ? 'Sign-in' : 'Look'}</Link>
-        </div>
-      )}
-      {!loading && canPrestart && doors.prestart && tomorrowPrestart && (
-        <div className="prestart-row prestart-row--done">
-          <span>Tomorrow&rsquo;s prestart is ready · {fmtDate(tomorrowPrestart.date)}</span>
-          <Link href={`/prestart/${tomorrowPrestart.id}`}>Look it over</Link>
         </div>
       )}
 
