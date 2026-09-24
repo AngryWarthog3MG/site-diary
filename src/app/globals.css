@@ -3316,6 +3316,14 @@ body {
 .gaplist__doors { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.4rem; }
 .gaplist__door, a.gaplist__door { text-decoration: none; }
 
+/* The register item on a day's variation (README R100). */
+.vreg { margin: 0.35rem 0 0.6rem; padding: 0.55rem 0.7rem; border: 1px dashed var(--ink-12); border-radius: 8px; font-size: 0.9rem; }
+.vreg__line { margin: 0; }
+.vreg__facts { color: var(--ink-60); }
+.vreg__edit { margin-left: 0.6rem; font-weight: 600; }
+.vreg__form { margin-top: 0.5rem; }
+.vreg__none { margin: 0.35rem 0 0.6rem; }
+
 /* The programme (README R95). */
 .programme__shelf { margin: 1.25rem 0 0.5rem; }
 .programme__shelf .section-title { margin-bottom: 0.25rem; }

@@ -2419,6 +2419,16 @@ with the machine still to pick); and for every warning with a section, "Go to La
 the tab and scrolls to it. The review page loads the job's plant register for this; nothing about the warning rules
 changed — the TypeScript half and the SQL trigger still decide what warns.
 
+**R100. The register on the Variations tab.** The 11 September decision stands — the day carries only the register
+number; the price is agreed once, by a PM, never guessed nightly by a supervisor — but it left the supervisor's tab
+blind to the register: a row said "V-003" and nothing else. Each variation row on the review now carries its register
+item beneath the heading: the number, the name, where it stands, what it is expected to be worth or what was agreed,
+the client's reference. For anyone who keeps the registers there is "Price it" / "Edit": the name, an estimated
+value, the agreed value, the reference and notes, saved to the register through its own RPCs
+(`update_variation_register`; `set_variation_details`, which grew an estimated value — a call that does not mention the
+estimate keeps it, so the tracker is unchanged — and now opens only to register keepers). Nothing is written to the
+day's row or the signed record. A number not yet on the register says so; it registers when the day is saved. Suite 44.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;

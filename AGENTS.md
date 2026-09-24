@@ -373,7 +373,9 @@ improvising; the register once shipped dead because a live smoke test was skippe
   statuses, summary arithmetic; `warnings.ts`: what the register is quietly getting wrong about money — a variation
   valued at 0 with work behind it, days recorded against it with no hours, README R85. `load.ts` counts a corrected day
   ONCE, superseded only by a signed correction — counting every version double-counted the hours a claim is built on). Status changes only via the `set_variation_status` RPC; the name on the register and the client's reference via
-  `update_variation_register` (keepers; README R98) — the diary rows behind an entry never change. A day's variation
+  `update_variation_register` (keepers; README R98) and `set_variation_details` (keepers; grew `p_estimated_cost` +
+  `p_keep_estimate`, README R100) — the diary rows behind an entry never change. The review's Variations tab shows each
+  row's register item and lets keepers price it there (`variation-register-panel.tsx`, screen-level `RegisterCtx`). A day's variation
   is identified by its register number alone (`variations.register_seq`, picked from a dropdown of
   1–50); the trigger registers by number, never by words or a client reference. Rows on days signed
   before the column existed carry theirs through the link (`public.variation_number`) — read that,

@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, createContext, useContext } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
@@ -21,6 +21,7 @@ import {
   type ReviewPayload,
 } from '@/lib/review/schema';
 import { matchRegister, plantNeedingPrestart, prestartHref } from '@/lib/review/warning-targets';
+import { VariationRegisterPanel, type RegisterRow } from './variation-register-panel';
 import { moveDayworkToVariations } from '@/lib/review/move';
 import { SECTION_KEYS, type SectionKey } from '@/lib/extraction/schema';
 import {
@@ -126,6 +127,10 @@ const PHOTO_LABELS: Record<PhotoCategory, string> = {
   general: 'General',
 };
 
+
+/** The variation register for the Variations tab (README R100): rows, whether this person may price, a reload after a save. */
+const RegisterCtx = createContext<{ rows: RegisterRow[]; canManage: boolean; reload: () => void }>({ rows: [], canManage: false, reload: () => {} });
+
 export function ReviewScreen(props: {
   entryId: string;
   projectId: string;
@@ -144,6 +149,8 @@ export function ReviewScreen(props: {
   plantPrestarted?: string[];
   /** The job's plant register (id, name), so a warning about a machine can open its prestart form (README R99). */
   plantRegister?: Array<{ id: string; name: string }>;
+  /** Whether this person keeps the registers — prices and names on the Variations tab (README R100). */
+  canManageRegisters?: boolean;
   /** The day before and after, as recorded — back/forward from this day. */
   neighbours?: DayNeighbours;
 }) {
@@ -172,6 +179,13 @@ export function ReviewScreen(props: {
   const [error, setError] = useState<string | null>(null);
   const [showTranscript, setShowTranscript] = useState(false);
   const [activeTab, setActiveTab] = useState<ReviewTab>('labour');
+  // The variation register, for the Variations tab (README R100).
+  const [registerRows, setRegisterRows] = useState<RegisterRow[]>([]);
+  const loadRegister = useCallback(async () => {
+    const { data } = await createClient().from('variation_register').select('id, seq, title, status, estimated_cost, agreed_cost, vr_ref, notes').eq('project_id', props.projectId);
+    setRegisterRows(((data ?? []) as RegisterRow[]).map((r) => ({ ...r, estimated_cost: r.estimated_cost == null ? null : Number(r.estimated_cost), agreed_cost: r.agreed_cost == null ? null : Number(r.agreed_cost) })));
+  }, [props.projectId]);
+  useEffect(() => { void loadRegister(); }, [loadRegister]);
 
   const gaps = useMemo(() => reviewBlockingGaps(payload), [payload]);
   const qualityWarnings = useMemo(
@@ -586,6 +600,7 @@ export function ReviewScreen(props: {
   }
 
   return (
+    <RegisterCtx.Provider value={{ rows: registerRows, canManage: Boolean(props.canManageRegisters), reload: () => void loadRegister() }}>
     <main className="app-shell review-shell">
       <section className="sheet review-sheet">
         <header className="review-hero">
@@ -911,6 +926,7 @@ export function ReviewScreen(props: {
       </Link>
       </section>
     </main>
+    </RegisterCtx.Provider>
   );
 }
 
@@ -1349,6 +1365,15 @@ function DocketSection({
   );
 }
 
+/** The register item behind this variation row, from the screen's register (README R100). */
+function VariationRegisterCard({ seq }: { seq: number | null }) {
+  const { rows, canManage, reload } = useContext(RegisterCtx);
+  const row = seq == null ? null : rows.find((r) => r.seq === seq) ?? null;
+  if (seq == null) return null;
+  if (!row) return <p className="caption vreg__none">V-{String(seq).padStart(3, '0')} is not on the register yet — it is registered when the day is saved.</p>;
+  return <VariationRegisterPanel row={row} canManage={canManage} onChanged={reload} />;
+}
+
 type DocketState =
   | { status: 'reading' }
   | { status: 'done'; changes: DocketChange[]; issue: string | null }
@@ -1442,6 +1467,7 @@ function ItemCard({
           </button>
         </div>
       </header>
+      {section.group === 'variations' && <VariationRegisterCard seq={(item.register_seq as number | null) ?? null} />}
 
       {moving && (
         <div className="itemmove">
