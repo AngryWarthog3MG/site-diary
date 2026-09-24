@@ -1,0 +1,118 @@
+{
+  "code": "KBS-QA-SL-001",
+  "kind": "itr_checklist",
+  "title": "Soft Landscape Prep and Planting",
+  "revision": "A",
+  "governing_itp": "KBS_C001_ITP_002",
+  "modules": ["landscape"],
+  "source": "docs/qa-source/KBS-QA-SL-001_Soft_Landscape_Prep_and_Planting_RevA.docx",
+  "header_heading": "PROJECT & RECORD DETAILS",
+  "header_fields": [
+    { "key": "project", "label": "Project", "type": "text", "default": "Curtin University B316 Sciences Project – External Works" },
+    { "key": "subcontract_no", "label": "Subcontract No", "type": "text", "default": "270033" },
+    { "key": "head_contractor", "label": "Head Contractor", "type": "text", "default": "Lendlease Building (LLB)" },
+    { "key": "landscape_area", "label": "Landscape Area / Zone", "type": "text" },
+    { "key": "threshold", "label": "Threshold", "type": "text" },
+    { "key": "drawing_rev", "label": "Drawing / Rev", "type": "text" },
+    { "key": "finish_type", "label": "Landscape Finish Type", "type": "select", "options": ["GA01", "GA02", "GA03", "GA04", "TU01"], "note": "(circle)" },
+    { "key": "area_m2", "label": "Area (m²)", "type": "number", "unit": "m²" },
+    { "key": "planting_plan_ref", "label": "Planting Plan / Schedule Ref", "type": "text" },
+    { "key": "soil_type_supplier", "label": "Soil Type / Supplier", "type": "text" },
+    { "key": "soil_depth_mm", "label": "Soil Depth (mm)", "type": "number", "unit": "mm" },
+    { "key": "fertiliser", "label": "Fertiliser Type / Rate", "type": "text" },
+    { "key": "mulch_type_supplier", "label": "Mulch Type / Supplier", "type": "text" },
+    { "key": "mulch_depth_mm", "label": "Mulch Depth (mm)", "type": "number", "unit": "mm" },
+    { "key": "docket_batch_nos", "label": "Docket / Batch Nos", "type": "text" },
+    { "key": "date_prep_complete", "label": "Date Prep Complete", "type": "date" },
+    { "key": "date_planted", "label": "Date Planted", "type": "date" },
+    { "key": "weather_temp", "label": "Weather / Temp", "type": "text" },
+    { "key": "kbs_supervisor", "label": "KBS Supervisor", "type": "text" },
+    { "key": "rev", "label": "Rev", "type": "text", "default": "A" },
+    { "key": "inspection_notice_given", "label": "Inspection Notice Given (date/time)", "type": "datetime" }
+  ],
+  "completion_key": "Completion key: ✓ = conforms × = does not conform (raise NCR below) N/A = not applicable to this area. Hold Points shaded grey – work must not proceed past a hold point until released in writing. Minimum 24 hours' notice of inspection to be given to LLB / the Superintendent in writing.",
+  "item_columns": ["No.", "Check Description", "Reference", "Responsible", "Sign / Date", "Comments", "LLB"],
+  "sections": [
+    { "title": "A – PREPARATION – PRIOR TO SOIL PLACEMENT", "items": [
+      { "id": "1", "text": "IFC landscape drawings, planting plan, plant schedule and specification of current revision available on site", "reference": "SOW 2.2", "responsible": "ASPECT KBS", "value_type": "text", "value_label": "Comments" },
+      { "id": "2", "text": "Work area inspected and formally accepted prior to taking possession – levels, surface condition and pre-existing defects notified in writing", "reference": "SOW 2.2.1.4 SOW 2.2.1.22", "responsible": "KBS", "value_type": "text", "value_label": "Comments" },
+      { "id": "3", "text": "Subgrade ripped / scarified for tree planting where required by design documentation", "reference": "SOW 2.2.3.19", "responsible": "KBS", "value_type": "text", "value_label": "Comments" },
+      { "id": "4", "text": "Subgrade graded to falls – free draining, no ponding, no smeared or sealed surfaces", "reference": "SOW 2.2.1.3", "responsible": "KBS", "value_type": "text", "value_label": "Comments" },
+      { "id": "5", "text": "Subsoil drainage installed where shown on landscape (ASPECT) and/or civil (WSP) drawings; outlets connected and clear", "reference": "SOW 2.2.1.24", "responsible": "KBS", "value_type": "text", "value_label": "Comments" },
+      { "id": "6", "text": "Spoil managed – stockpiles controlled and protected, or excess spoil removed", "reference": "SOW 2.2.1.8", "responsible": "KBS", "value_type": "text", "value_label": "Comments" }
+    ] },
+    { "title": "B – PLANTER PREPARATION – GA03 / GA04 / INTERNAL PLANTERS", "items": [
+      { "id": "7", "text": "Waterproof membrane / lining verified intact and undamaged prior to overlay; protection layer in place", "reference": "SOW 2.2.4.2", "responsible": "KBS", "value_type": "text", "value_label": "Comments" },
+      { "id": "8", "text": "Drainage cell, reservoir layer and filter fabric installed to detail – laps, upturns and terminations correct", "reference": "SOW 2.2.4.4", "responsible": "KBS", "value_type": "text", "value_label": "Comments" },
+      { "id": "9", "text": "Washed sand and lightweight soil mix supplied and placed in line with design documentation", "reference": "SOW 2.2.4.1", "responsible": "KBS", "value_type": "text", "value_label": "Comments" },
+      { "id": "10", "text": "Planter drainage outlets clear and functional; discharge point confirmed and free flowing", "reference": "SOW 2.2.4.4", "responsible": "KBS", "value_type": "text", "value_label": "Comments" },
+      { "id": "11", "text": "Planter build-up inspected and approved prior to placing growing medium", "reference": "—", "responsible": "KBS / LLB", "hold_point": true, "notice": "■ HOLD POINT – 24 hrs notice to LL", "value_type": "text", "value_label": "Comments" }
+    ] },
+    { "title": "C – GROWING MEDIUM – SOIL & AMELIORANTS", "items": [
+      { "id": "12", "text": "Soil supplier conformance certificate / laboratory test results submitted and approved prior to delivery", "reference": "AS 4419", "responsible": "KBS", "value_type": "text", "value_label": "Comments" },
+      { "id": "13", "text": "Garden beds backfilled with approved imported topsoil only – no site spoil or unsuitable material used", "reference": "SOW 2.2.3.16", "responsible": "KBS", "value_type": "text", "value_label": "Comments" },
+      { "id": "14", "text": "Soil improver incorporated at specified rate (nom. 200 mm depth through top 300 mm depth, or as documented)", "reference": "Annexure B Rates", "responsible": "KBS", "value_type": "text", "value_label": "Comments" },
+      { "id": "15", "text": "Growing medium placed and graded to design levels and falls; finished flush with adjacent surfaces allowing for full mulch depth", "reference": "SOW 2.2.3.18 SOW 2.2.4.6", "responsible": "KBS", "value_type": "text", "value_label": "Comments" },
+      { "id": "16", "text": "Soil lightly consolidated – no over-compaction, no voids, no perched layers or interfaces", "reference": "—", "responsible": "KBS", "value_type": "text", "value_label": "Comments" },
+      { "id": "17", "text": "Turf areas: topsoil placed to specified depth, levelled, lightly rolled and free of stones and debris", "reference": "SOW 2.2.3.9", "responsible": "KBS", "value_type": "text", "value_label": "Comments" }
+    ] },
+    { "title": "D – IRRIGATION COORDINATION", "items": [
+      { "id": "18", "text": "Irrigation mainline, laterals and sleeves installed, pressure tested and approved", "reference": "01SITE-IR Dwgs", "responsible": "KBS / Irrigation", "value_type": "text", "value_label": "Comments" },
+      { "id": "19", "text": "Valve boxes, pit lids and sprinkler heads set to finished surface level, located in lawn/garden and clear of planting", "reference": "Dwg Note AK", "responsible": "KBS / Irrigation", "value_type": "text", "value_label": "Comments" },
+      { "id": "20", "text": "Sprinkler offsets to edges, walls and pavements confirmed to standard detail", "reference": "01SITEIRDT0002", "responsible": "KBS / Irrigation", "value_type": "text", "value_label": "Comments" },
+      { "id": "21", "text": "Where irrigation is not yet operational, temporary watering and maintenance plan in place and being executed", "reference": "SOW 2.2.1.25", "responsible": "KBS", "value_type": "text", "value_label": "Comments" }
+    ] },
+    { "title": "E – PLANT MATERIAL – SUPPLY & ACCEPTANCE", "items": [
+      { "id": "22", "text": "Plant stock conforms to schedule – species, cultivar, quantity, pot / container size", "reference": "Planting Schedule", "responsible": "KBS", "value_type": "text", "value_label": "Comments" },
+      { "id": "23", "text": "Mature and advanced tree stock supplied at heights nominated in landscape drawings and specification", "reference": "SOW 2.2.3.8", "responsible": "KBS", "value_type": "text", "value_label": "Comments" },
+      { "id": "24", "text": "Stock inspected on delivery – healthy, true to name, well established, free of pest, disease and weed", "reference": "AS 2303", "responsible": "KBS", "value_type": "text", "value_label": "Comments" },
+      { "id": "25", "text": "Plants stored, shaded and watered on site prior to planting; materials protected from damage", "reference": "SOW 2.2.3.11", "responsible": "KBS", "value_type": "text", "value_label": "Comments" },
+      { "id": "26", "text": "Plant stock inspected and accepted by LL prior to planting", "reference": "—", "responsible": "KBS / LLB", "hold_point": true, "notice": "■ HOLD POINT – 24 hrs notice to LL", "value_type": "text", "value_label": "Comments" }
+    ] },
+    { "title": "F – PLANTING", "items": [
+      { "id": "27", "text": "Planting holes excavated to minimum twice rootball width; sides and base scarified, not glazed or smeared", "reference": "—", "responsible": "KBS", "value_type": "text", "value_label": "Comments" },
+      { "id": "28", "text": "Plants set plumb and at correct depth – root collar flush with finished soil level, not buried or proud", "reference": "—", "responsible": "KBS", "value_type": "text", "value_label": "Comments" },
+      { "id": "29", "text": "Backfill with approved topsoil placed and firmed in layers not exceeding 150 mm; no air voids", "reference": "01B3161 Trees", "responsible": "KBS", "value_type": "text", "value_label": "Comments" },
+      { "id": "30", "text": "Trees: minimum 300 mm thick topsoil mixture around root ball, compacted to density of surrounding soil", "reference": "01B3161 Trees", "responsible": "KBS", "value_type": "text", "value_label": "Comments" },
+      { "id": "31", "text": "All planting watered in thoroughly immediately after backfilling", "reference": "01B3161 Trees", "responsible": "KBS", "value_type": "text", "value_label": "Comments" },
+      { "id": "32", "text": "Tree stakes and ties installed to detail – stakes clear of rootball, ties non-abrasive and not girdling", "reference": "SOW 2.2.3.1", "responsible": "KBS", "value_type": "text", "value_label": "Comments" },
+      { "id": "33", "text": "Planting densities, spacings and setout as per planting plan and schedule", "reference": "Planting Plan", "responsible": "KBS", "value_type": "text", "value_label": "Comments" },
+      { "id": "34", "text": "Turf laid – joints staggered and close butted, no gaps or overlaps, rolled and watered in (TU01 and trenched areas)", "reference": "SOW 2.2.2.2", "responsible": "KBS", "value_type": "text", "value_label": "Comments" }
+    ] },
+    { "title": "G – MULCH, EDGING & FINISHES", "items": [
+      { "id": "35", "text": "Mulch type and sample submitted and approved prior to delivery", "reference": "SOW 2.2.3.15", "responsible": "KBS", "value_type": "text", "value_label": "Comments" },
+      { "id": "36", "text": "Mulch placed evenly to specified depth (nom. 75 mm or as documented) and kept clear of plant stems and tree trunks", "reference": "Annexure B Rates", "responsible": "KBS", "value_type": "text", "value_label": "Comments" },
+      { "id": "37", "text": "Gravel mulch areas – filter fabric, gravel and screed installed in line with design documentation", "reference": "SOW 2.2.1.24", "responsible": "KBS", "value_type": "text", "value_label": "Comments" },
+      { "id": "38", "text": "Transitions to pre-existing landscape areas blended; no abrupt level changes", "reference": "SOW 2.2.1.6", "responsible": "KBS", "value_type": "text", "value_label": "Comments" }
+    ] },
+    { "title": "H – COMPLETION & HANDOVER", "items": [
+      { "id": "39", "text": "Finished levels and profile verified against architectural, landscape and civil drawings, within specified tolerances", "reference": "SOW 2.2.1.3", "responsible": "KBS", "value_type": "text", "value_label": "Comments" },
+      { "id": "40", "text": "Work area cleaned down – surplus material removed, hard surfaces swept, rubbish and debris cleared", "reference": "SOW 2.2.1.11", "responsible": "KBS", "value_type": "text", "value_label": "Comments" },
+      { "id": "41", "text": "Damaged or dead plant stock replaced; make good of new and pre-existing beds complete", "reference": "SOW 2.2.3.10 SOW 2.2.2.4", "responsible": "KBS", "value_type": "text", "value_label": "Comments" },
+      { "id": "42", "text": "Records compiled – delivery dockets, conformance certificates, soil test results, photographic record, survey setout", "reference": "SOW 2.2.1.21", "responsible": "KBS", "value_type": "text", "value_label": "Comments" },
+      { "id": "43", "text": "Protection to plants and completed areas in place and to remain until Practical Completion", "reference": "SOW 2.2.3.11", "responsible": "KBS", "value_type": "text", "value_label": "Comments" },
+      { "id": "44", "text": "Completed works inspected and accepted by LL", "reference": "—", "responsible": "KBS / LLB", "hold_point": true, "notice": "■ HOLD POINT – 24 hrs notice to LL", "value_type": "text", "value_label": "Comments" }
+    ] }
+  ],
+  "sub_register": {
+    "heading": "NON-CONFORMANCES / DEFECTS RAISED & CLOSED OUT",
+    "rows_printed": 4,
+    "columns": [
+      { "key": "item", "label": "Item", "type": "text" },
+      { "key": "description", "label": "Description of Non-Conformance / Defect", "type": "text" },
+      { "key": "ncr_no", "label": "NCR No.", "type": "text" },
+      { "key": "date_raised", "label": "Date Raised", "type": "date" },
+      { "key": "closed_signed", "label": "Closed / Signed", "type": "text" }
+    ]
+  },
+  "certification": "This is to certify that the above results are a true record of the inspection, that ALL defects have been rectified to the acceptance of Lendlease Building and the Landscape Consultant, and that the soft landscape preparation and planting works comply with the requirements of the Subcontract, the Specification, the design documentation and the relevant Australian Standards.",
+  "signoffs": [
+    { "party": "Inspected by – KBS Supervisor", "required": true, "kind": "internal" },
+    { "party": "Accepted by – KBS Project Manager", "required": true, "kind": "internal" },
+    { "party": "Witnessed by – LLB Site Manager", "required": true, "kind": "external", "is_release": true },
+    { "party": "Reviewed by – Landscape Consultant (ASPECT)", "required": true, "kind": "external" }
+  ],
+  "signoff_fields": ["Name:", "Signature:", "Date:"],
+  "hold_point": true,
+  "footer": "The acceptance of this Certificate does not relieve the Suppliers, Contractor or Subcontractor of their Statutory and Contractual responsibilities."
+}

@@ -2357,6 +2357,37 @@ Kept by the supervisor and the office (`app.can_keep_programme`); read by every 
 leading hand, behind the record read lock — the programme is what the crew works to. Nothing reads the file's
 contents: it opens as uploaded, by a signed link minted when tapped. Suite 41.
 
+**R96. The QA engine: ITPs, ITRs and site forms from one template shape.** Kooboolong's paper QA system — the
+inspection and test plan for a package, the inspection and test record completed for every element or lot, the pour
+and compaction registers, the site-pack forms — reproduced digitally, without a React component per form. One template
+shape (`src/lib/qa/model.ts`, `qa_templates.spec`) describes any of them: header fields; sections of items each with
+its wording, reference, responsible party and value type; register columns; the sign-off parties with which of them
+release a hold point; and for an ITP, the activities with their governing documents, acceptance criteria, records and
+the H / W / R mark per inspecting party. The transcriptions of the forms on hand live in `docs/qa-templates/` (one JSON
+per revision, item for item, wording untouched — it is contractual) and load through `scripts/qa-seed-templates.mjs`.
+
+Three tables. `qa_templates` is company data, kept by the office, versioned: a revision is edited until it is issued,
+then frozen (`app.qa_template_problems`, the SQL twin of `templateProblems`, refuses a malformed one on the way in);
+the next wording is the next revision, and a record keeps the revision it was completed against. `qa_itp_instances` is
+one ITP revision on one job: draft → issued to the head contractor → approved (who, when, the countersigned file) →
+signed; forward only; signed = frozen; office only. `qa_records` is one completed ITR or site form: a CLIENT-CHOSEN id
+so the phone writes it with no signal and upserts it later exactly once; header, item results (`ok | na | gap`), register
+rows, comments, sign-offs with the signature image, each checked against the template (an item, a column, a party the
+form does not have is refused). **A gap is an answer**: nothing in the trigger blocks a save, the DB counts the gaps,
+and the office reads them. A sign-off once made is never changed or removed; when every required party has signed the
+record is frozen (`completed_at`), like a signed dayworks docket; a hold point form is released (`released_at`) only when
+every party marked `is_release` has signed; a wrong record is voided with a reason and stays readable. Photos and
+signatures sit in `entry-photos` under `{project}/qa/{record}/`, written by `app.can_write_qa` (supervisor, leading
+hand, pm, admin) and read under the bucket's record-media policy.
+
+What was NOT replaced. The brief's `hold_point_checks`, `prepour_checklists`, `pour_loads` and `compaction_tests` never
+existed in this app; its `pours` is the diary's pour register, a child of the signed day, and stays. The R66 quality
+tables — `itps`, `itp_points`, `lots`, `lot_checks`, `hold_point_releases`, `ncrs` — are the lot-based conformance
+engine with Spec 201's rules (a failed check holds the lot, no testing until an NCR is open, a rework lot is renumbered);
+the new engine is how a FORM is written and signed, and a record may name the ITP instance and activity it evidences.
+Both stand; a later step can draw a lot's checks from its records. Built as phase 1 — engine, templates, record tables —
+and stopped for review before any screen, as the prompt asked. Suite 42.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;

@@ -1,0 +1,135 @@
+{
+  "code": "KBS_C001_ITP_001",
+  "kind": "itp",
+  "title": "Concrete Foot Paths (Type 5,6,8)",
+  "revision": "B",
+  "modules": ["core", "landscape"],
+  "source": "docs/qa-source/01SITE-HL-ITP-001[B].docx",
+  "document_title": "INSPECTION AND TEST PLAN (ITP)",
+  "project_info": [
+    { "key": "project_name", "label": "Project Name", "value": "Curtin B316 Sciences Project" },
+    { "key": "location", "label": "Location", "value": "Curtin University, Brand Drive & Hayman rd, Bentley, Western Australia" },
+    { "key": "scope_overview", "label": "Scope Overview", "value": "Concrete Foot Paths (Type 5,6,8)" },
+    { "key": "subcontractor", "label": "Subcontractor", "value": "Kooboolong Services" },
+    { "key": "trade_package", "label": "Trade Package", "value": "Hard Land Scaping" },
+    { "key": "itp_ref", "label": "ITP Ref.", "value": "KBS_C001_ITP_001" },
+    { "key": "revision", "label": "Revision", "value": "B" },
+    { "key": "date", "label": "Date", "value": "20/02/2026" },
+    { "key": "lot_location", "label": "Lot/Location", "value": "" }
+  ],
+  "approval": {
+    "heading": "LENDLEASE APPROVAL",
+    "party": "Lendlease Approval",
+    "fields": [
+      { "key": "name", "label": "Name", "type": "text" },
+      { "key": "position", "label": "Position", "type": "select", "options": ["PM", "SM", "Other (specify)"] },
+      { "key": "signature", "label": "Signature", "type": "signature" },
+      { "key": "date", "label": "Date", "type": "date" },
+      { "key": "initial", "label": "Initial", "type": "text" }
+    ]
+  },
+  "reference_docs": {
+    "heading": "REFERENCE DOCUMENTATION",
+    "specifications": {
+      "heading": "Project Specifications and Drawings",
+      "columns": ["Specification Number", "Specification Title"],
+      "rows": [
+        ["01SITE-C-SPE00107", "Civil Specifications"],
+        ["01SITE-C-RW0047", "CIVIL AND PAVEMENT DETAILS"],
+        ["01SITE-C-GN0003", "General Notes"]
+      ]
+    },
+    "standards": {
+      "heading": "Referenced Standards",
+      "columns": ["Standard Reference", "Standard Title"],
+      "rows": [
+        ["AS 1379", "Specification and supply of concrete"],
+        ["AS 3600", "Concrete structures"],
+        ["AS 1012", "Methods of testing concrete"],
+        ["AS 3798", "Guidelines on earthworks for commercial & residential developments"],
+        ["AS 1289", "Methods of testing soils"],
+        ["AS 4671", "Steel reinforcing materials"]
+      ]
+    },
+    "checklists": {
+      "heading": "Associated Checklists or Inspection Reports",
+      "columns": ["Checklist Reference", "Checklist Title"],
+      "rows": []
+    }
+  },
+  "activity_columns": ["Description of required activity", "Governing specification or standard", "Acceptance Criteria", "Record of compliance/ completion"],
+  "inspection_legend": "Type of Inspection H = HOLD W = WITNESS R = REVIEW",
+  "parties": ["Kooboolong", "Lendlease", "WSP", "Aspect"],
+  "activities": [
+    { "no": "1", "group": "GENERAL", "activity": "Review SOW, SWMS, drawings and associated Specifications.",
+      "governing": ["Contract & SOW"],
+      "criteria": ["Contractual accepted specifications& Approved SWMS"],
+      "record": ["Prior to works commencing"],
+      "inspection": { "Kooboolong": "H, R", "Lendlease": "H, R", "WSP": "", "Aspect": "" } },
+    { "no": "2", "group": "GENERAL", "activity": "Subgrade handover (by others)",
+      "governing": ["01SITE-C-SPE00107", "AS3798 Table 5.1", "01SITE-C-RW0047", "01SITE-C-GN0003"],
+      "criteria": ["Surface firm, level, and free of soft spots", "No standing water or unsuitable material", "Subgrade compacted to ≥95% MMDD"],
+      "record": ["Prior to works commencing/", "NATA Compaction Records", "Photos"],
+      "inspection": { "Kooboolong": "H", "Lendlease": "H", "WSP": "R", "Aspect": "" } },
+    { "no": "3", "group": "SUBBASE & BEDDING", "activity": "Material",
+      "governing": ["01SITE-C-SPE00107", "01SITE-C-RW0047", "01SITE-C-GN0003"],
+      "criteria": ["Subbase", "Subbase material meets project requirements (clean, free of organics, correct grading)", "Subbase material achieves minimum CBR 45%", "Bedding Course Sand", "Bedding sand is clean, coarse, free from organics"],
+      "record": ["Material Certificate/Report", "Delivery dockets"],
+      "inspection": { "Kooboolong": "W", "Lendlease": "W", "WSP": "R", "Aspect": "" } },
+    { "no": "4", "group": "SUBBASE & BEDDING", "activity": "Placement & Compaction",
+      "governing": ["01SITE‑C‑SPE00107", "01SITE‑C‑GN0003", "AS 1289.5.2.1", "AS 3798", "01SITE‑C‑RW0047"],
+      "criteria": ["Subbase", "Placed in uniform layers (≤150 mm compacted thickness)", "Compaction ≥ 95% Modified (AS1289.5.2.1)", "Subbase material moisture content to be maintained within OMC ±2%", "Surface trimmed to tolerance: +10 / −25 mm per civil spec subbase tolerances", "No contamination or segregation", "Bedding Course Sand", "Spread evenly to 50mm ±10 mm thickness", "No soft spots, voids, ruts or moisture pockets", "Graded smooth and level prior to reinforcement placement"],
+      "record": ["NATA Compaction Records", "Survey Ascons", "Photos"],
+      "inspection": { "Kooboolong": "W", "Lendlease": "W", "WSP": "W", "Aspect": "" } },
+    { "no": "5", "group": "CONCRETE WORKS", "activity": "Concrete Supply",
+      "governing": ["01SITE-C-SPE00107", "01SITE‑C‑GN0003", "01SITE-C-RW0047", "AS 3600", "AS 1012"],
+      "criteria": ["Concrete Mix Requirements:", "N25 Concrete Grade (minimum)", "SL Cement Type", "No breccia type aggregate permitted", "20mm Nominal Aggregate Size", "Slump ≤100 mm", "Concrete must comply with AS 3600 (structural concrete)", "No unauthorised water addition on site"],
+      "record": ["Mix Design", "Delivery Docket", "NATA Report"],
+      "inspection": { "Kooboolong": "H", "Lendlease": "R", "WSP": "", "Aspect": "" } },
+    { "no": "6", "group": "CONCRETE WORKS", "activity": "Formwork",
+      "governing": ["01SITE‑C‑SPE00107"],
+      "criteria": ["Formwork Set to correct RLs, finished surface levels, and crossfalls as shown on drawings", "Formwork straight, rigid, braced and free from distortion", "Internal faces smooth and clean to ensure uniform finish"],
+      "record": ["Pre-Pour Check", "Photos"],
+      "inspection": { "Kooboolong": "W", "Lendlease": "W", "WSP": "W", "Aspect": "" } },
+    { "no": "7", "group": "CONCRETE WORKS", "activity": "Reinforcement",
+      "governing": ["AS 4671", "AS 3600", "01SITE‑C‑GN0003"],
+      "criteria": ["Reinforcement clean and free of rust, scale, oil, mud, paint or contaminants", "Reinforcement installed to design", "Mesh supported on approved chairs/spacers to achieve correct cover", "Top cover: 40 mm", "Bottom cover: 50 mm", "Mesh overlaps per GN0003 reinforcement notes:", "Laps to include cross‑wire and meet the minimum lengths per mesh standards (typically 225 mm) unless otherwise shown", "Mesh placed centrally in slab depth unless otherwise detailed", "Tie wires used where required to maintain spacing and stability"],
+      "record": ["Material Certificate", "Pre-Pour Check", "Photos"],
+      "inspection": { "Kooboolong": "W", "Lendlease": "W", "WSP": "W", "Aspect": "" } },
+    { "no": "8", "group": "CONCRETE WORKS", "activity": "Concrete Placement & Finishing",
+      "governing": ["01SITE-C-SPE00107", "01SITE-C-RW0047", "01SITE‑C‑GN0003"],
+      "criteria": ["Concrete placed to full depth without segregation or excessive freefall", "Vibrators used throughout placement to ensure full compaction", "Concrete spread evenly and continuously to avoid cold joints", "Slump tested and confirmed ≤ 100 mm maximum and Compressive Strength Cylinders Taken (7 Day & 28 Day)", "Concrete screeded to the required cross-section profile, free of depressions or high areas", "Surface closed and shaped uniformly", "Edges neatly finished along formwork lines", "Any transitions or adjoining pavement edges matched to drawings"],
+      "record": ["Photos"],
+      "inspection": { "Kooboolong": "W", "Lendlease": "W", "WSP": "R", "Aspect": "" } },
+    { "no": "9", "group": "CONCRETE WORKS", "activity": "Jointing",
+      "governing": ["01SITE-C-SPE00107", "01SITE‑C‑GN0003"],
+      "criteria": ["Expansion Joints Expansion joints at maximum 6.0 m centres 10 mm Abelflex with rip‑off strip adhered to previously cast concrete face", "Contraction Joints Maximum spacing = 1.5 × the width of the footpath Joints to match kerb joints and adjacent pavements where possible", "Saw Cutting Saw‑cutting using soft‑cut saws to prevent shrinkage cracking Saw Cut Grooves Clean and free of debris"],
+      "record": ["Photos"],
+      "inspection": { "Kooboolong": "H", "Lendlease": "H", "WSP": "W", "Aspect": "" } },
+    { "no": "10", "group": "CONCRETE WORKS", "activity": "Curing",
+      "governing": ["01SITE-C-SPE00107", "01SITE-C-RW0047", "AS 3600", "01SITE‑C‑GN0003"],
+      "criteria": ["7 Day minimum Curing Period", "Concrete cured using approved non-oil-based curing compound, or clear plastic sheet covering slab", "Entire surface to be uniformly covered / coated"],
+      "record": ["Photos"],
+      "inspection": { "Kooboolong": "W", "Lendlease": "W", "WSP": "R", "Aspect": "" } },
+    { "no": "11", "group": "CONCRETE WORKS", "activity": "Final Inspection",
+      "governing": ["01SITE-C-SPE00107", "01SITE-C-RW0047"],
+      "criteria": ["Footpath finish is uniform, smooth, and true to profile.", "Surface is free of defects, including honeycombing, segregation, surface tearing, excessive trowel marks, and edge damage.", "No unplanned cracking present.", "Footpath width, alignment, and levels comply with design requirements", "Crossfall and surface profile meet drawing requirements with no ponding or deformation.", "All joints installed in the correct design locations and matching adjacent kerb/pavement joints where applicable.", "NCRs Closed (If Applicable)"],
+      "record": ["Ascon Survey", "Photos", "NATA Report (Slump & Compressive Strength)"],
+      "inspection": { "Kooboolong": "H", "Lendlease": "H", "WSP": "H", "Aspect": "H" } }
+  ],
+  "acceptance": {
+    "heading": "Reviewed and accepted by:",
+    "parties": ["Earthworks – Kooboolong Services", "Lendlease"],
+    "fields": [
+      { "key": "name", "label": "Name:", "type": "text" },
+      { "key": "position", "label": "Position/Title:", "type": "text" },
+      { "key": "date", "label": "Date:", "type": "date" },
+      { "key": "signature", "label": "Signature:", "type": "signature" }
+    ]
+  },
+  "signoffs": [
+    { "party": "Earthworks – Kooboolong Services", "required": true, "kind": "internal" },
+    { "party": "Lendlease", "required": true, "kind": "external", "is_release": true }
+  ],
+  "hold_point": true
+}

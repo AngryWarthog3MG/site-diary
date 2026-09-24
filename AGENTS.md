@@ -342,6 +342,15 @@ improvising; the register once shipped dead because a live smoke test was skippe
   folder), bucket `programmes` `{project}/{id}.ext` (file first then row; a refused row clears its file; the orphan
   check walks it). Keeping = `app.can_keep_programme` (supervisor/pm/admin); reads = every member behind `reads_record`,
   leading hand included. `/programme` is screen `programme`, under Site. Suite 41
+- `src/lib/qa/` — the QA engine (README R96), PHASE 1 ONLY (no screens yet): `model.ts` (`templateProblems` — the TS half
+  of `app.qa_template_problems`, `blanksAsGaps`, `gapCount`, `signoffsComplete`, `released`, `recordState`, `nextRevision`,
+  `templateCounts`). Tables `qa_templates` (company; `spec` jsonb is the form; issued = frozen, next wording = next revision),
+  `qa_itp_instances` (one ITP revision per job; draft → issued → approved → signed, forward only; office only), `qa_records`
+  (client-chosen id, upsert; items ok | na | gap checked against the form; sign-offs never removed; frozen at
+  `completed_at`, released at `released_at`; voided never deleted). Writes = `app.can_write_qa`; files under
+  `entry-photos/{project}/qa/{record}/`. Transcribed forms in `docs/qa-templates/` (wording is contractual — never
+  paraphrase), sources in `docs/qa-source/`, loader `scripts/qa-seed-templates.mjs <ORG>`. The R66 quality tables stand
+  beside it. Suite 42
 - `src/lib/calendar.ts` — `isRestDay`: weekends with nothing recorded are rest days, not holes. One definition for
   the screens, the weekly and the reminder
 - `src/lib/dayworks/` — the dayworks schedule (README R72): `schedule.ts` (pure: `readRange`, `buildSchedule` by Monday weeks,
