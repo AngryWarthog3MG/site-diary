@@ -20,8 +20,7 @@ export default async function LoginPage({
         </div>
         <h1 className="page-title">Sign in</h1>
         <p className="page-subtitle">
-          No password. Scan the QR your site admin gives you, or send yourself a fallback
-          link and open it on this phone.
+          Type your email. A link comes back — tap it and you are in. No password.
         </p>
         <hr className="rule" />
         <LoginForm next={next} initialError={params.error} />

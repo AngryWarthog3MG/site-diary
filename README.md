@@ -2441,6 +2441,19 @@ small one goes; (6) the drawer lists sections by name, what each is for waits un
 what is recorded or who may see it; it changes how much is on the glass at once. The pieces: `src/components/fold.tsx`,
 `src/components/read-more.tsx`, the review card's `expanded` state, and the phone block in `globals.css`.
 
+**R102. Add an email, give a title, they sign in.** "Forget about all this sign up stuff. I add someone's email, I
+assign them a title and they then log in. It should be that simple." The members screen had three ways to get a
+person on: a form with name, email and role; a textarea for several at once; and printable sign-in cards with a QR
+each. Three ways is two too many for a screen an admin sees once a job, and the login screen explained all three to
+the person arriving. Now there is one: their email and their title (the role, under the word people use), a name if
+you have it — otherwise they are asked once, R70 — and Add. The account is made on the spot if none exists, and a
+note goes to that address from the app saying the three things they need: open kbsdailydiary.me, type this email, tap
+the link. The note is not part of the record and its failure is not a failure — the membership is already written,
+and the screen's message says whether it went or what to tell them instead (`src/lib/members/welcome.ts`, R102's one
+new file). The login screen says as much and no more: type your email, a link comes back, tap it. The bulk route and
+the cards route still exist for a terminal — nothing that worked was removed — but no screen offers them, because a
+door you have to explain is a door too many.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;

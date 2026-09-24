@@ -116,9 +116,6 @@ export function MembersForm({
   const [email, setEmail] = useState('');
   const [name, setName] = useState('');
   const [role, setRole] = useState<MemberRole>('supervisor');
-  const [lines, setLines] = useState('');
-  const [bulkRole, setBulkRole] = useState<MemberRole>('labourer');
-  const [bulk, setBulk] = useState<null | { added: number; results: Array<{ email: string; name: string | null; outcome: string; detail?: string }> }>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -148,20 +145,6 @@ export function MembersForm({
     } catch {
       setError('No signal.');
       return false;
-    } finally {
-      setBusy(null);
-    }
-  }
-
-  async function addSeveral() {
-    setBusy('bulk');
-    try {
-      const res = await fetch(`/api/projects/${projectId}/members/bulk`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ lines, role: bulkRole }) });
-      const json = (await res.json().catch(() => null)) as { added?: number; results?: Array<{ email: string; name: string | null; outcome: string; detail?: string }>; error?: { message?: string } } | null;
-      if (!res.ok || !json?.results) { setNotice(json?.error?.message ?? 'That did not save.'); return; }
-      setBulk({ added: json.added ?? 0, results: json.results });
-      setLines('');
-      router.refresh();
     } finally {
       setBusy(null);
     }
@@ -258,22 +241,10 @@ export function MembersForm({
       {canEdit && (
         <>
           <hr className="rule" />
-          <p className="label">Add member</p>
+          <p className="label">Add someone</p>
           <p style={{ margin: '0.5rem 0 0', color: 'var(--ink-60)', fontSize: '0.875rem' }}>
-            An email address is enough. If they have no account yet one is made for them, and they sign in with that
-            address on their own phone — nothing to send. Their name goes on the sheets; put it in now, or they will be
-            asked for it the first time they open the app.
+            Their email and their title. They open the app, type that email, tap the link that comes back, and they are in — nothing to send, no password, no sign-up.
           </p>
-          <label className="fieldcell" style={{ marginTop: '0.75rem' }}>
-            <span className="label">Name</span>
-            <input
-              className="field field--sm"
-              autoComplete="name"
-              value={name}
-              onChange={(event) => setName(event.target.value)}
-              placeholder="As it should print on the sheets"
-            />
-          </label>
           <label className="fieldcell" style={{ marginTop: '0.75rem' }}>
             <span className="label">Email</span>
             <input
@@ -288,7 +259,7 @@ export function MembersForm({
             />
           </label>
           <label className="fieldcell" style={{ marginTop: '0.75rem' }}>
-            <span className="label">Role</span>
+            <span className="label">Title</span>
             <select
               className="field field--sm"
               value={role}
@@ -301,52 +272,24 @@ export function MembersForm({
               ))}
             </select>
           </label>
+          <label className="fieldcell" style={{ marginTop: '0.75rem' }}>
+            <span className="label">Name (optional — it prints on the sheets)</span>
+            <input
+              className="field field--sm"
+              autoComplete="name"
+              value={name}
+              onChange={(event) => setName(event.target.value)}
+              placeholder="If you leave it, they are asked once"
+            />
+          </label>
           <button
             className="button"
             type="button"
             disabled={busy !== null || !email.trim()}
             onClick={() => void addMember()}
           >
-            {busy === 'add' ? 'Adding...' : 'Add member'}
+            {busy === 'add' ? 'Adding...' : 'Add them'}
           </button>
-
-          <hr className="rule" />
-          <p className="label">Add several at once</p>
-          <p style={{ margin: '0.5rem 0 0', color: 'var(--ink-60)', fontSize: '0.875rem' }}>
-            One person per line — a name and an email address. Anyone without an account gets one; anyone already on the job is left as they are.
-          </p>
-          <textarea className="field field--sm" rows={6} value={lines} placeholder={'Sam Nguyen sam@example.com\nPriya Patel <priya@example.com>\ndanny@example.com'} onChange={(e) => setLines(e.target.value)} />
-          <label className="fieldcell" style={{ marginTop: '0.75rem' }}>
-            <span className="label">Role for everyone on the list</span>
-            <select className="field field--sm" value={bulkRole} onChange={(e) => setBulkRole(e.target.value as MemberRole)}>
-              {ROLES.map((option) => <option key={option} value={option}>{ROLE_LABEL[option]}</option>)}
-            </select>
-          </label>
-          <button className="button" type="button" disabled={busy !== null || !lines.trim()} onClick={() => void addSeveral()}>
-            {busy === 'bulk' ? 'Adding…' : 'Add everyone on the list'}
-          </button>
-          {bulk && (
-            <div className="notice" style={{ marginTop: '0.75rem' }}>
-              <p style={{ margin: 0 }}><strong>{bulk.added}</strong> added as {ROLE_LABEL[bulkRole].toLowerCase()}{bulk.added === 1 ? '' : 's'}.</p>
-              <ul className="gaplist">
-                {bulk.results.map((r) => (
-                  <li key={r.email}>{r.name ? `${r.name} · ` : ''}{r.email} — {r.outcome === 'added' ? 'added' : r.outcome === 'already' ? `already on the job as ${r.detail}` : r.outcome === 'invalid' ? 'not an email address' : `failed: ${r.detail}`}</li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          <hr className="rule" />
-          <p className="label">Sign-in cards</p>
-          <p style={{ margin: '0.5rem 0 0', color: 'var(--ink-60)', fontSize: '0.875rem' }}>
-            One printable card per person with a QR code that signs them in. Each code works once and expires in about
-            an hour, so print the pack with the crew in front of you.
-          </p>
-          <div className="photo-add-pair" style={{ marginTop: '0.5rem' }}>
-            <a className="button button--quiet" style={{ marginTop: 0 }} href={`/settings/members/cards?project=${projectId}&role=labourer`} target="_blank" rel="noopener">Cards for labourers</a>
-            <a className="button button--quiet" style={{ marginTop: 0 }} href={`/settings/members/cards?project=${projectId}`} target="_blank" rel="noopener">Cards for everyone</a>
-          </div>
-          <p className="caption" style={{ marginTop: '0.5rem' }}>From a terminal: <code>npm run signin -- --project {projectRef} --qr-pack --role labourer</code></p>
         </>
       )}
     </>

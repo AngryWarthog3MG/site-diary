@@ -82,8 +82,8 @@ export default async function MembersPage({
             <p className="label">{current.project.name}</p>
             <h1 className="page-title">Members</h1>
             <p className="page-subtitle">
-              Who is on this job and what each person may open. The role says what they can do; the tick boxes under
-              Access say which screens they see.
+              Who is on this job. Add someone with their email and a title; they sign in with that email. The title
+              says what they can do; the tick boxes under Access say which screens they see.
             </p>
           </div>
         </header>

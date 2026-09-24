@@ -1,7 +1,8 @@
 import { fail, ok, readJson, requireApiUser, isUuid } from '@/lib/api';
 import { createAdminClient } from '@/lib/supabase/admin';
 import type { MemberRole } from '@/types/database';
-import { SCREENS, grantableScreens, type Screen } from '@/lib/roles';
+import { ROLE_LABEL, SCREENS, grantableScreens, type Screen } from '@/lib/roles';
+import { sendWelcome } from '@/lib/members/welcome';
 import { cleanName } from '@/lib/people/name';
 
 const ROLES = new Set<MemberRole>(['supervisor', 'leading_hand', 'labourer', 'pm', 'admin']);
@@ -66,9 +67,8 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
     return fail('bad_request', 'Pick a role.', 400);
   }
 
-  // An email is enough (README R88). No account yet: one is made, confirmed,
-  // with no email sent — they sign in with the address, by the link the login
-  // screen sends them or a printed card. A name given here goes on the sheets
+  // An email is enough (README R88, R102). No account yet: one is made, confirmed;
+  // they sign in with the address, by the link the login screen sends them. A name given here goes on the sheets
   // from the first day (R70); it fills a blank, never overwrites the person's own.
   let userId: string | null;
   let made = false;
@@ -111,10 +111,18 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
     .insert({ project_id: projectId, user_id: userId, role: role as MemberRole });
   if (error) return fail('server_error', error.message, 500);
 
+  // Tell them (README R102): where the app is and what to type. The membership stands
+  // whether or not the note goes; the message says which happened.
+  const [{ data: project }, { data: me }] = await Promise.all([
+    auth.supabase.from('projects').select('name').eq('id', projectId).maybeSingle(),
+    auth.supabase.from('profiles').select('full_name').eq('id', auth.user.id).maybeSingle(),
+  ]);
+  const sent = await sendWelcome({ email, name, role: role as MemberRole, projectName: project?.name ?? 'the job', addedBy: me?.full_name ?? null });
+  const who = name ?? email;
   return ok({
-    message: made
-      ? `${name ?? email} is on the job as ${role}. They sign in with ${email} — no link to send.`
-      : `${email} is now a ${role}.`,
+    message: sent
+      ? `${who} is on the job as ${ROLE_LABEL[role as MemberRole]}. A note went to ${email} saying where to sign in.`
+      : `${who} is on the job as ${ROLE_LABEL[role as MemberRole]}. The note did not send — tell them: open kbsdailydiary.me and type ${email}.`,
   });
 }
 

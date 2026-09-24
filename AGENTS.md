@@ -97,7 +97,9 @@ improvising; the register once shipped dead because a live smoke test was skippe
   `crew/inductions.ts` (`peopleOnJob` = members + roster by name, `inductionRows`, `notInducted`) backs the
   inductions block on `/settings/members`, where an induction is recorded by hand — any day up to today, with
   notes; `app.crew_inductions_before_write` tidies the name and refuses a future date. Suite 35, README R88.
-  Add member (`POST /api/projects/[id]/members`) makes the account when none exists, like the bulk add
+  Add member (`POST /api/projects/[id]/members`) makes the account when none exists and sends the welcome note
+  (`src/lib/members/welcome.ts`, README R102 — email + title is the whole of adding someone; the bulk and cards routes
+  stay for a terminal but no screen offers them)
 - `src/lib/outbox/` — the forms' offline queue (prestart create/edit/sign-on/finish, toolbox sign-on/finish, plant
   check). Any new form write goes through `runOrQueue(live, queue)` with phone-chosen ids, and its replay in
   `sync.ts` (also `hc_notice`, `swms_review`, `env_monitoring`, `hc_document` — README R76; show queued items with `usePending`, and never
