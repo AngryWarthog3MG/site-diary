@@ -230,3 +230,48 @@ export function RecordOnDay({
     </div>
   );
 }
+
+
+/**
+ * The name on the register (README R98). A variation is born with the
+ * supervisor's words for its title; the office renames it once the claim has a
+ * shape, and records the client's reference. The diary rows behind it never
+ * change — this is the register's own label, through the keeper-only RPC.
+ */
+export function RenameVariation({ registerId, title, vrRef }: { registerId: string; title: string; vrRef: string | null }) {
+  const router = useRouter();
+  const [open, setOpen] = useState(false);
+  const [name, setName] = useState(title);
+  const [ref, setRef] = useState(vrRef ?? '');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function save() {
+    if (!name.trim()) { setError('A variation needs a name.'); return; }
+    setBusy(true); setError(null);
+    try {
+      const { error: rpcError } = await createClient().rpc('update_variation_register', { p_register_id: registerId, p_title: name, p_vr_ref: ref || null });
+      if (rpcError) throw new Error(rpcError.message);
+      setOpen(false);
+      router.refresh();
+    } catch (err) { setError(err instanceof Error ? err.message : 'That did not save.'); }
+    finally { setBusy(false); }
+  }
+
+  if (!open) {
+    return <button type="button" className="quotebtn vt-rename" onClick={() => { setName(title); setRef(vrRef ?? ''); setOpen(true); }}>Rename</button>;
+  }
+  return (
+    <div className="item vt-rename__form">
+      <label className="fieldcell"><span className="label">Name on the register</span>
+        <input className="field field--sm" value={name} onChange={(e) => setName(e.target.value)} placeholder="West fence comms trenching" /></label>
+      <label className="fieldcell"><span className="label">Client&rsquo;s reference (optional)</span>
+        <input className="field field--sm" value={ref} onChange={(e) => setRef(e.target.value)} placeholder="VR-0012" /></label>
+      {error && <p className="alert">{error}</p>}
+      <div className="claims-actions">
+        <button type="button" className="button" disabled={busy || !name.trim()} onClick={() => void save()}>{busy ? 'Saving…' : 'Save the name'}</button>
+        <button type="button" className="button button--quiet" disabled={busy} onClick={() => setOpen(false)}>Cancel</button>
+      </div>
+    </div>
+  );
+}

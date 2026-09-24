@@ -2402,6 +2402,14 @@ under the header, above the quick actions and the heading bar, so the three thin
 every row is a thumb high and its link is drawn as a button; and the grid tracks are `minmax(0, 1fr)` so a wide child
 can never widen the page — the reorder had briefly left the diary block inside the prestart row, which did exactly that.
 
+**R98. Renaming a variation on the register.** A register entry is born from the first diary row that names its
+number, and its title is that day's description as the supervisor said it — the right seed and usually the wrong name
+once the office has the claim in hand. The tracker now has "Rename" on an open card for anyone who keeps the registers:
+the name on the register and the client's reference, through `update_variation_register` (keeper-only, tidied, a
+blank name refused). Nothing else moves: the diary rows behind it are the signed record and never change, the number
+stays the identity, status still moves only through `set_variation_status`, and there is still no update policy on the
+table — the RPC is the one door. Suite 43.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;

@@ -9,7 +9,7 @@ import {
   type RegisterItem, type VariationStatus,
 } from '@/lib/claims/register';
 import { registerWarnings } from '@/lib/claims/warnings';
-import { RecordOnDay, RemoveVariationButton, VariationStatusControl } from '@/app/claims/variation-status';
+import { RecordOnDay, RemoveVariationButton, RenameVariation, VariationStatusControl } from '@/app/claims/variation-status';
 
 /** Whole dollars when the figure is whole; cents when it has them — never rounded away. */
 const money = (n: number | null) => (n == null ? '—' : `$${n.toLocaleString('en-AU', { minimumFractionDigits: Number.isInteger(n) ? 0 : 2, maximumFractionDigits: 2 })}`);
@@ -159,7 +159,9 @@ export function VariationTracker({ data, userId, canManage, today }: { data: Cla
 
                   {canManage ? (
                     <div className="vt-controls">
-                      <p className="label">Move it along</p>
+                      <p className="label">The name on the register</p>
+                      <RenameVariation registerId={item.id} title={item.title} vrRef={item.vr_ref} />
+                      <p className="label" style={{ marginTop: '0.9rem' }}>Move it along</p>
                       <VariationStatusControl registerId={item.id} status={item.status} vrRef={item.vr_ref} agreedCost={item.agreed_cost} notes={item.notes} needsValue={value == null} />
                       {(() => {
                         const mentioned = new Set(item.mentions.map((m) => m.entry_id));

@@ -369,7 +369,8 @@ improvising; the register once shipped dead because a live smoke test was skippe
 - `src/lib/claims/` — the claims register loader and the variation register (`register.ts`:
   statuses, summary arithmetic; `warnings.ts`: what the register is quietly getting wrong about money — a variation
   valued at 0 with work behind it, days recorded against it with no hours, README R85. `load.ts` counts a corrected day
-  ONCE, superseded only by a signed correction — counting every version double-counted the hours a claim is built on). Status changes only via the `set_variation_status` RPC. A day's variation
+  ONCE, superseded only by a signed correction — counting every version double-counted the hours a claim is built on). Status changes only via the `set_variation_status` RPC; the name on the register and the client's reference via
+  `update_variation_register` (keepers; README R98) — the diary rows behind an entry never change. A day's variation
   is identified by its register number alone (`variations.register_seq`, picked from a dropdown of
   1–50); the trigger registers by number, never by words or a client reference. Rows on days signed
   before the column existed carry theirs through the link (`public.variation_number`) — read that,
