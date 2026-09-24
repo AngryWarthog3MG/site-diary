@@ -20,6 +20,7 @@ import {
   type ReviewWeatherReading,
   type ReviewPayload,
 } from '@/lib/review/schema';
+import { matchRegister, plantNeedingPrestart, prestartHref } from '@/lib/review/warning-targets';
 import { moveDayworkToVariations } from '@/lib/review/move';
 import { SECTION_KEYS, type SectionKey } from '@/lib/extraction/schema';
 import {
@@ -141,6 +142,8 @@ export function ReviewScreen(props: {
   startedBy?: string | null;
   /** Register names of plant with a signed plant prestart on this day. */
   plantPrestarted?: string[];
+  /** The job's plant register (id, name), so a warning about a machine can open its prestart form (README R99). */
+  plantRegister?: Array<{ id: string; name: string }>;
   /** The day before and after, as recorded — back/forward from this day. */
   neighbours?: DayNeighbours;
 }) {
@@ -703,9 +706,29 @@ export function ReviewScreen(props: {
             <p>{qualityWarnings.length} warning{qualityWarnings.length === 1 ? '' : 's'} before signing.</p>
           </div>
           <ul className="gaplist">
-            {qualityWarnings.map((warning) => (
-              <li key={warning}>{WARNING_PROMPTS[warning] ?? warning}</li>
-            ))}
+            {qualityWarnings.map((warning) => {
+              const group = WARNING_GROUPS[warning];
+              const tabLabel = group ? REVIEW_TABS.find((t) => t.key === group)?.label : null;
+              const machines = warning === 'plant_without_prestart' ? plantNeedingPrestart(payload, props.plantPrestarted ?? []) : [];
+              return (
+                <li key={warning}>
+                  {WARNING_PROMPTS[warning] ?? warning}
+                  {/* Straight to the issue: the machine's own prestart form, or the section it lives in (README R99). */}
+                  <span className="gaplist__doors">
+                    {machines.map((name) => (
+                      <Link key={name} className="quotebtn gaplist__door" href={prestartHref(props.projectId, matchRegister(name, props.plantRegister ?? []))}>
+                        Do the prestart · {name}
+                      </Link>
+                    ))}
+                    {group && tabLabel && (
+                      <button type="button" className="quotebtn gaplist__door" onClick={() => { setActiveTab(group); document.querySelector('.review-tabs')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); }}>
+                        Go to {tabLabel}
+                      </button>
+                    )}
+                  </span>
+                </li>
+              );
+            })}
           </ul>
         </section>
       )}

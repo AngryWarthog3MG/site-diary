@@ -2410,6 +2410,15 @@ blank name refused). Nothing else moves: the diary rows behind it are the signed
 stays the identity, status still moves only through `set_variation_status`, and there is still no update policy on the
 table — the RPC is the one door. Suite 43.
 
+**R99. A warning is a door.** The review's quality check named the problem — "a machine worked today with no signed
+plant prestart" — and left the supervisor to find the machine, the Plant screen and the form. Each warning now carries
+where to go: for a machine with no prestart, one link per machine, "Do the prestart · Excavator", opening the plant
+check form already on that machine (`src/lib/review/warning-targets.ts`: the diary's name is matched to the register by
+the same containment rule the check itself uses, the longest register name winning; an unknown name opens the form
+with the machine still to pick); and for every warning with a section, "Go to Labour / Plant / Variations…" switches
+the tab and scrolls to it. The review page loads the job's plant register for this; nothing about the warning rules
+changed — the TypeScript half and the SQL trigger still decide what warns.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;

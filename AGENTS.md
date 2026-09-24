@@ -308,6 +308,9 @@ improvising; the register once shipped dead because a live smoke test was skippe
   is computed anywhere the Safety screen does not also compute it. A card is drawn only when it has something
   in it; the rest fold into one "Nothing needs attention" line naming what was checked (README R56). A new card
   declares its own `attention` test
+- `src/lib/review/warning-targets.ts` — a quality warning's door (README R99): `plantNeedingPrestart`, `matchRegister`
+  (diary name → register machine by containment, longest wins), `prestartHref` (`/plant/new?project=…&plant=<id>`). The
+  review page passes `plantRegister`; the screen draws a link per machine and a "Go to <section>" per warning
 - `src/lib/undo/history.ts` — undo/redo for the day's review screen only (README R79): pure `begin`/`record`/`undo`/`redo`,
   50 steps, snapshots of the whole review payload. Never offer undo over a signed entry or a frozen row — that is a correction
 - `src/lib/review/move.ts` — moving a daywork row onto its variation (README R82): pure, so it is an ordinary payload

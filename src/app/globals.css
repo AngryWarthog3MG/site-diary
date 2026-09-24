@@ -3312,6 +3312,10 @@ body {
 .vt-rename { margin-top: 0.25rem; }
 .vt-rename__form { margin: 0.35rem 0 0.5rem; }
 
+/* A quality warning's doors (README R99): the machine's prestart form, or the section. */
+.gaplist__doors { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.4rem; }
+.gaplist__door, a.gaplist__door { text-decoration: none; }
+
 /* The programme (README R95). */
 .programme__shelf { margin: 1.25rem 0 0.5rem; }
 .programme__shelf .section-title { margin-bottom: 0.25rem; }

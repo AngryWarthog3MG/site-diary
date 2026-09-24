@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { loadPlantOnJob } from '@/lib/plant/on-job';
 import { fmtDate } from '@/lib/pdf/dates';
 import { notFound, redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
@@ -68,6 +69,8 @@ export default async function ReviewPage({ params }: { params: Promise<{ id: str
   const plantPrestarted = (prestartedRows ?? [])
     .map((r) => { const p = Array.isArray(r.plant) ? r.plant[0] : r.plant; return (p as { name?: string } | null)?.name ?? ''; })
     .filter(Boolean);
+  // And the job's register, so the warning can open the prestart form on the machine it means (README R99).
+  const plantRegister = (await loadPlantOnJob(supabase, entry.project_id)).map((m) => ({ id: m.id, name: m.name }));
 
   const { data: extraction } = await supabase
     .from('entry_extractions')
@@ -242,6 +245,7 @@ export default async function ReviewPage({ params }: { params: Promise<{ id: str
       hasStored={hasStored}
       startedBy={startedBy}
       plantPrestarted={plantPrestarted}
+      plantRegister={plantRegister}
       neighbours={neighbours}
     />
   );
