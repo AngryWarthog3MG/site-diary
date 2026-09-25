@@ -2447,6 +2447,12 @@ in the grid — no name above a box with the name in it — and the fold hid tha
 belong to". The folded line is now the name in bold with the facts under it; a long identity (a daywork's description) is
 cut at two lines, and Edit shows the rest.
 
+The phone-only fold broke the desk (25/09, Mitchell's laptop): "Needs attention" stayed a box on a desk, so it took ONE
+column of the home's card grid, and `.dash-grid` later in the stylesheet beat `.dash-grid--folded` on source order, so
+the inner grid came back and three cards shared that one column at about 50 px each. On a desk the fold, its body and
+the inner grid are now all `display: contents` (two classes, so order cannot win), and the grid beside the day panel
+takes as many cards across as fit at 13rem rather than a fixed four, which had squeezed them to 158 px on a wide screen.
+
 **R102. Add an email, give a title, they sign in.** "Forget about all this sign up stuff. I add someone's email, I
 assign them a title and they then log in. It should be that simple." The members screen had three ways to get a
 person on: a form with name, email and role; a textarea for several at once; and printable sign-in cards with a QR
@@ -2459,6 +2465,22 @@ and the screen's message says whether it went or what to tell them instead (`src
 new file). The login screen says as much and no more: type your email, a link comes back, tap it. The bulk route and
 the cards route still exist for a terminal — nothing that worked was removed — but no screen offers them, because a
 door you have to explain is a door too many.
+
+**R103. One timesheet for the company.** "Generate a page where I can have all of the timesheets for all the jobs — it
+needs to list who was on what job, but put them in as one timesheet." Payroll does not care which job a person was on
+that day; the job does. So the sheet is by the week, one row per person across every job the account is on, a cell per
+day, and the jobs told apart where a person moved: a small code under the cell on the days it matters, and a per-job
+split at the end of the row. Where the hours come from is the whole decision. The gate has clocks, but the gate is who
+came through it; the diary's labour list is what the supervisor confirmed — the gate feeds it (R-gate), the supervisor
+fixes it, and signing freezes it. The timesheet reads the labour rows and nothing else. A corrected day counts once, by
+the claims register's rule (a signed correction replaces its original; a draft one does not, and the sheet says a
+correction is waiting). A day not signed yet is on the sheet in amber, because Friday's payroll cannot wait for Friday's
+signature, and marked so nobody mistakes it for the record. A row with no hours prints — and is counted apart; it is
+never 0 (invariant 4). One person is one person however the name was spelt on the day — folded case- and
+space-insensitively, the commonest spelling printed — because the gate and the voice both spell names. The sheet is the
+office's (pm, admin), company scope, under People; the PDF (`/api/timesheets/pdf`) renders from the same loader with
+the week's Monday as its instant, so the same week from the same diaries is the same bytes. `src/lib/timesheets/`:
+`model.ts` pure and node-tested, `load.ts` under the caller's RLS — every job they are on, nothing else.
 
 ## Not built, and deliberately so
 

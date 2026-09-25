@@ -3356,14 +3356,18 @@ body {
 .home-unfinished .fold__head { margin-top: 0.25rem; }
 .signin-gate { margin: 0.5rem 0 0; }
 @media (min-width: 700px) {
-  /* On a desk a phone-only fold is not a fold: the head goes, the body shows. */
+  /* On a desk a phone-only fold is not a fold, and not a box either: the fold, its body and the inner grid all step
+     aside so the cards inside land straight in the page's own grid. The fold used to stay a box, which put it in ONE
+     column of the card grid, and `.dash-grid` further down beat `.dash-grid--folded` on source order, so the inner grid
+     came back and squeezed three cards into that one column (laptop, 25/09). Two classes here so order cannot win. */
+  .fold--phone { display: contents; }
   .fold--phone > .fold__head { display: none; }
-  .fold--phone > .fold__body { display: block; margin-top: 0; }
-  .dash-grid--folded { display: contents; }
+  .fold--phone > .fold__body { display: contents; }
+  .dash-grid.dash-grid--folded { display: contents; }
 }
 @media (max-width: 699px) {
   .dash-clear__list--desk { display: none; }
-  .dash-grid--folded { display: grid; gap: 0.75rem; }
+  .dash-grid.dash-grid--folded { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.75rem; }
 }
 
 /* The programme (README R95). */
@@ -3838,10 +3842,8 @@ a.dash-row:hover { background: var(--teal-tint); }
   body:has(> .rail) .dash-head__tools { margin-top: 0; }
   body:has(> .rail) .dash-actions { margin-top: 0; }
   .dash-body { grid-template-columns: minmax(0, 27rem) minmax(0, 1fr); gap: 0.9rem; }
-  .dash-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.9rem; }
-}
-@media (min-width: 1500px) {
-  .dash-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  /* As many cards across as fit at 13rem each — a fixed count squeezed them to 158 px on a wide screen. */
+  .dash-grid { grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr)); gap: 0.9rem; }
 }
 
 /* ==========================================================================
@@ -4349,3 +4351,18 @@ a.dash-row:hover { background: var(--teal-tint); }
 }
 .review-undo .caption { flex: 1 1 100%; }
 .review-undo .caption { margin: 0; }
+
+/* The company timesheet (README R103): names down, days across; scrolls sideways on a phone with the name column held. */
+.timesheet { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; font-size: 0.92rem; }
+.timesheet th, .timesheet td { padding: 0.5rem 0.55rem; border-bottom: 1px solid var(--ink-08); text-align: right; vertical-align: top; white-space: nowrap; }
+.timesheet th:first-child, .timesheet td:first-child { text-align: left; position: sticky; left: 0; background: var(--paper); z-index: 1; }
+.timesheet thead th { font-size: 0.7rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-60); font-weight: 600; }
+.timesheet .ts-name { font-weight: 650; }
+.timesheet .ts-job { display: block; font-size: 0.72rem; color: var(--ink-60); font-weight: 500; letter-spacing: 0; text-transform: none; }
+.timesheet .ts-unsigned { color: var(--amber); }
+.timesheet .ts-rest { color: var(--ink-40); }
+.timesheet .ts-cell { color: inherit; text-decoration: none; border-bottom: 1px dotted currentColor; }
+.timesheet .ts-total { font-weight: 650; }
+.timesheet th:last-child { text-align: left; }
+.timesheet .ts-jobs { text-align: left; white-space: normal; min-width: 9rem; font-size: 0.8rem; color: var(--ink-60); }
+.timesheet tfoot td { font-weight: 650; border-top: 2px solid var(--ink); border-bottom: 0; }

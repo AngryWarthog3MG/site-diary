@@ -97,6 +97,7 @@ export const NAV_GROUPS: NavGroup[] = [
     label: 'People',
     items: [
       { href: '/training', name: 'Training matrix', what: 'Who holds what, what each role needs, what is expiring — the whole company or one job', screen: 'training', scope: 'company' },
+      { href: '/timesheets', name: 'Timesheets', what: 'Everyone’s hours for the week, across every job, on one sheet', screen: 'timesheets', scope: 'company' },
       { href: '/health', name: 'Health monitoring', short: 'Health', what: 'Confidential — blood lead, asbestos and Schedule 14 monitoring, for named record keepers only', screen: 'health', scope: 'company' },
       { href: '/subcontractors', name: 'Subcontractors', what: 'Insurances, SWMS and licences, chased before they lapse', screen: 'subcontractors', scope: 'company' },
       { href: '/settings/members', name: 'Who is on this job', what: 'Crew and PM access', when: 'canRecord' },

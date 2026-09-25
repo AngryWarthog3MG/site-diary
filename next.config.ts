@@ -50,6 +50,7 @@ const nextConfig: NextConfig = {
     '/api/toolbox/*/pdf': CHROMIUM,
     '/api/plant/*/pdf': CHROMIUM,
     '/api/signin/pdf': CHROMIUM,
+    '/api/timesheets/pdf': CHROMIUM,
     '/api/swms/*/pdf': CHROMIUM,
     '/api/incidents/*/pdf': CHROMIUM,
     '/api/inspections/*/pdf': CHROMIUM,

@@ -192,6 +192,11 @@ improvising; the register once shipped dead because a live smoke test was skippe
   keyed) and `competency_requirements` (role → competency; role normalised). Records stay in `crew_tickets`. Screens
   `/training` (job or whole company; tap a cell to record), `/training/requirements`; PDF GET `/api/training/pdf?project`;
   nightly `tickets=1` also emails `trainingGaps()`
+- `src/lib/timesheets/` — the company timesheet (README R103): `model.ts` (`buildTimesheet` — one row per person across every
+  job, a cell per day, jobs told apart; `weekOf`, `readWeek`, `normName`; pure, node-tested), `load.ts` (labour rows under the
+  caller's RLS, a corrected day counted once by the claims rule, unsigned days marked not hidden). Hours come from the diary's
+  labour list ONLY — never the gate, never computed here; null is "not recorded", never 0. Screen `timesheets` (pm/admin,
+  company scope, under People): `/timesheets?week=<Monday>`, PDF `/api/timesheets/pdf` (in `outputFileTracingIncludes`)
 - `src/lib/chemicals/` — the hazardous chemicals register: `model.ts` (GHS hazard classes, `currentSds`,
   `sdsStatus` — a sheet is current for five years from the date printed on it, `registerFor`), `load.ts`.
   Tables `chemical_products` (org-wide, one product once), `chemical_sds` (retired never rewritten or deleted,
