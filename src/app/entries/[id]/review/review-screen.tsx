@@ -1410,6 +1410,7 @@ function ItemCard({
   const heading = String(item[section.identity] ?? '').trim() || `${section.noun} ${index + 1}`;
   // Less on the screen (README R101): a row that has its name and nothing flagged opens as one line of facts
   // with Edit; a row that needs a look (low confidence, no name yet, just added) opens with its fields showing.
+  // The folded line leads with the name — the sheet hides the card's heading, so this is the only place it shows.
   const named = Boolean(String(item[section.identity] ?? '').trim());
   const [expanded, setExpanded] = useState<boolean>(low || !named);
   const clock = (v: unknown) => (typeof v === 'string' && /^\d\d:\d\d/.test(v) ? v.slice(0, 5) : null);
@@ -1526,7 +1527,8 @@ function ItemCard({
 
       {!expanded && (
         <button type="button" className="item__summary" onClick={() => setExpanded(true)}>
-          {summary.length > 0 ? summary.join(' · ') : 'Nothing else recorded — tap to add'}
+          <span className="item__summary-name">{heading}</span>
+          <span className="item__summary-facts">{summary.length > 0 ? summary.join(' · ') : 'Nothing else recorded — tap to add'}</span>
         </button>
       )}
 

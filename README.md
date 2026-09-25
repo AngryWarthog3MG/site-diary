@@ -2441,6 +2441,12 @@ small one goes; (6) the drawer lists sections by name, what each is for waits un
 what is recorded or who may see it; it changes how much is on the glass at once. The pieces: `src/components/fold.tsx`,
 `src/components/read-more.tsx`, the review card's `expanded` state, and the phone block in `globals.css`.
 
+A folded row leads with its name. The review sheet hides the card's heading because the identity field used to sit first
+in the grid — no name above a box with the name in it — and the fold hid that grid, so the first cut of (2) showed
+"06:30–16:30 · Labourer · 10 h" with no one it belonged to. Mitchell: "add the names so I can see quickly who the hours
+belong to". The folded line is now the name in bold with the facts under it; a long identity (a daywork's description) is
+cut at two lines, and Edit shows the rest.
+
 **R102. Add an email, give a title, they sign in.** "Forget about all this sign up stuff. I add someone's email, I
 assign them a title and they then log in. It should be that simple." The members screen had three ways to get a
 person on: a form with name, email and role; a textarea for several at once; and printable sign-in cards with a QR
