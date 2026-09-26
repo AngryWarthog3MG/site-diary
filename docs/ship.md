@@ -30,6 +30,13 @@ Tool-neutral procedure. Run in order; stop and fix on any failure.
    plus the `Aliased https://site-diary-eight.vercel.app` line. If neither appears, check
    `npx vercel ls` — a missing new deployment means the deploy silently failed; rerun with
    full output.
+
+   **`Error: Not authorized` on the first deploy of a session is the CLI sign-in expiring, not
+   a permission problem — run the same command again.** The CLI's saved sign-in lasts eight
+   hours (`expiresAt` in its `auth.json`). A deploy after it lapses renews it but fails itself;
+   the rerun succeeds. Seen 24/09, 25/09 and 26/09, each time with the renewal stamped seconds
+   before. Do not `vercel login` again or touch team settings for this. If a second run also
+   says Not authorized, then it is real: check `npx vercel whoami` and the team membership.
 6. **Live smoke test.** Sign in through production exactly as a phone does. Never assume —
    the register once shipped dead. Mint a magic link with the service role
    (`auth.admin.generateLink`), open
