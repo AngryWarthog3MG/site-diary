@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { requireUser, resolveProject, guardScreen, canRunTalks } from '@/lib/auth';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { perthToday } from '@/lib/push/decide';
 import { peopleOnJob, type Induction } from '@/lib/crew/inductions';
 import { MembersForm, AccessHistory, type AccessEvent, type MemberRow } from './members-form';
@@ -15,7 +16,7 @@ export default async function MembersPage({
 }: {
   searchParams: Promise<{ project?: string }>;
 }) {
-  const { userId, memberships } = await requireUser();
+  const { userId, memberships, aal } = await requireUser();
   const { project } = await searchParams;
   const current = resolveProject(memberships, project);
   guardScreen(current, 'settings');
@@ -47,6 +48,7 @@ export default async function MembersPage({
       role: member.role as MemberRow['role'],
       screens: (member.screens as string[] | null) ?? null,
       finance: (member.finance as boolean | null) ?? null,
+      twoFactor: null,
       name: (profile?.full_name as string | null) ?? null,
       email: (profile?.email as string | null) ?? null,
       isCurrentUser: member.user_id === userId,
@@ -67,6 +69,16 @@ export default async function MembersPage({
     moneyBefore: Boolean(e.money_before), moneyAfter: Boolean(e.money_after),
     screensChanged: JSON.stringify(e.old_screens ?? null) !== JSON.stringify(e.new_screens ?? null),
   }));
+
+  // Who has two-factor set up — for the admin's access review and the reset (README R106). Read with the service
+  // role because factors live in the auth schema; admins only, and only for people on this job.
+  if (canEdit) {
+    const admin = createAdminClient();
+    await Promise.all(rows.map(async (r) => {
+      const { data } = await admin.auth.admin.mfa.listFactors({ userId: r.userId });
+      r.twoFactor = ((data?.factors ?? []) as Array<{ status: string }>).some((f) => f.status === 'verified');
+    }));
+  }
 
   const projectRef = `${current.project.org.code}_${current.project.code}`;
 
@@ -111,6 +123,7 @@ export default async function MembersPage({
         projectRef={projectRef}
         canEdit={canEdit}
         members={rows}
+        codeEntered={aal.current === 'aal2'}
       />
       {canEdit && <AccessHistory events={history} />}
 

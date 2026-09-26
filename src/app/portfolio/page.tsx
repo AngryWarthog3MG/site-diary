@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
-import { requireUser, sees, seesMoney } from '@/lib/auth';
+import { requireUser, sees, moneyState } from '@/lib/auth';
 import { redirect } from 'next/navigation';
 import { BrandMark } from '@/components/brand-mark';
 import { fmtDate } from '@/lib/pdf/dates';
@@ -16,7 +16,7 @@ export const metadata = { title: 'All jobs · Kooboolong IMS' };
  * own portfolio.
  */
 export default async function PortfolioPage() {
-  const { memberships } = await requireUser();
+  const { memberships, aal } = await requireUser();
   if (!memberships.some((m) => sees(m, 'weekly'))) redirect('/');
   const projects = memberships.filter((m) => m.project.active);
   const supabase = await createClient();
@@ -65,7 +65,7 @@ export default async function PortfolioPage() {
   // The variations figure is the register's value (agreed, else estimated), and only for someone who sees the
   // money on that job (README R105). The day rows' old estimates are not it.
   const variationValue = new Map<string, number>();
-  await Promise.all(projects.filter((m) => seesMoney(m)).map(async (m) => {
+  await Promise.all(projects.filter((m) => moneyState(m, aal) === 'open').map(async (m) => {
     const { data } = await supabase.rpc('variation_values', { p_project: m.project_id });
     const rows = (data ?? []) as Array<{ estimated_cost: unknown; agreed_cost: unknown }>;
     variationValue.set(m.project_id, Math.round(rows.reduce((n, r) => n + Number(r.agreed_cost ?? r.estimated_cost ?? 0), 0) * 100) / 100);

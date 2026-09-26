@@ -11,6 +11,8 @@ export interface MemberRow {
   screens: string[] | null;
   /** Money access; null = the role's default (README R105). */
   finance: boolean | null;
+  /** Two-factor set up (README R106); null when not loaded (a non-admin's view). */
+  twoFactor: boolean | null;
   name: string | null;
   email: string | null;
   isCurrentUser: boolean;
@@ -109,11 +111,14 @@ export function MembersForm({
   projectRef,
   canEdit,
   members,
+  codeEntered = false,
 }: {
   projectId: string;
   projectRef: string;
   canEdit: boolean;
   members: MemberRow[];
+  /** Whether this admin's session has passed its two-factor code — granting money needs it (README R106). */
+  codeEntered?: boolean;
 }) {
   const router = useRouter();
   const [email, setEmail] = useState('');
@@ -153,6 +158,17 @@ export function MembersForm({
     }
   }
 
+  async function resetTwoFactor(targetId: string) {
+    setBusy(`2fa:${targetId}`); setError(null); setNotice(null);
+    try {
+      const res = await fetch(`/api/projects/${projectId}/members/two-factor`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId: targetId }) });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) { setError(json?.error?.message ?? 'That did not work.'); return false; }
+      setNotice(json?.message ?? 'Done.'); router.refresh(); return true;
+    } catch { setError('No signal.'); return false; }
+    finally { setBusy(null); }
+  }
+
   async function addMember() {
     const added = await request('POST', { email, name, role }, 'add');
     if (added) { setEmail(''); setName(''); }
@@ -166,6 +182,11 @@ export function MembersForm({
         </p>
       )}
 
+      {canEdit && !codeEntered && (
+        <p className="money-lock">
+          <span>Giving someone the money, or making someone a PM or admin, needs your two-factor code. <a href={`/security/verify?next=${encodeURIComponent(`/settings/members?project=${projectId}`)}`}>Enter it</a> or <a href="/security">set it up</a>.</span>
+        </p>
+      )}
       {notice && <p className="notice">{notice}</p>}
       {error && <p className="alert">{error}</p>}
 
@@ -240,6 +261,7 @@ export function MembersForm({
                   canEdit={canEdit}
                   busy={busy !== null}
                   onSave={(finance) => request('PATCH', { userId: member.userId, finance }, `money:${member.userId}`)}
+                  onReset={() => resetTwoFactor(member.userId)}
                 />
               </article>
             );
@@ -310,7 +332,8 @@ export function MembersForm({
  * cost build-ups and the company's figures. An admin always sees it; a PM does unless switched off; a supervisor
  * does not unless switched on; a leading hand or labourer never does. The database enforces the same rule.
  */
-function MoneyAccess({ member, canEdit, busy, onSave }: { member: MemberRow; canEdit: boolean; busy: boolean; onSave: (finance: boolean | null) => Promise<boolean> }) {
+function MoneyAccess({ member, canEdit, busy, onSave, onReset }: { member: MemberRow; canEdit: boolean; busy: boolean; onSave: (finance: boolean | null) => Promise<boolean>; onReset: () => Promise<boolean> }) {
+  const [confirmReset, setConfirmReset] = useState(false);
   const on = seesMoney(member);
   const settable = member.role === 'pm' || member.role === 'supervisor';
   const byHand = settable && member.finance !== null;
@@ -323,11 +346,21 @@ function MoneyAccess({ member, canEdit, busy, onSave }: { member: MemberRow; can
         <span className={`money-access__dot${on ? ' money-access__dot--on' : ''}`} aria-hidden />
         <strong>{on ? 'Sees the money' : 'Money hidden'}</strong>
         <span className="caption"> · {why}</span>
+        {member.twoFactor !== null && (on || member.twoFactor) && (
+          <span className={`caption money-access__2fa${on && !member.twoFactor ? ' money-access__2fa--missing' : ''}`}> · two-factor {member.twoFactor ? 'on' : 'not set up — the money stays shut for them'}</span>
+        )}
       </span>
       {canEdit && settable && (
         <span className="money-access__act">
           <button type="button" className="quotebtn" disabled={busy} onClick={() => void onSave(!on)}>{on ? 'Hide the money' : 'Show the money'}</button>
           {byHand && <button type="button" className="quotebtn" disabled={busy} onClick={() => void onSave(null)}>Back to the default</button>}
+        </span>
+      )}
+      {canEdit && member.twoFactor && !member.isCurrentUser && (
+        <span className="money-access__act">
+          {confirmReset
+            ? <button type="button" className="quotebtn quotebtn--remove" disabled={busy} onClick={() => void onReset().then(() => setConfirmReset(false))}>Sure? Reset their two-factor</button>
+            : <button type="button" className="quotebtn" disabled={busy} onClick={() => setConfirmReset(true)}>Lost phone? Reset two-factor</button>}
         </span>
       )}
     </div>
@@ -339,7 +372,7 @@ export interface AccessEvent {
   who: string;
   by: string;
   at: string;
-  kind: 'added' | 'changed' | 'removed';
+  kind: 'added' | 'changed' | 'removed' | 'two_factor_reset';
   oldRole: string | null;
   newRole: string | null;
   moneyBefore: boolean;
@@ -355,6 +388,7 @@ export function AccessHistory({ events }: { events: AccessEvent[] }) {
   const say = (e: AccessEvent) => {
     if (e.kind === 'added') return `added as ${roleWord(e.newRole)}${e.moneyAfter ? ', sees the money' : ''}`;
     if (e.kind === 'removed') return `removed (was ${roleWord(e.oldRole)})`;
+    if (e.kind === 'two_factor_reset') return 'two-factor reset';
     const parts: string[] = [];
     if (e.oldRole !== e.newRole) parts.push(`${roleWord(e.oldRole)} → ${roleWord(e.newRole)}`);
     if (e.moneyBefore !== e.moneyAfter) parts.push(e.moneyAfter ? 'money shown' : 'money hidden');

@@ -57,7 +57,7 @@ set local role authenticated;
 
 -- ---- The rate card ----------------------------------------------------------------------------------------------
 -- The PM writes the company's rates and job A's own.
-set local request.jwt.claims = '{"sub":"11111111-dddd-0000-0000-000000000001","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"11111111-dddd-0000-0000-000000000001","role":"authenticated","aal":"aal2"}';
 insert into public.rate_items (id, org_id, kind, label, unit, rate) values
   ('ffffffff-dddd-0000-0000-000000000001', 'aaaaaaaa-dddd-0000-0000-000000000001', 'labour', '  Labourer ', 'hour', 95),
   ('ffffffff-dddd-0000-0000-000000000002', 'aaaaaaaa-dddd-0000-0000-000000000001', 'plant', 'Excavator 5t', 'hour', 150);
@@ -84,7 +84,7 @@ end; $$;
 select tests.expect_error($$ update public.rate_items set kind = 'plant' where id = 'ffffffff-dddd-0000-0000-000000000001' $$, 'keeps its company');
 
 -- The supervisor reads the card but cannot write it.
-set local request.jwt.claims = '{"sub":"11111111-dddd-0000-0000-000000000002","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"11111111-dddd-0000-0000-000000000002","role":"authenticated","aal":"aal2"}';
 do $$
 begin
   if (select count(*) from public.rate_items where org_id = 'aaaaaaaa-dddd-0000-0000-000000000001') <> 3 then raise exception 'TESTFAIL: supervisor should read 3 rates'; end if;
@@ -99,17 +99,17 @@ begin
 end; $$;
 
 -- The leading hand and the labourer read no rates.
-set local request.jwt.claims = '{"sub":"11111111-dddd-0000-0000-000000000003","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"11111111-dddd-0000-0000-000000000003","role":"authenticated","aal":"aal2"}';
 do $$ begin if (select count(*) from public.rate_items) <> 0 then raise exception 'TESTFAIL: leading hand reads rates'; end if; end; $$;
-set local request.jwt.claims = '{"sub":"11111111-dddd-0000-0000-000000000004","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"11111111-dddd-0000-0000-000000000004","role":"authenticated","aal":"aal2"}';
 do $$ begin if (select count(*) from public.rate_items) <> 0 then raise exception 'TESTFAIL: labourer reads rates'; end if; end; $$;
 -- Job B's admin reads the company card but not job A's own rate.
-set local request.jwt.claims = '{"sub":"11111111-dddd-0000-0000-000000000005","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"11111111-dddd-0000-0000-000000000005","role":"authenticated","aal":"aal2"}';
 do $$ begin if (select count(*) from public.rate_items) <> 2 then raise exception 'TESTFAIL: job B admin should read the 2 company rates only, got %', (select count(*) from public.rate_items); end if; end; $$;
 
 -- ---- The build-up -----------------------------------------------------------------------------------------------
 -- A typed estimate first, then the supervisor builds it up.
-set local request.jwt.claims = '{"sub":"11111111-dddd-0000-0000-000000000002","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"11111111-dddd-0000-0000-000000000002","role":"authenticated","aal":"aal2"}';
 select public.set_variation_details('cccccccc-dddd-0000-0000-000000000001', null, null, null, 5000, false);
 insert into public.variation_cost_lines (id, register_id, project_id, kind, description, person_name, quantity, unit, rate, rate_item_id, work_date) values
   ('dddddddd-dddd-0000-0000-000000000001', 'cccccccc-dddd-0000-0000-000000000001', 'bbbbbbbb-dddd-0000-0000-000000000001', 'labour', 'Labourer', 'Sam Test', 8, 'hour', 105, 'ffffffff-dddd-0000-0000-000000000003', '2026-09-16');
@@ -147,12 +147,12 @@ select tests.expect_error($$ update public.variation_cost_lines set register_id 
 select tests.expect_error($$ update public.variation_cost_lines set amount = 1 where id = 'dddddddd-dddd-0000-0000-000000000001' $$, 'only be updated to DEFAULT');
 
 -- The leading hand neither reads nor writes the build-up.
-set local request.jwt.claims = '{"sub":"11111111-dddd-0000-0000-000000000003","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"11111111-dddd-0000-0000-000000000003","role":"authenticated","aal":"aal2"}';
 do $$ begin if (select count(*) from public.variation_cost_lines) <> 0 then raise exception 'TESTFAIL: leading hand reads the build-up'; end if; end; $$;
 select tests.expect_error($$ insert into public.variation_cost_lines (register_id, project_id, kind, description, quantity, rate) values ('cccccccc-dddd-0000-0000-000000000001', 'bbbbbbbb-dddd-0000-0000-000000000001', 'labour', 'Labourer', 1, 95) $$, 'row-level security');
 
 -- Two rows on one day: both come in; the same row twice is refused; a row of another variation is refused.
-set local request.jwt.claims = '{"sub":"11111111-dddd-0000-0000-000000000002","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"11111111-dddd-0000-0000-000000000002","role":"authenticated","aal":"aal2"}';
 insert into public.variation_cost_lines (id, register_id, project_id, kind, description, source_entry_id, source_variation_id, quantity, rate) values
   ('dddddddd-dddd-0000-0000-000000000011', 'cccccccc-dddd-0000-0000-000000000001', 'bbbbbbbb-dddd-0000-0000-000000000001', 'labour', 'Labour — crew not named', '99999999-dddd-0000-0000-000000000001', '88888888-dddd-0000-0000-000000000001', 10, null),
   ('dddddddd-dddd-0000-0000-000000000012', 'cccccccc-dddd-0000-0000-000000000001', 'bbbbbbbb-dddd-0000-0000-000000000001', 'labour', 'Labour — crew not named', '99999999-dddd-0000-0000-000000000001', '88888888-dddd-0000-0000-000000000002', 6, null);
@@ -161,7 +161,7 @@ select tests.expect_error($$ insert into public.variation_cost_lines (register_i
 delete from public.variation_cost_lines where id in ('dddddddd-dddd-0000-0000-000000000011', 'dddddddd-dddd-0000-0000-000000000012');
 
 -- ---- Submitted is what was claimed ------------------------------------------------------------------------------
-set local request.jwt.claims = '{"sub":"11111111-dddd-0000-0000-000000000001","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"11111111-dddd-0000-0000-000000000001","role":"authenticated","aal":"aal2"}';
 select public.set_variation_status('cccccccc-dddd-0000-0000-000000000001', 'submitted', 'sent to Lendlease');
 do $$
 declare e record;

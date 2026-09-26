@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
+import type { MoneyState } from '@/lib/auth';
 import { STATUS_LABEL, type VariationStatus } from '@/lib/claims/register';
 
 export interface RegisterRow {
@@ -30,7 +31,7 @@ const num = (s: string) => (s.trim() === '' ? null : Number(s.replace(/[$,\s]/g,
  * the day. Saves go through the register's own RPCs; nothing here touches
  * the day's row or the signed record.
  */
-export function VariationRegisterPanel({ row, canManage, seesMoney = false, onChanged, projectId }: { row: RegisterRow | null; canManage: boolean; seesMoney?: boolean; onChanged: () => void; projectId: string }) {
+export function VariationRegisterPanel({ row, canManage, seesMoney = false, moneyLock = 'none', onChanged, projectId }: { row: RegisterRow | null; canManage: boolean; seesMoney?: boolean; moneyLock?: MoneyState; onChanged: () => void; projectId: string }) {
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -72,6 +73,13 @@ export function VariationRegisterPanel({ row, canManage, seesMoney = false, onCh
         </span>
         {canManage && !open && <button type="button" className="linklike vreg__edit" onClick={begin}>{seesMoney && row.agreed_cost == null && row.estimated_cost == null ? 'Price it' : 'Edit'}</button>}
       </p>
+      {canManage && (moneyLock === 'needs_code' || moneyLock === 'needs_setup') && (
+        <p className="vreg__build">
+          <Link href={moneyLock === 'needs_code' ? `/security/verify?next=${encodeURIComponent(`/variations/${row.id}?project=${projectId}`)}` : '/security'}>
+            {moneyLock === 'needs_code' ? 'Enter your code to see the value and the build-up' : 'Set up two-factor sign-in to see the value'}
+          </Link>
+        </p>
+      )}
       {canManage && seesMoney && (
         <p className="vreg__build">
           <Link href={`/variations/${row.id}?project=${projectId}`}>

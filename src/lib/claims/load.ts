@@ -93,12 +93,14 @@ async function diaryQuery(
 export async function loadClaimsData(
   supabase: SupabaseClient,
   project: { id: string; name: string; code: string; orgCode: string },
+  /** false when this session has not passed its code (README R106): no money is fetched at all. */
+  options: { money?: boolean } = {},
 ): Promise<ClaimsData> {
   if (!UUID_RE.test(project.id)) throw new ClaimsLoadError('Bad project id.');
 
   const where = `where project_id = '${project.id}'`;
   const { data: moneyFlag } = await supabase.rpc('sees_money', { p_project: project.id });
-  const seesMoney = moneyFlag === true;
+  const seesMoney = moneyFlag === true && options.money !== false;
   const [entries, delays, variations, dayworks] = await Promise.all([
     diaryQuery(supabase, `select entry_no, entry_id from diary.entries ${where}`),
     diaryQuery(
@@ -156,7 +158,7 @@ export async function loadClaimsData(
 
   // The register beside the diary: which item each mention belongs to, and
   // where each item stands. Read under RLS like everything else here.
-  const register = await loadRegister(supabase, project.id);
+  const register = await loadRegister(supabase, project.id, seesMoney);
   const { data: open } = await supabase
     .from('entries')
     .select('id, entry_date, author_id')
@@ -215,7 +217,7 @@ export async function loadClaimsData(
   };
 }
 
-async function loadRegister(supabase: SupabaseClient, projectId: string): Promise<RegisterItem[]> {
+async function loadRegister(supabase: SupabaseClient, projectId: string, withMoney: boolean): Promise<RegisterItem[]> {
   // Every item on the project, then every diary row that mentions one — draft
   // or signed — so a variation dictated this afternoon is already here.
   const [{ data: items }, { data: links }, { data: versions }] = await Promise.all([
@@ -244,7 +246,7 @@ async function loadRegister(supabase: SupabaseClient, projectId: string): Promis
       .map((e) => e.supersedes_entry_id as string),
   );
   // The values come only through the locked function (README R105): empty for anyone without money access.
-  const { data: values, error: valuesError } = await supabase.rpc('variation_values', { p_project: projectId });
+  const { data: values, error: valuesError } = withMoney ? await supabase.rpc('variation_values', { p_project: projectId }) : { data: [], error: null };
   if (valuesError) throw new Error(`Could not load the variation values: ${valuesError.message}`);
   const money = new Map(((values ?? []) as Array<{ register_id: string; estimated_cost: unknown; agreed_cost: unknown }>).map((v) => [v.register_id, v]));
   const out = new Map<string, RegisterItem>();
@@ -308,7 +310,7 @@ async function loadRegister(supabase: SupabaseClient, projectId: string): Promis
   }
   // The build-up at a glance (README R104). Only a register keeper reads the lines; anyone else gets none and
   // the card shows the value alone.
-  const { data: costLines } = await supabase.from('variation_cost_lines').select('register_id, kind, quantity, rate, amount').eq('project_id', projectId);
+  const { data: costLines } = withMoney ? await supabase.from('variation_cost_lines').select('register_id, kind, quantity, rate, amount').eq('project_id', projectId) : { data: [] };
   for (const l of (costLines ?? []) as Array<{ register_id: string; kind: CostKind; quantity: unknown; rate: unknown; amount: unknown }>) {
     const item = out.get(l.register_id);
     if (!item) continue;

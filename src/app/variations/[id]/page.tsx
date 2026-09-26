@@ -3,7 +3,8 @@ import { notFound, redirect } from 'next/navigation';
 import { HomeFoot } from '@/components/home-foot';
 import { BrandMark } from '@/components/brand-mark';
 import { createClient } from '@/lib/supabase/server';
-import { requireUser, resolveProject, guardScreen } from '@/lib/auth';
+import { requireUser, resolveProject, guardScreen, moneyState } from '@/lib/auth';
+import { MoneyLock } from '@/components/money-lock';
 import { canManageRegisters, seesMoney } from '@/lib/roles';
 import { isUuid } from '@/lib/api';
 import { perthToday } from '@/lib/push/decide';
@@ -20,7 +21,7 @@ export const metadata = { title: 'Variation build-up · Kooboolong IMS' };
  * day's Variations tab; everything on it points back to the variation.
  */
 export default async function BuildUpPage({ params }: { params: Promise<{ id: string }> }) {
-  const { memberships } = await requireUser();
+  const { memberships, aal } = await requireUser();
   const { id } = await params;
   if (!isUuid(id)) notFound();
   const data = await loadBuildUp(await createClient(), id);
@@ -30,6 +31,18 @@ export default async function BuildUpPage({ params }: { params: Promise<{ id: st
   guardScreen(current, 'variations');
   // The build-up is money (README R105).
   if (!seesMoney(current)) redirect(`/variations?project=${current.project_id}`);
+  const money = moneyState(current, aal);
+  if (money !== 'open') {
+    return (
+      <main className="sheet">
+        <Suspense fallback={null}>
+          <HomeFoot at="top" />
+        </Suspense>
+        <h1 className="page-title">{registerNumber(data.register.seq)} · {data.register.title}</h1>
+        <MoneyLock state={money} next={`/variations/${data.register.id}?project=${current.project_id}`} />
+      </main>
+    );
+  }
 
   return (
     <main className="sheet sheet--wide">

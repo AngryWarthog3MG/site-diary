@@ -26,10 +26,24 @@ export async function GET(request: NextRequest) {
 
   const supabase = await createClient();
 
+  // Someone with an authenticator set up is asked for their code straight after the email link (README R106).
+  // They can go on without it; the money stays shut until they give it.
+  const landing = async () => {
+    try {
+      const { data } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+      if (data?.nextLevel === 'aal2' && data.currentLevel !== 'aal2') {
+        return NextResponse.redirect(new URL(`/security/verify?next=${encodeURIComponent(next)}`, url.origin));
+      }
+    } catch {
+      // A failed check is the email link alone: the money stays shut, the rest opens.
+    }
+    return NextResponse.redirect(new URL(next, url.origin));
+  };
+
   if (tokenHash && type) {
     const { error } = await supabase.auth.verifyOtp({ type, token_hash: tokenHash });
     if (!error) {
-      return NextResponse.redirect(new URL(next, url.origin));
+      return landing();
     }
     return NextResponse.redirect(
       new URL(`/login?error=${encodeURIComponent(error.message)}`, url.origin),
@@ -39,7 +53,7 @@ export async function GET(request: NextRequest) {
   if (code) {
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) {
-      return NextResponse.redirect(new URL(next, url.origin));
+      return landing();
     }
     return NextResponse.redirect(
       new URL(`/login?error=${encodeURIComponent(error.message)}`, url.origin),

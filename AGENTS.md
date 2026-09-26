@@ -497,7 +497,13 @@ Change four of them and the app silently stops capturing what supervisors say. I
   from the app; read values through `variation_values(project)` / `variation_submissions(register)`. A NEW table or column
   that holds money gets the same treatment — `app.sees_money` in its policies, or column privileges plus a function that asks
   first — and every screen, export, PDF and model prompt that shows money asks `seesMoney` (or `ClaimsData.seesMoney`).
-  Membership changes are logged in `member_access_events`; never delete from it. The labourer has two doors — the gate and hazard reporting — and `canSee` lists
+  Membership changes are logged in `member_access_events`; never delete from it.
+- **Money also needs a second factor (README R106).** `app.sees_money` requires the session's `aal2` (`app.aal2()`); a page
+  decides what to draw with `moneyState(member, aal)` from `requireUser()` (open / needs_code / needs_setup / none) and shows
+  `MoneyLock` when shut — never `seesMoney(member)` alone for display, that is entitlement. Granting money (adding a PM or
+  admin, raising a role, switching a supervisor on) needs the granting admin at aal2 (`app.money_grant_needs_code`); any
+  service-role path that grants money checks the caller's level itself, as the bulk add does. SQL suites that expect money
+  sign in with `"aal":"aal2"` in their claims. The labourer has two doors — the gate and hazard reporting — and `canSee` lists
   exactly those (plus chemicals and the emergency plan, which the law puts in the workers' reach). A labourer reads ONLY THE
   REPORTS THEY MADE — `app.incident_readable`, restrictive policies, and the incident photo folder (README R75). Reads: RESTRICTIVE select policies (`*_reads_record`, migration 20260915140000) keep the
   labourer out of every record table; a NEW table that belongs to the record gets one too

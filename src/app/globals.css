@@ -4418,3 +4418,23 @@ a.dash-row:hover { background: var(--teal-tint); }
 .access-history { margin-top: 1rem; }
 .access-history summary { cursor: pointer; font-weight: 600; color: var(--teal); }
 .access-history li { padding: 0.35rem 0; border-bottom: 1px solid var(--ink-08); font-size: 0.9rem; }
+
+/* Two-factor sign-in and the money lock (README R106). */
+.money-lock { display: flex; gap: 0.6rem; align-items: flex-start; margin: 0.75rem 0; padding: 0.7rem 0.85rem; border-radius: 10px; background: var(--paper-dim); border: 1px solid var(--ink-08); font-size: 0.93rem; }
+.money-lock--compact { margin: 0.35rem 0; padding: 0.45rem 0.6rem; font-size: 0.85rem; }
+.money-lock__icon { line-height: 1.4; }
+.money-lock a { font-weight: 600; }
+.security { display: grid; gap: 0.85rem; margin-top: 1rem; max-width: 34rem; }
+.security__status, .security__setup, .security__enrol { display: grid; gap: 0.6rem; }
+.security__on { display: flex; align-items: center; gap: 0.45rem; margin: 0; }
+.security__dot { width: 0.65rem; height: 0.65rem; border-radius: 50%; background: var(--ink-40); display: inline-block; }
+.security__dot--on { background: var(--teal); }
+.security__steps { margin: 0; padding-left: 1.2rem; display: grid; gap: 0.35rem; }
+.security__qr { width: 200px; height: 200px; max-width: 100%; background: #fff; padding: 8px; border-radius: 8px; border: 1px solid var(--ink-08); }
+.security__secret { font-size: 1rem; letter-spacing: 0.06em; word-break: break-all; margin: 0; padding: 0.5rem 0.65rem; background: var(--paper-dim); border-radius: 8px; user-select: all; }
+.security__code { font-size: 1.6rem; letter-spacing: 0.3em; text-align: center; max-width: 12rem; font-variant-numeric: tabular-nums; }
+.security__skip { margin-top: 0.25rem; }
+
+.money-access__2fa--missing { color: var(--amber); }
+
+.menu-drawer__security { display: block; margin: 0.25rem 0 0.5rem; font-size: 0.9rem; color: var(--teal); font-weight: 600; }

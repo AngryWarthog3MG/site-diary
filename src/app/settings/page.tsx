@@ -100,6 +100,15 @@ export default async function SettingsPage({
           />
         </section>
         <section className="sheet" style={{ marginTop: '1rem' }}>
+          <p className="label">Your account</p>
+          <h2 className="home-card__title">Two-factor sign-in</h2>
+          <p className="caption">
+            A six-digit code from an authenticator app, as well as the email link. Anyone who sees the company&rsquo;s
+            money needs it; the money stays shut without it.
+          </p>
+          <Link className="button button--quiet" href="/security">Security</Link>
+        </section>
+        <section className="sheet" style={{ marginTop: '1rem' }}>
           <p className="label">Plant</p>
           <h2 className="home-card__title">One register, under Plant</h2>
           <p className="caption">

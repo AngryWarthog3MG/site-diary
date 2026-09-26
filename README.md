@@ -2570,6 +2570,33 @@ a plan decision), one-factor sign-in for anyone who sees the money, the data hel
 standards name that the app does not have yet (objectives, interested parties and company risks, supplier evaluation,
 management of change, client feedback).
 
+**R106. Two-factor sign-in for the money.** The first build the readiness review asked for. Sign-in stays an emailed link
+for everyone; anyone entitled to the money (R105) adds a second step — a six-digit code from an authenticator app — and
+the money opens only in a session that has passed it. Supabase stamps that session's token `aal = 'aal2'`;
+`app.aal2()` reads it and `app.sees_money` / `app.sees_org_money` / the rate-card functions require it, so every money
+path needs the code with no screen involved. Entitlement is unchanged: a code opens only what the person may see.
+
+Without the code the rest of the app works and the money is shut with one line saying why and the tap that opens it
+(`MoneyLock`, from `moneyState(member, aal)` in `src/lib/auth.ts`: open / needs_code / needs_setup / none). Straight
+after the email link, someone with an authenticator lands on `/security/verify` (from `/auth/confirm`), with "Not now"
+to carry on without the money. `/security` sets it up — a QR to scan or the key to type, then the first code, which
+proves the phone has it — and removes it (Supabase requires a code-verified session to remove one). The rail and the
+drawer carry a Security link for everyone, since a PM does not see Settings.
+
+Granting the money needs the code too, or anyone holding an admin's email link could add an account of their own as a
+PM, set up a code on it and read the figures. `app.money_grant_needs_code` refuses, for a signed-in request, any
+membership change that gives someone the money — a PM or admin added, a role raised, a supervisor switched on — unless
+the admin making it is at aal2. A person's own row is exempt (`create_project` seats its creator), and so is anything the
+service role writes; the bulk add, which writes with the service role, checks the admin's code itself for PMs and
+admins. A lost phone is an admin's reset on Who is on this job (their own code entered, never their own account):
+every authenticator on the account is removed, which also signs the person out everywhere, and the reset is kept in the
+job's access history (`two_factor_reset`). Admins see who has two-factor set up, beside the money switch.
+
+Released in order, because the migration shuts the money for every session without a code: TOTP switched on in the
+Supabase project (Authentication → Multi-Factor — a setting only Mitchell changes), the screens deployed, the people who
+see money set up their codes, then migration 20260926120000 applied. Suite 47; the money suites 44–46 now sign in at
+aal2.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;

@@ -26,12 +26,14 @@ export async function GET(request: Request) {
 
   let data;
   try {
+    // No money without the code (README R106) — the database says the same.
+    const { data: level } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
     data = await loadClaimsData(supabase, {
       id: project.id,
       name: project.name,
       code: project.code,
       orgCode,
-    });
+    }, { money: level?.currentLevel === 'aal2' });
   } catch (error) {
     if (error instanceof ClaimsLoadError) return fail('bad_request', error.message, 400);
     throw error;

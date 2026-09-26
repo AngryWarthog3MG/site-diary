@@ -3,8 +3,8 @@ import { loadPlantOnJob } from '@/lib/plant/on-job';
 import { fmtDate } from '@/lib/pdf/dates';
 import { notFound, redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
-import { requireUser, canAuthorEntries, guardScreen } from '@/lib/auth';
-import { canManageRegisters, seesMoney } from '@/lib/roles';
+import { requireUser, canAuthorEntries, guardScreen, moneyState } from '@/lib/auth';
+import { canManageRegisters } from '@/lib/roles';
 import { ReviewPayload } from '@/lib/review/schema';
 import type { SectionKey } from '@/lib/extraction/schema';
 import { ReviewScreen } from './review-screen';
@@ -27,7 +27,7 @@ type Row = Record<string, unknown>;
  */
 export default async function ReviewPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const { userId, memberships } = await requireUser();
+  const { userId, memberships, aal } = await requireUser();
   const supabase = await createClient();
 
   const { data: entry } = await supabase
@@ -248,7 +248,8 @@ export default async function ReviewPage({ params }: { params: Promise<{ id: str
       plantPrestarted={plantPrestarted}
       plantRegister={plantRegister}
       canManageRegisters={(() => { const r = memberships.find((m) => m.project_id === entry.project_id)?.role; return r ? canManageRegisters(r) : false; })()}
-      seesMoney={seesMoney(memberships.find((m) => m.project_id === entry.project_id))}
+      seesMoney={moneyState(memberships.find((m) => m.project_id === entry.project_id), aal) === 'open'}
+      moneyLock={moneyState(memberships.find((m) => m.project_id === entry.project_id), aal)}
       neighbours={neighbours}
     />
   );

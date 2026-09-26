@@ -107,6 +107,7 @@ export function AppMenu({ slotId }: { slotId: string }) {
 
       <div className="menu-drawer__foot">
         {me?.name && <p className="menu-drawer__who mono">{me.name}</p>}
+        <Link className="menu-drawer__security" href="/security" onClick={() => setOpen(false)}>Security · two-factor sign-in</Link>
         <SignOutButton />
       </div>
     </nav>

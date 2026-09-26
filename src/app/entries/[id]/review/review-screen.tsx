@@ -1,5 +1,6 @@
 'use client';
 
+import type { MoneyState } from '@/lib/auth';
 import { useCallback, useEffect, useMemo, useRef, useState, createContext, useContext } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -129,7 +130,7 @@ const PHOTO_LABELS: Record<PhotoCategory, string> = {
 
 
 /** The variation register for the Variations tab (README R100): rows, whether this person may price, a reload after a save. */
-const RegisterCtx = createContext<{ rows: RegisterRow[]; canManage: boolean; seesMoney: boolean; reload: () => void; projectId: string }>({ rows: [], canManage: false, seesMoney: false, reload: () => {}, projectId: '' });
+const RegisterCtx = createContext<{ rows: RegisterRow[]; canManage: boolean; seesMoney: boolean; moneyLock: MoneyState; reload: () => void; projectId: string }>({ rows: [], canManage: false, seesMoney: false, moneyLock: 'none', reload: () => {}, projectId: '' });
 
 export function ReviewScreen(props: {
   entryId: string;
@@ -151,8 +152,10 @@ export function ReviewScreen(props: {
   plantRegister?: Array<{ id: string; name: string }>;
   /** Whether this person keeps the registers — prices and names on the Variations tab (README R100). */
   canManageRegisters?: boolean;
-  /** Money access on this job (README R105). */
+  /** Money access on this job (README R105), with the code entered (R106). */
   seesMoney?: boolean;
+  /** Why the money is shut, when it is: the Variations tab says so and links to the code (R106). */
+  moneyLock?: MoneyState;
   /** The day before and after, as recorded — back/forward from this day. */
   neighbours?: DayNeighbours;
 }) {
@@ -611,7 +614,7 @@ export function ReviewScreen(props: {
   }
 
   return (
-    <RegisterCtx.Provider value={{ rows: registerRows, canManage: Boolean(props.canManageRegisters), seesMoney: Boolean(props.seesMoney), reload: () => void loadRegister(), projectId: props.projectId }}>
+    <RegisterCtx.Provider value={{ rows: registerRows, canManage: Boolean(props.canManageRegisters), seesMoney: Boolean(props.seesMoney), moneyLock: props.moneyLock ?? 'none', reload: () => void loadRegister(), projectId: props.projectId }}>
     <main className="app-shell review-shell">
       <section className="sheet review-sheet">
         <header className="review-hero">
@@ -1378,11 +1381,11 @@ function DocketSection({
 
 /** The register item behind this variation row, from the screen's register (README R100). */
 function VariationRegisterCard({ seq }: { seq: number | null }) {
-  const { rows, canManage, seesMoney, reload, projectId } = useContext(RegisterCtx);
+  const { rows, canManage, seesMoney, moneyLock, reload, projectId } = useContext(RegisterCtx);
   const row = seq == null ? null : rows.find((r) => r.seq === seq) ?? null;
   if (seq == null) return null;
   if (!row) return <p className="caption vreg__none">V-{String(seq).padStart(3, '0')} is not on the register yet — it is registered when the day is saved.</p>;
-  return <VariationRegisterPanel row={row} canManage={canManage} seesMoney={seesMoney} onChanged={reload} projectId={projectId} />;
+  return <VariationRegisterPanel row={row} canManage={canManage} seesMoney={seesMoney} moneyLock={moneyLock} onChanged={reload} projectId={projectId} />;
 }
 
 type DocketState =

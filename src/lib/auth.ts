@@ -2,7 +2,7 @@ import 'server-only';
 
 import { redirect } from 'next/navigation';
 import { cookies } from 'next/headers';
-import { sees, type Screen } from '@/lib/roles';
+import { sees, seesMoney, type Screen } from '@/lib/roles';
 import { createClient } from '@/lib/supabase/server';
 import type { MemberRole, Profile } from '@/types/database';
 import { needsName } from '@/lib/people/name';
@@ -30,6 +30,35 @@ export interface SessionContext {
   email: string | null;
   profile: Profile | null;
   memberships: Membership[];
+  /**
+   * Whether this session has passed a second factor (README R106): `current` is what the session holds now,
+   * `next` is what it could reach — 'aal2' when the person has an authenticator set up.
+   */
+  aal: Aal;
+}
+
+export interface Aal { current: 'aal1' | 'aal2'; next: 'aal1' | 'aal2' }
+
+/**
+ * What a screen shows of the money for this person on this job (README R105, R106): 'open' with a verified code;
+ * 'needs_code' when they have an authenticator but signed in with the email link alone; 'needs_setup' when they are
+ * entitled but have none yet; 'none' when the money is not theirs to see. The database enforces the same.
+ */
+export type MoneyState = 'open' | 'needs_code' | 'needs_setup' | 'none';
+export function moneyState(member: Pick<Membership, 'role' | 'finance'> | null | undefined, aal: Aal): MoneyState {
+  if (!seesMoney(member)) return 'none';
+  if (aal.current === 'aal2') return 'open';
+  return aal.next === 'aal2' ? 'needs_code' : 'needs_setup';
+}
+
+/** The session's assurance level, read from its own token; never throws — a failure reads as the email link alone. */
+export async function readAal(supabase: Awaited<ReturnType<typeof createClient>>): Promise<Aal> {
+  try {
+    const { data } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+    return { current: data?.currentLevel === 'aal2' ? 'aal2' : 'aal1', next: data?.nextLevel === 'aal2' ? 'aal2' : 'aal1' };
+  } catch {
+    return { current: 'aal1', next: 'aal1' };
+  }
 }
 
 /**
@@ -86,6 +115,7 @@ export async function requireUser(): Promise<SessionContext> {
     email: user.email ?? null,
     profile: (profile as Profile | null) ?? null,
     memberships: preferJob((memberships ?? []) as unknown as Membership[], chosen),
+    aal: await readAal(supabase),
   };
 }
 

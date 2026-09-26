@@ -2,7 +2,8 @@ import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { DraftClaimButton } from './draft-button';
 import { createClient } from '@/lib/supabase/server';
-import { requireUser, resolveProject } from '@/lib/auth';
+import { requireUser, resolveProject, moneyState } from '@/lib/auth';
+import { MoneyLock } from '@/components/money-lock';
 import { sees, canManageRegisters } from '@/lib/roles';
 import { loadClaimsData, type ClaimsData } from '@/lib/claims/load';
 import { BrandMark } from '@/components/brand-mark';
@@ -23,7 +24,7 @@ export default async function ClaimsPage({
 }: {
   searchParams: Promise<{ project?: string }>;
 }) {
-  const { userId, memberships } = await requireUser();
+  const { userId, memberships, aal } = await requireUser();
   const { project } = await searchParams;
   const current = resolveProject(memberships, project);
   if (!current) {
@@ -34,6 +35,7 @@ export default async function ClaimsPage({
     );
   }
   if (!sees(current, 'claims')) redirect(`/?project=${current.project_id}`);
+  const moneyAccess = moneyState(current, aal);
 
   let data: ClaimsData | null = null;
   let loadError: string | null = null;
@@ -43,7 +45,7 @@ export default async function ClaimsPage({
       name: current.project.name,
       code: current.project.code,
       orgCode: current.project.org.code,
-    });
+    }, { money: moneyAccess === 'open' });
   } catch (error) {
     loadError = error instanceof Error ? error.message : 'Could not load the register.';
   }
@@ -101,6 +103,7 @@ export default async function ClaimsPage({
         </a>
       </div>
       <hr className="rule" />
+      <MoneyLock state={moneyAccess} next={`/claims?project=${current.project_id}`} />
 
       {loadError && <p className="notice gap">{loadError}</p>}
 

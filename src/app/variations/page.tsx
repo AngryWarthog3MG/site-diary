@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
-import { requireUser, resolveProject } from '@/lib/auth';
+import { requireUser, resolveProject, moneyState } from '@/lib/auth';
+import { MoneyLock } from '@/components/money-lock';
 import { sees, canManageRegisters } from '@/lib/roles';
 import { loadClaimsData, type ClaimsData } from '@/lib/claims/load';
 import { BrandMark } from '@/components/brand-mark';
@@ -21,7 +22,7 @@ export default async function VariationsPage({
 }: {
   searchParams: Promise<{ project?: string }>;
 }) {
-  const { userId, memberships } = await requireUser();
+  const { userId, memberships, aal } = await requireUser();
   const { project } = await searchParams;
   const current = resolveProject(memberships, project);
   if (!current) {
@@ -32,6 +33,7 @@ export default async function VariationsPage({
     );
   }
   if (!sees(current, 'variations')) redirect(`/?project=${current.project_id}`);
+  const money = moneyState(current, aal);
 
   let data: ClaimsData | null = null;
   let loadError: string | null = null;
@@ -41,7 +43,7 @@ export default async function VariationsPage({
       name: current.project.name,
       code: current.project.code,
       orgCode: current.project.org.code,
-    });
+    }, { money: money === 'open' });
   } catch (error) {
     loadError = error instanceof Error ? error.message : 'Could not load the register.';
   }
@@ -57,6 +59,7 @@ export default async function VariationsPage({
         tap a variation for the days behind it, its history, and to move it along.
       </p>
       <hr className="rule" />
+      <MoneyLock state={money} next={`/variations?project=${current.project_id}`} />
       {loadError && <p className="notice gap">{loadError}</p>}
       {data && <VariationTracker data={data} userId={userId} canManage={canManageRegisters(current.role)} today={perthToday()} />}
     </main>

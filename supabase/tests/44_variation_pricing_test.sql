@@ -29,7 +29,7 @@ insert into public.variation_register (id, project_id, title, raised_on)
 values ('cccccccc-cccc-0000-0000-000000000001', 'bbbbbbbb-cccc-0000-0000-000000000001', 'Extra trenching', '2026-09-16');
 
 set local role authenticated;
-set local request.jwt.claims = '{"sub":"11111111-cccc-0000-0000-000000000001","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"11111111-cccc-0000-0000-000000000001","role":"authenticated","aal":"aal2"}';
 -- From the tab: estimate set, nothing agreed yet.
 select public.set_variation_details('cccccccc-cccc-0000-0000-000000000001', 'VR-7', null, 'priced from the diary', 4200, false);
 do $$
@@ -54,7 +54,7 @@ begin
 end; $$;
 select tests.expect_error($$ select public.set_variation_details('cccccccc-cccc-0000-0000-000000000001', null, -1, null) $$, 'cannot be negative');
 select tests.expect_error($$ select public.set_variation_details('cccccccc-cccc-0000-0000-000000000001', null, null, null, -5, false) $$, 'cannot be negative');
-set local request.jwt.claims = '{"sub":"11111111-cccc-0000-0000-000000000002","role":"authenticated"}';
+set local request.jwt.claims = '{"sub":"11111111-cccc-0000-0000-000000000002","role":"authenticated","aal":"aal2"}';
 select tests.expect_error($$ select public.set_variation_details('cccccccc-cccc-0000-0000-000000000001', null, 100, null) $$, 'keeps the registers');
 
 rollback;

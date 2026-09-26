@@ -3,7 +3,8 @@ import { redirect } from 'next/navigation';
 import { HomeFoot } from '@/components/home-foot';
 import { BrandMark } from '@/components/brand-mark';
 import { createClient } from '@/lib/supabase/server';
-import { requireUser, resolveProject, guardScreen } from '@/lib/auth';
+import { requireUser, resolveProject, guardScreen, moneyState } from '@/lib/auth';
+import { MoneyLock } from '@/components/money-lock';
 import type { CostKind, RateItem } from '@/lib/variations/costs';
 import { RatesScreen } from './rates-screen';
 
@@ -16,11 +17,24 @@ export const metadata = { title: 'Rates · Kooboolong IMS' };
  * here. The office sets rates; the people who price variations read them.
  */
 export default async function RatesPage({ searchParams }: { searchParams: Promise<{ project?: string }> }) {
-  const { memberships } = await requireUser();
+  const { memberships, aal } = await requireUser();
   const { project } = await searchParams;
   const current = resolveProject(memberships, project);
   if (!current) redirect('/');
   guardScreen(current, 'rates');
+  // The rate card is money: it opens with the code (README R106).
+  const money = moneyState(current, aal);
+  if (money !== 'open') {
+    return (
+      <main className="sheet">
+        <Suspense fallback={null}>
+          <HomeFoot at="top" />
+        </Suspense>
+        <h1 className="page-title">Rates</h1>
+        <MoneyLock state={money} next={`/rates?project=${current.project_id}`} />
+      </main>
+    );
+  }
 
   const supabase = await createClient();
   const orgId = current.project.org.id;
