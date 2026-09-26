@@ -2525,6 +2525,51 @@ Not built: the build-up as a PDF for the head contractor, and a margin or on-cos
 and the second is a contract term that belongs on the job, not a guess. The claims CSV still prints the day rows'
 estimates. Migrations 20260926100000–100200, suite 45, `src/lib/variations/`.
 
+**R105. The money is locked away.** "A lot of the financials and company financial data would be in this app as well, so
+I need to keep that separate and locked away from individuals who use the app." Until now a supervisor read every
+variation value, and after R104 every rate and build-up line too. Money is now its own permission, apart from the
+screens a person may open, and the database enforces it — hiding figures on a screen is not a lock, because a phone
+session can query the database directly.
+
+*Who.* `project_members.finance`, per person per job, null for the role's default: an admin always sees the money; a PM
+does unless an admin switches it off; a supervisor does not unless an admin switches it on; a leading hand and a labourer
+never do, whatever the column says. `app.role_sees_money` / `app.sees_money(project)` / `app.sees_org_money(org)` in SQL,
+`seesMoney(member)` in `src/lib/roles.ts` — the database wins. The switch is on Who is on this job, admins only; a change
+of role puts it back to the new role's default, as it does the screen ticks.
+
+*What.* The register's `estimated_cost` and `agreed_cost`, and a submission's `claimed_total` / `claimed_lines`, cannot be
+selected by a signed-in account at all — column privileges, so `select *` on those tables is refused too, and the app names
+its columns. The values come back only through `variation_values(project)` and `variation_submissions(register)`, which
+answer empty, never with an error that says something is there. The two functions that hand back a register row blank the
+money for a caller without it, and `set_variation_details` ignores money from such a caller — so a supervisor still moves a
+variation, renames it and sets the client's reference. The rate card and the build-up need money access to read or write.
+The screens follow: no money tiles, values, build-up link or Rates for someone without it, and a waiting line that never
+asks them to "put a value on it" (`waitingOnForCrew`); the claims export blanks the column and its total rather than print
+a misleading 0; the claim narrative is not given the figures; the portfolio shows the register's value, and only on jobs
+where the viewer sees the money. Rates is not a screen tick: the money switch alone opens it.
+
+*Accepted, on purpose.* Three per-day estimates were typed on diary rows before the register held values. They are part of
+signed days — in the hash and in stored PDFs — and the signed record does not change, so they stay readable wherever the
+signed day is; no screen or export shows them without money access. A column privilege on them would also have broken the
+diary views that Ask's safety rests on.
+
+*Who decided.* Every change to who is on a job, their role, their screen ticks or their money access is kept in
+`member_access_events` (added / changed / removed, money before and after, who made it) — the record an access review
+reads. Admins read it as Access history on Who is on this job, and What's due carries a quarterly access review (ISO/IEC
+27001 A.5.18; cl. 7.5.3 of the three ISO standards). Suite 46; suites 01, 43, 44 and 45 now read values through the
+functions. Migration 20260926110000.
+
+The same pass found a regression from R89: rewriting `app.swms_problems` for filed SWMSs dropped the `::text` on three
+plain messages, so an incomplete SWMS was refused with "malformed array literal" instead of the list of what was missing.
+The casts are back (20260926110100); suite 11 caught it.
+
+What this is not: ISO certification. A certification body certifies Kooboolong's management system, not the software;
+the app runs the processes and holds the evidence. The readiness review of 26/09 maps clauses 4–10 of ISO 9001, 14001 and
+45001 against the app, and names what is left: no restorable database backups (none listed, point-in-time recovery off —
+a plan decision), one-factor sign-in for anyone who sees the money, the data held in Tokyo, and five registers the
+standards name that the app does not have yet (objectives, interested parties and company risks, supplier evaluation,
+management of change, client feedback).
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;

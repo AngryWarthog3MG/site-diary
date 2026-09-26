@@ -30,7 +30,7 @@ const num = (s: string) => (s.trim() === '' ? null : Number(s.replace(/[$,\s]/g,
  * the day. Saves go through the register's own RPCs; nothing here touches
  * the day's row or the signed record.
  */
-export function VariationRegisterPanel({ row, canManage, onChanged, projectId }: { row: RegisterRow | null; canManage: boolean; onChanged: () => void; projectId: string }) {
+export function VariationRegisterPanel({ row, canManage, seesMoney = false, onChanged, projectId }: { row: RegisterRow | null; canManage: boolean; seesMoney?: boolean; onChanged: () => void; projectId: string }) {
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -67,12 +67,12 @@ export function VariationRegisterPanel({ row, canManage, onChanged, projectId }:
       <p className="vreg__line">
         <span className="mono">V-{String(row.seq).padStart(3, '0')}</span> {row.title}
         <span className="vreg__facts"> · {STATUS_LABEL[row.status] ?? row.status}
-          {row.agreed_cost != null ? ` · agreed ${money(row.agreed_cost)}` : row.estimated_cost != null ? ` · ${row.estimate_source === 'build_up' ? 'claim' : 'est.'} ${money(row.estimated_cost)}` : ' · no value yet'}
+          {!seesMoney ? '' : row.agreed_cost != null ? ` · agreed ${money(row.agreed_cost)}` : row.estimated_cost != null ? ` · ${row.estimate_source === 'build_up' ? 'claim' : 'est.'} ${money(row.estimated_cost)}` : ' · no value yet'}
           {row.vr_ref ? ` · ${row.vr_ref}` : ''}
         </span>
-        {canManage && !open && <button type="button" className="linklike vreg__edit" onClick={begin}>{row.agreed_cost == null && row.estimated_cost == null ? 'Price it' : 'Edit'}</button>}
+        {canManage && !open && <button type="button" className="linklike vreg__edit" onClick={begin}>{seesMoney && row.agreed_cost == null && row.estimated_cost == null ? 'Price it' : 'Edit'}</button>}
       </p>
-      {canManage && (
+      {canManage && seesMoney && (
         <p className="vreg__build">
           <Link href={`/variations/${row.id}?project=${projectId}`}>
             {row.estimate_source === 'build_up' ? 'Cost build-up — labour, plant, materials' : 'Build up the cost — labour at its rate, each machine, materials'}
@@ -84,20 +84,22 @@ export function VariationRegisterPanel({ row, canManage, onChanged, projectId }:
           <label className="fieldcell"><span className="label">Name on the register</span>
             <input className="field field--sm" value={draft.title} onChange={(e) => setDraft({ ...draft, title: e.target.value })} /></label>
           <div className="signin__grid">
-            {row.estimate_source === 'build_up' ? (
+            {seesMoney && (row.estimate_source === 'build_up' ? (
               <div className="fieldcell"><span className="label">Claim (built up)</span>
                 <p className="vreg__built">{money(row.estimated_cost) ?? '—'} — <Link href={`/variations/${row.id}?project=${projectId}`}>change it on the build-up</Link></p></div>
             ) : (
               <label className="fieldcell"><span className="label">Estimated value ($)</span>
                 <input className="field field--sm" inputMode="decimal" value={draft.estimated} placeholder="e.g. 4200" onChange={(e) => setDraft({ ...draft, estimated: e.target.value })} /></label>
+            ))}
+            {seesMoney && (
+              <label className="fieldcell"><span className="label">Agreed value ($)</span>
+                <input className="field field--sm" inputMode="decimal" value={draft.agreed} placeholder="once the client agrees" onChange={(e) => setDraft({ ...draft, agreed: e.target.value })} /></label>
             )}
-            <label className="fieldcell"><span className="label">Agreed value ($)</span>
-              <input className="field field--sm" inputMode="decimal" value={draft.agreed} placeholder="once the client agrees" onChange={(e) => setDraft({ ...draft, agreed: e.target.value })} /></label>
             <label className="fieldcell"><span className="label">Client&rsquo;s reference</span>
               <input className="field field--sm" value={draft.vrRef} placeholder="VR-012" onChange={(e) => setDraft({ ...draft, vrRef: e.target.value })} /></label>
           </div>
           <label className="fieldcell"><span className="label">Notes</span>
-            <input className="field field--sm" value={draft.notes} placeholder="Rates, basis, who said what" onChange={(e) => setDraft({ ...draft, notes: e.target.value })} /></label>
+            <input className="field field--sm" value={draft.notes} placeholder="Who asked for it, what was agreed on site" onChange={(e) => setDraft({ ...draft, notes: e.target.value })} /></label>
           {error && <p className="alert">{error}</p>}
           <div className="claims-actions">
             <button type="button" className="button" disabled={busy} onClick={() => void save()}>{busy ? 'Saving…' : 'Save to the register'}</button>

@@ -666,11 +666,11 @@ select set_config('request.jwt.claims',
 set local role authenticated;
 do $$
 declare
-  v_reg  public.variation_register;
+  v_reg  record;
   v_link int;
   v_ev   int;
 begin
-  select * into v_reg from public.variation_register
+  select id, seq, title, vr_ref, raised_on, status, submitted_on, decided_on, paid_on, notes into v_reg from public.variation_register
    where project_id = 'bbbbbbbb-0000-0000-0000-000000000001' and seq = 14;
   assert found, 'the number picked on the day did not register the variation';
   assert v_reg.vr_ref is null, 'the day carries only the number; the client reference is set on the register';
@@ -681,14 +681,17 @@ begin
   assert v_link = 1, 'one diary mention linked';
 
   perform public.set_variation_status(v_reg.id, 'submitted', 'Sent to the QS');
-  select * into v_reg from public.variation_register where id = v_reg.id;
+  select id, seq, title, vr_ref, raised_on, status, submitted_on, decided_on, paid_on, notes into v_reg from public.variation_register where id = v_reg.id;
   assert v_reg.status = 'submitted' and v_reg.submitted_on = app.perth_today(), 'submitted stamps the Perth date (README R78)';
   select count(*) into v_ev from public.variation_status_events where register_id = v_reg.id;
   assert v_ev = 2, format('expected raised + submitted events, got %s', v_ev);
 
   perform public.set_variation_details(v_reg.id, ' vr-014 ', 1250.00, 'Agreed at 1,250');
-  select * into v_reg from public.variation_register where id = v_reg.id;
-  assert v_reg.vr_ref = 'vr-014' and v_reg.agreed_cost = 1250.00, 'details stored';
+  select id, seq, title, vr_ref, raised_on, status, submitted_on, decided_on, paid_on, notes into v_reg from public.variation_register where id = v_reg.id;
+  assert v_reg.vr_ref = 'vr-014', 'details stored';
+  -- A supervisor keeps the register but, by default, not the money (README R105): the reference saves, the value
+  -- does not, and the values stay out of reach. Suite 46 covers who does see them.
+  assert (select count(*) from public.variation_values('bbbbbbbb-0000-0000-0000-000000000001')) = 0, 'a supervisor sees no values by default';
   raise notice 'PASS  variation register: signing registers, status is an audited RPC';
 end;
 $$;
@@ -698,12 +701,12 @@ $$;
 -- can be removed, one a signed diary stands behind cannot.
 do $$
 declare
-  v_signed public.variation_register;
-  v_item   public.variation_register;
-  v_again  public.variation_register;
+  v_signed record;
+  v_item   record;
+  v_again  record;
   v_links  int;
 begin
-  select * into v_signed from public.variation_register
+  select id, seq, title, vr_ref, raised_on, status, submitted_on, decided_on, paid_on, notes into v_signed from public.variation_register
    where project_id = 'bbbbbbbb-0000-0000-0000-000000000001' and vr_ref = 'vr-014';
   assert v_signed.seq is not null, 'the signed item has a number';
 
@@ -720,7 +723,7 @@ begin
   insert into public.variations (id, entry_id, description, register_seq)
   values ('dddddddd-0000-0000-0000-000000000088', 'cccccccc-0000-0000-0000-000000000088', 'Extra kerb at the bus bay', 15);
 
-  select r.* into v_item from public.variation_register r
+  select r.id, r.seq, r.title, r.vr_ref, r.raised_on, r.status into v_item from public.variation_register r
     join public.variation_register_links l on l.register_id = r.id
    where l.variation_id = 'dddddddd-0000-0000-0000-000000000088';
   assert found, 'a draft variation with a number is registered as it is written';
@@ -735,7 +738,7 @@ begin
   assert exists (select 1 from public.variation_register where id = v_item.id), 'the item itself stays';
   insert into public.variations (entry_id, description, register_seq)
   values ('cccccccc-0000-0000-0000-000000000088', 'Extra kerb at the bus bay, reworded', 15);
-  select r.* into v_again from public.variation_register r
+  select r.id, r.seq, r.title, r.vr_ref, r.raised_on, r.status into v_again from public.variation_register r
     join public.variation_register_links l on l.register_id = r.id
     join public.variations v on v.id = l.variation_id
    where v.entry_id = 'cccccccc-0000-0000-0000-000000000088';
@@ -767,11 +770,11 @@ select set_config('request.jwt.claims',
 set local role authenticated;
 do $$
 declare
-  v_signed public.variation_register;
+  v_signed record;
   v_new    uuid;
   v_state  text;
 begin
-  select * into v_signed from public.variation_register
+  select id, seq, title, vr_ref, raised_on, status, submitted_on, decided_on, paid_on, notes into v_signed from public.variation_register
    where project_id = 'bbbbbbbb-0000-0000-0000-000000000001' and vr_ref = 'vr-014';
 
   -- entry ...0088 (2026-09-01, supervisor 1, draft) is still open from above.
@@ -810,9 +813,9 @@ select set_config('request.jwt.claims',
   '{"sub":"33333333-3333-3333-3333-333333333333","role":"authenticated"}', true);
 set local role authenticated;
 do $$
-declare v_signed public.variation_register;
+declare v_signed record;
 begin
-  select * into v_signed from public.variation_register
+  select id, seq, title, vr_ref, raised_on, status, submitted_on, decided_on, paid_on, notes into v_signed from public.variation_register
    where project_id = 'bbbbbbbb-0000-0000-0000-000000000001' and vr_ref = 'vr-014';
   begin
     perform public.record_variation_on_day(v_signed.id, 'cccccccc-0000-0000-0000-000000000089');
@@ -837,9 +840,9 @@ select set_config('request.jwt.claims',
   '{"sub":"44444444-4444-4444-4444-444444444444","role":"authenticated"}', true);
 set local role authenticated;
 do $$
-declare v_signed public.variation_register;
+declare v_signed record;
 begin
-  select * into v_signed from public.variation_register
+  select id, seq, title, vr_ref, raised_on, status, submitted_on, decided_on, paid_on, notes into v_signed from public.variation_register
    where project_id = 'bbbbbbbb-0000-0000-0000-000000000001' and vr_ref = 'vr-014';
   assert found, 'the leading hand can still read the register';
   begin

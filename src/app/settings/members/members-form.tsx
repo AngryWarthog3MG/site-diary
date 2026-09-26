@@ -9,12 +9,15 @@ export interface MemberRow {
   role: MemberRole;
   /** Exactly the screens ticked for this person; null = the role's own list. */
   screens: string[] | null;
+  /** Money access; null = the role's default (README R105). */
+  finance: boolean | null;
   name: string | null;
   email: string | null;
   isCurrentUser: boolean;
 }
 
-import { ROLES, ROLE_HINT as ROLE_TEXT, ROLE_LABEL, defaultScreens, grantableScreens, type Screen } from '@/lib/roles';
+import { ROLES, ROLE_HINT as ROLE_TEXT, ROLE_LABEL, defaultScreens, grantableScreens, seesMoney, type Screen } from '@/lib/roles';
+import { fmtPerthDate } from '@/lib/pdf/dates';
 import { NAV_GROUPS } from '@/lib/nav';
 
 /**
@@ -232,6 +235,12 @@ export function MembersForm({
                   busy={busy !== null}
                   onSave={(screens) => request('PATCH', { userId: member.userId, screens }, `access:${member.userId}`)}
                 />
+                <MoneyAccess
+                  member={member}
+                  canEdit={canEdit}
+                  busy={busy !== null}
+                  onSave={(finance) => request('PATCH', { userId: member.userId, finance }, `money:${member.userId}`)}
+                />
               </article>
             );
           })}
@@ -293,5 +302,73 @@ export function MembersForm({
         </>
       )}
     </>
+  );
+}
+
+/**
+ * The money switch (README R105). Money is its own permission, apart from the screens: variation values, rates,
+ * cost build-ups and the company's figures. An admin always sees it; a PM does unless switched off; a supervisor
+ * does not unless switched on; a leading hand or labourer never does. The database enforces the same rule.
+ */
+function MoneyAccess({ member, canEdit, busy, onSave }: { member: MemberRow; canEdit: boolean; busy: boolean; onSave: (finance: boolean | null) => Promise<boolean> }) {
+  const on = seesMoney(member);
+  const settable = member.role === 'pm' || member.role === 'supervisor';
+  const byHand = settable && member.finance !== null;
+  const why = member.role === 'admin' ? 'an admin always does'
+    : !settable ? `a ${ROLE_LABEL[member.role].toLowerCase()} never does`
+    : byHand ? 'set by hand' : `the ${ROLE_LABEL[member.role].toLowerCase()}’s default`;
+  return (
+    <div className="money-access">
+      <span className="money-access__state">
+        <span className={`money-access__dot${on ? ' money-access__dot--on' : ''}`} aria-hidden />
+        <strong>{on ? 'Sees the money' : 'Money hidden'}</strong>
+        <span className="caption"> · {why}</span>
+      </span>
+      {canEdit && settable && (
+        <span className="money-access__act">
+          <button type="button" className="quotebtn" disabled={busy} onClick={() => void onSave(!on)}>{on ? 'Hide the money' : 'Show the money'}</button>
+          {byHand && <button type="button" className="quotebtn" disabled={busy} onClick={() => void onSave(null)}>Back to the default</button>}
+        </span>
+      )}
+    </div>
+  );
+}
+
+export interface AccessEvent {
+  id: string;
+  who: string;
+  by: string;
+  at: string;
+  kind: 'added' | 'changed' | 'removed';
+  oldRole: string | null;
+  newRole: string | null;
+  moneyBefore: boolean;
+  moneyAfter: boolean;
+  screensChanged: boolean;
+}
+
+const roleWord = (r: string | null) => (r && r in ROLE_LABEL ? ROLE_LABEL[r as MemberRole] : r ?? '');
+
+/** Who changed whose access on this job, and when — the record an access review reads (README R105). Admins only. */
+export function AccessHistory({ events }: { events: AccessEvent[] }) {
+  if (events.length === 0) return null;
+  const say = (e: AccessEvent) => {
+    if (e.kind === 'added') return `added as ${roleWord(e.newRole)}${e.moneyAfter ? ', sees the money' : ''}`;
+    if (e.kind === 'removed') return `removed (was ${roleWord(e.oldRole)})`;
+    const parts: string[] = [];
+    if (e.oldRole !== e.newRole) parts.push(`${roleWord(e.oldRole)} → ${roleWord(e.newRole)}`);
+    if (e.moneyBefore !== e.moneyAfter) parts.push(e.moneyAfter ? 'money shown' : 'money hidden');
+    if (e.screensChanged) parts.push('screens changed');
+    return parts.join(' · ') || 'access changed';
+  };
+  return (
+    <details className="access-history">
+      <summary>Access history · last {events.length}</summary>
+      <ul className="plainlist">
+        {events.map((e) => (
+          <li key={e.id}><span className="mono">{fmtPerthDate(e.at)}</span> <strong>{e.who}</strong> {say(e)} <span className="caption">— by {e.by}</span></li>
+        ))}
+      </ul>
+    </details>
   );
 }

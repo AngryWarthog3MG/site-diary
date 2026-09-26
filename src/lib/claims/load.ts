@@ -13,6 +13,8 @@ import { loadDocketsAdded } from '@/lib/weekly/load';
 
 export interface ClaimsData {
   project: { id: string; name: string; code: string; orgCode: string };
+  /** Whether the caller sees the money on this job (README R105). When false every money field below is empty. */
+  seesMoney: boolean;
   entryIds: Record<string, string>;
   delays: {
     rows: Array<{
@@ -95,6 +97,8 @@ export async function loadClaimsData(
   if (!UUID_RE.test(project.id)) throw new ClaimsLoadError('Bad project id.');
 
   const where = `where project_id = '${project.id}'`;
+  const { data: moneyFlag } = await supabase.rpc('sees_money', { p_project: project.id });
+  const seesMoney = moneyFlag === true;
   const [entries, delays, variations, dayworks] = await Promise.all([
     diaryQuery(supabase, `select entry_no, entry_id from diary.entries ${where}`),
     diaryQuery(
@@ -180,8 +184,11 @@ export async function loadClaimsData(
     };
   });
 
+  // The legacy per-day estimates are part of signed days, but no screen or export shows them without money access.
+  if (!seesMoney) for (const r of variationRows) r.estimated_cost = null;
   return {
     project,
+    seesMoney,
     entryIds,
     delays: {
       rows: delayRows,
@@ -214,7 +221,7 @@ async function loadRegister(supabase: SupabaseClient, projectId: string): Promis
   const [{ data: items }, { data: links }, { data: versions }] = await Promise.all([
     supabase
       .from('variation_register')
-      .select('id, seq, title, vr_ref, raised_on, status, estimated_cost, agreed_cost, estimate_source, submitted_on, decided_on, paid_on, notes')
+      .select('id, seq, title, vr_ref, raised_on, status, estimate_source, submitted_on, decided_on, paid_on, notes')
       .eq('project_id', projectId),
     supabase
       .from('variation_register_links')
@@ -236,12 +243,17 @@ async function loadRegister(supabase: SupabaseClient, projectId: string): Promis
       .filter((e) => e.status === 'signed' && e.supersedes_entry_id)
       .map((e) => e.supersedes_entry_id as string),
   );
+  // The values come only through the locked function (README R105): empty for anyone without money access.
+  const { data: values, error: valuesError } = await supabase.rpc('variation_values', { p_project: projectId });
+  if (valuesError) throw new Error(`Could not load the variation values: ${valuesError.message}`);
+  const money = new Map(((values ?? []) as Array<{ register_id: string; estimated_cost: unknown; agreed_cost: unknown }>).map((v) => [v.register_id, v]));
   const out = new Map<string, RegisterItem>();
-  for (const row of (items ?? []) as Array<Omit<RegisterItem, 'mentions' | 'signed' | 'events' | 'crew' | 'hours'>>) {
+  for (const row of (items ?? []) as Array<Omit<RegisterItem, 'mentions' | 'signed' | 'events' | 'crew' | 'hours' | 'estimated_cost' | 'agreed_cost'>>) {
+    const v = money.get(row.id);
     out.set(row.id, {
       ...row,
-      estimated_cost: row.estimated_cost == null ? null : num(row.estimated_cost),
-      agreed_cost: row.agreed_cost == null ? null : num(row.agreed_cost),
+      estimated_cost: v?.estimated_cost == null ? null : num(v.estimated_cost),
+      agreed_cost: v?.agreed_cost == null ? null : num(v.agreed_cost),
       mentions: [],
       events: [],
       crew: [],

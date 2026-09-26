@@ -107,7 +107,8 @@ export async function GET(request: Request) {
       data.delays.totalMinutes,
       data.delays.totalHours,
       null,
-      data.variations.totalCost,
+      // Money only for those who see it (README R105): blank, never a misleading 0.
+      data.seesMoney ? data.variations.totalCost : null,
     ]),
   );
 

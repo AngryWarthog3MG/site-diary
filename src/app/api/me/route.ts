@@ -18,7 +18,7 @@ export async function GET(request: Request) {
   const { data: memberships, error } = await supabase
     .from('project_members')
     .select(
-      'project_id, role, screens, project:projects!inner(id, name, code, active, next_entry_seq, org:organisations!inner(id, name, code))',
+      'project_id, role, screens, finance, project:projects!inner(id, name, code, active, next_entry_seq, org:organisations!inner(id, name, code))',
     )
     .eq('user_id', user.id)
     .order('project_id');
@@ -42,6 +42,7 @@ export async function GET(request: Request) {
         : null,
       role: current?.role ?? null,
       screens: current?.screens ?? null,
+      finance: current?.finance ?? null,
       canRecord: current ? canAuthorEntries(current.role) : false,
       canRunTalks: current ? canRunTalks(current.role) : false,
       projects: rows

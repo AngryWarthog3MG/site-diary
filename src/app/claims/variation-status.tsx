@@ -18,6 +18,7 @@ export function VariationStatusControl({
   agreedCost,
   notes,
   needsValue = false,
+  seesMoney = true,
 }: {
   registerId: string;
   status: VariationStatus;
@@ -26,6 +27,8 @@ export function VariationStatusControl({
   notes: string | null;
   /** No figure anywhere yet: the Details link says so and opens ready to take one. */
   needsValue?: boolean;
+  /** Money access (README R105). Without it the agreed value is neither shown nor sent; the database ignores it anyway. */
+  seesMoney?: boolean;
 }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
@@ -99,11 +102,13 @@ export function VariationStatusControl({
             <input className="field field--sm" value={draft.vrRef} placeholder="VR-012"
               onChange={(e) => setDraft({ ...draft, vrRef: e.target.value })} />
           </label>
-          <label className="fieldcell">
-            <span className="label">Agreed value ($)</span>
-            <input className="field field--sm" inputMode="decimal" value={draft.agreedCost} placeholder="e.g. 2000" autoFocus={needsValue}
-              onChange={(e) => setDraft({ ...draft, agreedCost: e.target.value })} />
-          </label>
+          {seesMoney && (
+            <label className="fieldcell">
+              <span className="label">Agreed value ($)</span>
+              <input className="field field--sm" inputMode="decimal" value={draft.agreedCost} placeholder="e.g. 2000" autoFocus={needsValue}
+                onChange={(e) => setDraft({ ...draft, agreedCost: e.target.value })} />
+            </label>
+          )}
           <label className="fieldcell">
             <span className="label">Notes</span>
             <textarea className="field" rows={2} value={draft.notes}

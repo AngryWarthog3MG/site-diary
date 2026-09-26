@@ -13,6 +13,8 @@ export interface Membership {
   role: MemberRole;
   /** Exactly the screens ticked for this person on this job; null = the role's list. */
   screens: string[] | null;
+  /** Money access on this job; null = the role's default (README R105). Read it through seesMoney. */
+  finance: boolean | null;
   project: {
     id: string;
     name: string;
@@ -50,7 +52,7 @@ export async function requireUser(): Promise<SessionContext> {
     supabase
       .from('project_members')
       .select(
-        'project_id, role, screens, project:projects!inner(id, name, code, active, next_entry_seq, org:organisations!inner(id, name, code))',
+        'project_id, role, screens, finance, project:projects!inner(id, name, code, active, next_entry_seq, org:organisations!inner(id, name, code))',
       )
       .eq('user_id', user.id)
       .order('project_id'),
@@ -97,7 +99,7 @@ export function provisionalEntryNo(membership: Membership, localDate: string): s
   return `${membership.project.org.code}-${localDate}`;
 }
 
-export { canAuthorEntries, canRunTalks, canSignIn, canReport, canSee, sees } from '@/lib/roles';
+export { canAuthorEntries, canRunTalks, canSignIn, canReport, canSee, sees, seesMoney } from '@/lib/roles';
 
 /**
  * The page-level half of the role gate: a screen refused to this role on this

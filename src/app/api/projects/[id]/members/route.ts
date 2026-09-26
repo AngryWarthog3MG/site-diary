@@ -154,6 +154,22 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
     return ok({ message: `Name set: ${result.name}. New sheets will print it.` });
   }
 
+  // Money access (README R105): on, off, or null for the role's default. Only a supervisor's or a PM's can be set:
+  // an admin always sees the money and a leading hand or labourer never does — the database holds the same rule.
+  if (body && typeof body === 'object' && 'finance' in body) {
+    const raw = (body as { finance: unknown }).finance;
+    if (raw !== null && typeof raw !== 'boolean') return fail('bad_request', 'Money access is on, off, or null for the role default.', 400);
+    const { data: member, error: mErr } = await auth.supabase.from('project_members').select('role').eq('project_id', projectId).eq('user_id', userId).maybeSingle();
+    if (mErr) return fail('server_error', mErr.message, 500);
+    if (!member) return fail('not_found', 'That person is not on this job.', 404);
+    if (member.role === 'admin') return fail('bad_request', 'An admin always sees the money.', 400);
+    if (member.role !== 'pm' && member.role !== 'supervisor') return fail('bad_request', `A ${ROLE_LABEL[member.role as MemberRole].toLowerCase()} never sees the money.`, 400);
+    const { error } = await auth.supabase.from('project_members').update({ finance: raw as boolean | null }).eq('project_id', projectId).eq('user_id', userId);
+    if (error) return fail('server_error', error.message, 500);
+    const effective = raw === null ? member.role === 'pm' : raw;
+    return ok({ message: effective ? 'They can see the money on this job.' : 'The money on this job is hidden from them.', finance: raw });
+  }
+
   // Access by tick box: exactly these screens, or null for the role's own list. Checked
   // against the list of screens there are and this role's ceiling, so a stray name can
   // never be stored. An admin may set their own — `sees` keeps Settings open for them.
@@ -202,10 +218,10 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
     return fail('server_error', error instanceof Error ? error.message : 'Could not check admins.', 500);
   }
 
-  // The ticks were made against the old role; a new role starts from its own list.
+  // The ticks were made against the old role; a new role starts from its own list, and its own money default.
   const { error } = await auth.supabase
     .from('project_members')
-    .update({ role: role as MemberRole, screens: null })
+    .update({ role: role as MemberRole, screens: null, finance: null })
     .eq('project_id', projectId)
     .eq('user_id', userId);
   if (error) return fail('server_error', error.message, 500);

@@ -49,10 +49,11 @@ export function narrativeInput(data: ClaimsData): string {
     delays: { rows: delays.rows, total_minutes: delays.totalMinutes, total_hours: delays.totalHours, man_hours_lost: delays.manHoursLost, by_category: delays.byCategory },
     variations: {
       rows: variations.rows,
-      total_estimated_cost: variations.totalCost,
+      // No money to the model for someone who cannot see it (README R105) — the loader has emptied the fields too.
+      ...(data.seesMoney ? { total_estimated_cost: variations.totalCost } : {}),
       register: variations.register.map((r) => ({
         number: r.seq, title: r.title, vr_ref: r.vr_ref, status: r.status, raised_on: r.raised_on,
-        estimated_cost: r.estimated_cost, agreed_cost: r.agreed_cost, submitted_on: r.submitted_on, decided_on: r.decided_on, paid_on: r.paid_on,
+        ...(data.seesMoney ? { estimated_cost: r.estimated_cost, agreed_cost: r.agreed_cost } : {}), submitted_on: r.submitted_on, decided_on: r.decided_on, paid_on: r.paid_on,
         hours: r.hours, crew: r.crew, days: r.mentions.map((m) => ({ date: m.date, entry_no: m.entry_no, signed: m.signed, hours: m.hours })),
       })),
       unreferenced: variations.unreferenced,

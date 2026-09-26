@@ -39,9 +39,9 @@ export async function forbidUnlessSees(
   screen: Screen,
 ): Promise<NextResponse | null> {
   // Fail closed: a lookup that errors, or finds no role on this job, refuses (Codex pass 42).
-  const { data, error } = await supabase.from('project_members').select('role, screens').eq('project_id', projectId).eq('user_id', userId).maybeSingle();
+  const { data, error } = await supabase.from('project_members').select('role, screens, finance').eq('project_id', projectId).eq('user_id', userId).maybeSingle();
   if (error) return fail('server_error', `Could not check your role on this job: ${error.message}`, 500);
-  const member = data ? { role: data.role as MemberRole, screens: (data.screens as string[] | null) ?? null } : null;
+  const member = data ? { role: data.role as MemberRole, screens: (data.screens as string[] | null) ?? null, finance: (data.finance as boolean | null) ?? null } : null;
   if (!member || !sees(member, screen)) return fail('forbidden', 'Your role on this job does not include that.', 403);
   return null;
 }

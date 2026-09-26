@@ -134,6 +134,15 @@ export function stageDates(item: Pick<RegisterItem, 'raised_on' | 'submitted_on'
 
 export type Waiting = { text: string; tone: 'act' | 'wait' | 'ok' | 'stop' };
 
+/**
+ * The waiting line for someone without money access (README R105): the same, except it never asks them for a
+ * value they cannot see or set — pricing is the office's.
+ */
+export function waitingOnForCrew(item: Parameters<typeof waitingOn>[0], today: string): Waiting {
+  const w = waitingOn(item, today);
+  return item.status === 'raised' || item.status === 'priced' ? (w.tone === 'act' ? { text: 'With the office to price and send', tone: 'wait' } : w) : w;
+}
+
 /** What this variation is waiting on right now — the one line a PM reads. */
 export function waitingOn(item: Pick<RegisterItem, 'status' | 'signed' | 'vr_ref' | 'estimated_cost' | 'agreed_cost' | 'submitted_on' | 'decided_on' | 'paid_on' | 'events' | 'raised_on' | 'mentions'>, today: string): Waiting {
   const dates = stageDates({ ...item, events: item.events });

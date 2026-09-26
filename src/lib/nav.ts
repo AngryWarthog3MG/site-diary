@@ -132,7 +132,7 @@ export const NAV_GROUPS: NavGroup[] = [
  */
 export const EVERY_ROLE: Screen[] = ['today', 'entries', 'weekly', 'prestart', 'plant', 'toolbox', 'signin', 'swms', 'swms_sign', 'incidents', 'inspections', 'permits', 'procedures', 'safety', 'orders', 'chemicals', 'obligations', 'emergency', 'construction', 'quality', 'audits', 'asbestos', 'environment'];
 
-export interface NavViewer { role: MemberRole | null; screens?: readonly string[] | null; canRecord: boolean; multiJob: boolean }
+export interface NavViewer { role: MemberRole | null; screens?: readonly string[] | null; finance?: boolean | null; canRecord: boolean; multiJob: boolean }
 
 /**
  * The groups this viewer gets, each holding only the doors they get; empty
@@ -150,7 +150,7 @@ export function navFor(viewer: NavViewer): NavGroup[] {
 
 /** Whether this viewer gets this door. A null role means "not known yet". */
 export function showNav(item: NavItem, viewer: NavViewer): boolean {
-  const member: Access | null = viewer.role ? { role: viewer.role, screens: viewer.screens ?? null } : null;
+  const member: Access | null = viewer.role ? { role: viewer.role, screens: viewer.screens ?? null, finance: viewer.finance ?? null } : null;
   // The crew pages live under Settings: an authoring role gets them, unless Settings is unticked for this person.
   if (item.when === 'canRecord') return viewer.canRecord && (member ? sees(member, 'settings') : true);
   // All jobs is the owner's screen: several jobs, and a role that reads the record on them.
@@ -161,5 +161,5 @@ export function showNav(item: NavItem, viewer: NavViewer): boolean {
 
 /** The viewer a membership implies, for a server page that already knows it. */
 export function viewerFor(member: Access, activeJobs: number): NavViewer {
-  return { role: member.role, screens: member.screens ?? null, canRecord: canAuthorEntries(member.role), multiJob: activeJobs > 1 };
+  return { role: member.role, screens: member.screens ?? null, finance: member.finance ?? null, canRecord: canAuthorEntries(member.role), multiJob: activeJobs > 1 };
 }

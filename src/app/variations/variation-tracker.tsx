@@ -5,7 +5,7 @@ import Link from 'next/link';
 import type { ClaimsData } from '@/lib/claims/load';
 import { fmtDate } from '@/lib/pdf/dates';
 import {
-  STAGES, STATUS_LABEL, STATUS_HINT, itemValue, registerNumber, stageIndex, stageDates, waitingOn, nextFreeNumber, trackerOrder, perthDate,
+  STAGES, STATUS_LABEL, STATUS_HINT, itemValue, registerNumber, stageIndex, stageDates, waitingOn, waitingOnForCrew, nextFreeNumber, trackerOrder, perthDate,
   type RegisterItem, type VariationStatus,
 } from '@/lib/claims/register';
 import { registerWarnings } from '@/lib/claims/warnings';
@@ -33,6 +33,8 @@ export function VariationTracker({ data, userId, canManage, today }: { data: Cla
   const total = items.reduce((n, i) => n + (itemValue(i) ?? 0), 0);
   const withClient = byStatus('submitted');
   const entryLink = (entryNo: string) => (data.entryIds[entryNo] ? `/entries/${data.entryIds[entryNo]}/signed` : null);
+  // Money only for those who see it (README R105); the loader has already left it empty for anyone else.
+  const seesMoney = data.seesMoney;
 
   if (items.length === 0) {
     return (
@@ -54,7 +56,7 @@ export function VariationTracker({ data, userId, canManage, today }: { data: Cla
               <button type="button" onClick={() => setStage(stage === st ? 'all' : st)} title={STATUS_HINT[st]}>
                 <span className="vt-pipe__n mono">{b.count}</span>
                 <span className="vt-pipe__name">{STATUS_LABEL[st]}</span>
-                <span className="vt-pipe__value mono">{b.count ? money(b.value) : ''}</span>
+                <span className="vt-pipe__value mono">{seesMoney && b.count ? money(b.value) : ''}</span>
               </button>
               {i < STAGES.length - 1 && <span className="vt-pipe__arrow" aria-hidden>›</span>}
             </li>
@@ -65,19 +67,19 @@ export function VariationTracker({ data, userId, canManage, today }: { data: Cla
             <button type="button" onClick={() => setStage(stage === 'rejected' ? 'all' : 'rejected')} title={STATUS_HINT.rejected}>
               <span className="vt-pipe__n mono">{byStatus('rejected').count}</span>
               <span className="vt-pipe__name">Rejected</span>
-              <span className="vt-pipe__value mono">{money(byStatus('rejected').value)}</span>
+              <span className="vt-pipe__value mono">{seesMoney ? money(byStatus('rejected').value) : ''}</span>
             </button>
           </li>
         )}
       </ol>
 
       {/* The money, in the four figures the office asks for. */}
-      <div className="vt-money">
+      {seesMoney && <div className="vt-money">
         <div><span className="label">All variations</span><strong className="mono">{money(total)}</strong><span className="caption">{items.length} raised</span></div>
         <div className={s.notSubmitted.count > 0 ? 'vt-money--act' : ''}><span className="label">Not yet sent</span><strong className="mono">{money(s.notSubmitted.value)}</strong><span className="caption">{s.notSubmitted.count} to price and send</span></div>
         <div><span className="label">With the client</span><strong className="mono">{money(withClient.value)}</strong><span className="caption">{withClient.count} awaiting a decision</span></div>
         <div className={s.approvedUnpaid.count > 0 ? 'vt-money--act' : ''}><span className="label">Approved, unpaid</span><strong className="mono">{money(s.approvedUnpaid.value)}</strong><span className="caption">{s.approvedUnpaid.count} to invoice</span></div>
-      </div>
+      </div>}
       <p className="caption vt-free">
         {stage === 'all' ? `${items.length} variation${items.length === 1 ? '' : 's'}, action needed first.` : <>Showing {STATUS_LABEL[stage].toLowerCase()} only · <button type="button" className="linklike" onClick={() => setStage('all')}>show all</button></>}
         {' '}Next number on a day: <strong className="mono">{registerNumber(nextFreeNumber(items))}</strong>.
@@ -85,7 +87,7 @@ export function VariationTracker({ data, userId, canManage, today }: { data: Cla
 
       <ul className="vt-list">
         {shown.map((item) => {
-          const w = waitingOn(item, today);
+          const w = seesMoney ? waitingOn(item, today) : waitingOnForCrew(item, today);
           const dates = stageDates(item);
           const reached = stageIndex(item.status);
           const isOpen = open === item.id;
@@ -95,7 +97,7 @@ export function VariationTracker({ data, userId, canManage, today }: { data: Cla
               <button type="button" className="vt-card__main" onClick={() => setOpen(isOpen ? null : item.id)} aria-expanded={isOpen}>
                 <span className="vt-card__top">
                   <span className="mono vt-card__ref">{registerNumber(item.seq)}{item.vr_ref ? <span className="vt-card__client"> · {item.vr_ref}</span> : null}</span>
-                  <span className={`mono vt-card__value${value == null ? ' vt-card__value--none' : ''}`}>{value == null ? 'no value' : money(value)}{item.agreed_cost == null && value != null ? <span className="vt-est">{item.estimate_source === 'build_up' ? ' built up' : ' est.'}</span> : null}</span>
+                  {seesMoney && <span className={`mono vt-card__value${value == null ? ' vt-card__value--none' : ''}`}>{value == null ? 'no value' : money(value)}{item.agreed_cost == null && value != null ? <span className="vt-est">{item.estimate_source === 'build_up' ? ' built up' : ' est.'}</span> : null}</span>}
                 </span>
                 <span className="vt-card__title">{item.title}</span>
                 <span className={`vt-wait vt-wait--${w.tone}`}>{w.text}</span>
@@ -122,7 +124,7 @@ export function VariationTracker({ data, userId, canManage, today }: { data: Cla
                   {item.crew.length > 0 ? ` · ${item.crew.join(', ')}` : ''}
                   {!item.signed ? ' · not yet signed' : ''}
                 </span>
-                {item.buildUp && item.buildUp.count > 0 && (
+                {seesMoney && item.buildUp && item.buildUp.count > 0 && (
                   <span className="vt-build caption">
                     {(['labour', 'plant', 'material', 'other'] as const).filter((k) => item.buildUp![k] > 0).map((k) => `${k === 'material' ? 'Materials' : k[0].toUpperCase() + k.slice(1)} ${money(item.buildUp![k])}`).join(' · ') || 'Built up, nothing priced yet'}
                     {item.buildUp.unpriced > 0 ? ` · ${item.buildUp.unpriced} line${item.buildUp.unpriced === 1 ? '' : 's'} not priced` : ''}
@@ -132,9 +134,9 @@ export function VariationTracker({ data, userId, canManage, today }: { data: Cla
 
               {isOpen && (
                 <div className="vt-card__body">
-                  <Link className="button vt-build__go" href={`/variations/${item.id}?project=${data.project.id}`}>
+                  {seesMoney && <Link className="button vt-build__go" href={`/variations/${item.id}?project=${data.project.id}`}>
                     {item.buildUp && item.buildUp.count > 0 ? `Cost build-up · ${money(item.buildUp.total)}` : canManage ? 'Build up the cost — labour, plant, materials' : 'Cost build-up'}
-                  </Link>
+                  </Link>}
                   <p className="label">The days behind it</p>
                   {item.mentions.length === 0 ? <p className="nil">No diary day records it any more.</p> : (
                     <table className="vt-days">
@@ -171,7 +173,7 @@ export function VariationTracker({ data, userId, canManage, today }: { data: Cla
                       <p className="label">The name on the register</p>
                       <RenameVariation registerId={item.id} title={item.title} vrRef={item.vr_ref} />
                       <p className="label" style={{ marginTop: '0.9rem' }}>Move it along</p>
-                      <VariationStatusControl registerId={item.id} status={item.status} vrRef={item.vr_ref} agreedCost={item.agreed_cost} notes={item.notes} needsValue={value == null} />
+                      <VariationStatusControl registerId={item.id} status={item.status} vrRef={item.vr_ref} agreedCost={item.agreed_cost} notes={item.notes} needsValue={seesMoney && value == null} seesMoney={seesMoney} />
                       {(() => {
                         const mentioned = new Set(item.mentions.map((m) => m.entry_id));
                         const days = data.variations.openDays.filter((d) => d.author_id === userId && !mentioned.has(d.entry_id));

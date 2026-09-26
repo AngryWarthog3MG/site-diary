@@ -4,7 +4,7 @@ import { fmtDate } from '@/lib/pdf/dates';
 import { notFound, redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { requireUser, canAuthorEntries, guardScreen } from '@/lib/auth';
-import { canManageRegisters } from '@/lib/roles';
+import { canManageRegisters, seesMoney } from '@/lib/roles';
 import { ReviewPayload } from '@/lib/review/schema';
 import type { SectionKey } from '@/lib/extraction/schema';
 import { ReviewScreen } from './review-screen';
@@ -248,6 +248,7 @@ export default async function ReviewPage({ params }: { params: Promise<{ id: str
       plantPrestarted={plantPrestarted}
       plantRegister={plantRegister}
       canManageRegisters={(() => { const r = memberships.find((m) => m.project_id === entry.project_id)?.role; return r ? canManageRegisters(r) : false; })()}
+      seesMoney={seesMoney(memberships.find((m) => m.project_id === entry.project_id))}
       neighbours={neighbours}
     />
   );

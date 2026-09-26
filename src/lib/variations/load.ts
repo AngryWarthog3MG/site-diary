@@ -44,7 +44,7 @@ const num = (v: unknown): number | null => (v == null || v === '' ? null : Numbe
 export async function loadBuildUp(supabase: SupabaseClient, registerId: string): Promise<BuildUpData | null> {
   const { data: reg, error: regErr } = await supabase
     .from('variation_register')
-    .select('id, project_id, seq, title, status, vr_ref, estimated_cost, agreed_cost, estimate_source, notes')
+    .select('id, project_id, seq, title, status, vr_ref, estimate_source, notes')
     .eq('id', registerId)
     .maybeSingle();
   if (regErr) throw new Error(regErr.message);
@@ -52,7 +52,7 @@ export async function loadBuildUp(supabase: SupabaseClient, registerId: string):
   const { data: project, error: pErr } = await supabase.from('projects').select('id, code, name, org_id').eq('id', reg.project_id).maybeSingle();
   if (pErr || !project) throw new Error(pErr?.message ?? 'The job for this variation is not on your account.');
 
-  const [lines, rates, plantOnJob, links, versions, events, siblings] = await Promise.all([
+  const [lines, rates, plantOnJob, links, versions, events, siblings, values] = await Promise.all([
     supabase.from('variation_cost_lines')
       .select('id, register_id, kind, description, person_name, plant_id, rate_item_id, source_entry_id, source_variation_id, work_date, quantity, unit, rate, amount, note')
       .eq('register_id', registerId),
@@ -65,10 +65,13 @@ export async function loadBuildUp(supabase: SupabaseClient, registerId: string):
       .select('variation:variations(id, crew, hours, description, entry:entries!inner(id, entry_no, entry_date, status, project_id))')
       .eq('register_id', registerId),
     supabase.from('entries').select('id, status, supersedes_entry_id').eq('project_id', project.id),
-    supabase.from('variation_status_events').select('changed_at, claimed_total, claimed_lines').eq('register_id', registerId).eq('status', 'submitted').order('changed_at'),
-    supabase.from('variation_register').select('id, seq, title, status, estimated_cost, agreed_cost').eq('project_id', project.id).order('seq'),
+    supabase.rpc('variation_submissions', { p_register: registerId }),
+    supabase.from('variation_register').select('id, seq, title, status').eq('project_id', project.id).order('seq'),
+    supabase.rpc('variation_values', { p_project: project.id }),
   ]);
-  for (const r of [lines, rates, links, versions, events, siblings]) if (r.error) throw new Error(r.error.message);
+  for (const r of [lines, rates, links, versions, events, siblings, values]) if (r.error) throw new Error(r.error.message);
+  // Values come only through the locked function (README R105).
+  const money = new Map(((values.data ?? []) as Array<{ register_id: string; estimated_cost: unknown; agreed_cost: unknown }>).map((v) => [v.register_id, v]));
 
   const costLines: CostLine[] = ((lines.data ?? []) as Array<Record<string, unknown>>).map((l) => ({
     id: String(l.id), register_id: String(l.register_id), kind: l.kind as CostKind, description: String(l.description),
@@ -118,7 +121,7 @@ export async function loadBuildUp(supabase: SupabaseClient, registerId: string):
   return {
     register: {
       id: reg.id, project_id: reg.project_id, seq: reg.seq, title: reg.title, status: reg.status, vr_ref: reg.vr_ref,
-      estimated_cost: num(reg.estimated_cost), agreed_cost: num(reg.agreed_cost), estimate_source: (reg.estimate_source ?? 'manual') as 'manual' | 'build_up', notes: reg.notes,
+      estimated_cost: num(money.get(reg.id)?.estimated_cost), agreed_cost: num(money.get(reg.id)?.agreed_cost), estimate_source: (reg.estimate_source ?? 'manual') as 'manual' | 'build_up', notes: reg.notes,
     },
     project: { id: project.id, code: project.code, name: project.name, orgId: project.org_id },
     lines: costLines,
@@ -127,7 +130,7 @@ export async function loadBuildUp(supabase: SupabaseClient, registerId: string):
     days,
     staleEntries: [...new Set(costLines.map((l) => l.source_entry_id).filter((x): x is string => Boolean(x) && superseded.has(x as string)))],
     submissions: ((events.data ?? []) as Array<{ changed_at: string; claimed_total: unknown; claimed_lines: unknown }>).map((e) => ({ at: e.changed_at, total: num(e.claimed_total), lines: num(e.claimed_lines) })),
-    siblings: ((siblings.data ?? []) as Array<{ id: string; seq: number; title: string; status: string; estimated_cost: unknown; agreed_cost: unknown }>)
-      .map((s) => ({ id: s.id, seq: s.seq, title: s.title, status: s.status, value: num(s.agreed_cost) ?? num(s.estimated_cost) })),
+    siblings: ((siblings.data ?? []) as Array<{ id: string; seq: number; title: string; status: string }>)
+      .map((s) => ({ id: s.id, seq: s.seq, title: s.title, status: s.status, value: num(money.get(s.id)?.agreed_cost) ?? num(money.get(s.id)?.estimated_cost) })),
   };
 }

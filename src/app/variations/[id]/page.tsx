@@ -4,7 +4,7 @@ import { HomeFoot } from '@/components/home-foot';
 import { BrandMark } from '@/components/brand-mark';
 import { createClient } from '@/lib/supabase/server';
 import { requireUser, resolveProject, guardScreen } from '@/lib/auth';
-import { canManageRegisters } from '@/lib/roles';
+import { canManageRegisters, seesMoney } from '@/lib/roles';
 import { isUuid } from '@/lib/api';
 import { perthToday } from '@/lib/push/decide';
 import { loadBuildUp } from '@/lib/variations/load';
@@ -28,6 +28,8 @@ export default async function BuildUpPage({ params }: { params: Promise<{ id: st
   const current = resolveProject(memberships, data.register.project_id);
   if (!current) redirect('/variations');
   guardScreen(current, 'variations');
+  // The build-up is money (README R105).
+  if (!seesMoney(current)) redirect(`/variations?project=${current.project_id}`);
 
   return (
     <main className="sheet sheet--wide">

@@ -84,7 +84,7 @@ export default async function ClaimsPage({
           <div className={`claims-tile${data.variations.summary.notSubmitted.count > 0 ? ' claims-tile--amber' : ''}`}>
             <span className="label">Variations</span>
             <strong>{data.variations.register.length}</strong>
-            <span>{data.variations.summary.notSubmitted.count === 0 ? 'all submitted' : `${data.variations.summary.notSubmitted.count} not yet submitted · ${money(data.variations.summary.notSubmitted.value)}`}</span>
+            <span>{data.variations.summary.notSubmitted.count === 0 ? 'all submitted' : `${data.variations.summary.notSubmitted.count} not yet submitted${data.seesMoney ? ` · ${money(data.variations.summary.notSubmitted.value)}` : ''}`}</span>
           </div>
           <div className={`claims-tile${data.dayworks.missingDockets > 0 ? ' claims-tile--amber' : ''}`}>
             <span className="label">Dayworks</span>

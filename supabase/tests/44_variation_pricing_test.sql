@@ -35,7 +35,7 @@ select public.set_variation_details('cccccccc-cccc-0000-0000-000000000001', 'VR-
 do $$
 declare r record;
 begin
-  select * into r from public.variation_register where id = 'cccccccc-cccc-0000-0000-000000000001';
+  select v.estimated_cost, v.agreed_cost, reg.vr_ref into r from public.variation_values('bbbbbbbb-cccc-0000-0000-000000000001') v join public.variation_register reg on reg.id = v.register_id where v.register_id = 'cccccccc-cccc-0000-0000-000000000001';
   if r.estimated_cost <> 4200 or r.agreed_cost is not null or r.vr_ref <> 'VR-7' then raise exception 'TESTFAIL: estimate not set: % % %', r.estimated_cost, r.agreed_cost, r.vr_ref; end if;
 end; $$;
 -- The tracker's old call (no estimate mentioned) keeps the estimate and sets the agreed value.
@@ -43,14 +43,14 @@ select public.set_variation_details('cccccccc-cccc-0000-0000-000000000001', 'VR-
 do $$
 declare r record;
 begin
-  select * into r from public.variation_register where id = 'cccccccc-cccc-0000-0000-000000000001';
+  select v.estimated_cost, v.agreed_cost, reg.vr_ref into r from public.variation_values('bbbbbbbb-cccc-0000-0000-000000000001') v join public.variation_register reg on reg.id = v.register_id where v.register_id = 'cccccccc-cccc-0000-0000-000000000001';
   if r.estimated_cost <> 4200 or r.agreed_cost <> 3900 then raise exception 'TESTFAIL: the old call should keep the estimate: % %', r.estimated_cost, r.agreed_cost; end if;
 end; $$;
 -- Clearing the estimate on purpose.
 select public.set_variation_details('cccccccc-cccc-0000-0000-000000000001', 'VR-7', 3900, null, null, false);
 do $$
 begin
-  if (select estimated_cost from public.variation_register where id = 'cccccccc-cccc-0000-0000-000000000001') is not null then raise exception 'TESTFAIL: estimate should clear'; end if;
+  if (select estimated_cost from public.variation_values('bbbbbbbb-cccc-0000-0000-000000000001') where register_id = 'cccccccc-cccc-0000-0000-000000000001') is not null then raise exception 'TESTFAIL: estimate should clear'; end if;
 end; $$;
 select tests.expect_error($$ select public.set_variation_details('cccccccc-cccc-0000-0000-000000000001', null, -1, null) $$, 'cannot be negative');
 select tests.expect_error($$ select public.set_variation_details('cccccccc-cccc-0000-0000-000000000001', null, null, null, -5, false) $$, 'cannot be negative');

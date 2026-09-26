@@ -129,7 +129,7 @@ const PHOTO_LABELS: Record<PhotoCategory, string> = {
 
 
 /** The variation register for the Variations tab (README R100): rows, whether this person may price, a reload after a save. */
-const RegisterCtx = createContext<{ rows: RegisterRow[]; canManage: boolean; reload: () => void; projectId: string }>({ rows: [], canManage: false, reload: () => {}, projectId: '' });
+const RegisterCtx = createContext<{ rows: RegisterRow[]; canManage: boolean; seesMoney: boolean; reload: () => void; projectId: string }>({ rows: [], canManage: false, seesMoney: false, reload: () => {}, projectId: '' });
 
 export function ReviewScreen(props: {
   entryId: string;
@@ -151,6 +151,8 @@ export function ReviewScreen(props: {
   plantRegister?: Array<{ id: string; name: string }>;
   /** Whether this person keeps the registers — prices and names on the Variations tab (README R100). */
   canManageRegisters?: boolean;
+  /** Money access on this job (README R105). */
+  seesMoney?: boolean;
   /** The day before and after, as recorded — back/forward from this day. */
   neighbours?: DayNeighbours;
 }) {
@@ -182,8 +184,17 @@ export function ReviewScreen(props: {
   // The variation register, for the Variations tab (README R100).
   const [registerRows, setRegisterRows] = useState<RegisterRow[]>([]);
   const loadRegister = useCallback(async () => {
-    const { data } = await createClient().from('variation_register').select('id, seq, title, status, estimated_cost, agreed_cost, vr_ref, notes, estimate_source').eq('project_id', props.projectId);
-    setRegisterRows(((data ?? []) as RegisterRow[]).map((r) => ({ ...r, estimated_cost: r.estimated_cost == null ? null : Number(r.estimated_cost), agreed_cost: r.agreed_cost == null ? null : Number(r.agreed_cost) })));
+    const supabase = createClient();
+    // The values come only through the locked function (README R105): empty for anyone without money access.
+    const [{ data }, { data: values }] = await Promise.all([
+      supabase.from('variation_register').select('id, seq, title, status, vr_ref, notes, estimate_source').eq('project_id', props.projectId),
+      supabase.rpc('variation_values', { p_project: props.projectId }),
+    ]);
+    const money = new Map(((values ?? []) as Array<{ register_id: string; estimated_cost: unknown; agreed_cost: unknown }>).map((v) => [v.register_id, v]));
+    setRegisterRows(((data ?? []) as Array<Omit<RegisterRow, 'estimated_cost' | 'agreed_cost'>>).map((r) => {
+      const v = money.get(r.id);
+      return { ...r, estimated_cost: v?.estimated_cost == null ? null : Number(v.estimated_cost), agreed_cost: v?.agreed_cost == null ? null : Number(v.agreed_cost) };
+    }));
   }, [props.projectId]);
   useEffect(() => { void loadRegister(); }, [loadRegister]);
 
@@ -600,7 +611,7 @@ export function ReviewScreen(props: {
   }
 
   return (
-    <RegisterCtx.Provider value={{ rows: registerRows, canManage: Boolean(props.canManageRegisters), reload: () => void loadRegister(), projectId: props.projectId }}>
+    <RegisterCtx.Provider value={{ rows: registerRows, canManage: Boolean(props.canManageRegisters), seesMoney: Boolean(props.seesMoney), reload: () => void loadRegister(), projectId: props.projectId }}>
     <main className="app-shell review-shell">
       <section className="sheet review-sheet">
         <header className="review-hero">
@@ -1367,11 +1378,11 @@ function DocketSection({
 
 /** The register item behind this variation row, from the screen's register (README R100). */
 function VariationRegisterCard({ seq }: { seq: number | null }) {
-  const { rows, canManage, reload, projectId } = useContext(RegisterCtx);
+  const { rows, canManage, seesMoney, reload, projectId } = useContext(RegisterCtx);
   const row = seq == null ? null : rows.find((r) => r.seq === seq) ?? null;
   if (seq == null) return null;
   if (!row) return <p className="caption vreg__none">V-{String(seq).padStart(3, '0')} is not on the register yet — it is registered when the day is saved.</p>;
-  return <VariationRegisterPanel row={row} canManage={canManage} onChanged={reload} projectId={projectId} />;
+  return <VariationRegisterPanel row={row} canManage={canManage} seesMoney={seesMoney} onChanged={reload} projectId={projectId} />;
 }
 
 type DocketState =

@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
-import { requireUser, sees } from '@/lib/auth';
+import { requireUser, sees, seesMoney } from '@/lib/auth';
 import { redirect } from 'next/navigation';
 import { BrandMark } from '@/components/brand-mark';
 import { fmtDate } from '@/lib/pdf/dates';
@@ -62,6 +62,14 @@ export default async function PortfolioPage() {
 
   const claimRows = ((claims.data as { rows?: Array<Record<string, unknown>> } | null)?.rows ?? []);
   const claimsBy = new Map(claimRows.map((r) => [String(r.project_id), r]));
+  // The variations figure is the register's value (agreed, else estimated), and only for someone who sees the
+  // money on that job (README R105). The day rows' old estimates are not it.
+  const variationValue = new Map<string, number>();
+  await Promise.all(projects.filter((m) => seesMoney(m)).map(async (m) => {
+    const { data } = await supabase.rpc('variation_values', { p_project: m.project_id });
+    const rows = (data ?? []) as Array<{ estimated_cost: unknown; agreed_cost: unknown }>;
+    variationValue.set(m.project_id, Math.round(rows.reduce((n, r) => n + Number(r.agreed_cost ?? r.estimated_cost ?? 0), 0) * 100) / 100);
+  }));
   const firstBy = new Map<string, string>();
   for (const row of firsts ?? []) {
     if (!firstBy.has(row.project_id as string)) firstBy.set(row.project_id as string, row.entry_date as string);
@@ -120,7 +128,7 @@ export default async function PortfolioPage() {
         {projects.map((m) => {
           const claim = claimsBy.get(m.project_id);
           const delayHours = claim ? Math.round((Number(claim.delay_mins) / 60) * 10) / 10 : 0;
-          const variationCost = claim ? Number(claim.variation_cost) : 0;
+          const variationCost = variationValue.get(m.project_id) ?? null;
           const dayworkHours = claim ? Number(claim.daywork_hours) : 0;
           const last = lastBy.get(m.project_id);
           const gaps = week(m.project_id).filter((d) => d.state === 'gap').length;
@@ -154,10 +162,12 @@ export default async function PortfolioPage() {
                   <dt>Standdown</dt>
                   <dd>{delayHours} h</dd>
                 </div>
-                <div>
-                  <dt>Variations</dt>
-                  <dd>${variationCost.toLocaleString('en-AU')}</dd>
-                </div>
+                {variationCost != null && (
+                  <div>
+                    <dt>Variations</dt>
+                    <dd>${variationCost.toLocaleString('en-AU')}</dd>
+                  </div>
+                )}
                 <div>
                   <dt>Dayworks</dt>
                   <dd>{dayworkHours} h</dd>

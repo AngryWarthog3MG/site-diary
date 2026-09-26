@@ -38,7 +38,7 @@ select public.update_variation_register('cccccccc-bbbb-0000-0000-000000000001', 
 do $$
 declare r record;
 begin
-  select * into r from public.variation_register where id = 'cccccccc-bbbb-0000-0000-000000000001';
+  select title, vr_ref into r from public.variation_register where id = 'cccccccc-bbbb-0000-0000-000000000001';
   if r.title <> 'West fence comms trenching' then raise exception 'TESTFAIL: title not renamed/tidied: "%"', r.title; end if;
   if r.vr_ref <> 'VR-0012' then raise exception 'TESTFAIL: reference not tidied: "%"', r.vr_ref; end if;
 end; $$;

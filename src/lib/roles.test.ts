@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { sees, canSee, defaultScreens, grantableScreens, SCREENS } from './roles.ts';
+import { sees, seesMoney, canSee, defaultScreens, grantableScreens, SCREENS } from './roles.ts';
 
 test('with no ticks, sees answers exactly as the role table does', () => {
   for (const role of ['supervisor', 'leading_hand', 'labourer', 'pm', 'admin'] as const) {
@@ -39,9 +39,26 @@ test('an admin keeps Settings — the screen the ticks are set from', () => {
   assert.equal(sees({ role: 'supervisor', screens: ['entries'] }, 'settings'), false);
 });
 
-test('the default list is the role table minus Home, and grantable is every screen minus Home for non-labourers', () => {
+test('the default list is the role table minus Home, and grantable is every screen minus Home and Rates (the money switch opens Rates) for non-labourers', () => {
   assert.equal(defaultScreens('pm').includes('today'), false);
   assert.equal(defaultScreens('pm').includes('settings'), false);
   assert.equal(defaultScreens('admin').includes('settings'), true);
-  assert.equal(grantableScreens('pm').length, SCREENS.length - 1);
+  assert.equal(grantableScreens('pm').length, SCREENS.length - 2);
+});
+
+test('money is its own permission: admin always, PM by default, supervisor only when switched on, crew never (R105)', () => {
+  assert.equal(seesMoney({ role: 'admin', finance: false }), true);
+  assert.equal(seesMoney({ role: 'pm', finance: null }), true);
+  assert.equal(seesMoney({ role: 'pm', finance: false }), false);
+  assert.equal(seesMoney({ role: 'supervisor', finance: null }), false);
+  assert.equal(seesMoney({ role: 'supervisor' }), false);
+  assert.equal(seesMoney({ role: 'supervisor', finance: true }), true);
+  assert.equal(seesMoney({ role: 'leading_hand', finance: true }), false);
+  assert.equal(seesMoney({ role: 'labourer', finance: true }), false);
+  assert.equal(seesMoney(null), false);
+  // The rate card is money: no screen tick opens it without money access.
+  assert.equal(sees({ role: 'supervisor', screens: ['rates'], finance: null }, 'rates'), false);
+  assert.equal(sees({ role: 'supervisor', screens: ['entries', 'signin'], finance: true }, 'rates'), true);
+  assert.equal(sees({ role: 'supervisor', screens: null, finance: true }, 'rates'), true);
+  assert.equal(sees({ role: 'pm', screens: null, finance: null }, 'rates'), true);
 });

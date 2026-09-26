@@ -71,7 +71,18 @@ export type Screen =
 export const SCREENS: Screen[] = ['today', 'entries', 'weekly', 'signin', 'claims', 'variations', 'notices', 'templates', 'start_gate', 'programme', 'progress', 'quality', 'audits', 'safety', 'obligations', 'emergency', 'incidents', 'inspections', 'permits', 'swms', 'swms_sign', 'chemicals', 'asbestos', 'environment', 'construction', 'prestart', 'toolbox', 'plant', 'orders', 'training', 'timesheets', 'rates', 'health', 'subcontractors', 'procedures', 'documents', 'ask', 'settings'];
 
 /** A membership as the gates read it: the role, and the screens ticked for this person (null = the role's list). */
-export interface Access { role: MemberRole; screens?: readonly string[] | null }
+export interface Access { role: MemberRole; screens?: readonly string[] | null; finance?: boolean | null }
+
+/**
+ * Whether this person sees the money on this job (README R105) — the TS half of app.role_sees_money; the database
+ * wins. An admin always; a PM unless switched off; a supervisor only if switched on; a leading hand or labourer never.
+ */
+export function seesMoney(member: Pick<Access, 'role' | 'finance'> | null | undefined): boolean {
+  if (!member) return false;
+  if (member.role === 'admin') return true;
+  if (member.role === 'pm' || member.role === 'supervisor') return member.finance ?? member.role === 'pm';
+  return false;
+}
 
 /**
  * Whether this member opens this screen on this job — the one question every
@@ -84,6 +95,9 @@ export interface Access { role: MemberRole; screens?: readonly string[] | null }
  */
 export function sees(member: Access, screen: Screen): boolean {
   if (screen === 'today') return true;
+  // The rate card is money (README R105): money access alone decides. Screen ticks set before it existed would
+  // otherwise keep it shut for someone just shown the money; to close it, hide the money.
+  if (screen === 'rates') return seesMoney(member);
   if (member.role === 'labourer' && !canSee('labourer', screen)) return false;
   if (member.role === 'admin' && screen === 'settings') return true;
   if (member.screens == null) return canSee(member.role, screen);
@@ -97,7 +111,8 @@ export function defaultScreens(role: MemberRole): Screen[] {
 
 /** The screens an admin may tick for this role: everything, but a labourer's ceiling is their two doors. */
 export function grantableScreens(role: MemberRole): Screen[] {
-  return SCREENS.filter((s) => s !== 'today' && (role !== 'labourer' || canSee('labourer', s)));
+  // Rates is not a tick: the money switch opens it (README R105).
+  return SCREENS.filter((s) => s !== 'today' && s !== 'rates' && (role !== 'labourer' || canSee('labourer', s)));
 }
 
 /** Which screens a role gets. Everything not listed for a role is refused, not just hidden. */
@@ -121,6 +136,8 @@ export function canSee(role: MemberRole, screen: Screen): boolean {
   // The job's setup board is the office's too (README R92): mobilisation items, risks and
   // submittals stay away from site roles, as the brief asks.
   if (screen === 'start_gate') return role === 'pm' || role === 'admin';
+  // The rate card's default follows the money's (README R105): admin and PM; a supervisor gets it with the switch.
+  if (screen === 'rates') return role === 'admin' || role === 'pm';
   // The company timesheet is the office's (README R103): everyone's hours across every job.
   if (screen === 'timesheets') return role === 'pm' || role === 'admin';
   if (screen === 'settings') return canAuthorEntries(role);

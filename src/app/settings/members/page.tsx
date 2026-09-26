@@ -4,7 +4,7 @@ import { createClient } from '@/lib/supabase/server';
 import { requireUser, resolveProject, guardScreen, canRunTalks } from '@/lib/auth';
 import { perthToday } from '@/lib/push/decide';
 import { peopleOnJob, type Induction } from '@/lib/crew/inductions';
-import { MembersForm, type MemberRow } from './members-form';
+import { MembersForm, AccessHistory, type AccessEvent, type MemberRow } from './members-form';
 import { InductionsBlock } from './inductions-block';
 
 export const dynamic = 'force-dynamic';
@@ -25,7 +25,7 @@ export default async function MembersPage({
   const supabase = await createClient();
   const { data: members, error } = await supabase
     .from('project_members')
-    .select('user_id, role, screens, created_at')
+    .select('user_id, role, screens, finance, created_at')
     .eq('project_id', current.project_id)
     .order('role')
     .order('created_at');
@@ -46,11 +46,27 @@ export default async function MembersPage({
       userId: member.user_id as string,
       role: member.role as MemberRow['role'],
       screens: (member.screens as string[] | null) ?? null,
+      finance: (member.finance as boolean | null) ?? null,
       name: (profile?.full_name as string | null) ?? null,
       email: (profile?.email as string | null) ?? null,
       isCurrentUser: member.user_id === userId,
     };
   });
+
+  // Who changed whose access, newest first — admins only, by the table's own policy (README R105).
+  const { data: accessEvents } = canEdit
+    ? await supabase.from('member_access_events').select('id, user_id, kind, old_role, new_role, money_before, money_after, old_screens, new_screens, changed_by, changed_at')
+        .eq('project_id', current.project_id).order('changed_at', { ascending: false }).limit(25)
+    : { data: [] };
+  const eventPeople = [...new Set(((accessEvents ?? []) as Array<{ user_id: string; changed_by: string | null }>).flatMap((e) => [e.user_id, e.changed_by]).filter((x): x is string => Boolean(x)))];
+  const { data: eventNames } = eventPeople.length ? await supabase.from('profiles').select('id, full_name, email').in('id', eventPeople) : { data: [] };
+  const nameOf = (id: string | null) => { const p = (eventNames ?? []).find((x) => x.id === id); return (p?.full_name as string | null) ?? (p?.email as string | null) ?? (id ? 'someone' : 'the system'); };
+  const history: AccessEvent[] = ((accessEvents ?? []) as Array<Record<string, unknown>>).map((e) => ({
+    id: String(e.id), who: nameOf(e.user_id as string), by: nameOf((e.changed_by as string | null) ?? null), at: String(e.changed_at), kind: e.kind as AccessEvent['kind'],
+    oldRole: (e.old_role as string | null) ?? null, newRole: (e.new_role as string | null) ?? null,
+    moneyBefore: Boolean(e.money_before), moneyAfter: Boolean(e.money_after),
+    screensChanged: JSON.stringify(e.old_screens ?? null) !== JSON.stringify(e.new_screens ?? null),
+  }));
 
   const projectRef = `${current.project.org.code}_${current.project.code}`;
 
@@ -96,6 +112,7 @@ export default async function MembersPage({
         canEdit={canEdit}
         members={rows}
       />
+      {canEdit && <AccessHistory events={history} />}
 
       <hr className="rule" />
 

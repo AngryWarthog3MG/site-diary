@@ -63,9 +63,9 @@ export function RegisterSection({ data, userId, canManage }: { data: ClaimsData;
           <p className="claims-total">
             {data.variations.summary.notSubmitted.count === 0
               ? 'Every variation has been submitted.'
-              : `${data.variations.summary.notSubmitted.count} not yet submitted, worth ${money(data.variations.summary.notSubmitted.value)}.`}
+              : `${data.variations.summary.notSubmitted.count} not yet submitted${data.seesMoney ? `, worth ${money(data.variations.summary.notSubmitted.value)}` : ''}.`}
             {data.variations.summary.approvedUnpaid.count > 0 &&
-              ` ${data.variations.summary.approvedUnpaid.count} approved and unpaid, ${money(data.variations.summary.approvedUnpaid.value)}.`}
+              ` ${data.variations.summary.approvedUnpaid.count} approved and unpaid${data.seesMoney ? `, ${money(data.variations.summary.approvedUnpaid.value)}` : ''}.`}
           </p>
           <p className="vr-summary mono">
             {data.variations.summary.byStatus
@@ -96,10 +96,10 @@ export function RegisterSection({ data, userId, canManage }: { data: ClaimsData;
                     <span className="vr-card__client">{item.vr_ref ? ` · client ref ${item.vr_ref}` : ' · no client ref yet'}</span>
                     {!item.signed && <span className="vr-tag vr-tag--unsigned">Not yet signed</span>}
                   </span>
-                  <span className={`mono vr-card__value${itemValue(item) == null ? ' vr-card__value--none' : ''}`}>
+                  {data.seesMoney && <span className={`mono vr-card__value${itemValue(item) == null ? ' vr-card__value--none' : ''}`}>
                     {itemValue(item) == null ? 'no value yet' : money(itemValue(item))}
                     {item.agreed_cost == null && item.estimated_cost != null && <span className="vr-note">{item.estimate_source === 'build_up' ? ' built up' : ' est.'}</span>}
-                  </span>
+                  </span>}
                 </div>
                 <p className="vr-card__title">{item.title}</p>
                 <p className="vr-card__meta">
@@ -128,7 +128,8 @@ export function RegisterSection({ data, userId, canManage }: { data: ClaimsData;
                     vrRef={item.vr_ref}
                     agreedCost={item.agreed_cost}
                     notes={item.notes}
-                    needsValue={itemValue(item) == null}
+                    needsValue={data.seesMoney && itemValue(item) == null}
+                    seesMoney={data.seesMoney}
                   />
                 ) : (
                   <p className="vr-note">{STATUS_LABEL[item.status]}</p>

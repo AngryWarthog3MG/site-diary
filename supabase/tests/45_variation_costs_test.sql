@@ -37,6 +37,8 @@ insert into public.project_members (project_id, user_id, role) values
   ('bbbbbbbb-dddd-0000-0000-000000000001', '11111111-dddd-0000-0000-000000000003', 'leading_hand'),
   ('bbbbbbbb-dddd-0000-0000-000000000001', '11111111-dddd-0000-0000-000000000004', 'labourer'),
   ('bbbbbbbb-dddd-0000-0000-000000000002', '11111111-dddd-0000-0000-000000000005', 'admin');
+-- This supervisor prices variations: an admin has shown them the money (README R105; suite 46 covers the default).
+update public.project_members set finance = true where user_id = '11111111-dddd-0000-0000-000000000002';
 insert into public.plant_register (id, org_id, name, kind) values
   ('eeeeeeee-dddd-0000-0000-000000000001', 'aaaaaaaa-dddd-0000-0000-000000000001', 'Excavator 5t', 'excavator'),
   ('eeeeeeee-dddd-0000-0000-000000000002', 'aaaaaaaa-dddd-0000-0000-000000000002', 'Their roller', 'roller');
@@ -122,7 +124,7 @@ begin
   if (select amount from public.variation_cost_lines where id = 'dddddddd-dddd-0000-0000-000000000001') <> 840 then raise exception 'TESTFAIL: 8 x 105 should be 840'; end if;
   if (select amount from public.variation_cost_lines where id = 'dddddddd-dddd-0000-0000-000000000002') <> 675 then raise exception 'TESTFAIL: 4.5 x 150 should be 675'; end if;
   if (select amount from public.variation_cost_lines where id = 'dddddddd-dddd-0000-0000-000000000003') is not null then raise exception 'TESTFAIL: no rate should be no amount'; end if;
-  select * into r from public.variation_register where id = 'cccccccc-dddd-0000-0000-000000000001';
+  select v.estimated_cost, v.estimate_source, reg.vr_ref into r from public.variation_values('bbbbbbbb-dddd-0000-0000-000000000001') v join public.variation_register reg on reg.id = v.register_id where v.register_id = 'cccccccc-dddd-0000-0000-000000000001';
   if r.estimated_cost <> 1515 or r.estimate_source <> 'build_up' then raise exception 'TESTFAIL: build-up should be the estimate: % %', r.estimated_cost, r.estimate_source; end if;
 end; $$;
 -- The typed estimate cannot overwrite it; the agreed value and the reference still save.
@@ -130,12 +132,12 @@ select public.set_variation_details('cccccccc-dddd-0000-0000-000000000001', 'VR-
 do $$
 declare r record;
 begin
-  select * into r from public.variation_register where id = 'cccccccc-dddd-0000-0000-000000000001';
+  select v.estimated_cost, v.estimate_source, reg.vr_ref into r from public.variation_values('bbbbbbbb-dddd-0000-0000-000000000001') v join public.variation_register reg on reg.id = v.register_id where v.register_id = 'cccccccc-dddd-0000-0000-000000000001';
   if r.estimated_cost <> 1515 or r.vr_ref <> 'VR-9' then raise exception 'TESTFAIL: typed estimate overwrote the build-up: % %', r.estimated_cost, r.vr_ref; end if;
 end; $$;
 -- Pricing the material moves the total.
 update public.variation_cost_lines set rate = 32.5 where id = 'dddddddd-dddd-0000-0000-000000000003';
-do $$ begin if (select estimated_cost from public.variation_register where id = 'cccccccc-dddd-0000-0000-000000000001') <> 1905 then raise exception 'TESTFAIL: 1515 + 12 x 32.5 should be 1905'; end if; end; $$;
+do $$ begin if (select estimated_cost from public.variation_values('bbbbbbbb-dddd-0000-0000-000000000001') where register_id = 'cccccccc-dddd-0000-0000-000000000001') <> 1905 then raise exception 'TESTFAIL: 1515 + 12 x 32.5 should be 1905'; end if; end; $$;
 -- Refusals: a negative, a day in the future, a machine from another company, a person on a plant line, the wrong job's day.
 select tests.expect_error($$ insert into public.variation_cost_lines (register_id, project_id, kind, description, quantity, rate) values ('cccccccc-dddd-0000-0000-000000000001', 'bbbbbbbb-dddd-0000-0000-000000000001', 'labour', 'Labourer', -1, 95) $$, 'check');
 select tests.expect_error($$ insert into public.variation_cost_lines (register_id, project_id, kind, description, quantity, rate, work_date) values ('cccccccc-dddd-0000-0000-000000000001', 'bbbbbbbb-dddd-0000-0000-000000000001', 'labour', 'Labourer', 1, 95, current_date + 3) $$, 'future');
@@ -164,7 +166,7 @@ select public.set_variation_status('cccccccc-dddd-0000-0000-000000000001', 'subm
 do $$
 declare e record;
 begin
-  select * into e from public.variation_status_events where register_id = 'cccccccc-dddd-0000-0000-000000000001' and status = 'submitted';
+  select * into e from public.variation_submissions('cccccccc-dddd-0000-0000-000000000001');
   if e.claimed_total <> 1905 or e.claimed_lines <> 3 then raise exception 'TESTFAIL: submission should stamp 1905 over 3 lines: % %', e.claimed_total, e.claimed_lines; end if;
 end; $$;
 select tests.expect_error($$ insert into public.variation_cost_lines (register_id, project_id, kind, description, quantity, rate) values ('cccccccc-dddd-0000-0000-000000000001', 'bbbbbbbb-dddd-0000-0000-000000000001', 'labour', 'Labourer', 1, 95) $$, 'what was claimed');
@@ -174,16 +176,16 @@ select tests.expect_error($$ delete from public.variation_cost_lines where id = 
 -- Back to Priced opens it; removing every line hands the estimate back to typing.
 select public.set_variation_status('cccccccc-dddd-0000-0000-000000000001', 'priced', 'client asked for a split');
 delete from public.variation_cost_lines where id = 'dddddddd-dddd-0000-0000-000000000003';
-do $$ begin if (select estimated_cost from public.variation_register where id = 'cccccccc-dddd-0000-0000-000000000001') <> 1515 then raise exception 'TESTFAIL: removing a line should move the total'; end if; end; $$;
+do $$ begin if (select estimated_cost from public.variation_values('bbbbbbbb-dddd-0000-0000-000000000001') where register_id = 'cccccccc-dddd-0000-0000-000000000001') <> 1515 then raise exception 'TESTFAIL: removing a line should move the total'; end if; end; $$;
 delete from public.variation_cost_lines where register_id = 'cccccccc-dddd-0000-0000-000000000001';
 do $$
 declare r record;
 begin
-  select * into r from public.variation_register where id = 'cccccccc-dddd-0000-0000-000000000001';
+  select v.estimated_cost, v.estimate_source, reg.vr_ref into r from public.variation_values('bbbbbbbb-dddd-0000-0000-000000000001') v join public.variation_register reg on reg.id = v.register_id where v.register_id = 'cccccccc-dddd-0000-0000-000000000001';
   if r.estimated_cost is not null or r.estimate_source <> 'manual' then raise exception 'TESTFAIL: no lines should mean no build-up: % %', r.estimated_cost, r.estimate_source; end if;
 end; $$;
 -- The history still says what was claimed when it was sent.
-do $$ begin if (select claimed_total from public.variation_status_events where register_id = 'cccccccc-dddd-0000-0000-000000000001' and status = 'submitted') <> 1905 then raise exception 'TESTFAIL: the submission record moved'; end if; end; $$;
+do $$ begin if (select claimed_total from public.variation_submissions('cccccccc-dddd-0000-0000-000000000001')) <> 1905 then raise exception 'TESTFAIL: the submission record moved'; end if; end; $$;
 
 -- ---- Removing an item takes its lines -------------------------------------------------------------------------
 insert into public.variation_cost_lines (id, register_id, project_id, kind, description, quantity, rate) values
