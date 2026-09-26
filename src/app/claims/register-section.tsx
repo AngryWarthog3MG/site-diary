@@ -98,7 +98,7 @@ export function RegisterSection({ data, userId, canManage }: { data: ClaimsData;
                   </span>
                   <span className={`mono vr-card__value${itemValue(item) == null ? ' vr-card__value--none' : ''}`}>
                     {itemValue(item) == null ? 'no value yet' : money(itemValue(item))}
-                    {item.agreed_cost == null && item.estimated_cost != null && <span className="vr-note"> est.</span>}
+                    {item.agreed_cost == null && item.estimated_cost != null && <span className="vr-note">{item.estimate_source === 'build_up' ? ' built up' : ' est.'}</span>}
                   </span>
                 </div>
                 <p className="vr-card__title">{item.title}</p>

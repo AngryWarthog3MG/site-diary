@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
+import Link from 'next/link';
 import { STATUS_LABEL, type VariationStatus } from '@/lib/claims/register';
 
 export interface RegisterRow {
@@ -13,6 +14,8 @@ export interface RegisterRow {
   agreed_cost: number | null;
   vr_ref: string | null;
   notes: string | null;
+  /** 'build_up' when the estimate is the sum of the variation's costed lines (README R104). */
+  estimate_source?: 'manual' | 'build_up';
 }
 
 const money = (n: number | null) => (n == null ? null : `$${n.toLocaleString('en-AU', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`);
@@ -27,7 +30,7 @@ const num = (s: string) => (s.trim() === '' ? null : Number(s.replace(/[$,\s]/g,
  * the day. Saves go through the register's own RPCs; nothing here touches
  * the day's row or the signed record.
  */
-export function VariationRegisterPanel({ row, canManage, onChanged }: { row: RegisterRow | null; canManage: boolean; onChanged: () => void }) {
+export function VariationRegisterPanel({ row, canManage, onChanged, projectId }: { row: RegisterRow | null; canManage: boolean; onChanged: () => void; projectId: string }) {
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -64,18 +67,30 @@ export function VariationRegisterPanel({ row, canManage, onChanged }: { row: Reg
       <p className="vreg__line">
         <span className="mono">V-{String(row.seq).padStart(3, '0')}</span> {row.title}
         <span className="vreg__facts"> · {STATUS_LABEL[row.status] ?? row.status}
-          {row.agreed_cost != null ? ` · agreed ${money(row.agreed_cost)}` : row.estimated_cost != null ? ` · est. ${money(row.estimated_cost)}` : ' · no value yet'}
+          {row.agreed_cost != null ? ` · agreed ${money(row.agreed_cost)}` : row.estimated_cost != null ? ` · ${row.estimate_source === 'build_up' ? 'claim' : 'est.'} ${money(row.estimated_cost)}` : ' · no value yet'}
           {row.vr_ref ? ` · ${row.vr_ref}` : ''}
         </span>
         {canManage && !open && <button type="button" className="linklike vreg__edit" onClick={begin}>{row.agreed_cost == null && row.estimated_cost == null ? 'Price it' : 'Edit'}</button>}
       </p>
+      {canManage && (
+        <p className="vreg__build">
+          <Link href={`/variations/${row.id}?project=${projectId}`}>
+            {row.estimate_source === 'build_up' ? 'Cost build-up — labour, plant, materials' : 'Build up the cost — labour at its rate, each machine, materials'}
+          </Link>
+        </p>
+      )}
       {open && (
         <div className="item vreg__form">
           <label className="fieldcell"><span className="label">Name on the register</span>
             <input className="field field--sm" value={draft.title} onChange={(e) => setDraft({ ...draft, title: e.target.value })} /></label>
           <div className="signin__grid">
-            <label className="fieldcell"><span className="label">Estimated value ($)</span>
-              <input className="field field--sm" inputMode="decimal" value={draft.estimated} placeholder="e.g. 4200" onChange={(e) => setDraft({ ...draft, estimated: e.target.value })} /></label>
+            {row.estimate_source === 'build_up' ? (
+              <div className="fieldcell"><span className="label">Claim (built up)</span>
+                <p className="vreg__built">{money(row.estimated_cost) ?? '—'} — <Link href={`/variations/${row.id}?project=${projectId}`}>change it on the build-up</Link></p></div>
+            ) : (
+              <label className="fieldcell"><span className="label">Estimated value ($)</span>
+                <input className="field field--sm" inputMode="decimal" value={draft.estimated} placeholder="e.g. 4200" onChange={(e) => setDraft({ ...draft, estimated: e.target.value })} /></label>
+            )}
             <label className="fieldcell"><span className="label">Agreed value ($)</span>
               <input className="field field--sm" inputMode="decimal" value={draft.agreed} placeholder="once the client agrees" onChange={(e) => setDraft({ ...draft, agreed: e.target.value })} /></label>
             <label className="fieldcell"><span className="label">Client&rsquo;s reference</span>

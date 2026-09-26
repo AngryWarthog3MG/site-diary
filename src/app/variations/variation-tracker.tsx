@@ -95,7 +95,7 @@ export function VariationTracker({ data, userId, canManage, today }: { data: Cla
               <button type="button" className="vt-card__main" onClick={() => setOpen(isOpen ? null : item.id)} aria-expanded={isOpen}>
                 <span className="vt-card__top">
                   <span className="mono vt-card__ref">{registerNumber(item.seq)}{item.vr_ref ? <span className="vt-card__client"> · {item.vr_ref}</span> : null}</span>
-                  <span className={`mono vt-card__value${value == null ? ' vt-card__value--none' : ''}`}>{value == null ? 'no value' : money(value)}{item.agreed_cost == null && value != null ? <span className="vt-est"> est.</span> : null}</span>
+                  <span className={`mono vt-card__value${value == null ? ' vt-card__value--none' : ''}`}>{value == null ? 'no value' : money(value)}{item.agreed_cost == null && value != null ? <span className="vt-est">{item.estimate_source === 'build_up' ? ' built up' : ' est.'}</span> : null}</span>
                 </span>
                 <span className="vt-card__title">{item.title}</span>
                 <span className={`vt-wait vt-wait--${w.tone}`}>{w.text}</span>
@@ -122,10 +122,19 @@ export function VariationTracker({ data, userId, canManage, today }: { data: Cla
                   {item.crew.length > 0 ? ` · ${item.crew.join(', ')}` : ''}
                   {!item.signed ? ' · not yet signed' : ''}
                 </span>
+                {item.buildUp && item.buildUp.count > 0 && (
+                  <span className="vt-build caption">
+                    {(['labour', 'plant', 'material', 'other'] as const).filter((k) => item.buildUp![k] > 0).map((k) => `${k === 'material' ? 'Materials' : k[0].toUpperCase() + k.slice(1)} ${money(item.buildUp![k])}`).join(' · ') || 'Built up, nothing priced yet'}
+                    {item.buildUp.unpriced > 0 ? ` · ${item.buildUp.unpriced} line${item.buildUp.unpriced === 1 ? '' : 's'} not priced` : ''}
+                  </span>
+                )}
               </button>
 
               {isOpen && (
                 <div className="vt-card__body">
+                  <Link className="button vt-build__go" href={`/variations/${item.id}?project=${data.project.id}`}>
+                    {item.buildUp && item.buildUp.count > 0 ? `Cost build-up · ${money(item.buildUp.total)}` : canManage ? 'Build up the cost — labour, plant, materials' : 'Cost build-up'}
+                  </Link>
                   <p className="label">The days behind it</p>
                   {item.mentions.length === 0 ? <p className="nil">No diary day records it any more.</p> : (
                     <table className="vt-days">

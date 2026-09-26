@@ -391,6 +391,17 @@ improvising; the register once shipped dead because a live smoke test was skippe
   1–50); the trigger registers by number, never by words or a client reference. Rows on days signed
   before the column existed carry theirs through the link (`public.variation_number`) — read that,
   never assume the column
+- `src/lib/variations/` — variation costing (README R104): `costs.ts` (pure, node-tested: `cardFor` — job rate replaces the
+  company rate of the same kind and name, `matchLabourRate`/`matchPlantRate`, `lineAmount` mirrors the DB's generated
+  `amount`, `summarise`, `proposeFromDiary` — one line per person per signed diary ROW at its hours, `SHIFT_MAX_HOURS`
+  leaves a likely total blank, never halves it), `load.ts` (`loadBuildUp`). Tables `rate_items` (org, or a job's own; office
+  writes via `app.can_write_rates`, keepers read via `app.can_read_rates`; retired never deleted; changes in
+  `rate_item_changes`) and `variation_cost_lines` (register keepers; amount generated; rate copied onto the line; unique per
+  `source_variation_id` + person; frozen unless the variation is raised/priced — `app.variation_cost_lines_guard`). The
+  build-up IS the estimate (`variation_register.estimate_source = 'build_up'`, synced by trigger; `set_variation_details`
+  cannot type over it); a submission stamps `claimed_total`/`claimed_lines` on its status event. Screens `/rates` (screen
+  `rates`, under Claims) and `/variations/[id]` (the build-up, screen `variations`); links carry `?project=`. `src/lib/money.ts`
+  `fmtMoney` for new money on screen. Suite 45
 - `src/lib/weekly/`, `src/lib/monthly/` — reports. The month bundle is bound in parts of at most 24 MB, ONE PART PER REQUEST
   (a whole month does not fit Vercel's 300 s; README R71): `monthly/generate.ts` `planMonthlyBundle` / `buildBundlePart` is the one builder
   for the button (`POST /api/reports/monthly` plan, then `&part=N`) and the monthly email (builds nightly through the first week).

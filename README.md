@@ -2482,6 +2482,49 @@ office's (pm, admin), company scope, under People; the PDF (`/api/timesheets/pdf
 the week's Monday as its instant, so the same week from the same diaries is the same bytes. `src/lib/timesheets/`:
 `model.ts` pure and node-tested, `load.ts` under the caller's RLS — every job they are on, nothing else.
 
+**R104. What a variation is made of.** "Add dollar figures to each line item — if we use a labourer, that labourer's
+hourly rate on there with the hours; if we use a machine, what machine and what the rate was — within a central portal
+linked to the variations tab, with the financials in the variation tab so we can see at a glance how much we are
+claiming." Until now a variation's money was two typed numbers, estimated and agreed, with nothing under them.
+
+*The rate card* (`/rates`, under Claims) is where rates live: labour by the role worked, plant by the machine (a rate may
+name one machine on the plant register, or none), materials and other costs, each per hour, day, tonne, cubic metre,
+load or lump sum, ex GST. A company rate applies on every job; a job's own rate replaces the company one of the same
+name on that job only — the head contract's schedule of rates, where it differs. The office sets rates (pm/admin); the
+people who price variations read them (supervisor/pm/admin); a leading hand and a labourer read none. Rates are retired,
+never deleted, and every change is kept (`rate_item_changes`).
+
+*The build-up* (`/variations/[id]`, reached from the tracker card and from the day's Variations tab) is the portal: the
+claim and its split by kind at the top, the diary rows the variation stands on, then every line — who or what, the day,
+quantity × rate, the amount. A line keeps the rate it was added at, so a rate changed later never moves a variation
+already priced; the screen says when the card has since moved. The amount is worked out by the database (a generated
+column), never typed. A blank quantity or rate is a blank, not 0: the line says what it needs and the claim leaves it
+out until someone says (invariant 4).
+
+*From the diary.* "Bring in the labour" makes one line per person per signed diary row, at that row's hours — a
+variation's hours are how long it ran, per person (R54) — at the rate for the role that person worked as on that day's
+labour list. Keyed to the diary ROW, not the day: Curtin's 17/09 records V-001 on two rows (10 h and 6 h), and keyed by
+the day the second was skipped and six hours fell out of the claim. A row that named nobody gives one unnamed line
+quoting the diary's words, since the names are often in the description. A row whose hours exceed a 12-hour shift with
+two or more named (Curtin's 10/09: 20 h, two named) was almost certainly written as the total between them; the line
+comes in with no hours and says so, because halving it would be inventing a number and taking it as each would double
+the claim. Unsigned days wait for their signature. Nothing is brought in twice (unique per row and person).
+
+*The build-up is the estimate.* While a variation has lines, its `estimated_cost` is their total and `estimate_source`
+says `build_up`; `set_variation_details` cannot type over it, and the price form on the Variations tab shows the
+built-up claim with a link instead of a box. Removing the last line hands the estimate back to typing. So the tracker's
+pipeline and money tiles, the Claims screen and the day's Variations tab all show the built-up figure without a second
+arithmetic — and the tracker card adds the split (labour · plant · materials).
+
+*Submitted is what was claimed.* Lines change only while the variation is raised or priced; the database refuses
+anything after (`app.variation_cost_lines_guard`). Moving it to Submitted stamps the total and the line count on that
+status event (`claimed_total`, `claimed_lines`), so if it is moved back to Priced, re-costed and sent again, both
+submissions stay on the record and the page lists them.
+
+Not built: the build-up as a PDF for the head contractor, and a margin or on-cost percentage — neither was asked for,
+and the second is a contract term that belongs on the job, not a guess. The claims CSV still prints the day rows'
+estimates. Migrations 20260926100000–100200, suite 45, `src/lib/variations/`.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;

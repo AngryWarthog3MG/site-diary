@@ -51,6 +51,10 @@ export interface RegisterItem {
   crew: string[];
   /** Hours the days stated, added up. A day that stated none adds nothing. */
   hours: number;
+  /** Where the estimate came from: typed, or the sum of its build-up lines (README R104). */
+  estimate_source?: 'manual' | 'build_up';
+  /** The build-up at a glance, when the caller may read it: total and the split by kind. */
+  buildUp?: { count: number; total: number; labour: number; plant: number; material: number; other: number; unpriced: number };
 }
 
 /** V-007: how a register number reads on screen and in a conversation. */

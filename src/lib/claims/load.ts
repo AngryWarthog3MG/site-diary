@@ -1,4 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
+import type { CostKind } from '../variations/costs';
 import { summariseRegister, type RegisterItem, type RegisterSummary } from './register';
 import { loadDocketsAdded } from '@/lib/weekly/load';
 
@@ -213,7 +214,7 @@ async function loadRegister(supabase: SupabaseClient, projectId: string): Promis
   const [{ data: items }, { data: links }, { data: versions }] = await Promise.all([
     supabase
       .from('variation_register')
-      .select('id, seq, title, vr_ref, raised_on, status, estimated_cost, agreed_cost, submitted_on, decided_on, paid_on, notes')
+      .select('id, seq, title, vr_ref, raised_on, status, estimated_cost, agreed_cost, estimate_source, submitted_on, decided_on, paid_on, notes')
       .eq('project_id', projectId),
     supabase
       .from('variation_register_links')
@@ -292,6 +293,19 @@ async function loadRegister(supabase: SupabaseClient, projectId: string): Promis
     for (const n of variation.crew ?? []) if (!item.crew.some((c) => c.toLowerCase() === n.toLowerCase())) item.crew.push(n);
     if (variation.hours != null) item.hours = Math.round((item.hours + num(variation.hours)) * 100) / 100;
     if (signed) item.signed = true;
+  }
+  // The build-up at a glance (README R104). Only a register keeper reads the lines; anyone else gets none and
+  // the card shows the value alone.
+  const { data: costLines } = await supabase.from('variation_cost_lines').select('register_id, kind, quantity, rate, amount').eq('project_id', projectId);
+  for (const l of (costLines ?? []) as Array<{ register_id: string; kind: CostKind; quantity: unknown; rate: unknown; amount: unknown }>) {
+    const item = out.get(l.register_id);
+    if (!item) continue;
+    const b = item.buildUp ?? (item.buildUp = { count: 0, total: 0, labour: 0, plant: 0, material: 0, other: 0, unpriced: 0 });
+    b.count += 1;
+    if (l.rate == null || l.quantity == null) b.unpriced += 1;
+    if (l.amount == null) continue;
+    b[l.kind] = Math.round((b[l.kind] + num(l.amount)) * 100) / 100;
+    b.total = Math.round((b.total + num(l.amount)) * 100) / 100;
   }
   return [...out.values()]
     .map((item) => ({ ...item, mentions: item.mentions.sort((a, b) => a.date.localeCompare(b.date)) }))

@@ -129,7 +129,7 @@ const PHOTO_LABELS: Record<PhotoCategory, string> = {
 
 
 /** The variation register for the Variations tab (README R100): rows, whether this person may price, a reload after a save. */
-const RegisterCtx = createContext<{ rows: RegisterRow[]; canManage: boolean; reload: () => void }>({ rows: [], canManage: false, reload: () => {} });
+const RegisterCtx = createContext<{ rows: RegisterRow[]; canManage: boolean; reload: () => void; projectId: string }>({ rows: [], canManage: false, reload: () => {}, projectId: '' });
 
 export function ReviewScreen(props: {
   entryId: string;
@@ -182,7 +182,7 @@ export function ReviewScreen(props: {
   // The variation register, for the Variations tab (README R100).
   const [registerRows, setRegisterRows] = useState<RegisterRow[]>([]);
   const loadRegister = useCallback(async () => {
-    const { data } = await createClient().from('variation_register').select('id, seq, title, status, estimated_cost, agreed_cost, vr_ref, notes').eq('project_id', props.projectId);
+    const { data } = await createClient().from('variation_register').select('id, seq, title, status, estimated_cost, agreed_cost, vr_ref, notes, estimate_source').eq('project_id', props.projectId);
     setRegisterRows(((data ?? []) as RegisterRow[]).map((r) => ({ ...r, estimated_cost: r.estimated_cost == null ? null : Number(r.estimated_cost), agreed_cost: r.agreed_cost == null ? null : Number(r.agreed_cost) })));
   }, [props.projectId]);
   useEffect(() => { void loadRegister(); }, [loadRegister]);
@@ -600,7 +600,7 @@ export function ReviewScreen(props: {
   }
 
   return (
-    <RegisterCtx.Provider value={{ rows: registerRows, canManage: Boolean(props.canManageRegisters), reload: () => void loadRegister() }}>
+    <RegisterCtx.Provider value={{ rows: registerRows, canManage: Boolean(props.canManageRegisters), reload: () => void loadRegister(), projectId: props.projectId }}>
     <main className="app-shell review-shell">
       <section className="sheet review-sheet">
         <header className="review-hero">
@@ -1367,11 +1367,11 @@ function DocketSection({
 
 /** The register item behind this variation row, from the screen's register (README R100). */
 function VariationRegisterCard({ seq }: { seq: number | null }) {
-  const { rows, canManage, reload } = useContext(RegisterCtx);
+  const { rows, canManage, reload, projectId } = useContext(RegisterCtx);
   const row = seq == null ? null : rows.find((r) => r.seq === seq) ?? null;
   if (seq == null) return null;
   if (!row) return <p className="caption vreg__none">V-{String(seq).padStart(3, '0')} is not on the register yet — it is registered when the day is saved.</p>;
-  return <VariationRegisterPanel row={row} canManage={canManage} onChanged={reload} />;
+  return <VariationRegisterPanel row={row} canManage={canManage} onChanged={reload} projectId={projectId} />;
 }
 
 type DocketState =
