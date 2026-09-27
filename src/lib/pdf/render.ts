@@ -1,4 +1,5 @@
 import { PDFDocument } from 'pdf-lib';
+import { sweepStaleProfiles, tmpFreeBytes } from './tmp-sweep';
 import type { Browser } from 'playwright-core';
 import { DailyDocket, type PhotoImage } from './docket';
 import { ClientSheet, CLIENT_SHEET_CSS } from './client-sheet';
@@ -105,6 +106,13 @@ let shared: Browser | null = null;
  */
 async function launch(): Promise<Browser> {
   if (process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME) {
+    // One browser at a time, so at launch every Chromium profile left in /tmp is a leftover of a dropped one; they
+    // filled the 512 MB temporary disk on a long-lived instance and Chromium died mid-print (README R110).
+    const swept = await sweepStaleProfiles();
+    const free = await tmpFreeBytes();
+    if (swept.removed || swept.failed || (free != null && free < 96 * 1024 * 1024)) {
+      console.warn(`pdf: swept ${swept.removed} stale Chromium profile(s)${swept.failed ? `, ${swept.failed} would not go` : ''}; /tmp free ${free == null ? 'unknown' : `${Math.round(free / 1048576)} MB`}`);
+    }
     const [{ default: packed }, { chromium }] = await Promise.all([
       import('@sparticuz/chromium'),
       import('playwright-core'),

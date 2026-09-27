@@ -2648,6 +2648,17 @@ it too, through the one printed table both PDFs now share (`src/lib/timesheets/h
 each job's weekly loader; the two agree except while a correction is unsigned, when the weekly counts the correction and
 pay counts the signed original — each says so.
 
+**R110. Chromium's leftovers filled the temporary disk.** The all-jobs PDF failed on 28/09 with "Target page, context
+or browser has been closed", and Chromium's own log said why: "Less than 64MB of free space in temporary directory for
+shared memory files: 2". A Vercel function's temporary disk is 512 MB. The packed Chromium takes a good part of it once
+per instance, and Playwright makes a profile directory per launch (with a 32 MB disk cache) that it removes on close —
+but R78's rule drops a frozen browser with a three-second deadline and relaunches, and a dropped browser's profile
+stays. On a long-lived warm instance those added up until Chromium died mid-print, and every render on that instance
+failed the same way until it was recycled. `src/lib/pdf/tmp-sweep.ts`: this module holds one browser at a time, so at
+launch every profile directory in the temporary directory is a leftover; `launch()` removes them first and logs a line
+when it removed any or free space is still under 96 MB, so `vercel logs` shows the instance's state. Node-tested against
+a made-up directory; the PDF determinism check passed unchanged, since nothing about a page changed.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;
