@@ -9,6 +9,7 @@ import { perthToday } from '@/lib/push/decide';
 import { loadTimesheet } from '@/lib/timesheets/load';
 import { DAY_LABELS, addDays, dm, dmy, fmtHours, readWeek, weekOf } from '@/lib/timesheets/model';
 import { isRestDay } from '@/lib/calendar';
+import { CombineNames } from './combine-names';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Timesheets · Kooboolong IMS' };
@@ -29,7 +30,7 @@ export default async function TimesheetsPage({ searchParams }: { searchParams: P
   const today = perthToday();
   const monday = readWeek(week, today);
   const thisWeek = weekOf(today);
-  const { sheet, pendingCorrections } = await loadTimesheet(supabase, monday);
+  const { sheet, pendingCorrections, combined } = await loadTimesheet(supabase, monday);
   const p = current.project_id;
   const at = (m: string) => `/timesheets?project=${p}${m === thisWeek ? '' : `&week=${m}`}`;
   const pdfHref = `/api/timesheets/pdf?project=${p}&week=${monday}`;
@@ -64,6 +65,7 @@ export default async function TimesheetsPage({ searchParams }: { searchParams: P
             {sheet.unsignedRows ? ` · ${sheet.unsignedRows} ${sheet.unsignedRows === 1 ? 'row' : 'rows'} on days not signed yet` : ''}
             {sheet.noHours ? ` · ${sheet.noHours} ${sheet.noHours === 1 ? 'row' : 'rows'} with no hours recorded` : ''}
             {pendingCorrections ? ` · ${pendingCorrections} correction${pendingCorrections === 1 ? '' : 's'} not signed yet (the original counts until it is)` : ''}
+            {sheet.clashes ? ` · ${sheet.clashes} day${sheet.clashes === 1 ? '' : 's'} where someone is on two jobs at once — check` : ''}
           </p>
 
           <div className="claims-tablewrap">
@@ -86,6 +88,7 @@ export default async function TimesheetsPage({ searchParams }: { searchParams: P
                       <td>
                         <span className="ts-name">{person.name}</span>
                         {person.roles.length > 0 && <span className="ts-job">{person.roles.join(' / ')}</span>}
+                        {person.aka.length > 0 && <span className="ts-job ts-aka">also written {person.aka.join(', ')}</span>}
                       </td>
                       {sheet.days.map((d) => {
                         const cell = person.days[d];
@@ -93,10 +96,11 @@ export default async function TimesheetsPage({ searchParams }: { searchParams: P
                         const href = cell.entryIds.length === 1 ? `/entries/${cell.entryIds[0]}/${cell.unsigned ? 'review' : 'signed'}` : null;
                         const text = `${fmtHours(cell.hours)}${cell.overtime ? ` +${fmtHours(cell.overtime)}` : ''}`;
                         return (
-                          <td key={d} className={cell.unsigned ? 'ts-unsigned' : undefined} title={cell.unsigned ? 'Day not signed yet' : cell.noHours ? 'Hours not recorded' : undefined}>
+                          <td key={d} className={[cell.unsigned ? 'ts-unsigned' : '', cell.clash ? 'ts-clash' : ''].filter(Boolean).join(' ') || undefined} title={cell.clash ? 'On two jobs at the same time — check both diaries' : cell.unsigned ? 'Day not signed yet' : cell.noHours ? 'Hours not recorded' : undefined}>
                             {href ? <Link href={href} className="ts-cell">{text}</Link> : text}
                             {multi && <span className="ts-job">{cell.jobs.join(' + ')}</span>}
                             {cell.unsigned && <span className="ts-job">not signed</span>}
+                            {cell.clash && <span className="ts-job ts-clash__note">two jobs at once</span>}
                           </td>
                         );
                       })}
@@ -131,6 +135,12 @@ export default async function TimesheetsPage({ searchParams }: { searchParams: P
           </div>
         </>
       )}
+
+      <CombineNames
+        orgId={current.project.org.id}
+        names={[...new Set(sheet.people.flatMap((pp) => [pp.name, ...pp.aka]))].sort((a, b) => a.localeCompare(b))}
+        combined={combined.filter((c) => c.orgId === current.project.org.id)}
+      />
     </main>
   );
 }

@@ -2597,6 +2597,23 @@ Supabase project (Authentication → Multi-Factor — a setting only Mitchell ch
 see money set up their codes, then migration 20260926120000 applied. Suite 47; the money suites 44–46 now sign in at
 aal2.
 
+Where to find it: on 28/09 Mitchell could not find Security — on a laptop it sat at the foot of the rail, and on a phone
+the home page has no menu at all. It is now a button beside Sign out on the home page, and the home page itself says
+"The money is hidden until you set up two-factor sign-in" to anyone entitled who has not.
+
+**R107. One person, one row on the timesheet.** "Matty and Mathew are the same person, so combine their hours." Curtin's
+crew list already knew Matthew Rodgers as Matty and Matt, so Curtin's rows arrived under his name; Deep Green Pad has no
+crew list and wrote "Matt Rodgers", so the company timesheet showed him twice. `makeResolver` (src/lib/timesheets/
+model.ts) now runs every name through two lists: a job's crew nicknames, on that job's rows only — "Matt" on one job may
+be somebody else on another — and the company's list of names that are one person (`person_aliases`: an alias and the
+name it is; the office adds and undoes them on the Timesheets screen; everyone who reads records reads it). A row shows
+every other spelling it took in ("also written Matt Rodgers"), so nothing is merged silently, and the diaries keep the
+name as it was said. Combining exposed the thing to check: on Friday 25/09 Matthew and Evan Burke are on Curtin's and Deep
+Green Pad's diaries at the same times. A cell where someone is on two jobs at overlapping clocks — or, with no clocks, more
+than 14 hours across them — is marked "two jobs at once" in red on the screen and the PDF, and counted in the caption.
+The hours stay as recorded; the diary is where they are put right. Matt Rodgers and Matty were combined into Matthew
+Rodgers at Mitchell's request. Migration 20260928100000 (applied on its own, ahead of the two-factor one), suite 48.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;

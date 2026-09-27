@@ -7,7 +7,9 @@ import {
   requireUser,
   resolveProject,
   canAuthorEntries,
+  moneyState,
 } from '@/lib/auth';
+import { MoneyLock } from '@/components/money-lock';
 import { canRunTalks, canReport, sees, ROLE_LABEL, type Screen } from '@/lib/roles';
 import { navFor, viewerFor } from '@/lib/nav';
 import { SignOutButton } from '@/components/sign-out-button';
@@ -32,7 +34,7 @@ export default async function TodayPage({
 }: {
   searchParams: Promise<{ project?: string }>;
 }) {
-  const { email, profile, memberships } = await requireUser();
+  const { email, profile, memberships, aal } = await requireUser();
   const { project: projectParam } = await searchParams;
   // A job named in the URL that is no longer this account's (a remembered id after access
   // changed, an old link) falls back to the account's own default rather than a dead end.
@@ -82,11 +84,14 @@ export default async function TodayPage({
           <p className="caption">{ROLE_LABEL[current.role]} · {current.project.org.name}</p>
           <div className="dash-head__tools">
             <RefreshButton />
+            <Link className="dash-security" href="/security">Security</Link>
             <SignOutButton />
           </div>
         </div>
       </header>
       <ProjectSwitcher memberships={memberships} currentId={current.project_id} />
+      {/* Anyone who sees the money and has not set up, or not entered, their code is told so here first (README R106). */}
+      <MoneyLock state={moneyState(current, aal)} next={`/${q}`} />
 
       <SectionBar groups={groups} q={q} jobId={current.project_id} orgName={current.project.org.name} />
       <FirstRun role={current.role} />

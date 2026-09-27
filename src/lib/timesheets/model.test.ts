@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { buildTimesheet, readWeek, weekOf, weekDays, normName, fmtHours, type LabourFact } from './model.ts';
+import { buildTimesheet, makeResolver, readWeek, weekOf, weekDays, normName, fmtHours, type LabourFact } from './model.ts';
 
 const fact = (over: Partial<LabourFact>): LabourFact => ({
   entryId: 'e1', projectId: 'p1', projectCode: 'C001', projectName: 'Curtin', date: '2026-09-22', signed: true,
@@ -76,4 +76,40 @@ test('facts outside the week and blank names are left out; overtime is kept apar
   assert.equal(sheet.total, 8);
   assert.equal(sheet.overtime, 2);
   assert.equal(sheet.people[0].overtime, 2);
+});
+
+test('one person across jobs: each job keeps its own nicknames, the company list applies everywhere, spellings shown (R107)', () => {
+  const resolve = makeResolver(
+    [{ projectId: 'p1', name: 'Matthew Rodgers', aliases: ['Matty', 'Matt'] }],
+    [{ alias: 'Matt Rodgers', name: 'Matthew Rodgers' }],
+  );
+  assert.equal(resolve('matty', 'p1'), 'Matthew Rodgers');
+  assert.equal(resolve('Matt', 'p2'), 'Matt'); // another job's Matt is not assumed to be him
+  assert.equal(resolve('matt  rodgers', 'p2'), 'Matthew Rodgers');
+  assert.equal(resolve('Evan Burke', 'p1'), 'Evan Burke');
+  const facts = [
+    fact({ date: '2026-09-23', personName: resolve('Matthew Rodgers', 'p1'), hours: 9 }),
+    fact({ date: '2026-09-24', projectId: 'p2', projectCode: 'C002', personName: resolve('Matt Rodgers', 'p2'), saidAs: 'Matt Rodgers', hours: 10, entryId: 'e2' }),
+  ];
+  const sheet = buildTimesheet(facts, '2026-09-21');
+  assert.equal(sheet.people.length, 1);
+  assert.equal(sheet.people[0].name, 'Matthew Rodgers');
+  assert.deepEqual(sheet.people[0].aka, ['Matt Rodgers']);
+  assert.equal(sheet.people[0].total, 19);
+});
+
+test('two jobs at the same time on one day is flagged; two jobs one after the other is not', () => {
+  const sheet = buildTimesheet([
+    fact({ date: '2026-09-25', hours: 9.05, start: '06:30', finish: '15:33' }),
+    fact({ date: '2026-09-25', projectId: 'p2', projectCode: 'C002', hours: 10, start: '06:30', finish: '16:30', entryId: 'e2' }),
+    fact({ date: '2026-09-24', hours: 4, start: '06:00', finish: '10:00', entryId: 'e3' }),
+    fact({ date: '2026-09-24', projectId: 'p2', projectCode: 'C002', hours: 5, start: '10:30', finish: '15:30', entryId: 'e4' }),
+    fact({ date: '2026-09-23', hours: 8, entryId: 'e5' }),
+    fact({ date: '2026-09-23', projectId: 'p2', projectCode: 'C002', hours: 8, entryId: 'e6' }),
+  ], '2026-09-21');
+  const p = sheet.people[0];
+  assert.equal(p.days['2026-09-25'].clash, true);
+  assert.equal(p.days['2026-09-24'].clash, false);
+  assert.equal(p.days['2026-09-23'].clash, true); // no clocks, 16 h across two jobs
+  assert.equal(sheet.clashes, 2);
 });

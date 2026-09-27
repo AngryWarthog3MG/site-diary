@@ -195,7 +195,9 @@ improvising; the register once shipped dead because a live smoke test was skippe
 - `src/lib/timesheets/` — the company timesheet (README R103): `model.ts` (`buildTimesheet` — one row per person across every
   job, a cell per day, jobs told apart; `weekOf`, `readWeek`, `normName`; pure, node-tested), `load.ts` (labour rows under the
   caller's RLS, a corrected day counted once by the claims rule, unsigned days marked not hidden). Hours come from the diary's
-  labour list ONLY — never the gate, never computed here; null is "not recorded", never 0. Screen `timesheets` (pm/admin,
+  labour list ONLY — never the gate, never computed here; null is "not recorded", never 0. Names go through `makeResolver`:
+  each job's crew nicknames on its own rows, the company's `person_aliases` everywhere (README R107); a person on two jobs at
+  overlapping clocks is flagged, never adjusted. Screen `timesheets` (pm/admin,
   company scope, under People): `/timesheets?week=<Monday>`, PDF `/api/timesheets/pdf` (in `outputFileTracingIncludes`)
 - `src/lib/chemicals/` — the hazardous chemicals register: `model.ts` (GHS hazard classes, `currentSds`,
   `sdsStatus` — a sheet is current for five years from the date printed on it, `registerFor`), `load.ts`.

@@ -18,7 +18,40 @@ export interface LabourFact {
   role: string | null;
   hours: number | null;
   overtimeHours: number | null;
+  /** The name as the diary wrote it, when the resolver turned it into another (README R107). */
+  saidAs?: string;
+  /** The day's clocks, "HH:MM", when recorded — they tell two jobs at once apart from two jobs in a day. */
+  start?: string | null;
+  finish?: string | null;
 }
+
+/**
+ * One person, one row (README R107). A job's crew list knows its own nicknames — they apply to that job's rows only,
+ * because "Matt" on one job may be someone else on another — and the company's list of names that are one person
+ * applies everywhere. Chains are followed a few steps; anything unknown is itself.
+ */
+export function makeResolver(
+  crew: ReadonlyArray<{ projectId: string; name: string; aliases: readonly string[] | null }>,
+  company: ReadonlyArray<{ alias: string; name: string }>,
+): (name: string, projectId: string) => string {
+  const perJob = new Map<string, string>();
+  for (const c of crew) for (const a of c.aliases ?? []) if (a.trim()) perJob.set(`${c.projectId}|${normName(a)}`, c.name.trim());
+  const everywhere = new Map(company.map((c) => [normName(c.alias), c.name.trim()]));
+  return (name, projectId) => {
+    let out = perJob.get(`${projectId}|${normName(name)}`) ?? name.trim();
+    for (let i = 0; i < 5; i++) {
+      const next = everywhere.get(normName(out));
+      if (!next || normName(next) === normName(out)) break;
+      out = next;
+    }
+    return out;
+  };
+}
+
+const minutes = (t: string | null | undefined): number | null => {
+  const m = typeof t === 'string' ? /^(\d{1,2}):(\d{2})/.exec(t) : null;
+  return m ? Number(m[1]) * 60 + Number(m[2]) : null;
+};
 
 export interface DayCell {
   /** Recorded hours summed; null when nothing for the day carried a figure. */
@@ -30,6 +63,9 @@ export interface DayCell {
   noHours: number;
   unsigned: boolean;
   entryIds: string[];
+  /** On two jobs at overlapping times — or, with no clocks, over 14 h across them. Someone should check. */
+  clash: boolean;
+  spans: Array<{ code: string; start: number | null; finish: number | null; hours: number | null }>;
 }
 
 export interface PersonRow {
@@ -42,6 +78,9 @@ export interface PersonRow {
   byJob: Record<string, number>;
   noHours: number;
   unsigned: boolean;
+  /** Other spellings folded into this row, as the diaries wrote them. */
+  aka: string[];
+  clashes: number;
 }
 
 export interface JobTotal { projectId: string; code: string; name: string; hours: number; people: number; rows: number }
@@ -57,6 +96,7 @@ export interface Timesheet {
   overtime: number;
   noHours: number;
   unsignedRows: number;
+  clashes: number;
 }
 
 export const DAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] as const;
@@ -116,14 +156,17 @@ export function buildTimesheet(facts: readonly LabourFact[], monday: string): Ti
     const key = normName(f.personName);
     let p = people.get(key);
     if (!p) {
-      p = { key, name: f.personName.trim(), roles: [], days: {}, total: 0, overtime: 0, byJob: {}, noHours: 0, unsigned: false, spellings: new Map() };
+      p = { key, name: f.personName.trim(), roles: [], days: {}, total: 0, overtime: 0, byJob: {}, noHours: 0, unsigned: false, aka: [], clashes: 0, spellings: new Map() };
       people.set(key, p);
     }
     p.spellings.set(f.personName.trim(), (p.spellings.get(f.personName.trim()) ?? 0) + 1);
+    const said = f.saidAs?.trim();
+    if (said && normName(said) !== key && !p.aka.some((a) => normName(a) === normName(said))) p.aka.push(said);
     const role = f.role?.trim();
     if (role && !p.roles.some((r) => r.toLowerCase() === role.toLowerCase())) p.roles.push(role);
     let cell = p.days[f.date];
-    if (!cell) { cell = { hours: null, overtime: 0, jobs: [], rows: 0, noHours: 0, unsigned: false, entryIds: [] }; p.days[f.date] = cell; }
+    if (!cell) { cell = { hours: null, overtime: 0, jobs: [], rows: 0, noHours: 0, unsigned: false, entryIds: [], clash: false, spans: [] }; p.days[f.date] = cell; }
+    cell.spans.push({ code: f.projectCode, start: minutes(f.start), finish: minutes(f.finish), hours: f.hours });
     cell.rows += 1;
     if (!cell.jobs.includes(f.projectCode)) cell.jobs.push(f.projectCode);
     if (!cell.entryIds.includes(f.entryId)) cell.entryIds.push(f.entryId);
@@ -143,15 +186,33 @@ export function buildTimesheet(facts: readonly LabourFact[], monday: string): Ti
     j.hours = round2(j.hours + f.hours);
   }
 
+  // Two jobs at once: spans on different jobs whose clocks overlap; with a clock missing, more than 14 h between them.
+  let clashes = 0;
+  for (const p of people.values()) {
+    for (const cell of Object.values(p.days)) {
+      if (cell.jobs.length < 2) continue;
+      let clash = false;
+      for (let i = 0; i < cell.spans.length && !clash; i++) {
+        for (let j = i + 1; j < cell.spans.length && !clash; j++) {
+          const a = cell.spans[i]; const b = cell.spans[j];
+          if (a.code === b.code) continue;
+          if (a.start != null && a.finish != null && b.start != null && b.finish != null) clash = a.start < b.finish && b.start < a.finish;
+          else clash = (cell.hours ?? 0) > 14;
+        }
+      }
+      if (clash) { cell.clash = true; p.clashes += 1; clashes += 1; }
+    }
+  }
+
   const rows: PersonRow[] = Array.from(people.values()).map((p) => {
     let best = p.name; let n = -1;
     for (const [s, c] of p.spellings) if (c > n) { best = s; n = c; }
     const { spellings: _s, ...row } = p;
     void _s;
-    return { ...row, name: best };
+    return { ...row, name: best, aka: [...new Set([...row.aka, ...[..._s.keys()].filter((s) => s !== best)])] };
   }).sort((a, b) => a.name.localeCompare(b.name));
 
   const jobRows: JobTotal[] = Array.from(jobs.values()).map(({ names, ...j }) => ({ ...j, people: names.size })).sort((a, b) => a.code.localeCompare(b.code));
 
-  return { from: monday, to, days, people: rows, jobs: jobRows, dayTotals, total, overtime, noHours, unsignedRows };
+  return { from: monday, to, days, people: rows, jobs: jobRows, dayTotals, total, overtime, noHours, unsignedRows, clashes };
 }

@@ -4438,3 +4438,15 @@ a.dash-row:hover { background: var(--teal-tint); }
 .money-access__2fa--missing { color: var(--amber); }
 
 .menu-drawer__security { display: block; margin: 0.25rem 0 0.5rem; font-size: 0.9rem; color: var(--teal); font-weight: 600; }
+/* Security beside Sign out on the home header (README R106): the account's door, where people look for it. */
+.dash-security { display: inline-flex; align-items: center; min-height: 2.5rem; padding: 0.35rem 0.85rem; border: 1px solid var(--ink-12, #d9dcd6); border-radius: 999px; background: var(--paper); color: var(--teal); font-weight: 600; font-size: 0.9rem; text-decoration: none; }
+.dash-security:hover { border-color: var(--teal); }
+.dash > .money-lock { order: 1; }
+
+/* One person, one row, and two jobs at once (README R107). */
+.timesheet .ts-aka { font-style: italic; }
+.timesheet .ts-clash { color: #9a2b2b; font-weight: 650; background: #fbecec; }
+.timesheet .ts-clash__note { color: #9a2b2b; }
+.combine-names { margin-top: 1.75rem; padding-top: 1rem; border-top: 1px solid var(--ink-08); display: grid; gap: 0.5rem; }
+.combine-names__row { display: grid; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); gap: 0.6rem; align-items: end; }
+.combine-names__list li { display: flex; justify-content: space-between; align-items: center; gap: 0.75rem; padding: 0.4rem 0; border-bottom: 1px solid var(--ink-08); }
