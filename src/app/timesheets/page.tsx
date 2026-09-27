@@ -7,9 +7,9 @@ import { createClient } from '@/lib/supabase/server';
 import { requireUser, resolveProject, guardScreen } from '@/lib/auth';
 import { perthToday } from '@/lib/push/decide';
 import { loadTimesheet } from '@/lib/timesheets/load';
-import { DAY_LABELS, addDays, dm, dmy, fmtHours, readWeek, weekOf } from '@/lib/timesheets/model';
-import { isRestDay } from '@/lib/calendar';
+import { addDays, dmy, fmtHours, readWeek, weekOf } from '@/lib/timesheets/model';
 import { CombineNames } from './combine-names';
+import { TimesheetTable } from './timesheet-table';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Timesheets · Kooboolong IMS' };
@@ -34,7 +34,6 @@ export default async function TimesheetsPage({ searchParams }: { searchParams: P
   const p = current.project_id;
   const at = (m: string) => `/timesheets?project=${p}${m === thisWeek ? '' : `&week=${m}`}`;
   const pdfHref = `/api/timesheets/pdf?project=${p}&week=${monday}`;
-  const jobsOnSheet = sheet.jobs.length;
 
   return (
     <main className="sheet sheet--wide">
@@ -59,67 +58,7 @@ export default async function TimesheetsPage({ searchParams }: { searchParams: P
         <p className="claims-nil">No labour recorded in any diary for the week of {dmy(monday)}.</p>
       ) : (
         <>
-          <p className="caption">
-            {sheet.people.length} {sheet.people.length === 1 ? 'person' : 'people'} · {jobsOnSheet} {jobsOnSheet === 1 ? 'job' : 'jobs'} · {fmtHours(sheet.total)} h
-            {sheet.overtime ? ` (+ ${fmtHours(sheet.overtime)} h overtime)` : ''}
-            {sheet.unsignedRows ? ` · ${sheet.unsignedRows} ${sheet.unsignedRows === 1 ? 'row' : 'rows'} on days not signed yet` : ''}
-            {sheet.noHours ? ` · ${sheet.noHours} ${sheet.noHours === 1 ? 'row' : 'rows'} with no hours recorded` : ''}
-            {pendingCorrections ? ` · ${pendingCorrections} correction${pendingCorrections === 1 ? '' : 's'} not signed yet (the original counts until it is)` : ''}
-            {sheet.clashes ? ` · ${sheet.clashes} day${sheet.clashes === 1 ? '' : 's'} where someone is on two jobs at once — check` : ''}
-          </p>
-
-          <div className="claims-tablewrap">
-            <table className="timesheet">
-              <thead>
-                <tr>
-                  <th>Person</th>
-                  {sheet.days.map((d, i) => (
-                    <th key={d} className={isRestDay(d) ? 'ts-rest' : undefined}>{DAY_LABELS[i]}<span className="ts-job">{dm(d)}</span></th>
-                  ))}
-                  <th>Total</th>
-                  <th>Jobs</th>
-                </tr>
-              </thead>
-              <tbody>
-                {sheet.people.map((person) => {
-                  const multi = Object.keys(person.byJob).length > 1;
-                  return (
-                    <tr key={person.key}>
-                      <td>
-                        <span className="ts-name">{person.name}</span>
-                        {person.roles.length > 0 && <span className="ts-job">{person.roles.join(' / ')}</span>}
-                        {person.aka.length > 0 && <span className="ts-job ts-aka">also written {person.aka.join(', ')}</span>}
-                      </td>
-                      {sheet.days.map((d) => {
-                        const cell = person.days[d];
-                        if (!cell) return <td key={d} className={isRestDay(d) ? 'ts-rest' : undefined}>·</td>;
-                        const href = cell.entryIds.length === 1 ? `/entries/${cell.entryIds[0]}/${cell.unsigned ? 'review' : 'signed'}` : null;
-                        const text = `${fmtHours(cell.hours)}${cell.overtime ? ` +${fmtHours(cell.overtime)}` : ''}`;
-                        return (
-                          <td key={d} className={[cell.unsigned ? 'ts-unsigned' : '', cell.clash ? 'ts-clash' : ''].filter(Boolean).join(' ') || undefined} title={cell.clash ? 'On two jobs at the same time — check both diaries' : cell.unsigned ? 'Day not signed yet' : cell.noHours ? 'Hours not recorded' : undefined}>
-                            {href ? <Link href={href} className="ts-cell">{text}</Link> : text}
-                            {multi && <span className="ts-job">{cell.jobs.join(' + ')}</span>}
-                            {cell.unsigned && <span className="ts-job">not signed</span>}
-                            {cell.clash && <span className="ts-job ts-clash__note">two jobs at once</span>}
-                          </td>
-                        );
-                      })}
-                      <td className="ts-total">{fmtHours(person.total)}{person.overtime ? <span className="ts-job">+{fmtHours(person.overtime)} OT</span> : null}</td>
-                      <td className="ts-jobs">{Object.entries(person.byJob).map(([code, h]) => `${code} ${fmtHours(h)}`).join(' · ') || '—'}</td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-              <tfoot>
-                <tr>
-                  <td>All</td>
-                  {sheet.days.map((d) => <td key={d}>{sheet.dayTotals[d] ? fmtHours(sheet.dayTotals[d]) : '·'}</td>)}
-                  <td>{fmtHours(sheet.total)}</td>
-                  <td className="ts-jobs">{sheet.jobs.map((j) => `${j.code} ${fmtHours(j.hours)}`).join(' · ')}</td>
-                </tr>
-              </tfoot>
-            </table>
-          </div>
+          <TimesheetTable sheet={sheet} pendingCorrections={pendingCorrections} />
 
           <p className="label" style={{ marginTop: '1.25rem' }}>By job</p>
           <ul className="plainlist">

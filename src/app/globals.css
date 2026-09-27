@@ -4466,3 +4466,6 @@ a.dash-row:hover { background: var(--teal-tint); }
 .cw-job-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 0.5rem 1rem; }
 .cw-job-head h2 { margin: 0; font-size: 1.1rem; }
 .cw-list { margin: 0.25rem 0 0.75rem; padding-left: 1.1rem; display: grid; gap: 0.2rem; font-size: 0.93rem; }
+
+.cw-pay { margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--ink-12, #d9dcd6); display: grid; gap: 0.5rem; }
+.cw-pay h2 { margin: 0; font-size: 1.1rem; }

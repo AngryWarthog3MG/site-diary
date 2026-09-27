@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { BrandMark } from '@/components/brand-mark';
 import { createClient } from '@/lib/supabase/server';
-import { requireUser, resolveProject, guardScreen } from '@/lib/auth';
+import { requireUser, resolveProject, guardScreen, sees } from '@/lib/auth';
 import { canExportReports } from '@/lib/roles';
 import { loadWeeklyData, type WeeklyData } from '@/lib/weekly/load';
 import { WeeklyReport, WEEKLY_CSS } from '@/lib/weekly/report';
@@ -40,7 +40,7 @@ function addDays(date: string, days: number): string {
 export default async function WeeklyReportPage({
   searchParams,
 }: {
-  searchParams: Promise<{ project?: string; start?: string; end?: string }>;
+  searchParams: Promise<{ project?: string; start?: string; end?: string; tab?: string }>;
 }) {
   const { memberships } = await requireUser();
   const params = await searchParams;
@@ -115,8 +115,18 @@ export default async function WeeklyReportPage({
     loadError = error instanceof Error ? error.message : 'Could not load the week.';
   }
 
+  // Two tabs (README R109): the week's report, and the week's prestarts in one PDF.
+  const canPrestarts = sees(current, 'prestart');
+  const tab: 'report' | 'prestarts' = params.tab === 'prestarts' && canPrestarts ? 'prestarts' : 'report';
   const base = `/reports/weekly?project=${current.project_id}`;
-  const weekNav = (from: string) => `${base}&start=${from}&end=${addDays(from, 6)}`;
+  const weekNav = (from: string) => `${base}&start=${from}&end=${addDays(from, 6)}${tab === 'prestarts' ? '&tab=prestarts' : ''}`;
+  const tabHref = (t: 'report' | 'prestarts') => `${base}&start=${start}&end=${end}${t === 'prestarts' ? '&tab=prestarts' : ''}`;
+  type PrestartRow = { id: string; prestart_date: string; supervisor_name: string | null; completed_at: string | null; prestart_attendees: Array<{ count: number }> };
+  const prestarts: PrestartRow[] = tab === 'prestarts'
+    ? (((await supabase.from('prestarts').select('id, prestart_date, supervisor_name, completed_at, prestart_attendees(count)')
+        .eq('project_id', current.project_id).gte('prestart_date', start).lte('prestart_date', end)
+        .order('prestart_date').order('created_at')).data ?? []) as unknown as PrestartRow[])
+    : [];
 
   return (
     <>
@@ -141,13 +151,52 @@ export default async function WeeklyReportPage({
           <Link href={weekNav(addDays(start, 7))}>Week after →</Link>
         </nav>
 
-        {fellBackTo && (
+        {canPrestarts && (
+          <nav className="weekly-tabs" aria-label="What to show">
+            <Link href={tabHref('report')} className={tab === 'report' ? 'is-on' : undefined} aria-current={tab === 'report' ? 'page' : undefined}>Weekly report</Link>
+            <Link href={tabHref('prestarts')} className={tab === 'prestarts' ? 'is-on' : undefined} aria-current={tab === 'prestarts' ? 'page' : undefined}>Prestarts</Link>
+          </nav>
+        )}
+
+        {tab === 'prestarts' && (
+          <section className="weekly-prestarts">
+            <div className="weekly-prestarts__head">
+              <h2>Prestarts, {fmtDate(start)} to {fmtDate(end)}</h2>
+              {prestarts.some((r) => r.completed_at) && (
+                <a className="button" href={`/api/reports/weekly/prestarts?project=${current.project_id}&start=${start}&end=${end}`} target="_blank" rel="noopener">
+                  The week’s prestarts — one PDF
+                </a>
+              )}
+            </div>
+            {prestarts.length === 0 ? (
+              <p className="weekly-prestarts__none">No prestarts this week.</p>
+            ) : (
+              <ul className="weekly-prestarts__list">
+                {prestarts.map((r) => {
+                  const count = r.prestart_attendees?.[0]?.count ?? 0;
+                  return (
+                    <li key={r.id}>
+                      <Link href={`/prestart/${r.id}?project=${current.project_id}`}>
+                        <strong>{new Intl.DateTimeFormat('en-AU', { weekday: 'short', timeZone: 'UTC' }).format(new Date(`${r.prestart_date}T00:00:00Z`))} {fmtDate(r.prestart_date)}</strong>
+                        <span>{r.supervisor_name ?? '—'} · {count} signed on</span>
+                        <span className={r.completed_at ? 'is-done' : 'is-open'}>{r.completed_at ? 'Finished' : 'Not finished — not in the PDF'}</span>
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+            <p className="weekly-prestarts__hint">One PDF with a cover listing every day — who ran it, how many signed on, the page it starts on, and working days with no prestart — then each finished prestart exactly as its own PDF prints it, signatures and all.</p>
+          </section>
+        )}
+
+        {tab === 'report' && fellBackTo && (
           <p className="weekly-fallback">
             Nothing signed this week yet, so this is the most recent week with signed days.
           </p>
         )}
 
-      {loadError && (
+      {tab === 'report' && loadError && (
         <section className="weekly-state weekly-state--error">
           <p className="weekly-kicker">Could not load</p>
           <h2>Weekly report unavailable</h2>
@@ -155,7 +204,7 @@ export default async function WeeklyReportPage({
         </section>
       )}
 
-      {data && data.entries.length === 0 && (
+      {tab === 'report' && data && data.entries.length === 0 && (
         <section className="weekly-state">
           <p className="weekly-kicker">Nothing recorded this week</p>
           <h2>Nothing to report yet</h2>
@@ -166,7 +215,7 @@ export default async function WeeklyReportPage({
         </section>
       )}
 
-      {data && data.entries.length > 0 && (
+      {tab === 'report' && data && data.entries.length > 0 && (
         <>
           {canExportReports(current.role) ? (
           <div className="weekly-actions">
@@ -221,6 +270,18 @@ export default async function WeeklyReportPage({
 }
 
 const PAGE_CSS = `
+.weekly-tabs { width: min(210mm, calc(100vw - 8mm)); margin: 3mm auto 0; display: flex; gap: 0.4rem; flex-wrap: wrap; }
+.weekly-tabs a { padding: 0.5rem 1rem; border-radius: 999px; border: 1px solid var(--rule, #d5d8d2); background: var(--paper); color: var(--ink); text-decoration: none; font-weight: 600; font-size: 0.92rem; }
+.weekly-tabs a.is-on { background: var(--teal); border-color: var(--teal); color: #fff; }
+.weekly-prestarts { width: min(210mm, calc(100vw - 8mm)); margin: 4mm auto 0; padding: 6mm; background: var(--paper); border-radius: 12px; box-shadow: var(--shadow-sm, 0 1px 3px rgba(0,0,0,.08)); display: grid; gap: 0.75rem; }
+.weekly-prestarts__head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 0.75rem; }
+.weekly-prestarts__head h2 { margin: 0; font-size: 1.15rem; }
+.weekly-prestarts__list { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.4rem; }
+.weekly-prestarts__list a { display: grid; grid-template-columns: minmax(8rem, auto) 1fr auto; gap: 0.25rem 0.9rem; align-items: baseline; padding: 0.65rem 0.8rem; border: 1px solid var(--rule, #d5d8d2); border-radius: 10px; color: inherit; text-decoration: none; }
+.weekly-prestarts__list .is-done { color: var(--teal); font-weight: 600; font-size: 0.88rem; }
+.weekly-prestarts__list .is-open { color: #8a5a00; font-weight: 600; font-size: 0.88rem; }
+.weekly-prestarts__none, .weekly-prestarts__hint { margin: 0; color: var(--ink-60, #5b665f); font-size: 0.9rem; }
+@media (max-width: 560px) { .weekly-prestarts__list a { grid-template-columns: 1fr; } }
 .weekly-shell {
   min-height: 100vh;
   padding: 8mm 4mm 12mm;

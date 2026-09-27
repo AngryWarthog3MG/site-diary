@@ -2628,6 +2628,26 @@ On the day it was built it agreed with the timesheet to the tenth of an hour (26
 signed the week and corrected the 25/09 clash R107 flagged. `src/lib/weekly/company.ts` (pure, node-tested) and
 `company-load.ts`.
 
+**R109. The week's prestarts in one PDF, and everyone's hours on the all-jobs weekly.** Two asks the same morning.
+
+*Prestarts.* "In the weekly report tab, add a tab for prestarts; this needs to give me the whole week's prestarts in 1
+PDF." The weekly report has two tabs now, Weekly report and Prestarts (shown to anyone who may open prestarts). The
+Prestarts tab lists the week's prestarts — day, who ran it, how many signed on, finished or not, each a door to its own
+page — and one button: `/api/reports/weekly/prestarts`. That PDF is a cover listing every day of the range (who ran it,
+how many signed on, when it was finished in AWST, the page it starts on, and working days with no prestart) followed by
+each finished prestart exactly as its own PDF prints it: the stored copy, or rendered once and stored by the same builder
+(`src/lib/prestart/document.ts`, `prestartPdf`), which the single prestart's button now uses too — so a prestart can
+never print one way alone and another way in the bundle. A prestart not finished is named on the cover and left out: its
+PDF is the frozen record, and it has none yet. Joined with pdf-lib as the month bundle is.
+
+*Hours.* "In the weekly tab for all jobs, add all the guys' hours so we can pay them for hours worked across all jobs." The
+all-jobs weekly (R108) now carries "Hours for pay — everyone, every job": the Timesheets page's own table
+(`TimesheetTable`, `src/app/timesheets/timesheet-table.tsx`) from its own loader, limited to the company's jobs, so the
+hours a person is paid for read the same in both places — names combined (R107), two-jobs-at-once in red. The PDF carries
+it too, through the one printed table both PDFs now share (`src/lib/timesheets/html.ts`). The job table above it comes from
+each job's weekly loader; the two agree except while a correction is unsigned, when the weekly counts the correction and
+pay counts the signed original — each says so.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;

@@ -16,13 +16,15 @@ export interface TimesheetLoad {
  * so the original stands and the draft is noted. Unsigned originals are shown and
  * marked, never hidden — the sheet says what is still to be signed.
  */
-export async function loadTimesheet(supabase: SupabaseClient, monday: string): Promise<TimesheetLoad> {
+export async function loadTimesheet(supabase: SupabaseClient, monday: string, options: { projectIds?: string[] } = {}): Promise<TimesheetLoad> {
   const to = addDays(monday, 6);
-  const { data: entries, error } = await supabase
+  // The company weekly asks for its own company's jobs only (README R108/R109); the Timesheets page, every job the caller reads.
+  const query = supabase
     .from('entries')
     .select('id, project_id, entry_date, status, supersedes_entry_id, project:projects!inner(code, name, org_id)')
     .gte('entry_date', monday)
     .lte('entry_date', to);
+  const { data: entries, error } = await (options.projectIds ? query.in('project_id', options.projectIds) : query);
   if (error) throw new Error(error.message);
   type P = { code: string; name: string; org_id: string };
   type E = { id: string; project_id: string; entry_date: string; status: string; supersedes_entry_id: string | null; project: P | P[] };

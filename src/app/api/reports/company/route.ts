@@ -8,6 +8,8 @@ import { LOGO_DATA_URI } from '@/lib/pdf/logo';
 import { perthToday } from '@/lib/push/decide';
 import { addDays, dmy, fmtHours, readWeek } from '@/lib/timesheets/model';
 import { loadCompanyWeek } from '@/lib/weekly/company-load';
+import { loadTimesheet } from '@/lib/timesheets/load';
+import { timesheetTableHtml, TIMESHEET_PDF_CSS } from '@/lib/timesheets/html';
 
 export const maxDuration = 300;
 export const runtime = 'nodejs';
@@ -39,11 +41,14 @@ export async function GET(request: Request) {
   const org = here.project.org;
   const start = readWeek(url.searchParams.get('week') ?? undefined, perthToday());
   const end = addDays(start, 6);
-  const data = await loadCompanyWeek(supabase, memberships.filter((m) => m.project.org.id === org.id), start, end);
+  const ours = memberships.filter((m) => m.project.org.id === org.id);
+  const data = await loadCompanyWeek(supabase, ours, start, end);
+  const pay = await loadTimesheet(supabase, start, { projectIds: ours.filter((m) => m.project.active).map((m) => m.project_id) });
   const t = data.totals;
 
   const html = ['<!doctype html>', '<html lang="en-AU"><head><meta charset="utf-8">', `<title>Weekly report, all jobs — ${esc(dmy(start))}</title>`,
     `<style>${EMBEDDED_FONT_CSS}</style>`, `<style>${DOCKET_CSS}</style>`,
+    `<style>${TIMESHEET_PDF_CSS}</style>`,
     '<style>.cw table{font-size:8.5pt} .cw td.n,.cw th.n{text-align:right;white-space:nowrap} .cw .sub{display:block;font-size:6.5pt;color:#666} .cw tfoot td{font-weight:700;border-top:1.5px solid #000} .cw .warn{color:#8a5a00} .cw h2{font-size:11pt;margin:5mm 0 1mm} .cw ul{margin:0 0 2mm;padding-left:5mm} .cw li{font-size:8.5pt}</style>',
     '</head><body><div class="docket cw">',
     `<header class="head"><div class="head__left"><p class="lbl"><img class="brandmark" src="${LOGO_DATA_URI}" alt="" /> ${esc(org.name)}</p><h1>Weekly report — all jobs</h1><p class="lbl">${esc(dmy(start))} to ${esc(dmy(end))}</p></div>`,
@@ -62,6 +67,8 @@ export async function GET(request: Request) {
     '<h2>Needs attention</h2>',
     data.attention.length ? `<ul>${data.attention.map((a) => `<li><b>${esc(a.code)}</b> ${esc(a.text)}</li>`).join('')}</ul>` : '<p class="src">Nothing: every working day has a signed diary, every variation a number, every daywork a docket.</p>',
     ...data.failed.map((f) => `<p class="src warn">${esc(f.code)} ${esc(f.name)} could not be read: ${esc(f.message)}</p>`),
+    '<h2>Hours for pay — everyone, every job</h2>',
+    `<div class="ts">${pay.sheet.people.length ? timesheetTableHtml(pay.sheet, pay.pendingCorrections) : '<p class="src">No labour recorded in any diary this week.</p>'}</div>`,
     ...data.jobs.map((j) => [
       `<h2>${esc(j.code)} · ${esc(j.name)}</h2>`,
       `<p class="src">${j.notStarted ? 'Not started — no start date and no diary yet' : `${j.workingDaysRecorded} of ${j.workingDays} working days recorded`}${j.unsignedDays.length ? ` · not signed: ${esc(j.unsignedDays.map((d) => dmy(d).slice(0, 5)).join(', '))}` : ''} · ${esc(fmtHours(j.labourHours))} h labour, ${j.people.length} people</p>`,

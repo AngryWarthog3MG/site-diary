@@ -90,7 +90,9 @@ improvising; the register once shipped dead because a live smoke test was skippe
   the model), chunking, indexing into `project_document_chunks`. Reference only, never a diary field; `spec-check.ts`
   backs the review screen's Spec tab (read-only, never stored); `prestart-spec.ts` backs the prestart's Spec tab
   (kept on `prestarts.spec_notes`, printed on the prestart PDF)
-- `src/lib/prestart/` — prestart checklist, PDF, spec notes; `dictate.ts` turns a spoken briefing into the
+- `src/lib/prestart/` — prestart checklist, PDF, spec notes; `document.ts` `prestartPdf` is the ONE builder of a finished
+  prestart's PDF (stored copy, else render and store) — the single button and the week's bundle (`/api/reports/weekly/prestarts`,
+  README R109) both use it; `dictate.ts` turns a spoken briefing into the
   form's fields (Deepgram → model, never stores, never ticks a check); `dictation-merge.ts` folds it into typed text
 - `src/lib/crew/tickets.ts` — tickets (org-wide, by person name) and what each plant kind needs; `crew_inductions`
   per job. The plant form refuses missing/expired, warns on none recorded; the prestart marks the un-inducted.
@@ -407,7 +409,8 @@ improvising; the register once shipped dead because a live smoke test was skippe
 - `src/lib/weekly/company.ts` + `company-load.ts` — the company's weekly report (README R108): every job's `loadWeeklyData`,
   added up by `rollUp` (pure, node-tested); never compute a company figure any other way. Working days count from the job's
   start (start date, else first diary); no start and no diary = not started. Screen `company_weekly` (pm/admin, Company),
-  `/reports/company`, PDF `/api/reports/company` (in `outputFileTracingIncludes`). No money, no model text
+  `/reports/company`, PDF `/api/reports/company` (in `outputFileTracingIncludes`). No money, no model text. Its "Hours for
+  pay" is the Timesheets page's `TimesheetTable` / `timesheetTableHtml` from `loadTimesheet` — one table for pay, never a second
 - `src/lib/weekly/`, `src/lib/monthly/` — reports. The month bundle is bound in parts of at most 24 MB, ONE PART PER REQUEST
   (a whole month does not fit Vercel's 300 s; README R71): `monthly/generate.ts` `planMonthlyBundle` / `buildBundlePart` is the one builder
   for the button (`POST /api/reports/monthly` plan, then `&part=N`) and the monthly email (builds nightly through the first week).

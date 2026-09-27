@@ -47,6 +47,7 @@ const nextConfig: NextConfig = {
     '/api/entries/*/email': CHROMIUM,
     // Prestart and toolbox-talk PDFs.
     '/api/prestart/*/pdf': CHROMIUM,
+    '/api/reports/weekly/prestarts': CHROMIUM,
     '/api/toolbox/*/pdf': CHROMIUM,
     '/api/plant/*/pdf': CHROMIUM,
     '/api/signin/pdf': CHROMIUM,

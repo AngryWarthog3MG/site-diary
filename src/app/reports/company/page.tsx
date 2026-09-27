@@ -9,6 +9,8 @@ import { perthToday } from '@/lib/push/decide';
 import { fmtDate } from '@/lib/pdf/dates';
 import { addDays, dmy, fmtHours, readWeek, weekOf } from '@/lib/timesheets/model';
 import { loadCompanyWeek } from '@/lib/weekly/company-load';
+import { loadTimesheet } from '@/lib/timesheets/load';
+import { TimesheetTable } from '@/app/timesheets/timesheet-table';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Weekly report, all jobs · Kooboolong IMS' };
@@ -41,6 +43,9 @@ export default async function CompanyWeeklyPage({ searchParams }: { searchParams
     fellBack = true;
   }
   const end = addDays(start, 6);
+  // Everyone's hours for pay across this company's jobs (README R109): the Timesheets page's loader and table, so the
+  // hours read the same in both — names combined, two-jobs-at-once flagged.
+  const pay = await loadTimesheet(supabase, start, { projectIds: ours.filter((m) => m.project.active).map((m) => m.project_id) });
   const at = (m: string) => `/reports/company?project=${current.project_id}&week=${m}`;
   const t = data.totals;
 
@@ -119,6 +124,17 @@ export default async function CompanyWeeklyPage({ searchParams }: { searchParams
                 {data.attention.map((a, i) => <li key={i}><strong>{a.code}</strong> {a.text}</li>)}
               </ul>
             )}
+          </section>
+
+          <section className="cw-pay" id="hours">
+            <div className="cw-job-head">
+              <h2>Hours for pay — everyone, every job</h2>
+              <Link href={`/timesheets?project=${current.project_id}&week=${start}`}>Timesheets ›</Link>
+            </div>
+            {pay.sheet.people.length === 0
+              ? <p className="caption">No labour recorded in any diary this week.</p>
+              : <TimesheetTable sheet={pay.sheet} pendingCorrections={pay.pendingCorrections} />}
+            <p className="caption">One row per person across every job, as the diaries recorded them. If one person shows twice under different names, combine them on Timesheets. A red day is someone on two jobs at the same time — check both diaries before paying.</p>
           </section>
 
           {data.jobs.map((j) => (
