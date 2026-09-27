@@ -2659,6 +2659,14 @@ launch every profile directory in the temporary directory is a leftover; `launch
 when it removed any or free space is still under 96 MB, so `vercel logs` shows the instance's state. Node-tested against
 a made-up directory; the PDF determinism check passed unchanged, since nothing about a page changed.
 
+The first deploy of the sweep showed the fuller picture in `vercel logs`: on a fresh instance, four renders in a row
+each waited fifteen seconds for the browser kept from the previous request, relaunched, and free space fell from
+237 MB to 88 MB with nothing left to sweep — the abandoned browsers were still alive, holding their files. Keeping a
+browser across requests buys nothing on Vercel, because the freeze kills it every time. So on Vercel the browser is
+now closed once the response has gone, through Next's `after`, while the instance is still running and the close
+completes: a fresh launch costs a second or two where the dead one cost fifteen, and nothing is left behind. Renders
+back to back in one request (the month bundle) share the browser until the last is done. Locally nothing changes.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;

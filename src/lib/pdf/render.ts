@@ -110,9 +110,8 @@ async function launch(): Promise<Browser> {
     // filled the 512 MB temporary disk on a long-lived instance and Chromium died mid-print (README R110).
     const swept = await sweepStaleProfiles();
     const free = await tmpFreeBytes();
-    if (swept.removed || swept.failed || (free != null && free < 96 * 1024 * 1024)) {
-      console.warn(`pdf: swept ${swept.removed} stale Chromium profile(s)${swept.failed ? `, ${swept.failed} would not go` : ''}; /tmp free ${free == null ? 'unknown' : `${Math.round(free / 1048576)} MB`}`);
-    }
+    // One line per launch, so `vercel logs` shows the instance's state over time.
+    console.info(`pdf: launch · swept ${swept.removed} stale Chromium profile(s)${swept.failed ? `, ${swept.failed} would not go` : ''} · /tmp free ${free == null ? 'unknown' : `${Math.round(free / 1048576)} MB`}`);
     const [{ default: packed }, { chromium }] = await Promise.all([
       import('@sparticuz/chromium'),
       import('playwright-core'),
@@ -136,6 +135,28 @@ async function browser(): Promise<Browser> {
     throw new BrowserUnavailableError(error instanceof Error ? error.message : String(error));
   }
   return shared;
+}
+
+/** Renders in progress on this instance; the browser is closed only when none is. */
+let inFlight = 0;
+
+/**
+ * On Vercel the instance is frozen the moment the response is out, and a browser kept across that freeze never
+ * answers again (README R78) — every later render waited fifteen seconds on it and relaunched, and the abandoned one
+ * kept its files until the temporary disk was full (R110). So on Vercel the browser is closed once the response has
+ * gone, while the instance is still running, through Next's `after`; a fresh launch costs a second or two, a dead
+ * one cost fifteen. Renders back to back in one request (the month bundle) share the browser until the last is done.
+ * Outside a request scope — a script — `after` refuses, and the browser is closed at once if nothing is using it.
+ */
+async function releaseAfterRequest(): Promise<void> {
+  if (!(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME)) return;
+  const closeIfIdle = async () => { if (inFlight === 0) await closeBrowser(); };
+  try {
+    const { after } = await import('next/server');
+    after(closeIfIdle);
+  } catch {
+    await closeIfIdle();
+  }
 }
 
 export async function closeBrowser(): Promise<void> {
@@ -312,9 +333,10 @@ export async function renderPdfDocument(html: string, meta: DocumentMeta): Promi
 }
 
 async function renderOnce(html: string, meta: DocumentMeta): Promise<Uint8Array> {
-  const page = await openPage();
-
+  inFlight += 1;
+  let page: Awaited<ReturnType<typeof openPage>> | null = null;
   try {
+    page = await openPage();
     await page.setContent(html, { waitUntil: 'load' });
     // Everything is embedded, so this resolves immediately — but laying out
     // before the faces are ready would silently produce a fallback-font PDF.
@@ -344,7 +366,9 @@ async function renderOnce(html: string, meta: DocumentMeta): Promise<Uint8Array>
 
     return normalise(raw, meta);
   } finally {
-    await page.close();
+    await page?.close().catch(() => undefined);
+    inFlight -= 1;
+    await releaseAfterRequest();
   }
 }
 

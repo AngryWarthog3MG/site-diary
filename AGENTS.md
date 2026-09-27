@@ -530,7 +530,8 @@ Change four of them and the app silently stops capturing what supervisors say. I
 - **Serials are issued at signing** and follow signing order, not entry date. Sort any
   register by `entry_date`.
 - **Chromium on Vercel shares a 512 MB temporary disk with its own leftovers.** `src/lib/pdf/render.ts` keeps one browser
-  per instance and sweeps stale Playwright profiles from the temporary directory before every launch (README R110). A
+  per REQUEST on Vercel — closed through Next's `after` once the response is out, because the instance freeze kills a
+  browser kept across requests — and sweeps stale Playwright profiles before every launch (README R110). A
   new render path must go through `renderPdfDocument`; never launch Chromium elsewhere, and never write into the
   temporary directory without removing it — a full disk kills every PDF on that instance until it is recycled.
 - **Bump `VERSION` in `public/sw.js`** when the service worker changes, or phones keep the
