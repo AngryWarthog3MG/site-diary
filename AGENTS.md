@@ -404,6 +404,10 @@ improvising; the register once shipped dead because a live smoke test was skippe
   cannot type over it); a submission stamps `claimed_total`/`claimed_lines` on its status event. Screens `/rates` (screen
   `rates`, under Claims) and `/variations/[id]` (the build-up, screen `variations`); links carry `?project=`. `src/lib/money.ts`
   `fmtMoney` for new money on screen. Suite 45
+- `src/lib/weekly/company.ts` + `company-load.ts` — the company's weekly report (README R108): every job's `loadWeeklyData`,
+  added up by `rollUp` (pure, node-tested); never compute a company figure any other way. Working days count from the job's
+  start (start date, else first diary); no start and no diary = not started. Screen `company_weekly` (pm/admin, Company),
+  `/reports/company`, PDF `/api/reports/company` (in `outputFileTracingIncludes`). No money, no model text
 - `src/lib/weekly/`, `src/lib/monthly/` — reports. The month bundle is bound in parts of at most 24 MB, ONE PART PER REQUEST
   (a whole month does not fit Vercel's 300 s; README R71): `monthly/generate.ts` `planMonthlyBundle` / `buildBundlePart` is the one builder
   for the button (`POST /api/reports/monthly` plan, then `&part=N`) and the monthly email (builds nightly through the first week).

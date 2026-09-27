@@ -4450,3 +4450,19 @@ a.dash-row:hover { background: var(--teal-tint); }
 .combine-names { margin-top: 1.75rem; padding-top: 1rem; border-top: 1px solid var(--ink-08); display: grid; gap: 0.5rem; }
 .combine-names__row { display: grid; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); gap: 0.6rem; align-items: end; }
 .combine-names__list li { display: flex; justify-content: space-between; align-items: center; gap: 0.75rem; padding: 0.4rem 0; border-bottom: 1px solid var(--ink-08); }
+
+/* The company's weekly report (README R108). */
+.cw-table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; font-size: 0.92rem; }
+.cw-table th, .cw-table td { padding: 0.5rem 0.6rem; border-bottom: 1px solid var(--ink-08); text-align: right; vertical-align: top; white-space: nowrap; }
+.cw-table th:first-child, .cw-table td:first-child { text-align: left; position: sticky; left: 0; background: var(--paper); z-index: 1; white-space: normal; min-width: 9rem; }
+.cw-table thead th { font-size: 0.7rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-60); font-weight: 600; }
+.cw-table tfoot td { font-weight: 650; border-top: 2px solid var(--ink); border-bottom: 0; }
+.cw-sub { display: block; font-size: 0.72rem; color: var(--ink-60); font-weight: 500; }
+.cw-job { color: inherit; text-decoration: none; }
+.cw-warn { color: var(--amber); }
+.cw-attention { margin-top: 1.25rem; }
+.cw-attention li { padding: 0.35rem 0; border-bottom: 1px solid var(--ink-08); }
+.cw-job-section { margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--ink-12, #d9dcd6); }
+.cw-job-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 0.5rem 1rem; }
+.cw-job-head h2 { margin: 0; font-size: 1.1rem; }
+.cw-list { margin: 0.25rem 0 0.75rem; padding-left: 1.1rem; display: grid; gap: 0.2rem; font-size: 0.93rem; }

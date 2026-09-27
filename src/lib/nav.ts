@@ -47,6 +47,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { href: '/signin', name: 'Site sign-in', what: 'Who is on site now — in and out at the gate', screen: 'signin' },
       { href: '/prestart', name: 'Prestarts', what: 'Morning briefing and sign-on', screen: 'prestart' },
       { href: '/reports/weekly', name: 'Weekly report', what: 'The week, rolled up', screen: 'weekly' },
+      { href: '/reports/company', name: 'Weekly report — all jobs', short: 'All jobs weekly', what: 'Every job’s week side by side, with the company’s totals and what needs attention', screen: 'company_weekly', scope: 'company' },
     ],
   },
   {

@@ -22,6 +22,7 @@ const SCREEN_OF_PATH: Array<[prefix: string, screen: Screen]> = [
   ['/entries', 'entries'], ['/record', 'entries'], ['/api/entries', 'entries'], ['/api/deepgram', 'entries'],
   ['/portfolio', 'weekly'],
   ['/reports', 'weekly'], ['/api/reports', 'weekly'],
+  ['/reports/company', 'company_weekly'], ['/api/reports/company', 'company_weekly'],
   ['/prestart', 'prestart'], ['/api/prestart', 'prestart'],
   ['/toolbox', 'toolbox'], ['/api/toolbox', 'toolbox'],
   ['/plant', 'plant'], ['/api/plant', 'plant'],

@@ -2614,6 +2614,20 @@ than 14 hours across them — is marked "two jobs at once" in red on the screen 
 The hours stay as recorded; the diary is where they are put right. Matt Rodgers and Matty were combined into Matthew
 Rodgers at Mitchell's request. Migration 20260928100000 (applied on its own, ahead of the two-factor one), suite 48.
 
+**R108. The company's weekly report.** "In the company tab, add a weekly report — but it needs to be across all jobs."
+`/reports/company` (screen `company_weekly`, pm/admin, under Company as "All jobs weekly"): one table with a row per job
+and the company's totals — diaries recorded, labour hours and overtime, people, plant hours and idle, concrete, delays
+and their main cause, variations, dayworks, rain — then what needs attention, then a few lines per job (the work done in
+the diary's words, delays, variations) and the door to its full weekly. Every figure is the job's own weekly report's
+figure: `loadCompanyWeek` runs `loadWeeklyData` for each job under the caller's RLS and `rollUp` adds them, so the two can
+never disagree; unsigned days are in and marked, as on the job's report. People are counted once across jobs through the
+timesheet's resolver (R107). A job's working days count from when it began — its start date, else its first diary — and a
+job with neither is "not started" and missing nothing, so Kalgoorlie does not nag every Monday before it mobilises. No money
+and no model-written words; the PDF (`/api/reports/company`) is the same numbers, byte-identical for the same week.
+On the day it was built it agreed with the timesheet to the tenth of an hour (261.6 h, week of 21/09), after the office had
+signed the week and corrected the 25/09 clash R107 flagged. `src/lib/weekly/company.ts` (pure, node-tested) and
+`company-load.ts`.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;
