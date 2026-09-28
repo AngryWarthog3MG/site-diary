@@ -300,9 +300,11 @@ improvising; the register once shipped dead because a live smoke test was skippe
 - `src/lib/nav.ts` — the ONE list of the app's sections (`NAV_GROUPS` under seven headings, `showNav`, `navFor`).
   The home page draws it as the heading bar (`src/components/section-bar.tsx`), the phone's Menu drawer as a
   list, the desktop rail as links. A section is added, renamed or moved there and nowhere else; each drawing
-  filters it by role through `canSee`. `scope: 'company'` on a section puts it under the Company heading that
-  `navFor` draws after the job's (README R87) — a screen whose record is the organisation's, not the job's. A
-  screen that is both (Plant, Chemicals) stays with the job and names the company on its company half. The
+  filters it by role through `canSee`. Two parts (README R111): a GROUP's `scope` is 'site' (this job's record) or
+  'company' (the office's, the same on every job — Reports, Staff, Money, Standards); `navFor` keeps site then company,
+  `partsFor` splits them for the home bar's two tabs; the rail and drawer caption the two runs. A new section goes in
+  the part its RECORD belongs to. A screen that is both (Plant, Chemicals) stays with the site and names the company
+  on its company half. Never reuse a heading label across the two parts — the rail keys its open state by label. The
   file imports `./roles.ts` with the extension because `src/lib/jobs.ts` is node-tested and loads it directly
 - `src/lib/jobs.ts` — which job you are looking at, and how it sticks (README R87): cookie `kbl-job`;
   `preferJob` puts the chosen job first in the memberships `requireUser` and `/api/me` return, so every screen

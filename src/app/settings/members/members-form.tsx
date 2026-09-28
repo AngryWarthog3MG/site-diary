@@ -32,7 +32,7 @@ function AccessGrid({ member, canEdit, busy, onSave }: { member: MemberRow; canE
   const grantable = grantableScreens(member.role);
   const ticked = new Set(member.screens ?? defaultScreens(member.role));
   const custom = member.screens !== null;
-  const groups = NAV_GROUPS.map((g) => ({ label: g.label, items: g.items.filter((it) => it.screen && grantable.includes(it.screen)) })).filter((g) => g.items.length > 0);
+  const groups = NAV_GROUPS.map((g) => ({ label: g.scope === 'company' ? `Company · ${g.label}` : g.label, items: g.items.filter((it) => it.screen && grantable.includes(it.screen)) })).filter((g) => g.items.length > 0);
   const toggle = (screen: Screen) => {
     const next = new Set(ticked);
     if (next.has(screen)) next.delete(screen); else next.add(screen);

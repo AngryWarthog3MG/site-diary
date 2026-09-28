@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import Link from 'next/link';
-import { COMPANY_LABEL, HOME_ITEM, navFor, type NavItem } from '@/lib/nav';
+import { COMPANY_LABEL, SITE_LABEL, HOME_ITEM, navFor, type NavItem } from '@/lib/nav';
 import { onJob } from '@/lib/jobs';
 import { JobSwitcher, type SwitchableJob } from '@/components/job-switcher';
 import type { MemberRole } from '@/types/database';
@@ -93,12 +93,13 @@ export function AppMenu({ slotId }: { slotId: string }) {
       {item(HOME_ITEM, 'wide')}
 
       {groups.map((group, i) => {
-        // "This job" captions the job's headings; the company's one heading names the company itself (README R87).
-        const caption = i === 0 && group.scope !== 'company' ? 'This job' : null;
-        const heading = group.scope === 'company' && me?.project?.org ? `${COMPANY_LABEL} · ${me.project.org.name}` : group.label;
+        // Two parts (README R111): "Site · this job" captions the site's headings, "Company · <name>" the company's.
+        const firstOfPart = i === 0 || groups[i - 1].scope !== group.scope;
+        const caption = !firstOfPart ? null : group.scope === 'company' ? `${COMPANY_LABEL}${me?.project?.org ? ` · ${me.project.org.name}` : ''}` : `${SITE_LABEL} · this job`;
+        const heading = group.label;
         return (
-          <section key={group.label} className={`navgroup${group.scope === 'company' ? ' navgroup--company' : ''}`}>
-            {caption && <p className="navscope">{caption}</p>}
+          <section key={group.label} className={`navgroup${group.scope === 'company' ? ' navgroup--company' : ''}${caption && group.scope === 'company' ? ' navgroup--first-company' : ''}`}>
+            {caption && <p className={`navscope${group.scope === 'company' ? ' navscope--company' : ''}`}>{caption}</p>}
             <p className="label">{heading}</p>
             <div className="navgrid">{group.items.map((it) => item(it))}</div>
           </section>

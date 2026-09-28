@@ -13,13 +13,12 @@ import type { MemberRole } from '@/types/database';
  * a screen of their own: the crew pages (anyone who can write the diary) and
  * All jobs (anyone on more than one).
  *
- * `scope: 'company'` marks a section whose record belongs to the COMPANY, not
- * the job you are standing on — the fleet's calibration register, the health
- * records, the subcontractors, the procedures (README R87). `navFor` draws
- * those under one Company heading, after the job's, so nobody edits the
- * company's list believing it is this job's. A section that is honestly both
- * (Plant: the machines here, and the fleet behind them) stays with the job
- * and labels its company half on the page.
+ * Two parts, Site and Company (README R87, R111). A group's `scope` says which:
+ * 'site' is this job's own record; 'company' is the office's — the same on
+ * every job — with headings of its own, so nobody edits the company's list
+ * believing it is this job's. A section that is honestly both (Plant: the
+ * machines here, and the fleet behind them) stays with the job and labels its
+ * company half on the page.
  */
 export interface NavItem {
   href: string;
@@ -29,29 +28,31 @@ export interface NavItem {
   what: string;
   screen?: Screen;
   when?: 'canRecord' | 'multiJob';
-  scope?: 'company';
 }
 
-export interface NavGroup { label: string; items: NavItem[]; scope?: 'job' | 'company' }
+/** Two parts (README R111): the job you are standing on, and the company that runs every job. */
+export type NavScope = 'site' | 'company';
+export interface NavGroup { label: string; items: NavItem[]; scope: NavScope }
 
-/** The heading the company's sections are drawn under. */
+/** The two parts' names: the site's headings are captioned as this job's; the company's carry its name. */
+export const SITE_LABEL = 'Site';
 export const COMPANY_LABEL = 'Company';
 
 export const HOME_ITEM: NavItem = { href: '/', name: 'Home', what: 'Today’s diary — record it, or type it in', screen: 'today' };
 
 export const NAV_GROUPS: NavGroup[] = [
+  // ---- Site: this job's own record ------------------------------------------------------------
   {
-    label: 'Diary',
+    label: 'Diary', scope: 'site',
     items: [
       { href: '/entries', name: 'Daily Diary', what: 'Every day’s diary — signed days and their PDFs', screen: 'entries' },
       { href: '/signin', name: 'Site sign-in', what: 'Who is on site now — in and out at the gate', screen: 'signin' },
       { href: '/prestart', name: 'Prestarts', what: 'Morning briefing and sign-on', screen: 'prestart' },
       { href: '/reports/weekly', name: 'Weekly report', what: 'The week, rolled up', screen: 'weekly' },
-      { href: '/reports/company', name: 'Weekly report — all jobs', short: 'All jobs weekly', what: 'Every job’s week side by side, with the company’s totals and what needs attention', screen: 'company_weekly', scope: 'company' },
     ],
   },
   {
-    label: 'Site',
+    label: 'Works', scope: 'site',
     items: [
       { href: '/programme', name: 'Programme', what: 'The construction programme as issued, and the two-week look-aheads', screen: 'programme' },
       { href: '/toolbox', name: 'Toolbox talks', what: 'Weekly talk and sign-on', screen: 'toolbox' },
@@ -61,26 +62,24 @@ export const NAV_GROUPS: NavGroup[] = [
     ],
   },
   {
-    label: 'Claims',
+    label: 'Claims', scope: 'site',
     items: [
       { href: '/claims', name: 'Claims', what: 'Delays, variations, dayworks', screen: 'claims' },
       { href: '/dayworks', name: 'Dayworks schedule', short: 'Dayworks', what: 'Works completed under daywork and the total hours, by period — printable', screen: 'claims' },
       { href: '/variations', name: 'Variation tracker', what: 'Each one walked from raised to paid — where it is, what it waits on', screen: 'variations' },
-      { href: '/rates', name: 'Rates', what: 'What we charge for labour, plant and materials — the company’s, and this job’s where its contract differs', screen: 'rates' },
       { href: '/notices', name: 'Notices', what: 'Instructions and events from the diary, and the notices we send about them', screen: 'notices' },
       { href: '/progress', name: 'Progress', what: 'How far along each area is', screen: 'progress' },
     ],
   },
   {
-    label: 'Quality',
+    label: 'Quality', scope: 'site',
     items: [
       { href: '/quality', name: 'Quality', what: 'Inspection and test plans, lots and hold points, non-conformances', screen: 'quality' },
       { href: '/audits', name: 'Audits and reviews', short: 'Audits', what: 'Internal audits, management reviews, and their actions until closed', screen: 'audits' },
-      { href: '/quality/equipment', name: 'Calibration register', short: 'Calibration', what: 'The company’s measuring equipment and when each is due', screen: 'quality', scope: 'company' },
     ],
   },
   {
-    label: 'Safety',
+    label: 'Safety', scope: 'site',
     items: [
       { href: '/safety', name: 'Safety dashboard', short: 'Safety', what: 'Open actions, expiring tickets, injuries and rates — read from the record', screen: 'safety' },
       { href: '/emergency', name: 'Emergency plan', short: 'Emergency', what: 'Muster point, nearest hospital, who to call — and the drills that test it', screen: 'emergency' },
@@ -96,32 +95,56 @@ export const NAV_GROUPS: NavGroup[] = [
     ],
   },
   {
-    label: 'People',
+    label: 'People', scope: 'site',
     items: [
-      { href: '/training', name: 'Training matrix', what: 'Who holds what, what each role needs, what is expiring — the whole company or one job', screen: 'training', scope: 'company' },
-      { href: '/timesheets', name: 'Timesheets', what: 'Everyone’s hours for the week, across every job, on one sheet', screen: 'timesheets', scope: 'company' },
-      { href: '/health', name: 'Health monitoring', short: 'Health', what: 'Confidential — blood lead, asbestos and Schedule 14 monitoring, for named record keepers only', screen: 'health', scope: 'company' },
-      { href: '/subcontractors', name: 'Subcontractors', what: 'Insurances, SWMS and licences, chased before they lapse', screen: 'subcontractors', scope: 'company' },
-      { href: '/settings/members', name: 'Who is on this job', what: 'Crew and PM access', when: 'canRecord' },
+      { href: '/settings/members', name: 'Who is on this job', what: 'Crew, roles, access and inductions', when: 'canRecord' },
     ],
   },
   {
-    label: 'Library',
+    label: 'Library', scope: 'site',
     items: [
-      { href: '/procedures', name: 'Policies & procedures', what: 'The company documents, versioned; who has read the current one', screen: 'procedures', scope: 'company' },
-      { href: '/templates', name: 'Templates', what: 'What every job starts with — mobilisation items, hold points, submittals, consumables, risks, folders — by module', screen: 'templates', scope: 'company' },
       { href: '/documents', name: 'Job documents', what: 'Spec, scope, contract, drawings', screen: 'documents' },
       { href: '/ask', name: 'Ask a question', short: 'Ask', what: 'From your diary and the job documents', screen: 'ask' },
     ],
   },
   {
-    label: 'Setup',
+    label: 'Setup', scope: 'site',
     items: [
       { href: '/mobilisation', name: 'Mobilisation', what: 'What this job needs before and as it starts — stamped from the company’s templates', screen: 'start_gate' },
       { href: '/settings', name: 'Settings', what: 'Hours, emails, crew and plant lists', screen: 'settings' },
       { href: '/name', name: 'Your name', what: 'How your name prints on the sheets' },
       { href: '/settings/vocabulary', name: 'Words and names', what: 'Names and site terms', when: 'canRecord' },
-      { href: '/portfolio', name: 'All jobs', what: 'Every active site at once', when: 'multiJob', scope: 'company' },
+    ],
+  },
+  // ---- Company: the office's record, the same on every job ------------------------------------
+  {
+    label: 'Reports', scope: 'company',
+    items: [
+      { href: '/reports/company', name: 'Weekly report — all jobs', short: 'All jobs weekly', what: 'Every job’s week side by side, the company’s totals, everyone’s hours for pay', screen: 'company_weekly' },
+      { href: '/portfolio', name: 'All jobs', what: 'Every active site at once', when: 'multiJob' },
+    ],
+  },
+  {
+    label: 'Staff', scope: 'company',
+    items: [
+      { href: '/timesheets', name: 'Timesheets', what: 'Everyone’s hours for the week, across every job, on one sheet', screen: 'timesheets' },
+      { href: '/training', name: 'Training matrix', what: 'Who holds what, what each role needs, what is expiring — the whole company or one job', screen: 'training' },
+      { href: '/health', name: 'Health monitoring', short: 'Health', what: 'Confidential — blood lead, asbestos and Schedule 14 monitoring, for named record keepers only', screen: 'health' },
+      { href: '/subcontractors', name: 'Subcontractors', what: 'Insurances, SWMS and licences, chased before they lapse', screen: 'subcontractors' },
+    ],
+  },
+  {
+    label: 'Money', scope: 'company',
+    items: [
+      { href: '/rates', name: 'Rates', what: 'What we charge for labour, plant and materials — the company’s, and a job’s own where its contract differs', screen: 'rates' },
+    ],
+  },
+  {
+    label: 'Standards', scope: 'company',
+    items: [
+      { href: '/procedures', name: 'Policies & procedures', what: 'The company documents, versioned; who has read the current one', screen: 'procedures' },
+      { href: '/templates', name: 'Templates', what: 'What every job starts with — mobilisation items, hold points, submittals, consumables, risks, folders — by module', screen: 'templates' },
+      { href: '/quality/equipment', name: 'Calibration register', short: 'Calibration', what: 'The company’s measuring equipment and when each is due', screen: 'quality' },
     ],
   },
 ];
@@ -137,16 +160,18 @@ export interface NavViewer { role: MemberRole | null; screens?: readonly string[
 
 /**
  * The groups this viewer gets, each holding only the doors they get; empty
- * groups dropped. The job's headings first, then the company's sections
- * gathered under one Company heading — the same split in the drawer, the rail
- * and the home page's bar, because they all draw this.
+ * groups dropped. The site's headings first, then the company's — the same
+ * split in the drawer, the rail and the home page's bar, because they all
+ * draw this. `partsFor` splits the result the way a two-tab drawing wants it.
  */
 export function navFor(viewer: NavViewer): NavGroup[] {
-  const job: NavGroup[] = NAV_GROUPS
-    .map((g) => ({ label: g.label, scope: 'job' as const, items: g.items.filter((it) => it.scope !== 'company' && showNav(it, viewer)) }))
+  return NAV_GROUPS
+    .map((g) => ({ ...g, items: g.items.filter((it) => showNav(it, viewer)) }))
     .filter((g) => g.items.length > 0);
-  const company = NAV_GROUPS.flatMap((g) => g.items.filter((it) => it.scope === 'company' && showNav(it, viewer)));
-  return company.length > 0 ? [...job, { label: COMPANY_LABEL, scope: 'company', items: company }] : job;
+}
+
+export function partsFor(groups: NavGroup[]): { site: NavGroup[]; company: NavGroup[] } {
+  return { site: groups.filter((g) => g.scope === 'site'), company: groups.filter((g) => g.scope === 'company') };
 }
 
 /** Whether this viewer gets this door. A null role means "not known yet". */

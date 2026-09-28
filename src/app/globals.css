@@ -2887,7 +2887,8 @@ body {
   text-transform: uppercase;
   color: var(--teal-deep);
 }
-.menu-drawer .navgroup--company { padding-top: 0.75rem; border-top: 1px solid var(--ink-08); }
+.menu-drawer .navgroup--first-company { margin-top: 0.75rem; padding-top: 0.9rem; border-top: 2px solid var(--teal-deep); }
+.navscope--company { color: var(--teal-deep); font-weight: 700; }
 .navgroup--company > .label { color: var(--teal-deep); font-weight: 700; }
 .navgroup--company .navitem { border-color: rgba(31, 92, 51, 0.28); }
 .secbar__item--company { color: var(--teal-deep); font-weight: 650; }
@@ -3502,7 +3503,8 @@ main.sheet--wide .vr-list { grid-template-columns: repeat(auto-fill, minmax(22re
     letter-spacing: 0.08em;
     color: var(--ink-40);
   }
-  .rail__group--company { margin-top: 0.6rem; padding-top: 0.5rem; border-top: 1px solid var(--ink-08); }
+  .rail__group--first-company { margin-top: 0.8rem; padding-top: 0.6rem; border-top: 2px solid var(--teal-deep); }
+  .rail__scope--company { color: var(--teal-deep); }
   .rail__group--company .rail__head { color: var(--teal-deep); }
   .rail__list { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.1rem; }
   .rail__item {
@@ -4469,3 +4471,8 @@ a.dash-row:hover { background: var(--teal-tint); }
 
 .cw-pay { margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--ink-12, #d9dcd6); display: grid; gap: 0.5rem; }
 .cw-pay h2 { margin: 0; font-size: 1.1rem; }
+
+/* The home bar's two parts, Site and Company (README R111). */
+.secbar__parts { display: flex; gap: 0.4rem; padding: 0.25rem 0 0.5rem; }
+.secbar__part { padding: 0.4rem 0.9rem; border-radius: 999px; border: 1px solid rgba(255, 255, 255, 0.55); background: transparent; color: #fff; font: inherit; font-weight: 650; font-size: 0.85rem; cursor: pointer; }
+.secbar__part--on { background: var(--paper); border-color: var(--paper); color: var(--teal-deep); }

@@ -2670,6 +2670,20 @@ now closed once the response has gone, through Next's `after`, while the instanc
 completes: a fresh launch costs a second or two where the dead one cost fifteen, and nothing is left behind. Renders
 back to back in one request (the month bundle) share the browser until the last is done. Locally nothing changes.
 
+**R111. Site and Company.** "All the site-specific items in the site-specific jobs, and everything to do with the
+company in a separate tab. Two different things: site is one and office is another." R87 had put the company's
+sections under one Company heading after the job's — a single flat list of nine by the end. Now the menu has two parts,
+each with its own headings. Site: Diary, Works (was the heading called Site — a heading named the same as the part it sat
+in), Claims, Quality, Safety, People, Library, Setup. Company: Reports (All jobs weekly, All jobs), Staff (Timesheets,
+Training matrix, Health monitoring, Subcontractors), Money (Rates), Standards (Policies & procedures, Templates,
+Calibration register). Rates moved to the company's side: the card is the company's, and a job's own rate is the
+exception on it. Plant and Chemicals stay with the site, as R87 decided — the machines and the drums are here, the fleet
+and the product list behind them are named on the page. The home page's bar shows one part at a time with Site and
+Company · Kooboolong as two tabs above it (the choice remembered for the session); the rail and the drawer caption the
+two runs "Site · this job" and "Company · Kooboolong" with a rule between. One list still: a group's `scope` is 'site' or
+'company', `navFor` keeps the order, `partsFor` splits it for a two-tab drawing. Access ticks on Who is on this job read
+the same list, so the company's headings show as "Company · Staff" and so on.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;

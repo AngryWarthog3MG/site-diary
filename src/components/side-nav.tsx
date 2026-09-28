@@ -6,7 +6,7 @@ import { usePathname, useSearchParams } from 'next/navigation';
 import { BrandMark } from '@/components/brand-mark';
 import { RefreshButton } from '@/components/refresh-button';
 import { ROLE_LABEL } from '@/lib/roles';
-import { COMPANY_LABEL, HOME_ITEM, navFor, showNav } from '@/lib/nav';
+import { COMPANY_LABEL, SITE_LABEL, HOME_ITEM, navFor, showNav } from '@/lib/nav';
 import { onJob } from '@/lib/jobs';
 import { JobSwitcher, type SwitchableJob } from '@/components/job-switcher';
 import type { MemberRole } from '@/types/database';
@@ -107,12 +107,13 @@ export function SideNav() {
           const items = group.items;
           const opened = isOpen(group.label);
           const holdsHere = isHereGroup(group.label);
-          // "This job" captions the job's headings; the company's one heading names the company itself.
-          const caption = i === 0 && group.scope !== 'company' ? 'This job' : null;
-          const heading = group.scope === 'company' && me?.project?.org ? `${COMPANY_LABEL} · ${me.project.org.name}` : group.label;
+          // Two parts (README R111): "Site · this job" captions the site's headings, "Company · <name>" the company's.
+          const firstOfPart = i === 0 || groups[i - 1].scope !== group.scope;
+          const caption = !firstOfPart ? null : group.scope === 'company' ? `${COMPANY_LABEL}${me?.project?.org ? ` · ${me.project.org.name}` : ''}` : `${SITE_LABEL} · this job`;
+          const heading = group.label;
           return (
-            <li key={group.label} className={`rail__group${opened ? ' rail__group--open' : ''}${group.scope === 'company' ? ' rail__group--company' : ''}`}>
-              {caption && <p className="rail__scope label">{caption}</p>}
+            <li key={group.label} className={`rail__group${opened ? ' rail__group--open' : ''}${group.scope === 'company' ? ' rail__group--company' : ''}${caption && group.scope === 'company' ? ' rail__group--first-company' : ''}`}>
+              {caption && <p className={`rail__scope label${group.scope === 'company' ? ' rail__scope--company' : ''}`}>{caption}</p>}
               <button
                 type="button"
                 className={`rail__head${holdsHere ? ' rail__head--here' : ''}`}
