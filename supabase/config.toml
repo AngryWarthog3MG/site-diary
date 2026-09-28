@@ -65,7 +65,10 @@ enroll_enabled = true
 verify_enabled = true
 
 [auth.email]
-enable_signup = false
+# TRUE, despite the name: this is the email PROVIDER's switch, not sign-up. False
+# here is "Email logins are disabled" for every account (28/09/2026, for the few
+# minutes it took to notice). The sign-up lock is `enable_signup` under [auth].
+enable_signup = true
 double_confirm_changes = true
 # OFF, and this matters: with confirmations on, a brand-new address gets a
 # "Confirm your signup" mail instead of a magic link — which is what happened

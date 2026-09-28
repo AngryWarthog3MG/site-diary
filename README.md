@@ -2738,7 +2738,7 @@ system or once we add them — I don't want random people getting access to the 
 address on the login screen and get a code: Supabase made them an account on the spot, and although that account held no
 job and RLS showed it nothing, it existed, it could enrol a second factor, and it sat in the user list looking like
 one of ours. Two halves, the database's the one that counts: the project's auth config now refuses sign-ups
-(`enable_signup = false`, both the service and the email provider — `supabase/config.toml`, pushed), so a code for an
+(`enable_signup = false` under `[auth]` — `supabase/config.toml`, pushed; NOT the same-named key under `[auth.email]`, which is the email provider's own switch and, set false, refuses every account with "Email logins are disabled" — found out the hard way the same afternoon), so a code for an
 unknown address is refused and no account is made; and the login action asks for no account (`shouldCreateUser: false`)
 and turns Supabase's "Signups not allowed for otp" into "That email is not on the system. Ask the office to add you."
 Adding someone (R102) is unchanged — it makes the account through the admin API, which the sign-up switch does not
