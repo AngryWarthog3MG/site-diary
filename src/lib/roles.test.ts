@@ -58,7 +58,10 @@ test('money is its own permission: admin always, PM by default, supervisor only 
   assert.equal(seesMoney(null), false);
   // The rate card is money: no screen tick opens it without money access.
   assert.equal(sees({ role: 'supervisor', screens: ['rates'], finance: null }, 'rates'), false);
-  assert.equal(sees({ role: 'supervisor', screens: ['entries', 'signin'], finance: true }, 'rates'), true);
-  assert.equal(sees({ role: 'supervisor', screens: null, finance: true }, 'rates'), true);
-  assert.equal(sees({ role: 'pm', screens: null, finance: null }, 'rates'), true);
+  // A supervisor shown the money prices variations on the day's tab; the rate card itself is the admin's (R111).
+  assert.equal(sees({ role: 'supervisor', screens: ['entries', 'signin'], finance: true }, 'rates'), false);
+  assert.equal(sees({ role: 'admin', screens: ['entries'], finance: null }, 'rates'), true);
+  assert.equal(sees({ role: 'supervisor', screens: null, finance: true }, 'rates'), false);
+  assert.equal(sees({ role: 'pm', screens: null, finance: null }, 'rates'), false); // company screens are the admin's (R111)
+  assert.equal(sees({ role: 'admin', screens: null, finance: null }, 'rates'), true);
 });

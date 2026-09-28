@@ -97,12 +97,14 @@ export const NAV_GROUPS: NavGroup[] = [
   {
     label: 'People', scope: 'site',
     items: [
+      { href: '/training', name: 'Training matrix', what: 'Who holds what, what each role needs, what is expiring — this job, or the whole company', screen: 'training' },
       { href: '/settings/members', name: 'Who is on this job', what: 'Crew, roles, access and inductions', when: 'canRecord' },
     ],
   },
   {
     label: 'Library', scope: 'site',
     items: [
+      { href: '/procedures', name: 'Policies & procedures', what: 'The company documents, versioned; read the current one and sign that you have', screen: 'procedures' },
       { href: '/documents', name: 'Job documents', what: 'Spec, scope, contract, drawings', screen: 'documents' },
       { href: '/ask', name: 'Ask a question', short: 'Ask', what: 'From your diary and the job documents', screen: 'ask' },
     ],
@@ -128,7 +130,6 @@ export const NAV_GROUPS: NavGroup[] = [
     label: 'Staff', scope: 'company',
     items: [
       { href: '/timesheets', name: 'Timesheets', what: 'Everyone’s hours for the week, across every job, on one sheet', screen: 'timesheets' },
-      { href: '/training', name: 'Training matrix', what: 'Who holds what, what each role needs, what is expiring — the whole company or one job', screen: 'training' },
       { href: '/health', name: 'Health monitoring', short: 'Health', what: 'Confidential — blood lead, asbestos and Schedule 14 monitoring, for named record keepers only', screen: 'health' },
       { href: '/subcontractors', name: 'Subcontractors', what: 'Insurances, SWMS and licences, chased before they lapse', screen: 'subcontractors' },
     ],
@@ -142,7 +143,6 @@ export const NAV_GROUPS: NavGroup[] = [
   {
     label: 'Standards', scope: 'company',
     items: [
-      { href: '/procedures', name: 'Policies & procedures', what: 'The company documents, versioned; who has read the current one', screen: 'procedures' },
       { href: '/templates', name: 'Templates', what: 'What every job starts with — mobilisation items, hold points, submittals, consumables, risks, folders — by module', screen: 'templates' },
       { href: '/quality/equipment', name: 'Calibration register', short: 'Calibration', what: 'The company’s measuring equipment and when each is due', screen: 'quality' },
     ],
@@ -166,6 +166,8 @@ export interface NavViewer { role: MemberRole | null; screens?: readonly string[
  */
 export function navFor(viewer: NavViewer): NavGroup[] {
   return NAV_GROUPS
+    // The Company part is the admin's alone (README R111); the site's doors follow the role table as ever.
+    .filter((g) => g.scope !== 'company' || viewer.role === 'admin')
     .map((g) => ({ ...g, items: g.items.filter((it) => showNav(it, viewer)) }))
     .filter((g) => g.items.length > 0);
 }
@@ -180,7 +182,7 @@ export function showNav(item: NavItem, viewer: NavViewer): boolean {
   // The crew pages live under Settings: an authoring role gets them, unless Settings is unticked for this person.
   if (item.when === 'canRecord') return viewer.canRecord && (member ? sees(member, 'settings') : true);
   // All jobs is the owner's screen: several jobs, and a role that reads the record on them.
-  if (item.when === 'multiJob') return viewer.multiJob && (member ? sees(member, 'weekly') : false);
+  if (item.when === 'multiJob') return viewer.multiJob && viewer.role === 'admin';
   if (!item.screen) return true;
   return member ? sees(member, item.screen) : EVERY_ROLE.includes(item.screen);
 }

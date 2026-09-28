@@ -95,9 +95,9 @@ export function seesMoney(member: Pick<Access, 'role' | 'finance'> | null | unde
  */
 export function sees(member: Access, screen: Screen): boolean {
   if (screen === 'today') return true;
-  // The rate card is money (README R105): money access alone decides. Screen ticks set before it existed would
-  // otherwise keep it shut for someone just shown the money; to close it, hide the money.
-  if (screen === 'rates') return seesMoney(member);
+  // The rate card is money (README R105) and the company's (R111): the role table says who, money access opens it.
+  // Screen ticks do not apply — to close it, hide the money.
+  if (screen === 'rates') return canSee(member.role, 'rates') && seesMoney(member);
   if (member.role === 'labourer' && !canSee('labourer', screen)) return false;
   if (member.role === 'admin' && screen === 'settings') return true;
   if (member.screens == null) return canSee(member.role, screen);
@@ -132,16 +132,16 @@ export function canSee(role: MemberRole, screen: Screen): boolean {
   // they have, but what we send the head contractor, and why, is not theirs.
   if (screen === 'notices') return role === 'pm' || role === 'admin';
   // The company's templates are set up by the office (README R91).
-  if (screen === 'templates') return role === 'pm' || role === 'admin';
+  if (screen === 'templates') return role === 'admin';
   // The job's setup board is the office's too (README R92): mobilisation items, risks and
   // submittals stay away from site roles, as the brief asks.
   if (screen === 'start_gate') return role === 'pm' || role === 'admin';
   // The rate card's default follows the money's (README R105): admin and PM; a supervisor gets it with the switch.
-  if (screen === 'rates') return role === 'admin' || role === 'pm';
-  // The company timesheet is the office's (README R103): everyone's hours across every job.
-  if (screen === 'timesheets') return role === 'pm' || role === 'admin';
+  if (screen === 'rates') return role === 'admin';
+  // The company's screens are the admin's alone (README R103, R111): everyone's hours, every job's week, the rate card, the templates.
+  if (screen === 'timesheets') return role === 'admin';
   // The company's weekly report, every job side by side, is the office's too (README R108).
-  if (screen === 'company_weekly') return role === 'pm' || role === 'admin';
+  if (screen === 'company_weekly') return role === 'admin';
   if (screen === 'settings') return canAuthorEntries(role);
   return true;
 }

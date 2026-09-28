@@ -2684,6 +2684,15 @@ two runs "Site · this job" and "Company · Kooboolong" with a rule between. One
 'company', `navFor` keeps the order, `partsFor` splits it for a two-tab drawing. Access ticks on Who is on this job read
 the same list, so the company's headings show as "Company · Staff" and so on.
 
+The same day: "only admin gets to see the company tab; take the security tab off the top and leave it in settings." The
+Company part is now drawn for admins alone, and the screens that are only the company's — the all-jobs weekly, Timesheets,
+Rates, Templates — are the admin's in the role table too (a PM was never seated on any of them; Matthew is an admin).
+Two doors the crew use came back to the site side so they are not lost with the tab: Policies & procedures (Library — a
+worker reads the current version and signs that they have) and the Training matrix (People — this job by default, the
+whole company on a switch). Subcontractors, Health monitoring and the Calibration register stay in Company; their pages
+still open by address for the roles the record gives them. The Security button left the home page's header, the rail and
+the drawer; Settings keeps it, and the money screens still link straight to it when a code is wanted.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;

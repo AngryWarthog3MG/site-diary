@@ -146,9 +146,6 @@ export function SideNav() {
             Settings
           </Link>
         )}
-        <Link className={`rail__item rail__item--quiet${here('/security') ? ' rail__item--here' : ''}`} href="/security">
-          Security
-        </Link>
         <RefreshButton />
         {me?.name && <p className="rail__who mono">{me.name}{me.role ? ` · ${ROLE_LABEL[me.role]}` : ''}</p>}
       </div>

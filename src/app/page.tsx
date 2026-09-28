@@ -84,7 +84,6 @@ export default async function TodayPage({
           <p className="caption">{ROLE_LABEL[current.role]} · {current.project.org.name}</p>
           <div className="dash-head__tools">
             <RefreshButton />
-            <Link className="dash-security" href="/security">Security</Link>
             <SignOutButton />
           </div>
         </div>
