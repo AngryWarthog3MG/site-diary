@@ -372,7 +372,7 @@ export interface AccessEvent {
   who: string;
   by: string;
   at: string;
-  kind: 'added' | 'changed' | 'removed' | 'two_factor_reset';
+  kind: 'added' | 'changed' | 'removed' | 'two_factor_reset' | 'account_closed' | 'account_reopened';
   oldRole: string | null;
   newRole: string | null;
   moneyBefore: boolean;
@@ -389,6 +389,8 @@ export function AccessHistory({ events }: { events: AccessEvent[] }) {
     if (e.kind === 'added') return `added as ${roleWord(e.newRole)}${e.moneyAfter ? ', sees the money' : ''}`;
     if (e.kind === 'removed') return `removed (was ${roleWord(e.oldRole)})`;
     if (e.kind === 'two_factor_reset') return 'two-factor reset';
+    if (e.kind === 'account_closed') return 'account closed — no job left';
+    if (e.kind === 'account_reopened') return `account reopened, added as ${roleWord(e.newRole)}`;
     const parts: string[] = [];
     if (e.oldRole !== e.newRole) parts.push(`${roleWord(e.oldRole)} → ${roleWord(e.newRole)}`);
     if (e.moneyBefore !== e.moneyAfter) parts.push(e.moneyAfter ? 'money shown' : 'money hidden');

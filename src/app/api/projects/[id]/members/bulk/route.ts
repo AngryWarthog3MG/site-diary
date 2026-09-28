@@ -1,5 +1,6 @@
 import { fail, ok, readJson, requireApiUser, isUuid } from '@/lib/api';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { reopenAccount } from '@/lib/members/account';
 import type { MemberRole } from '@/types/database';
 
 const ROLES = new Set<MemberRole>(['supervisor', 'leading_hand', 'labourer', 'pm', 'admin']);
@@ -47,9 +48,11 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
         if (cErr || !created.user) throw new Error(cErr?.message ?? 'Could not create the account.');
         userId = created.user.id;
         await admin.from('profiles').upsert({ id: userId, email: p.email, full_name: p.name });
-      } else if (p.name) {
+      } else {
         // A name given here fills a blank one; it never overwrites what the person has.
-        await admin.from('profiles').update({ full_name: p.name }).eq('id', userId).is('full_name', null);
+        if (p.name) await admin.from('profiles').update({ full_name: p.name }).eq('id', userId).is('full_name', null);
+        // A closed account (README R115) opens again when the person is put back on a job.
+        await reopenAccount(admin, userId, { projectId, changedBy: user.id, newRole: role as string });
       }
       const { data: existing } = await admin.from('project_members').select('role').eq('project_id', projectId).eq('user_id', userId).maybeSingle();
       if (existing) { results.push({ ...p, outcome: 'already', detail: String(existing.role) }); continue; }

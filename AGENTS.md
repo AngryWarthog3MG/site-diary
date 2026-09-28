@@ -102,6 +102,10 @@ improvising; the register once shipped dead because a live smoke test was skippe
   Add member (`POST /api/projects/[id]/members`) makes the account when none exists and sends the welcome note
   (`src/lib/members/welcome.ts`, README R102 — email + title is the whole of adding someone; the bulk and cards routes
   stay for a terminal but no screen offers them)
+- `src/lib/members/account.ts` — removed from their last job, the account is CLOSED, never deleted (README R115): a ban in
+  the auth service, the profile and the record kept, `account_closed` / `account_reopened` in `member_access_events`. The
+  members DELETE calls `closeAccountIfOrphaned`; add and bulk add call `reopenAccount`. Never `auth.admin.deleteUser` —
+  the record's foreign keys refuse it, and where they do not, they cascade through the name on the sheets
 - `src/lib/outbox/` — the forms' offline queue (prestart create/edit/sign-on/finish, toolbox sign-on/finish, plant
   check). Any new form write goes through `runOrQueue(live, queue)` with phone-chosen ids, and its replay in
   `sync.ts` (also `hc_notice`, `swms_review`, `env_monitoring`, `hc_document` — README R76; show queued items with `usePending`, and never

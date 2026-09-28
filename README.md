@@ -2750,6 +2750,18 @@ TOTP enrol and verify OFF in production — every money screen shut behind a sec
 minutes it took to notice and push the block back. The block is in the file now with a comment that says why it must
 stay; run `config push` without `--yes` first and read the diff, always.
 
+**R115. Removed from their last job, the account is closed.** "Delete the account when they're removed from their
+last job." Closed, not deleted, and the difference is the record: the account's id is on every incident the person
+reported, every ticket they recorded, every docket they signed, with `on delete no action` — the database refuses to
+delete anyone who has ever recorded anything — and where it would not refuse, it would cascade through the profile and
+take the name off the sheets. So when Remove leaves a person with no job on any project, the account is banned in the
+auth service (no link, no code, no refresh; a phone already signed in keeps its token for up to twelve hours and sees an
+empty app meanwhile), the profile and everything they wrote stay exactly as they were, and the access history gets
+"account closed — no job left" with who did it (`member_access_events`, kind `account_closed`). Adding the person to a job
+again — Settings, or the bulk add — reopens it (`account_reopened`) and they sign in as before. `src/lib/members/account.ts`;
+migration 20260928140000. With R114 this is the whole of who can get in: only an address the office has added, and only
+while they hold a job.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;

@@ -3,6 +3,7 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import type { MemberRole } from '@/types/database';
 import { ROLE_LABEL, SCREENS, grantableScreens, type Screen } from '@/lib/roles';
 import { sendWelcome } from '@/lib/members/welcome';
+import { closeAccountIfOrphaned, reopenAccount } from '@/lib/members/account';
 import { cleanName } from '@/lib/people/name';
 
 const ROLES = new Set<MemberRole>(['supervisor', 'leading_hand', 'labourer', 'pm', 'admin']);
@@ -81,8 +82,10 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
       userId = created.user.id;
       await admin.from('profiles').upsert({ id: userId, email, full_name: name });
       made = true;
-    } else if (name) {
-      await admin.from('profiles').update({ full_name: name }).eq('id', userId).is('full_name', null);
+    } else {
+      if (name) await admin.from('profiles').update({ full_name: name }).eq('id', userId).is('full_name', null);
+      // Removed from their last job earlier, the account was closed (README R115); adding them again reopens it.
+      await reopenAccount(admin, userId, { projectId, changedBy: auth.user.id, newRole: role });
     }
   } catch (error) {
     return fail('server_error', error instanceof Error ? error.message : 'Could not look up that account.', 500);
@@ -260,12 +263,22 @@ export async function DELETE(request: Request, context: { params: Promise<{ id: 
     return fail('server_error', error instanceof Error ? error.message : 'Could not check admins.', 500);
   }
 
-  const { error } = await auth.supabase
+  const { data: gone, error } = await auth.supabase
     .from('project_members')
     .delete()
     .eq('project_id', projectId)
-    .eq('user_id', userId);
+    .eq('user_id', userId)
+    .select('role');
   if (error) return fail('server_error', error.message, 500);
 
+  // No job left anywhere: the account is closed, the record kept (README R115).
+  try {
+    const closed = await closeAccountIfOrphaned(createAdminClient(), userId, {
+      projectId, changedBy: auth.user.id, wasRole: (gone?.[0]?.role as string | undefined) ?? null,
+    });
+    if (closed.outcome === 'closed') return ok({ message: 'Member removed. That was their last job, so their account is closed — adding them to a job again reopens it.' });
+  } catch (e) {
+    return ok({ message: `Member removed, but their account could not be closed: ${e instanceof Error ? e.message : 'unknown'}. Remove them again to retry.` });
+  }
   return ok({ message: 'Member removed.' });
 }
