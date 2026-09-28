@@ -39,8 +39,7 @@ export function TimesheetTable({ sheet, pendingCorrections }: { sheet: Timesheet
                         <td>
                           <span className="ts-name">{person.name}</span>
                           {person.roles.length > 0 && <span className="ts-job">{person.roles.join(' / ')}</span>}
-                          {person.aka.length > 0 && <span className="ts-job ts-aka">also written {person.aka.join(', ')}</span>}
-                        </td>
+                          </td>
                         {sheet.days.map((d) => {
                           const cell = person.days[d];
                           if (!cell) return <td key={d} className={isRestDay(d) ? 'ts-rest' : undefined}>·</td>;

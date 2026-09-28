@@ -2607,7 +2607,8 @@ crew list and wrote "Matt Rodgers", so the company timesheet showed him twice. `
 model.ts) now runs every name through two lists: a job's crew nicknames, on that job's rows only — "Matt" on one job may
 be somebody else on another — and the company's list of names that are one person (`person_aliases`: an alias and the
 name it is; the office adds and undoes them on the Timesheets screen; everyone who reads records reads it). A row shows
-every other spelling it took in ("also written Matt Rodgers"), so nothing is merged silently, and the diaries keep the
+every other spelling it took in ("also written Matt Rodgers") — until 28/09, when Mitchell asked for those lines to go;
+the spellings still feed the Combine control's list, and nothing is merged silently — and the diaries keep the
 name as it was said. Combining exposed the thing to check: on Friday 25/09 Matthew and Evan Burke are on Curtin's and Deep
 Green Pad's diaries at the same times. A cell where someone is on two jobs at overlapping clocks — or, with no clocks, more
 than 14 hours across them — is marked "two jobs at once" in red on the screen and the PDF, and counted in the caption.

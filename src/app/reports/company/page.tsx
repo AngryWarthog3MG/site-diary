@@ -134,7 +134,7 @@ export default async function CompanyWeeklyPage({ searchParams }: { searchParams
             {pay.sheet.people.length === 0
               ? <p className="caption">No labour recorded in any diary this week.</p>
               : <TimesheetTable sheet={pay.sheet} pendingCorrections={pay.pendingCorrections} />}
-            <p className="caption">One row per person across every job, as the diaries recorded them. If one person shows twice under different names, combine them on Timesheets. A red day is someone on two jobs at the same time — check both diaries before paying.</p>
+            <p className="caption">One row per person across every job, as the diaries recorded them. If one person shows twice under different names, combine them on Timesheets, under Same person, different name. A red day is someone on two jobs at the same time — check both diaries before paying.</p>
           </section>
 
           {data.jobs.map((j) => (

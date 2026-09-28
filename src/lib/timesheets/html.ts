@@ -17,7 +17,7 @@ export function timesheetTableHtml(sheet: Timesheet, pendingCorrections: number)
       '<th class="n">Total</th><th>Jobs</th></tr></thead><tbody>',
       ...sheet.people.map((p) => {
         const multi = Object.keys(p.byJob).length > 1;
-        return `<tr><td class="name">${esc(p.name)}${p.roles.length ? `<span class="sub">${esc(p.roles.join(' / '))}</span>` : ''}${p.aka.length ? `<span class="sub">also written ${esc(p.aka.join(', '))}</span>` : ''}</td>` +
+        return `<tr><td class="name">${esc(p.name)}${p.roles.length ? `<span class="sub">${esc(p.roles.join(' / '))}</span>` : ''}</td>` +
           sheet.days.map((d) => {
             const c = p.days[d];
             if (!c) return '<td class="n">·</td>';
