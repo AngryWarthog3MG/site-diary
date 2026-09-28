@@ -38,6 +38,8 @@ export const PRESETS: ReadonlyArray<{ kind: ObligationKind; title: string; inter
   { kind: 'plan_review', title: 'Asbestos management plan reviewed', intervalMonths: 60, basis: 'WHS (General) Regs 2022 (WA) reg. 429', scope: 'project' },
   // Read each job's Access history on Who is on this job: who can open what, and who sees the money (README R105).
   { kind: 'other', title: 'Access review — who can see the records and the money', intervalMonths: 3, basis: 'ISO/IEC 27001 A.5.18 access rights · ISO 9001, 45001, 14001 cl. 7.5.3 control of documented information', scope: 'org' },
+  // Bring last night's off-site copy back into a scratch project and check it against its manifest (docs/backups.md, README R113).
+  { kind: 'other', title: 'Restore test — the off-site backup brought back and checked', intervalMonths: 3, basis: 'ISO/IEC 27001 A.8.13 information backup · ISO 9001, 45001, 14001 cl. 7.5.3 control of documented information', scope: 'org' },
 ];
 
 /** How far ahead something is "due soon" rather than merely upcoming. */

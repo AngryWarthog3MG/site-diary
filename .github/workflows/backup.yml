@@ -1,0 +1,75 @@
+name: Off-site backup
+
+# The copy of the record that is not in Supabase (README R113, docs/backups.md):
+# the database dumped three ways the way Supabase's own restore guide expects,
+# and every file in every Storage bucket, into an S3-compatible bucket the
+# company holds. Append-only there; nothing is ever deleted by this job.
+#
+# A missing secret fails the run on purpose. A backup that quietly skips is
+# worse than none, because someone believes it exists.
+
+on:
+  schedule:
+    # 21:30 UTC = 05:30 AWST — after the app's own nightly run (20:00 UTC),
+    # so last night's snapshot and exports are in the copy too.
+    - cron: '30 21 * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: offsite-backup
+  cancel-in-progress: false
+
+jobs:
+  backup:
+    name: Dump the database and copy every bucket
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    env:
+      SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      BACKUP_S3_ENDPOINT: ${{ secrets.BACKUP_S3_ENDPOINT }}
+      BACKUP_S3_BUCKET: ${{ secrets.BACKUP_S3_BUCKET }}
+      BACKUP_S3_ACCESS_KEY_ID: ${{ secrets.BACKUP_S3_ACCESS_KEY_ID }}
+      BACKUP_S3_SECRET_ACCESS_KEY: ${{ secrets.BACKUP_S3_SECRET_ACCESS_KEY }}
+      BACKUP_S3_REGION: ${{ secrets.BACKUP_S3_REGION }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Every secret present
+        run: |
+          missing=""
+          for n in SUPABASE_DB_URL SUPABASE_URL SUPABASE_SERVICE_ROLE_KEY BACKUP_S3_ENDPOINT BACKUP_S3_BUCKET BACKUP_S3_ACCESS_KEY_ID BACKUP_S3_SECRET_ACCESS_KEY; do
+            [ -n "${!n}" ] || missing="$missing $n"
+          done
+          if [ -n "$missing" ]; then
+            echo "Not set:$missing — see docs/backups.md for what each one is and where it comes from."
+            exit 1
+          fi
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 26
+          cache: npm
+      - run: npm ci
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Dump the database (roles, schema, data — Supabase's own restore order)
+        run: |
+          set -e
+          mkdir -p dump
+          supabase db dump --db-url "$SUPABASE_DB_URL" -f dump/roles.sql --role-only
+          supabase db dump --db-url "$SUPABASE_DB_URL" -f dump/schema.sql
+          supabase db dump --db-url "$SUPABASE_DB_URL" -f dump/data.sql --use-copy --data-only -x storage.buckets_vectors -x storage.vector_indexes
+          gzip -9 dump/roles.sql dump/schema.sql dump/data.sql
+          ls -l dump | awk 'NR>1 {print $9, $5 " bytes"}'
+
+      - name: Copy every bucket and the dump
+        run: |
+          node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/backup-offsite.mjs \
+            --file dump/roles.sql.gz roles.sql.gz \
+            --file dump/schema.sql.gz schema.sql.gz \
+            --file dump/data.sql.gz data.sql.gz

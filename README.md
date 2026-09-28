@@ -2709,6 +2709,30 @@ record costs nothing to keep. Reads: the recipient's own, the sender's own, any 
 nothing (suite 49). Notifications reach a phone only where the app is on the home screen and notifications are on —
 the inbox carries the switch, and the sender is told when a person has no phone registered. Migration 20260928110000.
 
+**R113. Storage, and the copy that is not in Supabase.** "Review all the storage capacities across each bit of the
+system, where I can get backups, and what I need to implement so it doesn't run into storage capacity issues once it's
+live — a lot of photos, unless a photo can be reduced when it's uploaded." Measured on 28/09: the database held 35 MB
+across 128 tables; the files held 860 MB, of which 608 MB was `exports` (the signed daily dockets at 15–28 MB each and the
+monthly bundles that bind them), 201 MB photographs (260 at 0.8 MB), 38 MB documents, 10 MB audio. September alone added
+857 MB. The photographs were already compressed on the phone (1920 px, JPEG 0.82); the dockets are heavy because each
+embeds its photographs byte for byte, which is the rule — a signed document is never re-encoded. So the one lever on the
+record's size is the size a photograph is STORED at, and `compressPhoto` now stores 1600 px at 0.78: on the app's own
+canvas path against four stored photographs that was 38 % of the bytes, and 1600 px is more than an A4 docket prints.
+Everything signed before stays exactly as it was. Backups: Supabase makes none on the Free plan and its daily backups on
+Pro never include Storage — a restore brings back the rows and not one photograph — and the app's own nightly snapshot
+(`_backups/`) is 21 diary tables as JSON inside the same project, so it dies with it. The off-site copy is a scheduled
+GitHub job (`.github/workflows/backup.yml`, 05:30 AWST): the database dumped three ways in the order Supabase's own restore
+guide wants (roles, schema, data — `supabase db dump` against the session pooler, because the runners have no IPv6), gzipped,
+and every object in every bucket, into an S3-compatible bucket the company holds (Cloudflare R2 — nothing to get data out,
+about a cent and a half per GB-month). `scripts/backup-offsite.mjs` copies what is missing or a different size and never
+deletes or shrinks anything there, so the copy is append-only and a mistake in the app cannot reach it; a manifest per
+night says what was found and what moved; any failure makes the run red and GitHub emails the owner. The pure part —
+keys, the decision to copy, the manifest — is `src/lib/backup/offsite.ts`, tested. `docs/backups.md` is the setup, the
+restore, and the quarterly restore test that What's due now offers as a company preset (ISO/IEC 27001 A.8.13): a backup
+nobody has restored is a hope. Not done here and still Mitchell's: the move to Supabase Pro, which is what lifts the 1 GB
+file cap the project is a fortnight from hitting, and what gives the database its own daily backup. Point-in-time recovery
+at US$100 a month is left off on purpose — a night's copy is the realistic loss, and this covers it.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;

@@ -9,10 +9,19 @@
  * Fail open, always: any decode or encode problem returns the original file.
  * A photo uploaded big is a nuisance; a photo not uploaded is a hole in the
  * evidence.
+ *
+ * The size chosen here is the size the record keeps for good (README R113):
+ * the signed docket embeds the photograph byte for byte, the monthly bundle
+ * binds the dockets, and none of that is ever re-encoded. At 1920 px and 0.82
+ * a site photograph stored at 0.9–1.3 MB and a docket with seventeen of them
+ * weighed 27 MB; at 1600 px and 0.78 the same photographs store at 0.35–0.55 MB
+ * — about 40 % of the bytes — and 1600 px is still more than an A4 page prints
+ * (a two-up photograph on the docket is about 1060 px wide at 300 dpi). Measured on the
+ * app's own canvas path against stored photographs, 28/09/2026.
  */
 
-const MAX_DIMENSION = 1920;
-const JPEG_QUALITY = 0.82;
+const MAX_DIMENSION = 1600;
+const JPEG_QUALITY = 0.78;
 /** Below this size, recompression saves nothing worth the CPU. */
 const SKIP_BELOW_BYTES = 400_000;
 

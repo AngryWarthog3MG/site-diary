@@ -413,6 +413,13 @@ improvising; the register once shipped dead because a live smoke test was skippe
   recipient through `mark_message_read` / `acknowledge_message`; push outcome via `record_message_push`). Send through
   `POST /api/messages` (row first, then `sendPush` to each `push_subscriptions` row, outcome stamped). Screens `messages`
   (admin, Company) and `inbox` (every role incl. labourer); `InboxNudge` on both homes. Suite 49
+- `src/lib/backup/offsite.ts` — the off-site copy (README R113): pure keys, `decide` (copy when missing or a different size,
+  never rewrite the same), `summarise` → the night's manifest; relative imports, node-tested. `scripts/backup-offsite.mjs`
+  copies every Storage bucket and the night's dumps to the company's S3-compatible bucket (append-only, never deletes there);
+  `.github/workflows/backup.yml` runs it at 05:30 AWST after `supabase db dump` (roles, schema, data, against the session
+  pooler). Setup, restore and the quarterly restore test: `docs/backups.md`. Supabase's own backups never include Storage.
+  `src/lib/photos/compress.ts` stores a photograph at 1600 px / 0.78 — the size the signed docket keeps for good; do not
+  raise it without reading R113
 - `src/lib/weekly/company.ts` + `company-load.ts` — the company's weekly report (README R108): every job's `loadWeeklyData`,
   added up by `rollUp` (pure, node-tested); never compute a company figure any other way. Working days count from the job's
   start (start date, else first diary); no start and no diary = not started. Screen `company_weekly` (pm/admin, Company),
