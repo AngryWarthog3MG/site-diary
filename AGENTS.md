@@ -548,6 +548,10 @@ Change four of them and the app silently stops capturing what supervisors say. I
   browser kept across requests — and sweeps stale Playwright profiles before every launch (README R110). A
   new render path must go through `renderPdfDocument`; never launch Chromium elsewhere, and never write into the
   temporary directory without removing it — a full disk kills every PDF on that instance until it is recycled.
+- **`supabase config push` rewrites the WHOLE auth config** from `supabase/config.toml`, filling anything the file omits
+  with the CLI's defaults — and the default for TOTP is off (README R114). The `[auth.mfa]` block must stay in the file.
+  Push without `--yes` first and read the diff; a non-tty push applies anyway. Sign-ups are off (`enable_signup = false`):
+  accounts come only from Add member, through the admin API
 - **Bump `VERSION` in `public/sw.js`** when the service worker changes, or phones keep the
   stale cache.
 

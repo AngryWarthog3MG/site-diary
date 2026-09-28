@@ -32,16 +32,20 @@ export async function sendMagicLink(
   }
 
   const supabase = await createClient();
+  // Only an address the office has added signs in (README R114). The project's
+  // auth config refuses sign-ups outright, so this flag is the polite half: the
+  // request says "do not make an account", and the answer below is worded for
+  // a person rather than a developer.
   const { error } = await supabase.auth.signInWithOtp({
     email,
     options: {
-      shouldCreateUser: true,
+      shouldCreateUser: false,
       emailRedirectTo: `${siteUrl()}/auth/confirm?next=${encodeURIComponent(next)}`,
     },
   });
 
   if (error) {
-    return { stage: 'email', email, error: error.message, notice: null };
+    return { stage: 'email', email, error: notOnTheSystem(error.message) ? NOT_ON_THE_SYSTEM : error.message, notice: null };
   }
 
   return {
@@ -53,6 +57,13 @@ export async function sendMagicLink(
       : `Sent to ${email}. Open the link on the phone you record on.`,
   };
 }
+
+// Not exported: a 'use server' module may export only async functions.
+/** Supabase's wording when an unknown address asks for a code with sign-ups off. */
+function notOnTheSystem(message: string): boolean {
+  return /signups? not allowed|user not found/i.test(message);
+}
+const NOT_ON_THE_SYSTEM = 'That email is not on the system. Ask the office to add you, then try again.';
 
 /** Step two (fallback): verify the six-digit code from the same email. */
 export async function verifyCode(

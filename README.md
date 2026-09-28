@@ -2733,6 +2733,23 @@ nobody has restored is a hope. Not done here and still Mitchell's: the move to S
 file cap the project is a fortnight from hitting, and what gives the database its own daily backup. Point-in-time recovery
 at US$100 a month is left off on purpose — a night's copy is the realistic loss, and this covers it.
 
+**R114. Only an email the office has added gets in.** "Only allow people to access whose email is already in the
+system or once we add them — I don't want random people getting access to the app." Until now anyone could type any
+address on the login screen and get a code: Supabase made them an account on the spot, and although that account held no
+job and RLS showed it nothing, it existed, it could enrol a second factor, and it sat in the user list looking like
+one of ours. Two halves, the database's the one that counts: the project's auth config now refuses sign-ups
+(`enable_signup = false`, both the service and the email provider — `supabase/config.toml`, pushed), so a code for an
+unknown address is refused and no account is made; and the login action asks for no account (`shouldCreateUser: false`)
+and turns Supabase's "Signups not allowed for otp" into "That email is not on the system. Ask the office to add you."
+Adding someone (R102) is unchanged — it makes the account through the admin API, which the sign-up switch does not
+govern — and so is the visitor gate, which never signs anyone in. Removing a person from their last job does NOT delete
+their account: they sign in to an empty app. That is the office's list to keep, and a later change could remove the
+account when the last membership goes. **A lesson paid for on the way:** `supabase config push` writes the whole auth
+section and fills what the file leaves out with the CLI's defaults; the file had no `[auth.mfa]` block, so one push turned
+TOTP enrol and verify OFF in production — every money screen shut behind a second factor nobody could pass — for the
+minutes it took to notice and push the block back. The block is in the file now with a comment that says why it must
+stay; run `config push` without `--yes` first and read the diff, always.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;

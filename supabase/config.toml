@@ -47,11 +47,25 @@ enable_refresh_token_rotation = true
 # exactly that race. Inside the interval the old token still answers; outside
 # it, reuse revokes the whole session family.
 refresh_token_reuse_interval = 300
-enable_signup = true
+# OFF (README R114): an email nobody has added is refused at the door. Accounts
+# are made by the office — Add member (`POST /api/projects/[id]/members`) uses
+# the admin API, which this does not restrict. A stranger asking for a code gets
+# "Signups not allowed", and no account is created for them.
+enable_signup = false
 enable_anonymous_sign_ins = false
 
+# Two-factor for the money (README R106). These MUST stay true: `supabase config
+# push` writes this whole section and fills in anything missing with the CLI's
+# defaults, and the default here is off — one push without this block switched
+# two-factor off in production on 28/09/2026 and shut everyone out of the money.
+[auth.mfa]
+max_enrolled_factors = 10
+[auth.mfa.totp]
+enroll_enabled = true
+verify_enabled = true
+
 [auth.email]
-enable_signup = true
+enable_signup = false
 double_confirm_changes = true
 # OFF, and this matters: with confirmations on, a brand-new address gets a
 # "Confirm your signup" mail instead of a magic link — which is what happened
