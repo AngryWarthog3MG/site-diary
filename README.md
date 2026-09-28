@@ -2693,6 +2693,22 @@ whole company on a switch). Subcontractors, Health monitoring and the Calibratio
 still open by address for the roles the record gives them. The Security button left the home page's header, the rail and
 the drawer; Settings keeps it, and the money screens still link straight to it when a code is wanted.
 
+**R112. A message from the office, on the record.** "Send notifications to the individual's apps — if I send AJ a
+notification that he needs to take photos, I can do that at any point through a separate tab under the company tab.
+If I send a message to a labourer it needs to be through the app as well as a notification. And store these — it is a
+good record that they were told to do certain things." Company › Messages › Send a message (admins): pick anyone on the
+company's jobs, say what they need to do, Send. The row is written first — it is the record — then every phone the
+person has registered is told through the push channel the knock-off reminder already uses, and the outcome is stamped
+on the row: sent to N phones, no phone registered (they see it when they open the app), or could not be delivered. The
+person's side is Messages for you (`/inbox`, every role, the labourer's included — Diary › Messages, a line on the home
+page while anything is unread, and the door a notification tap opens); being shown marks a message read, and "Got it"
+records that they understood, both stamped by the database for the recipient alone (`mark_message_read`,
+`acknowledge_message`). The sender's list shows each message with not opened / opened at / got it at. The text and the
+parties never change and nothing is deleted, not even by the service role — a message is a few hundred bytes, so the
+record costs nothing to keep. Reads: the recipient's own, the sender's own, any admin of the company; another company sees
+nothing (suite 49). Notifications reach a phone only where the app is on the home screen and notifications are on —
+the inbox carries the switch, and the sender is told when a person has no phone registered. Migration 20260928110000.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;

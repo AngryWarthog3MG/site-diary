@@ -18,7 +18,7 @@ function urlBase64ToUint8Array(base64: string): Uint8Array {
   return Uint8Array.from(raw, (c) => c.charCodeAt(0));
 }
 
-export function ReminderToggle() {
+export function ReminderToggle({ what = 'reminder' }: { what?: 'reminder' | 'messages' } = {}) {
   const [state, setState] = useState<State>('unknown');
   const [error, setError] = useState<string | null>(null);
 
@@ -93,7 +93,7 @@ export function ReminderToggle() {
   if (state === 'unsupported') {
     return (
       <p className="reminder-line reminder-line--muted">
-        Knock-off reminders need the app on your home screen — Share, then “Add to Home
+        {what === 'messages' ? 'Notifications' : 'Knock-off reminders'} need the app on your home screen — Share, then “Add to Home
         Screen”.
       </p>
     );
@@ -113,9 +113,11 @@ export function ReminderToggle() {
       >
         {state === 'busy'
           ? 'One moment…'
-          : state === 'on'
-            ? 'Knock-off reminder is ON — turn it off'
-            : 'Remind me at knock-off if I haven’t recorded'}
+          : what === 'messages'
+            ? (state === 'on' ? 'Notifications are ON — turn them off' : 'Turn on notifications for messages from the office')
+            : state === 'on'
+              ? 'Knock-off reminder is ON — turn it off'
+              : 'Remind me at knock-off if I haven’t recorded'}
       </button>
       {error && <p className="alert">{error}</p>}
     </div>

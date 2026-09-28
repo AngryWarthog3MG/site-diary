@@ -10,6 +10,7 @@ import { eventClock, hoursOnSite, type SignInRow } from '@/lib/signin/register';
 import type { Membership } from '@/lib/auth';
 import { loadCurrentPlan } from '@/lib/emergency/load';
 import { loadHeadContractorEmergencyPlan } from '@/lib/subcontract/load';
+import { InboxNudge } from '@/components/inbox-nudge';
 
 /**
  * The labourer's opening page: are they signed in right now, and the two
@@ -18,7 +19,7 @@ import { loadHeadContractorEmergencyPlan } from '@/lib/subcontract/load';
  * today's register by name, so a supervisor signing them in at the gate shows
  * here too.
  */
-export async function LabourerHome({ current, name }: { current: Membership; name: string }) {
+export async function LabourerHome({ current, name, userId }: { current: Membership; name: string; userId: string }) {
   const supabase = await createClient();
   const today = perthToday();
   const planPromise = loadCurrentPlan(supabase, current.project_id);
@@ -51,6 +52,7 @@ export async function LabourerHome({ current, name }: { current: Membership; nam
         </div>
       </header>
       <FirstRun role={current.role} />
+      <InboxNudge userId={userId} />
 
       <section className={`labhome__status${open ? ' labhome__status--in' : ''}`}>
         <p className="label">{fmtDate(today)}</p>

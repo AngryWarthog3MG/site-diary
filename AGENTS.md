@@ -408,6 +408,11 @@ improvising; the register once shipped dead because a live smoke test was skippe
   cannot type over it); a submission stamps `claimed_total`/`claimed_lines` on its status event. Screens `/rates` (screen
   `rates`, under Claims) and `/variations/[id]` (the build-up, screen `variations`); links carry `?project=`. `src/lib/money.ts`
   `fmtMoney` for new money on screen. Suite 45
+- `src/lib/messages/` — messages from the office to a person (README R112): table `messages` (admin of the org sends to a
+  member of its jobs; body and parties frozen; NEVER deleted, service role included; read/acknowledged stamped only by the
+  recipient through `mark_message_read` / `acknowledge_message`; push outcome via `record_message_push`). Send through
+  `POST /api/messages` (row first, then `sendPush` to each `push_subscriptions` row, outcome stamped). Screens `messages`
+  (admin, Company) and `inbox` (every role incl. labourer); `InboxNudge` on both homes. Suite 49
 - `src/lib/weekly/company.ts` + `company-load.ts` — the company's weekly report (README R108): every job's `loadWeeklyData`,
   added up by `rollUp` (pure, node-tested); never compute a company figure any other way. Working days count from the job's
   start (start date, else first diary); no start and no diary = not started. Screen `company_weekly` (pm/admin, Company),

@@ -64,11 +64,11 @@ export function canExportReports(role: MemberRole): boolean {
 }
 
 export type Screen =
-  | 'today' | 'entries' | 'weekly' | 'prestart' | 'plant' | 'toolbox' | 'signin' | 'swms' | 'swms_sign' | 'incidents' | 'inspections' | 'permits' | 'subcontractors' | 'procedures' | 'training' | 'timesheets' | 'company_weekly' | 'rates' | 'safety' | 'orders' | 'chemicals' | 'obligations' | 'emergency' | 'construction' | 'quality' | 'audits' | 'asbestos' | 'health' | 'environment'
+  | 'today' | 'entries' | 'weekly' | 'prestart' | 'plant' | 'toolbox' | 'signin' | 'swms' | 'swms_sign' | 'incidents' | 'inspections' | 'permits' | 'subcontractors' | 'procedures' | 'training' | 'timesheets' | 'company_weekly' | 'rates' | 'messages' | 'inbox' | 'safety' | 'orders' | 'chemicals' | 'obligations' | 'emergency' | 'construction' | 'quality' | 'audits' | 'asbestos' | 'health' | 'environment'
   | 'claims' | 'variations' | 'notices' | 'templates' | 'start_gate' | 'programme' | 'progress' | 'ask' | 'documents' | 'settings';
 
 /** Every screen there is, in the order the Members screen lists them. */
-export const SCREENS: Screen[] = ['today', 'entries', 'weekly', 'signin', 'claims', 'variations', 'notices', 'templates', 'start_gate', 'programme', 'progress', 'quality', 'audits', 'safety', 'obligations', 'emergency', 'incidents', 'inspections', 'permits', 'swms', 'swms_sign', 'chemicals', 'asbestos', 'environment', 'construction', 'prestart', 'toolbox', 'plant', 'orders', 'training', 'timesheets', 'company_weekly', 'rates', 'health', 'subcontractors', 'procedures', 'documents', 'ask', 'settings'];
+export const SCREENS: Screen[] = ['today', 'entries', 'weekly', 'signin', 'claims', 'variations', 'notices', 'templates', 'start_gate', 'programme', 'progress', 'quality', 'audits', 'safety', 'obligations', 'emergency', 'incidents', 'inspections', 'permits', 'swms', 'swms_sign', 'chemicals', 'asbestos', 'environment', 'construction', 'prestart', 'toolbox', 'plant', 'orders', 'training', 'timesheets', 'company_weekly', 'rates', 'messages', 'inbox', 'health', 'subcontractors', 'procedures', 'documents', 'ask', 'settings'];
 
 /** A membership as the gates read it: the role, and the screens ticked for this person (null = the role's list). */
 export interface Access { role: MemberRole; screens?: readonly string[] | null; finance?: boolean | null }
@@ -94,7 +94,7 @@ export function seesMoney(member: Pick<Access, 'role' | 'finance'> | null | unde
  * An admin keeps Settings, because that is the screen the ticks are set from.
  */
 export function sees(member: Access, screen: Screen): boolean {
-  if (screen === 'today') return true;
+  if (screen === 'today' || screen === 'inbox') return true;
   // The rate card is money (README R105) and the company's (R111): the role table says who, money access opens it.
   // Screen ticks do not apply — to close it, hide the money.
   if (screen === 'rates') return canSee(member.role, 'rates') && seesMoney(member);
@@ -124,9 +124,9 @@ export function canSee(role: MemberRole, screen: Screen): boolean {
   // the labourer is the one who needs the muster point (README R63).
   // And signing on to a SWMS as themselves (README R89): a worker must be able to read the
   // method statement for their work and put their own name to it — r. 299, r. 300.
-  if (role === 'labourer') return screen === 'today' || screen === 'signin' || screen === 'incidents' || screen === 'chemicals' || screen === 'emergency' || screen === 'swms_sign';
+  if (role === 'labourer') return screen === 'today' || screen === 'inbox' || screen === 'signin' || screen === 'incidents' || screen === 'chemicals' || screen === 'emergency' || screen === 'swms_sign';
   if (role === 'leading_hand') {
-    return screen === 'today' || screen === 'entries' || screen === 'weekly' || screen === 'prestart' || screen === 'plant' || screen === 'toolbox' || screen === 'programme' || screen === 'signin' || screen === 'swms' || screen === 'swms_sign' || screen === 'incidents' || screen === 'inspections' || screen === 'permits' || screen === 'procedures' || screen === 'safety' || screen === 'orders' || screen === 'chemicals' || screen === 'obligations' || screen === 'emergency' || screen === 'construction' || screen === 'quality' || screen === 'audits' || screen === 'asbestos' || screen === 'environment';
+    return screen === 'today' || screen === 'inbox' || screen === 'entries' || screen === 'weekly' || screen === 'prestart' || screen === 'plant' || screen === 'toolbox' || screen === 'programme' || screen === 'signin' || screen === 'swms' || screen === 'swms_sign' || screen === 'incidents' || screen === 'inspections' || screen === 'permits' || screen === 'procedures' || screen === 'safety' || screen === 'orders' || screen === 'chemicals' || screen === 'obligations' || screen === 'emergency' || screen === 'construction' || screen === 'quality' || screen === 'audits' || screen === 'asbestos' || screen === 'environment';
   }
   // Notices are the office's (README R90): a supervisor keeps the claims screens
   // they have, but what we send the head contractor, and why, is not theirs.
@@ -142,6 +142,8 @@ export function canSee(role: MemberRole, screen: Screen): boolean {
   if (screen === 'timesheets') return role === 'admin';
   // The company's weekly report, every job side by side, is the office's too (README R108).
   if (screen === 'company_weekly') return role === 'admin';
+  // Messages from the office are sent by an admin (README R112); the inbox is everyone's, the labourer's included.
+  if (screen === 'messages') return role === 'admin';
   if (screen === 'settings') return canAuthorEntries(role);
   return true;
 }

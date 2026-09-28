@@ -49,6 +49,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { href: '/signin', name: 'Site sign-in', what: 'Who is on site now — in and out at the gate', screen: 'signin' },
       { href: '/prestart', name: 'Prestarts', what: 'Morning briefing and sign-on', screen: 'prestart' },
       { href: '/reports/weekly', name: 'Weekly report', what: 'The week, rolled up', screen: 'weekly' },
+      { href: '/inbox', name: 'Messages for you', short: 'Messages', what: 'What the office has sent you', screen: 'inbox' },
     ],
   },
   {
@@ -132,6 +133,12 @@ export const NAV_GROUPS: NavGroup[] = [
       { href: '/timesheets', name: 'Timesheets', what: 'Everyone’s hours for the week, across every job, on one sheet', screen: 'timesheets' },
       { href: '/health', name: 'Health monitoring', short: 'Health', what: 'Confidential — blood lead, asbestos and Schedule 14 monitoring, for named record keepers only', screen: 'health' },
       { href: '/subcontractors', name: 'Subcontractors', what: 'Insurances, SWMS and licences, chased before they lapse', screen: 'subcontractors' },
+    ],
+  },
+  {
+    label: 'Messages', scope: 'company',
+    items: [
+      { href: '/messages', name: 'Send a message', short: 'Messages', what: 'Tell someone something — it goes to their phone and stays on the record', screen: 'messages' },
     ],
   },
   {

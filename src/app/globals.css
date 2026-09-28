@@ -4476,3 +4476,26 @@ a.dash-row:hover { background: var(--teal-tint); }
 .secbar__parts { display: flex; gap: 0.4rem; padding: 0.25rem 0 0.5rem; }
 .secbar__part { padding: 0.4rem 0.9rem; border-radius: 999px; border: 1px solid rgba(255, 255, 255, 0.55); background: transparent; color: #fff; font: inherit; font-weight: 650; font-size: 0.85rem; cursor: pointer; }
 .secbar__part--on { background: var(--paper); border-color: var(--paper); color: var(--teal-deep); }
+
+/* Messages from the office (README R112). */
+.inbox-nudge { display: flex; align-items: center; gap: 0.6rem; margin: 0.5rem 0; padding: 0.75rem 0.9rem; border-radius: 10px; background: var(--teal-tint); border: 1px solid var(--teal); color: var(--ink); text-decoration: none; }
+.dash > .inbox-nudge { order: 1; }
+.inbox-nudge__dot { width: 0.7rem; height: 0.7rem; border-radius: 50%; background: var(--amber); flex: 0 0 auto; }
+.inbox { display: grid; gap: 0.6rem; margin-top: 0.75rem; }
+.inbox__msg { padding: 0.85rem 0.95rem; border: 1px solid var(--ink-08); border-radius: 12px; background: var(--paper); display: grid; gap: 0.4rem; }
+.inbox__msg--new { border-color: var(--amber); }
+.inbox__msg--done { opacity: 0.8; }
+.inbox__meta { margin: 0; }
+.inbox__body { margin: 0; font-size: 1.05rem; line-height: 1.45; white-space: pre-wrap; }
+.inbox__ack { margin: 0; color: var(--teal); font-weight: 600; }
+.msg__form { display: grid; gap: 0.6rem; }
+.msg__nophone { color: var(--amber); }
+.msg__quick { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.msg__list { display: grid; gap: 0.5rem; margin-top: 0.5rem; }
+.msg__row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0.25rem 0.75rem; padding: 0.65rem 0.8rem; border: 1px solid var(--ink-08); border-radius: 10px; background: var(--paper); }
+.msg__head, .msg__body { margin: 0; }
+.msg__body { white-space: pre-wrap; }
+.msg__state { font-size: 0.82rem; font-weight: 600; white-space: nowrap; color: var(--ink-60); }
+.msg__state--acknowledged { color: var(--teal); }
+.msg__state--unread { color: var(--amber); }
+@media (max-width: 560px) { .msg__row { grid-template-columns: 1fr; } .msg__state { white-space: normal; } }
