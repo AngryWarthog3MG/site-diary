@@ -28,7 +28,7 @@ export default async function RatesPage({ searchParams }: { searchParams: Promis
     return (
       <main className="sheet">
         <Suspense fallback={null}>
-          <HomeFoot at="top" />
+          <HomeFoot />
         </Suspense>
         <h1 className="page-title">Rates</h1>
         <MoneyLock state={money} next={`/rates?project=${current.project_id}`} />
@@ -59,7 +59,7 @@ export default async function RatesPage({ searchParams }: { searchParams: Promis
   return (
     <main className="sheet sheet--wide">
       <Suspense fallback={null}>
-        <HomeFoot at="top" />
+        <HomeFoot />
       </Suspense>
       <p className="label"><BrandMark size={18} /> {current.project.org.name} · {current.project.name}</p>
       <h1 className="page-title">Rates</h1>

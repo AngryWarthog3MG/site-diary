@@ -38,7 +38,7 @@ export default async function TimesheetsPage({ searchParams }: { searchParams: P
   return (
     <main className="sheet sheet--wide">
       <Suspense fallback={null}>
-        <HomeFoot at="top" />
+        <HomeFoot />
       </Suspense>
       <p className="label"><BrandMark size={18} /> {current.project.org.name}</p>
       <h1 className="page-title">Timesheets</h1>

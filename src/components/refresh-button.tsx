@@ -14,7 +14,8 @@ import { drainOutbox } from '@/lib/outbox/sync';
 export function RefreshButton() {
   const pathname = usePathname();
   const [busy, setBusy] = useState(false);
-  if (/^\/(signin|auth|verify|offline)/.test(pathname)) return null;
+  // Off only where no session sits behind the screen (README R116); Site sign-in keeps it.
+  if (/^\/(login|auth|gate|offline)(\/|$)/.test(pathname)) return null;
 
   async function refresh() {
     if (busy) return;

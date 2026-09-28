@@ -64,7 +64,8 @@ export function AppMenu({ slotId }: { slotId: string }) {
     return () => document.removeEventListener('keydown', onKey);
   }, [open, slotId]);
 
-  if (/^\/(signin|login|auth|verify|offline)/.test(pathname)) return null;
+  // Off only where no session sits behind the screen (README R116); Site sign-in keeps it.
+  if (/^\/(login|auth|gate|offline)(\/|$)/.test(pathname)) return null;
 
   const jobId = me?.project?.id ?? projectParam ?? null;
   // The same list the home page and the rail draw. Until the role is known

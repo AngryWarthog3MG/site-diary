@@ -3339,7 +3339,6 @@ body {
   .page-subtitle:not(.page-subtitle--open) { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
   .readmore { display: inline-block; margin: -0.35rem 0 0.75rem; padding: 0; font-size: 0.875rem; font-weight: 600; }
   /* One Home at the top: where a screen carries the big one, the bar's small one goes. */
-  body:has(.homefoot--top) .topbar .home-button { display: none; }
   /* The drawer lists the sections by name; what each one is for waits until it is opened. */
   .menu-drawer .navitem__what { display: none; }
   .menu-drawer .navitem { padding: 0.55rem 0.7rem; }

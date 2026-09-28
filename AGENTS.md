@@ -312,7 +312,8 @@ improvising; the register once shipped dead because a live smoke test was skippe
   file imports `./roles.ts` with the extension because `src/lib/jobs.ts` is node-tested and loads it directly.
   The rail (`src/components/side-nav.tsx`) is on EVERY signed-in screen from 900 px wide (README R116); it goes
   without only on the login, the link landing, the visitor's gate and the offline page — a new path prefix that
-  hides it needs a reason written there
+  hides it needs a reason written there. The phone's top bar (`top-bar.tsx`: Home, Menu, Refresh) follows the same rule
+  — `refresh-button.tsx` and `app-menu.tsx` carry the exclusion too; change all three together
 - `src/lib/jobs.ts` — which job you are looking at, and how it sticks (README R87): cookie `kbl-job`;
   `preferJob` puts the chosen job first in the memberships `requireUser` and `/api/me` return, so every screen
   that falls back to "the first active job" opens on it; `switchTarget` is where a switch lands (the section,

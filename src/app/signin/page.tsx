@@ -67,7 +67,7 @@ export default async function SignInPage({
   return (
     <main className="sheet">
       <Suspense fallback={null}>
-        <HomeFoot at="top" />
+        <HomeFoot />
       </Suspense>
       <p className="label">
         <BrandMark size={18} /> {current.project.name}

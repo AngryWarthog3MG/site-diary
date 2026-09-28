@@ -2769,7 +2769,11 @@ the one without a way out. And below 1100 px wide there was no rail anywhere —
 screen, an iPad on its side — only the phone's drawer. Now the rail goes without only where there is no session behind
 the screen (the login, the link landing, the visitor's gate, the offline page), and it draws from 900 px: it is 15.5 rem
 wide and the record reads fine in the 650 px beside it. Below 900 the drawer takes over, as it should on a phone held in
-one hand.
+one hand. The phone's bar — Home, Menu, Refresh — is the same story ("keep this on each page on the mobile, it's a
+good way to get quick access"): Site sign-in had an empty bar, because Menu and Refresh each carried the same
+`/signin` exclusion and a stylesheet rule hid Home wherever a screen drew its own big Home at the top. The exclusions
+are now the four sessionless doors, the rule is gone, and the in-page Home at the head of Site sign-in, Timesheets and
+Rates went with it — the bar's is the one under the thumb. The foot's Home stays for the bottom of a long screen.
 
 ## Not built, and deliberately so
 
