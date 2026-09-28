@@ -2595,7 +2595,9 @@ job's access history (`two_factor_reset`). Admins see who has two-factor set up,
 Released in order, because the migration shuts the money for every session without a code: TOTP switched on in the
 Supabase project (Authentication → Multi-Factor — a setting only Mitchell changes), the screens deployed, the people who
 see money set up their codes, then migration 20260926120000 applied. Suite 47; the money suites 44–46 now sign in at
-aal2.
+aal2. Live on 28/09: TOTP took two attempts to switch on — the first went onto another project in the same Supabase
+account — and the rule was applied once Mitchell's code was recorded, with Matthew's still to come; on a code-less
+session the database hands back no values and no rates, and the email link lands on the code step.
 
 Where to find it: on 28/09 Mitchell could not find Security — on a laptop it sat at the foot of the rail, and on a phone
 the home page has no menu at all. It is now a button beside Sign out on the home page, and the home page itself says
