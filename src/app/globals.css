@@ -3466,7 +3466,10 @@ main.sheet--wide .vr-list { grid-template-columns: repeat(auto-fill, minmax(22re
 
 .rail { display: none; }
 
-@media (min-width: 1100px) {
+/* 900 px, down from 1100 (README R116): the rail is 15.5 rem and the record reads fine in the
+   650 px beside it, so a laptop with a narrower window, a split screen or an iPad on its side
+   keeps every section a click away. Below that the phone's drawer takes over. */
+@media (min-width: 900px) {
   .rail {
     position: fixed;
     top: 0;
@@ -3600,7 +3603,7 @@ main.sheet--wide .vr-list { grid-template-columns: repeat(auto-fill, minmax(22re
    Beaten on specificity rather than order, and never by editing the PDF's own
    stylesheet: that file is the printed record and must not move.
    -------------------------------------------------------------------------- */
-@media (min-width: 1100px) {
+@media (min-width: 900px) {
   html body:has(> .rail) { padding-left: 15.5rem; }
 
   /* The preview is a 210 mm document. The page around it hugs that width so
@@ -3695,7 +3698,7 @@ main.sheet--wide .vr-list { grid-template-columns: repeat(auto-fill, minmax(22re
 .home-top__code { margin-left: 0.5rem; font-size: 0.75rem; color: var(--ink-40); letter-spacing: 0.04em; }
 .home-top .refresh-button { flex: 0 0 auto; }
 @media (max-width: 480px) { .home-top__code { display: none; } }
-@media (min-width: 1100px) {
+@media (min-width: 900px) {
   /* The rail carries Refresh; the in-sheet one goes. */
   .home-top > :not(.home-top__job) { display: none; }
 }
@@ -3833,7 +3836,7 @@ a.dash-row:hover { background: var(--teal-tint); }
   .home-today .home-actions { margin-top: 0.75rem; padding: 0.85rem; }
   .home-today .button--record { min-height: 3.8rem; font-size: 1.1rem; }
 }
-@media (min-width: 1100px) {
+@media (min-width: 900px) {
   .dash-head .refresh-button { display: none; }
   /* With the rail beside the page there is one navigation: the heading bar and the
      brand it repeats go, the person and Sign out stay. */
@@ -4174,8 +4177,8 @@ a.dash-row:hover { background: var(--teal-tint); }
   box-shadow: var(--shadow-ui);
 }
 .homefoot__button:active { background: var(--teal-deep); }
-@media (min-width: 1100px) {
-  /* Where the rail carries Home the foot steps aside; a screen without the rail (the crew's sign-in) keeps it. */
+@media (min-width: 900px) {
+  /* Where the rail carries Home the foot steps aside; a screen without the rail (the login, the visitor's gate) keeps it. */
   body:has(> .rail) .homefoot { display: none; }
 }
 

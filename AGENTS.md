@@ -309,7 +309,10 @@ improvising; the register once shipped dead because a live smoke test was skippe
   `partsFor` splits them for the home bar's two tabs; the rail and drawer caption the two runs. A new section goes in
   the part its RECORD belongs to. A screen that is both (Plant, Chemicals) stays with the site and names the company
   on its company half. Never reuse a heading label across the two parts — the rail keys its open state by label. The
-  file imports `./roles.ts` with the extension because `src/lib/jobs.ts` is node-tested and loads it directly
+  file imports `./roles.ts` with the extension because `src/lib/jobs.ts` is node-tested and loads it directly.
+  The rail (`src/components/side-nav.tsx`) is on EVERY signed-in screen from 900 px wide (README R116); it goes
+  without only on the login, the link landing, the visitor's gate and the offline page — a new path prefix that
+  hides it needs a reason written there
 - `src/lib/jobs.ts` — which job you are looking at, and how it sticks (README R87): cookie `kbl-job`;
   `preferJob` puts the chosen job first in the memberships `requireUser` and `/api/me` return, so every screen
   that falls back to "the first active job" opens on it; `switchTarget` is where a switch lands (the section,

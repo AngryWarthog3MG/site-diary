@@ -68,7 +68,10 @@ export function SideNav() {
     return () => { cancelled = true; };
   }, [projectParam]);
 
-  if (/^\/(signin|login|auth|verify|offline)/.test(pathname)) return null;
+  // Only the doors with no session behind them go without it: the login, the link landing, the
+  // visitor's gate, the offline page. Site sign-in (/signin) is a section like any other and keeps
+  // the rail — it lost it for a while to this very line (README R116).
+  if (/^\/(login|auth|gate|offline)(\/|$)/.test(pathname)) return null;
 
   const jobId = me?.project?.id ?? projectParam ?? null;
   const q = jobId ? `?project=${jobId}` : '';

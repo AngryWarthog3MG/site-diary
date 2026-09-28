@@ -2762,6 +2762,15 @@ again — Settings, or the bulk add — reopens it (`account_reopened`) and they
 migration 20260928140000. With R114 this is the whole of who can get in: only an address the office has added, and only
 while they hold a job.
 
+**R116. The rail on every screen.** "Keep this tab on every single window that opens so that people can access it
+easily. On each screen." A walk of twenty screens on 28/09 found it missing in two ways. Site sign-in had no rail at
+all: the line that keeps it off the login pages matched `/signin` as well, so the one screen the gate runs all day was
+the one without a way out. And below 1100 px wide there was no rail anywhere — a laptop with a narrower window, a split
+screen, an iPad on its side — only the phone's drawer. Now the rail goes without only where there is no session behind
+the screen (the login, the link landing, the visitor's gate, the offline page), and it draws from 900 px: it is 15.5 rem
+wide and the record reads fine in the 650 px beside it. Below 900 the drawer takes over, as it should on a phone held in
+one hand.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;
