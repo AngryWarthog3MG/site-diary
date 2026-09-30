@@ -11,7 +11,7 @@ export function newGateToken(random: (n: number) => Uint8Array = (n) => crypto.g
   return Array.from(bytes, (b) => ALPHABET[b % ALPHABET.length]).join('');
 }
 
-export function gateUrl(token: string, base = 'https://kbsdailydiary.me'): string {
+export function gateUrl(token: string, base: string): string {
   return `${base}/gate/${token}`;
 }
 

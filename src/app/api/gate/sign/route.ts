@@ -1,5 +1,6 @@
 import { fail, ok, requireApiUser, isUuid } from '@/lib/api';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { siteUrl } from '@/lib/site-url';
 import { renderPdfDocument, BrowserUnavailableError } from '@/lib/pdf/render';
 import { DOCKET_CSS } from '@/lib/pdf/styles';
 import { EMBEDDED_FONT_CSS } from '@/lib/pdf/fonts';
@@ -22,7 +23,7 @@ export async function POST(request: Request) {
   const { data: gate } = await supabase.from('gate_tokens').select('token, rules, created_at').eq('project_id', projectId).eq('active', true).order('created_at', { ascending: false }).limit(1).maybeSingle();
   if (!gate) return fail('not_found', 'Make a gate code first.', 404);
   const org = (Array.isArray(project.org) ? project.org[0] : project.org) as { name: string; code: string };
-  const base = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://kbsdailydiary.me';
+  const base = siteUrl();
   const url = gateUrl(gate.token as string, base);
   const QRCode = await import('qrcode');
   const svg = await QRCode.toString(url, { type: 'svg', margin: 0, errorCorrectionLevel: 'M' });

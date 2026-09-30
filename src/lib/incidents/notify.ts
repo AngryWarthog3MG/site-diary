@@ -1,5 +1,6 @@
 import { createAdminClient } from '@/lib/supabase/admin';
 import { KIND_LABEL, SEVERITY_LABEL, incidentRef, urgent, type IncidentKind, type Severity } from './model';
+import { siteUrl } from '@/lib/site-url';
 import { fmtDate, fmtPerthDate } from '@/lib/pdf/dates';
 
 const esc = (v: unknown) => String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -53,7 +54,7 @@ export async function notifyOffice(incidentId: string): Promise<NotifyOutcome> {
         (r.injured_name ? `<p style="margin:.25em 0"><b>Person hurt:</b> ${esc(r.injured_name)}</p>` : '') +
         `<p style="margin:.25em 0;color:#555">Severity: ${r.actual_severity ? SEVERITY_LABEL[r.actual_severity as Severity] : '—'} actual, ${r.potential_severity ? SEVERITY_LABEL[r.potential_severity as Severity] : '—'} potential. Reported by ${esc(reporter?.full_name ?? reporter?.email ?? '—')}.</p>` +
         (r.notifiable ? `<p style="margin:.5em 0;color:#9a2b2b"><b>WorkSafe WA must be notified immediately by phone: 1800 678 198 (24 hours).</b></p>` : '') +
-        `<p style="margin:.5em 0"><a href="${esc(process.env.NEXT_PUBLIC_SITE_URL ?? 'https://kbsdailydiary.me')}/incidents/${esc(r.id)}">Open the report</a></p>` +
+        `<p style="margin:.5em 0"><a href="${esc(siteUrl())}/incidents/${esc(r.id)}">Open the report</a></p>` +
         `</div>`,
     }),
   }).catch(() => null);

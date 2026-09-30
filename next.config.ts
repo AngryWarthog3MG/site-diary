@@ -9,8 +9,17 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   // The setup board was "Start gate" for a day; Mitchell renamed it Mobilisation (README R92).
   // Bookmarks and the phone's history keep working; the query string travels with the redirect.
+  // One address (README R119): once CANONICAL_HOST names it, every other host the deployment answers on —
+  // kbsdailydiary.me, its www, the *.vercel.app names — sends the visitor there with the path intact.
+  // Permanent, because the signed dockets already in people's hands say "verify at kbsdailydiary.me".
+  // Unset, nothing redirects, so a build before the DNS switch is harmless.
   async redirects() {
+    const canonical = process.env.CANONICAL_HOST?.trim();
+    const toCanonical = canonical
+      ? [{ source: '/:path*', has: [{ type: 'host' as const, value: `(?!${canonical.replace(/\./g, '\\.')}$).*` }], destination: `https://${canonical}/:path*`, permanent: true }]
+      : [];
     return [
+      ...toCanonical,
       { source: '/start-gate', destination: '/mobilisation', permanent: true },
       { source: '/start-gate/:path*', destination: '/mobilisation/:path*', permanent: true },
     ];

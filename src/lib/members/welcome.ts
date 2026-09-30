@@ -1,5 +1,6 @@
 import { ROLE_LABEL } from '@/lib/roles';
 import type { MemberRole } from '@/types/database';
+import { siteUrl } from '@/lib/site-url';
 
 const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c] as string);
 
@@ -13,7 +14,7 @@ const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&l
 export async function sendWelcome(input: { email: string; name: string | null; role: MemberRole; projectName: string; addedBy: string | null }): Promise<boolean> {
   const key = process.env.SMTP_PASS?.trim();
   if (!key) return false;
-  const site = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://kbsdailydiary.me';
+  const site = siteUrl();
   const title = ROLE_LABEL[input.role];
   const send = await fetch('https://api.resend.com/emails', {
     method: 'POST',

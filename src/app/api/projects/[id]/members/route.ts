@@ -1,5 +1,6 @@
 import { fail, ok, readJson, requireApiUser, isUuid } from '@/lib/api';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { siteUrl } from '@/lib/site-url';
 import type { MemberRole } from '@/types/database';
 import { ROLE_LABEL, SCREENS, grantableScreens, type Screen } from '@/lib/roles';
 import { sendWelcome } from '@/lib/members/welcome';
@@ -125,7 +126,7 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
   return ok({
     message: sent
       ? `${who} is on the job as ${ROLE_LABEL[role as MemberRole]}. A note went to ${email} saying where to sign in.`
-      : `${who} is on the job as ${ROLE_LABEL[role as MemberRole]}. The note did not send — tell them: open kbsdailydiary.me and type ${email}.`,
+      : `${who} is on the job as ${ROLE_LABEL[role as MemberRole]}. The note did not send — tell them: open ${siteUrl().replace(/^https?:\/\//, '')} and type ${email}.`,
   });
 }
 

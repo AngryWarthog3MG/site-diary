@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation';
 import QRCode from 'qrcode';
+import { siteUrl } from '@/lib/site-url';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { requireUser, resolveProject, guardScreen } from '@/lib/auth';
@@ -42,7 +43,7 @@ export default async function SignInCardsPage({ searchParams }: { searchParams: 
     .sort((a, b) => (a.name ?? a.email ?? '').localeCompare(b.name ?? b.email ?? ''));
 
   const admin = createAdminClient();
-  const site = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://kbsdailydiary.me';
+  const site = siteUrl();
   const cards = await Promise.all(members.map(async (m) => {
     const { data, error } = await admin.auth.admin.generateLink({ type: 'magiclink', email: m.email as string });
     const token = data?.properties?.hashed_token;

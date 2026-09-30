@@ -1,5 +1,6 @@
 import { fail, ok, requireApiUser, isUuid, readJson, forbidUnlessSees } from '@/lib/api';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { siteUrl } from '@/lib/site-url';
 import { loadDocketEntry } from '@/lib/pdf/load';
 import { collectPhotos } from '@/lib/pdf/photos';
 import { collectSignatures } from '@/lib/pdf/photos';
@@ -94,7 +95,7 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
       <p style="font-size:11px;letter-spacing:.08em;color:#1f5c33;font-weight:bold;text-transform:uppercase">${entry.org_name} — Dayworks and variations</p>
       <h2 style="margin:.25em 0">${entry.project_name} · ${entry.entry_date}</h2>
       <p style="margin:.25em 0;color:#555">The dayworks and variations recorded on this day, drawn from signed site diary ${entry.entry_no}, are attached as a PDF with a sign-off block for your representative.</p>
-      <p style="margin:1em 0 0;font-size:11px;color:#888">The underlying diary entry is immutable and can be verified at kbsdailydiary.me/verify against the content hash printed in the document. Sent from Kooboolong IMS by ${user.email ?? 'a project member'}.</p>
+      <p style="margin:1em 0 0;font-size:11px;color:#888">The underlying diary entry is immutable and can be verified at ${siteUrl().replace(/^https?:\/\//, '')}/verify against the content hash printed in the document. Sent from Kooboolong IMS by ${user.email ?? 'a project member'}.</p>
     </div>` : `
     <div style="font-family:Arial,sans-serif;max-width:560px">
       <p style="font-size:11px;letter-spacing:.08em;color:#1f5c33;font-weight:bold;text-transform:uppercase">${entry.org_name} — Daily site diary</p>

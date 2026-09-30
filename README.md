@@ -2820,6 +2820,19 @@ it is one**: the line under the title reads "Extract · 2 of 6 lines on the regi
 the counts beneath are the extract's. A head contractor is entitled to their job's register; a document that looked like
 the whole register and was not would be a false one.
 
+**R119. One system, one address.** "I want to implement the daily diary and the IMS in one — which one do we use?"
+There were two: this app at kbsdailydiary.me, and a separate Kooboolong Management System at ims-kooboolong.net — a
+single-server app whose Document Control (policy sign-off with comprehension checks, PDF import, reminders, Microsoft 365
+sign-in) is real and whose other modules, the diary included, are placeholders; still on demo data on 30/09. This app is
+the system: three jobs run on it every day and its record cannot be moved without losing what makes it a record. The
+other's one strong module is to be rebuilt here (Policies and procedures), Microsoft sign-in added through Supabase, and
+the server switched off once nothing real is on it. The name and address follow the product: `ims-kooboolong.net` is
+attached to the Vercel project, and the switch is a configuration change — the app never assumed its own address
+(`siteUrl()`), and `CANONICAL_HOST` turns on a permanent redirect from every other host, path intact, because the
+signed dockets already in people's hands say "verify at kbsdailydiary.me" and that must answer for good. The one line of
+literal text, the verify line on the docket and client sheet, changes at cutover. The procedure, step by step, is in
+`docs/ship.md`.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;

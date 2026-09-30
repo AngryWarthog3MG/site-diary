@@ -7,7 +7,8 @@ test('a gate code is long, lowercase and unambiguous', () => {
   assert.equal(t.length, 20);
   assert.match(t, /^[abcdefghjkmnpqrstuvwxyz23456789]+$/);
   assert.notEqual(newGateToken(), t);
-  assert.equal(gateUrl('abc'), 'https://kbsdailydiary.me/gate/abc');
+  // The address is the deployment's own (README R119) — never a literal the app assumes.
+  assert.equal(gateUrl('abc', 'https://ims-kooboolong.net'), 'https://ims-kooboolong.net/gate/abc');
 });
 
 test('the gate accepts a real person and refuses the rest', () => {

@@ -76,3 +76,29 @@ Tool-neutral procedure. Run in order; stop and fix on any failure.
 | `npm run test:all` | ✓ | ✓ | | ✓ |
 
 Nothing runs all four. `npm run db:test` has to be chosen deliberately.
+
+## Moving the address (README R119)
+
+The app never assumes its own address. Everything that writes it — sign-in links, the
+welcome note, the gate QR and sign, order and incident emails — reads `siteUrl()`, which
+is `NEXT_PUBLIC_SITE_URL`. A redirect from every other host is switched on by naming the
+one address in `CANONICAL_HOST`. So a move is configuration plus one line of docket text:
+
+1. Attach the new names to the project: `npx vercel domains add <name> site-diary` (apex and www).
+2. At the registrar: `A @ 76.76.21.21` and `CNAME www cname.vercel-dns.com`. `npx vercel domains
+   inspect <name>` says when Vercel is satisfied.
+3. Add `https://<name>/**` (and www) to `additional_redirect_urls` in `supabase/config.toml` and push
+   it (Mitchell, from his terminal, reading the diff) BEFORE the switch — a magic link to a host not on
+   that list falls back to `site_url`, which is localhost, and nobody can sign in.
+4. Set `NEXT_PUBLIC_SITE_URL=https://<name>` and `CANONICAL_HOST=<name>` in Vercel's production env.
+5. Change the "verify this document at …" line in `src/lib/pdf/docket.tsx` and `client-sheet.tsx`
+   to the new host. Dockets already stored keep the old host, which is why the old name redirects
+   for good and is never released.
+6. Deploy, then the live check: sign in on the new host, the old host redirects with the path kept,
+   a gate QR encodes the new host, `/verify` answers on both.
+7. Tell the crews (Company › Messages): sign in once on the new address, put it on the home
+   screen, and turn notifications back on — a push registration belongs to the address it was
+   made on.
+
+The email sender stays `diary@kbsdailydiary.me` until the new domain is verified with Resend;
+that is DNS at the registrar again, and a separate step.

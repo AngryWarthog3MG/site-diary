@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
+import { siteUrl } from '@/lib/site-url';
 import { requireUser, resolveProject } from '@/lib/auth';
 import { canAuthorEntries } from '@/lib/roles';
 import { BrandMark } from '@/components/brand-mark';
@@ -21,7 +22,7 @@ export default async function GatePage({ searchParams }: { searchParams: Promise
   let svg: string | null = null;
   if (gate) {
     const QRCode = await import('qrcode');
-    svg = await QRCode.toString(gateUrl(gate.token as string, process.env.NEXT_PUBLIC_SITE_URL ?? 'https://kbsdailydiary.me'), { type: 'svg', margin: 1, errorCorrectionLevel: 'M' });
+    svg = await QRCode.toString(gateUrl(gate.token as string, siteUrl()), { type: 'svg', margin: 1, errorCorrectionLevel: 'M' });
   }
   return (
     <main className="sheet">
@@ -31,7 +32,7 @@ export default async function GatePage({ searchParams }: { searchParams: Promise
       <GateAdmin
         projectId={current.project_id} userId={userId}
         gate={gate ? { id: gate.id as string, token: gate.token as string, rules: (gate.rules as string | null) ?? DEFAULT_RULES, since: gate.created_at as string, svg: svg ?? '' } : null}
-        base={process.env.NEXT_PUBLIC_SITE_URL ?? 'https://kbsdailydiary.me'}
+        base={siteUrl()}
         defaultRules={DEFAULT_RULES}
       />
     </main>

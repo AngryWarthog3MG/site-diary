@@ -48,7 +48,8 @@ Next.js 16 (App Router) + TypeScript on Vercel `syd1` · Supabase Postgres 17 (p
 transcription · Anthropic `claude-sonnet-4-6` for extraction and query, `claude-haiku-4-5`
 for routing · BOM observations over anonymous FTP · Chromium via Playwright for PDF.
 
-Production: `https://site-diary-eight.vercel.app` (the `-eight` host is the public one).
+Production: `https://kbsdailydiary.me`, moving to `https://ims-kooboolong.net` (README R119; the procedure is in
+`docs/ship.md`). The app never assumes its address — `siteUrl()` — and `CANONICAL_HOST` redirects every other host.
 
 ## Commands
 
