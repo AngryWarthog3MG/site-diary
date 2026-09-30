@@ -51,7 +51,7 @@ export function registerBodyHtml(doc: RegisterDoc, head: RegisterHead): string {
         : `<table><thead><tr>${s.columns.map((c) => `<th>${esc(c)}</th>`).join('')}</tr></thead><tbody>${s.rows.map((r) => `<tr>${r.map(cell).join('')}</tr>`).join('')}</tbody></table>`,
       '</section>',
     ].join('')),
-    `<section class="sect"><p class="src">Printed from the register as it stood on ${esc(fmtDay(head.asOf))}. Red is overdue, missing or lapsed; amber falls due within the warning period. Nothing on this page was typed for the page — each line is the record the app holds.</p></section>`,
+    `<section class="sect"><p class="src">Printed from the register as it stood on ${esc(fmtDay(head.asOf))}. Red is overdue, missing or lapsed; amber falls due within the warning period.</p></section>`,
     '</div>',
   ].join('');
 }
