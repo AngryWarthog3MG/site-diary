@@ -128,6 +128,12 @@ export const NAV_GROUPS: NavGroup[] = [
     ],
   },
   {
+    label: 'Registers', scope: 'company',
+    items: [
+      { href: '/registers', name: 'All registers', short: 'Registers', what: 'Plant and equipment, chemicals and safety data sheets, calibration — one page, edited in place', screen: 'registers' },
+    ],
+  },
+  {
     label: 'Staff', scope: 'company',
     items: [
       { href: '/timesheets', name: 'Timesheets', what: 'Everyone’s hours for the week, across every job, on one sheet', screen: 'timesheets' },

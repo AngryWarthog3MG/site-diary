@@ -434,6 +434,12 @@ improvising; the register once shipped dead because a live smoke test was skippe
   the caller against the register's screen, `registerPdf` renders). Routes `/api/plant/register/pdf`, `/api/chemicals/pdf`,
   `/api/quality/equipment/pdf`, each `?project=`, each in `outputFileTracingIncludes`. Returned, never stored. An empty
   register prints empty — never an example row. A NEW register is a row builder and a thin route, not a new template
+- `/registers` — every editable register on one page (README R118): screen `registers` (admin, Company › Registers), a
+  dropdown (`src/lib/registers/kinds.ts`, choice in `?r=`), one editor per kind in `src/app/registers/`. It saves THE ROW
+  ITSELF (`plant_register`, `project_plant`, `chemical_products`, `project_chemicals`, `measuring_equipment`) under the
+  caller's RLS — never a copy, so nothing needs syncing. Sheets and calibrations are frozen records: recorded from the
+  page, never edited. `src/lib/chemicals/add-sheet.ts` is the ONE way a sheet is recorded. A new register kind is a key in
+  `kinds.ts`, a row builder in `registers/model.ts`, an editor, and a PDF route
 - `src/lib/weekly/company.ts` + `company-load.ts` — the company's weekly report (README R108): every job's `loadWeeklyData`,
   added up by `rollUp` (pure, node-tested); never compute a company figure any other way. Working days count from the job's
   start (start date, else first diary); no start and no diary = not started. Screen `company_weekly` (pm/admin, Company),

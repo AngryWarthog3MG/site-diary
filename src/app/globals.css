@@ -4501,3 +4501,44 @@ a.dash-row:hover { background: var(--teal-tint); }
 .msg__state--acknowledged { color: var(--teal); }
 .msg__state--unread { color: var(--amber); }
 @media (max-width: 560px) { .msg__row { grid-template-columns: 1fr; } .msg__state { white-space: normal; } }
+
+/* ==========================================================================
+   Registers (README R118): one page, a dropdown, every line edited in place.
+   ========================================================================== */
+.regs__pick { display: flex; align-items: flex-end; gap: 0.75rem; flex-wrap: wrap; margin-top: 0.5rem; }
+.regs__pick .fieldcell { flex: 1 1 16rem; margin: 0; }
+.regs__pick .button { margin-top: 0; width: auto; }
+.regs__what { margin: 0.6rem 0 0; }
+.regs__counts { margin: 0.4rem 0 1rem; }
+.regs__counts p { margin: 0.1rem 0; color: var(--ink); }
+.regs__list { display: grid; gap: 0.6rem; }
+.regs__row--retired { opacity: 0.72; }
+.regs__head { display: flex; align-items: flex-start; justify-content: space-between; gap: 0.75rem; }
+.regs__name { margin: 0; font-weight: 700; font-size: 1.02rem; }
+.regs__meta { margin: 0.15rem 0 0; }
+.regs__edit { width: auto; margin-top: 0; padding: 0.4rem 0.9rem; flex: none; }
+.regs__facts { display: grid; grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr)); gap: 0.5rem 0.9rem; margin-top: 0.6rem; }
+.regs__fact { display: flex; flex-direction: column; font-size: 0.9rem; }
+.regs__fact-label { font-size: 0.68rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-60, #5b6660); }
+.regs__fact-text { font-weight: 600; }
+.regs__fact-sub { font-size: 0.78rem; color: var(--ink-60, #5b6660); }
+.regs__fact--bad .regs__fact-text, .regs__fact--bad .regs__fact-sub { color: #9a2f2f; }
+.regs__fact--warn .regs__fact-text, .regs__fact--warn .regs__fact-sub { color: #8a5a00; }
+.regs__fact--ok .regs__fact-text { color: #2e6b4f; }
+.regs__form { margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid var(--ink-12); }
+.regs__fields { display: grid; grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr)); gap: 0.5rem 0.75rem; }
+.regs__field { margin: 0; }
+.regs__field--wide { grid-column: span 2; }
+.regs__sub { margin: 0.9rem 0 0.35rem; }
+.regs__ticks { display: grid; grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr)); gap: 0.3rem 0.75rem; }
+.regs__ticks--dense { grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr)); }
+.regs__tick { display: flex; align-items: center; gap: 0.5rem; font-size: 0.92rem; min-height: 2rem; }
+.regs__tick input { width: 1.15rem; height: 1.15rem; flex: none; }
+.regs__actions { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; margin-top: 0.9rem; }
+.regs__actions .button { width: auto; margin-top: 0; }
+.regs__links { display: flex; gap: 1.1rem; flex-wrap: wrap; margin: 0.6rem 0 0; }
+.regs__others { margin: 0.4rem 0 0; padding-left: 1.1rem; display: grid; gap: 0.2rem; }
+@media (max-width: 520px) {
+  .regs__field--wide { grid-column: auto; }
+  .regs__fields { grid-template-columns: 1fr; }
+}

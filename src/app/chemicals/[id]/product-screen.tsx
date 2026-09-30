@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
+import { addSafetyDataSheet } from '@/lib/chemicals/add-sheet';
 import { fmtDate } from '@/lib/pdf/dates';
 import {
   currentSds, sdsReviewDue, sdsStatus, SDS_STATUS_LABEL, hazardLabel, sdsNeedsAttention,
@@ -74,26 +75,9 @@ export function ProductScreen({ product, projectId, userId, today, onThisJob, el
     setBusy('sds');
     setError(null);
     setNotice(null);
-    const supabase = createClient();
-    const id = crypto.randomUUID();
-    let filePath: string | null = null;
     try {
-      if (file) {
-        const ext = (file.name.split('.').pop() ?? 'pdf').toLowerCase().replace(/[^a-z0-9]/g, '') || 'pdf';
-        filePath = `${product.orgId}/${product.id}/${id}.${ext}`;
-        const { error: upErr } = await supabase.storage.from('chemical-sds')
-          .upload(filePath, file, { contentType: file.type || 'application/pdf', upsert: false });
-        if (upErr) throw new Error(`The file did not upload: ${upErr.message}`);
-      }
-      const { error: e } = await supabase.from('chemical_sds')
-        .insert({ id, product_id: product.id, issued_on: issued, version: version.trim() || null, file_path: filePath, created_by: userId });
-      if (e) {
-        if (filePath) await supabase.storage.from('chemical-sds').remove([filePath]).catch(() => undefined);
-        throw new Error(e.message);
-      }
-      // The newest sheet is the one the register holds; the others are history.
-      const older = sheets.filter((s) => s.active && s.issued_on <= issued).map((s) => s.id);
-      if (older.length > 0) await supabase.from('chemical_sds').update({ active: false }).in('id', older);
+      // The one way a sheet enters the register, shared with Registers (README R118).
+      await addSafetyDataSheet(createClient(), { orgId: product.orgId, productId: product.id, issuedOn: issued, version: version.trim() || null, file, userId, existing: sheets });
       setIssued(''); setVersion(''); setFile(null);
       setNotice('Sheet recorded. It is now the one the register holds.');
       router.refresh();

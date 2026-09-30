@@ -2791,6 +2791,27 @@ due inside the warning period. A register is returned and never stored — it is
 empty register prints as empty with what it would hold: on 30/09 Kooboolong's fleet held five machines and its chemicals
 and calibration registers held nothing, and that is what the paper said. Nothing is typed for the page.
 
+**R118. Registers: one page, a dropdown, edited in place.** "Do a registers tab with all the register items on it. Have a
+dropdown for individual categories, i.e. SDS, plant and equipment, calibration. In the register I need to be able to edit
+all info from that page, which will then populate the rest." Company › Registers (`/registers`, screen `registers`, the
+admin's): a dropdown — Plant and equipment, Chemicals and safety data sheets (SDS), Calibration — with the choice in the
+address (`?r=`), the register's counts under it, Print as a PDF (R117) beside it, and every line with its verdicts and
+an Edit button. Edit opens every field the line has: a machine's name, number, model, kind, owned or hired, supplier, in
+service or retired, inspection basis and interval, registration, and a tick for each of the company's jobs; a product's
+name, manufacturer, code, dangerous goods class, use, notes, the hazards on its label, and whether and where it is kept
+on this job; a gauge's name, serial, kind, interval, in use or retired. Each can be added from the same page. **"Populate
+the rest" is not a copy.** What Registers saves is the row itself — `plant_register`, `project_plant`,
+`chemical_products`, `project_chemicals`, `measuring_equipment` — the same rows Plant, the diary's plant list, the
+prestart form, Chemicals, Quality's calibrated points, What's due and the printed registers read, so a change is
+everywhere the moment it is saved and there is no second copy to drift. **What Edit does not do:** a safety data sheet
+and a calibration are records, and the database keeps them as they were made — a sheet is retired, never rewritten; a
+calibration is frozen. So those are RECORDED from the page (a new sheet becomes the one the register holds, a new
+calibration the latest), not edited; and an inspection or maintenance record is made on the machine's own page, one link
+away. Recording a sheet now has one implementation (`src/lib/chemicals/add-sheet.ts`), used here and on the product's
+page. The registers whose lines are signed or numbered records — training, subcontractors, SWMS, incidents, permits,
+quality, procedures, variations — are listed at the foot with a door to each rather than pretended to be editable. Writes
+go under the caller's own RLS; the page adds no permission of its own.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;
