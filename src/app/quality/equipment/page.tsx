@@ -35,6 +35,9 @@ export default async function EquipmentPage({ searchParams }: { searchParams: Pr
       <p className="label"><BrandMark size={18} /> {current.project.org.name}</p>
       <h1 className="page-title">Calibration register</h1>
       <p className="page-subtitle">Gauges, levels, density meters — each with the certificate that says it measures true, and when that runs out.</p>
+      <a className="button button--quiet" href={`/api/quality/equipment/pdf?project=${current.project_id}`} target="_blank" rel="noreferrer">
+        Calibration register as a PDF
+      </a>
       <EquipmentScreen
         orgId={current.project.org.id}
         equipment={(data ?? []) as Array<{ id: string; name: string; serial_no: string | null; kind: string | null; calibration_interval_months: number | null; active: boolean; equipment_calibrations: Array<{ id: string; calibrated_on: string; due_on: string; certificate_no: string; calibrated_by: string | null }> }>}

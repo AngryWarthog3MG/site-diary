@@ -54,6 +54,9 @@ export default async function ChemicalsPage({ searchParams }: { searchParams: Pr
       </div>
 
       <p className="chemreg__asof caption">Register as at {fmtDate(today)} · {current.project.org.name} · {current.project.name}</p>
+      <a className="button button--quiet" href={`/api/chemicals/pdf?project=${current.project_id}`} target="_blank" rel="noreferrer">
+        Chemicals register as a PDF
+      </a>
 
       {data.register.length === 0 ? (
         <p className="nil">

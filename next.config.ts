@@ -59,6 +59,10 @@ const nextConfig: NextConfig = {
     '/api/permits/*/pdf': CHROMIUM,
     '/api/gate/sign': CHROMIUM,
     '/api/training/pdf': CHROMIUM,
+    // The printed registers (README R117). The plant register is covered by '/api/plant/*/pdf' above.
+    '/api/plant/register/pdf': CHROMIUM,
+    '/api/chemicals/pdf': CHROMIUM,
+    '/api/quality/equipment/pdf': CHROMIUM,
     '/api/safety/pdf': CHROMIUM,
     '/api/dayworks/pdf': CHROMIUM,
     // Weekly (both), monthly bundle, and the cron that generates them.

@@ -132,6 +132,9 @@ export default async function PlantPage({ searchParams }: { searchParams: Promis
         review screen and today&rsquo;s prestarts read. Anyone who runs prestarts can add a machine; one no
         longer around is retired, never deleted.
       </p>
+      <a className="button button--quiet" href={`/api/plant/register/pdf?project=${current.project_id}`} target="_blank" rel="noreferrer">
+        Plant register as a PDF
+      </a>
       <PlantRegister orgId={orgId} projectId={current.project_id} initial={rows} onJob={[...onJob]} canEdit={canRun} />
 
     </main>

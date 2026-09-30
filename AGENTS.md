@@ -428,6 +428,12 @@ improvising; the register once shipped dead because a live smoke test was skippe
   pooler). Setup, restore and the quarterly restore test: `docs/backups.md`. Supabase's own backups never include Storage.
   `src/lib/photos/compress.ts` stores a photograph at 1600 px / 0.78 — the size the signed docket keeps for good; do not
   raise it without reading R113
+- `src/lib/registers/` — the printed registers (README R117): `model.ts` (pure, node-tested: `plantRegister`,
+  `chemicalsRegister`, `calibrationRegister` → a `RegisterDoc` of sections and toned cells, every verdict from the screen's
+  own function — never a second rule), `html.ts` (`registerBodyHtml`, one layout), `respond.ts` (`registerContext` checks
+  the caller against the register's screen, `registerPdf` renders). Routes `/api/plant/register/pdf`, `/api/chemicals/pdf`,
+  `/api/quality/equipment/pdf`, each `?project=`, each in `outputFileTracingIncludes`. Returned, never stored. An empty
+  register prints empty — never an example row. A NEW register is a row builder and a thin route, not a new template
 - `src/lib/weekly/company.ts` + `company-load.ts` — the company's weekly report (README R108): every job's `loadWeeklyData`,
   added up by `rollUp` (pure, node-tested); never compute a company figure any other way. Working days count from the job's
   start (start date, else first diary); no start and no diary = not started. Screen `company_weekly` (pm/admin, Company),

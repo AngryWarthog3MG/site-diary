@@ -2775,6 +2775,22 @@ good way to get quick access"): Site sign-in had an empty bar, because Menu and 
 are now the four sessionless doors, the rule is gone, and the in-page Home at the head of Site sign-in, Timesheets and
 Rates went with it — the bar's is the one under the thumb. The foot's Home stays for the bottom of a long screen.
 
+**R117. Three registers, printed.** "Generate the plant register, the SDS hazard register, the calibration register."
+Each already existed as a screen; none could be handed to an auditor, a head contractor or WorkSafe as a document. Now
+each prints as an A4 PDF from a button on its own screen: Plant › "Plant register as a PDF" (`/api/plant/register/pdf`,
+the whole company's fleet — plant number, machine, kind, owned or hired, registration, last inspection and by whom, next
+inspection, the jobs it is ticked onto; retired machines apart), Chemicals › "Chemicals register as a PDF"
+(`/api/chemicals/pdf`, the workplace's register under reg. 346 — product, hazards, where kept, what for, the sheet held,
+its five-year review date and its status; then what else the company keeps), and Quality › Calibration register ›
+"Calibration register as a PDF" (`/api/quality/equipment/pdf`, ISO 9001 cl. 7.1.5 — equipment, serial, interval, last
+calibration and certificate, due date, status, and the full calibration history). One builder (`src/lib/registers/`):
+`model.ts` turns the record into rows using the SAME verdict functions the screens use (`nextInspection`,
+`registrationStatus`, `sdsStatus`, `calibrationStatus`), `html.ts` lays any register out, `respond.ts` checks the caller
+against the register's own screen and renders through the one renderer. Red is overdue, missing or lapsed; amber falls
+due inside the warning period. A register is returned and never stored — it is a view of the record on the day. An
+empty register prints as empty with what it would hold: on 30/09 Kooboolong's fleet held five machines and its chemicals
+and calibration registers held nothing, and that is what the paper said. Nothing is typed for the page.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;
