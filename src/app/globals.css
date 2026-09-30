@@ -4527,8 +4527,9 @@ a.dash-row:hover { background: var(--teal-tint); }
 .regs__fact--ok .regs__fact-text { color: #2e6b4f; }
 .regs__form { margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid var(--ink-12); }
 .regs__fields { display: grid; grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr)); gap: 0.5rem 0.75rem; }
-.regs__field { margin: 0; }
-.regs__field--wide { grid-column: span 2; }
+/* .fieldcell spans the whole row by default; in a register's form the fields sit side by side. */
+.regs__fields .regs__field { margin: 0; grid-column: auto; }
+.regs__fields .regs__field--wide { grid-column: span 2; }
 .regs__sub { margin: 0.9rem 0 0.35rem; }
 .regs__ticks { display: grid; grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr)); gap: 0.3rem 0.75rem; }
 .regs__ticks--dense { grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr)); }
@@ -4539,6 +4540,6 @@ a.dash-row:hover { background: var(--teal-tint); }
 .regs__links { display: flex; gap: 1.1rem; flex-wrap: wrap; margin: 0.6rem 0 0; }
 .regs__others { margin: 0.4rem 0 0; padding-left: 1.1rem; display: grid; gap: 0.2rem; }
 @media (max-width: 520px) {
-  .regs__field--wide { grid-column: auto; }
+  .regs__fields .regs__field--wide { grid-column: auto; }
   .regs__fields { grid-template-columns: 1fr; }
 }
