@@ -6,7 +6,7 @@ import { createClient } from '@/lib/supabase/client';
 import { OWNERSHIP_LABEL, PLANT_KINDS, PLANT_KIND_LABEL, type Ownership, type PlantKind } from '@/lib/plant/checklist';
 import { BASIS_LABEL, INSPECTION_BASES, type InspectionBasis } from '@/lib/plant/inspections';
 import { plantRegister, type PlantRecord, type PlantRow } from '@/lib/registers/model';
-import { Field, Messages, Verdict, blankToNull, readMonths, useSave } from './shared';
+import { Field, Messages, PickBox, PrintBar, Verdict, blankToNull, readMonths, usePick, useSave } from './shared';
 
 export interface Machine extends PlantRow { registration_kind: 'item' | 'design' | null }
 export interface Job { id: string; code: string; name: string }
@@ -47,6 +47,9 @@ export function PlantEditor({ orgId, projectId, jobs, today, userId, machines, r
   const jobsOf = (id: string) => new Set(links.filter((l) => l.plant_id === id && l.active).map((l) => l.project_id));
   const jobCodes = new Map(machines.map((m) => [m.id, [...jobsOf(m.id)].map((j) => codeOf.get(j)).filter((c): c is string => Boolean(c))]));
   const sorted = machines.slice().sort((a, b) => Number(b.active) - Number(a.active) || a.name.localeCompare(b.name));
+  const pick = usePick(sorted.map((m) => m.id));
+  const onThisJob = sorted.filter((m) => jobsOf(m.id).has(projectId)).map((m) => m.id);
+  const jobCode = jobs.find((j) => j.id === projectId)?.code;
 
   const edit = (m: Machine | null) => {
     setDraft(draftOf(m, m ? jobsOf(m.id) : new Set([projectId])));
@@ -170,13 +173,15 @@ export function PlantEditor({ orgId, projectId, jobs, today, userId, machines, r
   return (
     <div className="regs__list">
       <Messages error={save.error} notice={save.notice} />
+      {sorted.length > 0 && <PrintBar pdf="/api/plant/register/pdf" projectId={projectId} pick={pick} all={sorted.map((m) => m.id)} onJob={onThisJob} jobCode={jobCode} />}
       {sorted.length === 0 && <p className="nil">No plant on the register yet.</p>}
       {sorted.map((m) => {
         const row = plantRegister([{ ...m, active: true }], records, jobCodes, today).sections[0].rows[0];
         return (
           <div key={m.id} className={`item regs__row${m.active ? '' : ' regs__row--retired'}`}>
             <div className="regs__head">
-              <div>
+              <PickBox id={m.id} pick={pick} label={m.name} />
+              <div className="regs__title">
                 <p className="regs__name">{m.name}{m.active ? '' : ' · retired'}</p>
                 <p className="caption regs__meta">{[m.plant_no ? `No. ${m.plant_no}` : 'No plant number', m.make_model, row[2].text, row[3].text, m.supplier].filter(Boolean).join(' · ')}</p>
               </div>

@@ -1,6 +1,7 @@
 import { fail } from '@/lib/api';
 import { chemicalsRegister, type ChemLine } from '@/lib/registers/model';
 import { registerContext, registerPdf } from '@/lib/registers/respond';
+import { readIds, readScope, scopeLine } from '@/lib/registers/select';
 import type { SdsFacts } from '@/lib/chemicals/model';
 
 export const maxDuration = 300;
@@ -32,11 +33,18 @@ export async function GET(request: Request) {
     usedFor: p.used_for, location: here.get(p.id)?.location ?? null, quantity: here.get(p.id)?.quantity ?? null, sheets: p.chemical_sds ?? [],
   });
   const all = (products ?? []) as ProductRow[];
-  const doc = chemicalsRegister(
-    all.filter((p) => here.has(p.id)).map(line),
-    // A retired product that is not on this workplace is history, not a register line.
-    all.filter((p) => !here.has(p.id) && p.active).map(line),
-    ctx.today,
-  );
-  return registerPdf(doc, ctx, { slug: 'chemicals', scope: `${ctx.project.name} · ${ctx.org.code}_${ctx.project.code}` });
+  // The workplace's register, then the rest of the company's list — or only this job's, or only the lines chosen (README R118).
+  const url = new URL(request.url);
+  const ids = readIds(url.searchParams.get('ids'));
+  const scope = readScope(url.searchParams.get('scope'), ids);
+  const keep = (p: ProductRow) => (scope === 'selected' ? ids!.has(p.id.toLowerCase()) : true);
+  const onSite = all.filter((p) => here.has(p.id) && keep(p));
+  // A retired product that is not on this workplace is history, not a register line.
+  const elsewhere = scope === 'job' ? [] : all.filter((p) => !here.has(p.id) && p.active && keep(p));
+  const total = all.filter((p) => here.has(p.id) || p.active).length;
+  const doc = chemicalsRegister(onSite.map(line), elsewhere.map(line), ctx.today);
+  const scopeText = scope === 'all'
+    ? `${ctx.project.name} · ${ctx.org.code}_${ctx.project.code} · then the rest of ${ctx.org.name}'s list`
+    : scopeLine(scope, onSite.length + elsewhere.length, total, ctx.project, ctx.org.name);
+  return registerPdf(doc, ctx, { slug: 'chemicals', scope: scopeText });
 }

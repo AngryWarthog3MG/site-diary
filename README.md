@@ -2811,6 +2811,14 @@ away. Recording a sheet now has one implementation (`src/lib/chemicals/add-sheet
 page. The registers whose lines are signed or numbered records — training, subcontractors, SWMS, incidents, permits,
 quality, procedures, variations — are listed at the foot with a door to each rather than pretended to be editable. Writes
 go under the caller's own RLS; the page adds no permission of its own.
+**Printing a selection.** "I need an option to select only specific lines — I don't want Lendlease to see all the
+company plant. The registers are for them." Each register's Print bar offers Everything, Only on this job (the machines
+ticked onto it; the chemicals kept on it, without the rest of the company's list), or Selected only — a tick box on each
+line, "Tick this job's" and "Tick all" to start from. The choice travels in the print's address (`scope=job`, or `ids=`
+— uuids only, capped at 300; `src/lib/registers/select.ts`, tested), so a print can be sent as a link. **An extract says
+it is one**: the line under the title reads "Extract · 2 of 6 lines on the register, chosen for this print · C001", and
+the counts beneath are the extract's. A head contractor is entitled to their job's register; a document that looked like
+the whole register and was not would be a false one.
 
 ## Not built, and deliberately so
 

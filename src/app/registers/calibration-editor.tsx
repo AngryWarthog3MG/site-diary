@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { addMonths } from '@/lib/obligations/model';
 import { calibrationRegister, fmtDay, type EquipmentRow } from '@/lib/registers/model';
-import { Field, Messages, Verdict, blankToNull, readMonths, useSave } from './shared';
+import { Field, Messages, PickBox, PrintBar, Verdict, blankToNull, readMonths, usePick, useSave } from './shared';
 
 interface Draft { name: string; serial: string; kind: string; interval: string; active: boolean }
 interface CalDraft { on: string; due: string; cert: string; by: string }
@@ -20,13 +20,14 @@ const draftOf = (e: EquipmentRow | null): Draft => ({
  * certificate, and then it stands. A wrong one is answered by recording the
  * right one, not by editing the first.
  */
-export function CalibrationEditor({ orgId, today, userId, equipment }: { orgId: string; today: string; userId: string; equipment: EquipmentRow[] }) {
+export function CalibrationEditor({ orgId, projectId, today, userId, equipment }: { orgId: string; projectId: string; today: string; userId: string; equipment: EquipmentRow[] }) {
   const save = useSave();
   const [open, setOpen] = useState<string | null>(null);
   const [draft, setDraft] = useState<Draft>(draftOf(null));
   const [calFor, setCalFor] = useState<string | null>(null);
   const [cal, setCal] = useState<CalDraft>({ on: today, due: '', cert: '', by: '' });
   const sorted = equipment.slice().sort((a, b) => Number(b.active) - Number(a.active) || a.name.localeCompare(b.name));
+  const pick = usePick(sorted.map((e) => e.id));
   const set = <K extends keyof Draft>(k: K, v: Draft[K]) => setDraft((d) => ({ ...d, [k]: v }));
   const edit = (e: EquipmentRow | null) => { setDraft(draftOf(e)); setOpen(e ? e.id : 'new'); setCalFor(null); save.setError(null); };
 
@@ -84,6 +85,7 @@ export function CalibrationEditor({ orgId, today, userId, equipment }: { orgId: 
   return (
     <div className="regs__list">
       <Messages error={save.error} notice={save.notice} />
+      {sorted.length > 0 && <PrintBar pdf="/api/quality/equipment/pdf" projectId={projectId} pick={pick} all={sorted.map((e) => e.id)} />}
       {sorted.length === 0 && <p className="nil">No measuring equipment on the register yet.</p>}
       {sorted.map((e) => {
         const row = calibrationRegister([{ ...e, active: true }], today).sections[0].rows[0];
@@ -91,7 +93,8 @@ export function CalibrationEditor({ orgId, today, userId, equipment }: { orgId: 
         return (
           <div key={e.id} className={`item regs__row${e.active ? '' : ' regs__row--retired'}`}>
             <div className="regs__head">
-              <div>
+              <PickBox id={e.id} pick={pick} label={e.name} />
+              <div className="regs__title">
                 <p className="regs__name">{e.name}{e.active ? '' : ' · retired'}</p>
                 <p className="caption regs__meta">{[e.serial_no ? `Serial ${e.serial_no}` : 'No serial number', e.kind, `Interval ${row[2].text.toLowerCase()}`].filter(Boolean).join(' · ')}</p>
               </div>

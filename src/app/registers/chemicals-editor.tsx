@@ -6,7 +6,7 @@ import { createClient } from '@/lib/supabase/client';
 import { HAZARD_CLASSES, HAZARD_LABEL, type SdsFacts } from '@/lib/chemicals/model';
 import { addSafetyDataSheet } from '@/lib/chemicals/add-sheet';
 import { chemicalsRegister, type ChemLine } from '@/lib/registers/model';
-import { Field, Messages, Verdict, blankToNull, useSave } from './shared';
+import { Field, Messages, PickBox, PrintBar, Verdict, blankToNull, usePick, useSave } from './shared';
 
 export interface Product {
   id: string; name: string; manufacturer: string | null; product_code: string | null; hazard_classes: string[];
@@ -42,6 +42,8 @@ export function ChemicalsEditor({ orgId, projectId, jobLabel, today, userId, pro
   const [sheet, setSheet] = useState<SheetDraft>({ issued: '', version: '', file: null });
   const here = new Map(onSite.map((l) => [l.product_id, l]));
   const sorted = products.slice().sort((a, b) => Number(b.active) - Number(a.active) || a.name.localeCompare(b.name));
+  const pick = usePick(sorted.map((p) => p.id));
+  const onThisJob = sorted.filter((p) => here.get(p.id)?.active).map((p) => p.id);
   const set = <K extends keyof Draft>(k: K, v: Draft[K]) => setDraft((d) => ({ ...d, [k]: v }));
 
   const edit = (p: Product | null) => { setDraft(draftOf(p, p ? here.get(p.id) : undefined)); setOpen(p ? p.id : 'new'); setSheetFor(null); save.setError(null); };
@@ -139,6 +141,7 @@ export function ChemicalsEditor({ orgId, projectId, jobLabel, today, userId, pro
   return (
     <div className="regs__list">
       <Messages error={save.error} notice={save.notice} />
+      {sorted.length > 0 && <PrintBar pdf="/api/chemicals/pdf" projectId={projectId} pick={pick} all={sorted.map((p) => p.id)} onJob={onThisJob} jobCode={jobLabel.split(' · ')[0]} />}
       {sorted.length === 0 && <p className="nil">No products recorded yet. Add the diesel, the degreaser, the weedkiller, the two-stroke — anything with a hazard on the label.</p>}
       {sorted.map((p) => {
         const link = here.get(p.id);
@@ -148,7 +151,8 @@ export function ChemicalsEditor({ orgId, projectId, jobLabel, today, userId, pro
         return (
           <div key={p.id} className={`item regs__row${p.active ? '' : ' regs__row--retired'}`}>
             <div className="regs__head">
-              <div>
+              <PickBox id={p.id} pick={pick} label={p.name} />
+              <div className="regs__title">
                 <p className="regs__name">{p.name}{p.active ? '' : ' · retired'}</p>
                 <p className="caption regs__meta">{[p.manufacturer, p.product_code, p.used_for].filter(Boolean).join(' · ') || 'No manufacturer or use recorded'}</p>
               </div>

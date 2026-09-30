@@ -1,6 +1,7 @@
 import { fail } from '@/lib/api';
 import { plantRegister, type PlantRecord, type PlantRow } from '@/lib/registers/model';
 import { registerContext, registerPdf } from '@/lib/registers/respond';
+import { readIds, readScope, scopeLine } from '@/lib/registers/select';
 
 export const maxDuration = 300;
 export const runtime = 'nodejs';
@@ -25,6 +26,14 @@ export async function GET(request: Request) {
     const p = (Array.isArray(l.project) ? l.project[0] : l.project) as { code: string } | null;
     if (p?.code) jobs.set(l.plant_id as string, [...(jobs.get(l.plant_id as string) ?? []), p.code]);
   }
-  const doc = plantRegister((plant ?? []) as PlantRow[], ((records ?? []) as unknown) as PlantRecord[], jobs, ctx.today);
-  return registerPdf(doc, ctx, { slug: 'plant', scope: `The whole company · every job · printed from ${ctx.org.code}_${ctx.project.code}` });
+  // Everything, this job's machines, or exactly the lines chosen on the Registers screen (README R118).
+  const url = new URL(request.url);
+  const ids = readIds(url.searchParams.get('ids'));
+  const scope = readScope(url.searchParams.get('scope'), ids);
+  const all = (plant ?? []) as PlantRow[];
+  const shown = scope === 'selected' ? all.filter((m) => ids!.has(m.id.toLowerCase()))
+    : scope === 'job' ? all.filter((m) => (jobs.get(m.id) ?? []).includes(ctx.project.code))
+    : all;
+  const doc = plantRegister(shown, ((records ?? []) as unknown) as PlantRecord[], jobs, ctx.today);
+  return registerPdf(doc, ctx, { slug: 'plant', scope: scopeLine(scope, shown.length, all.length, ctx.project, ctx.org.name) });
 }

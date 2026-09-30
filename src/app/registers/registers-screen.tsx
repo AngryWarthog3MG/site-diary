@@ -28,7 +28,6 @@ export function RegistersScreen({ kind, projectId, summary, children }: { kind: 
             {REGISTER_KINDS.map((k) => <option key={k.key} value={k.key}>{k.label}</option>)}
           </select>
         </label>
-        <a className="button button--quiet" href={`${chosen.pdf}?project=${projectId}`} target="_blank" rel="noreferrer">Print as a PDF</a>
       </div>
       <p className="caption regs__what">{chosen.what}</p>
       <div className="regs__counts">

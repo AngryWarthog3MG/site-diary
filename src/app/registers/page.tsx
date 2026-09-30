@@ -85,7 +85,7 @@ export default async function RegistersPage({ searchParams }: { searchParams: Pr
     const equipment: EquipmentRow[] = ((data ?? []) as Array<Omit<EquipmentRow, 'calibrations'> & { equipment_calibrations: CalibrationRow[] | null }>)
       .map(({ equipment_calibrations, ...e }) => ({ ...e, calibrations: equipment_calibrations ?? [] }));
     summary = calibrationRegister(equipment, today).summary;
-    body = <CalibrationEditor orgId={org.id} today={today} userId={userId} equipment={equipment} />;
+    body = <CalibrationEditor orgId={org.id} projectId={current.project_id} today={today} userId={userId} equipment={equipment} />;
   }
 
   return (

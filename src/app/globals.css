@@ -4543,3 +4543,9 @@ a.dash-row:hover { background: var(--teal-tint); }
   .regs__fields .regs__field--wide { grid-column: auto; }
   .regs__fields { grid-template-columns: 1fr; }
 }
+.regs__print { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; padding: 0.6rem 0.75rem; border: 1px solid var(--ink-12); border-radius: 0.6rem; background: var(--paper-2, #f6f7f5); }
+.regs__print .button { width: auto; margin-top: 0; padding: 0.45rem 0.9rem; }
+.regs__print-tools { display: flex; gap: 0.9rem; margin-left: auto; }
+.regs__pickbox { display: flex; align-items: flex-start; padding-top: 0.2rem; flex: none; }
+.regs__pickbox input { width: 1.2rem; height: 1.2rem; }
+.regs__title { flex: 1; min-width: 0; }

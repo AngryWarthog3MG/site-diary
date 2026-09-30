@@ -439,7 +439,8 @@ improvising; the register once shipped dead because a live smoke test was skippe
   ITSELF (`plant_register`, `project_plant`, `chemical_products`, `project_chemicals`, `measuring_equipment`) under the
   caller's RLS — never a copy, so nothing needs syncing. Sheets and calibrations are frozen records: recorded from the
   page, never edited. `src/lib/chemicals/add-sheet.ts` is the ONE way a sheet is recorded. A new register kind is a key in
-  `kinds.ts`, a row builder in `registers/model.ts`, an editor, and a PDF route
+  `kinds.ts`, a row builder in `registers/model.ts`, an editor, and a PDF route. A print is Everything, `scope=job`, or `ids=`
+  (`registers/select.ts`); an extract's scope line SAYS it is an extract — never print a subset that reads as the whole
 - `src/lib/weekly/company.ts` + `company-load.ts` — the company's weekly report (README R108): every job's `loadWeeklyData`,
   added up by `rollUp` (pure, node-tested); never compute a company figure any other way. Working days count from the job's
   start (start date, else first diary); no start and no diary = not started. Screen `company_weekly` (pm/admin, Company),
