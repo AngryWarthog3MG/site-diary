@@ -27,7 +27,7 @@ Tool-neutral procedure. Run in order; stop and fix on any failure.
    npx vercel deploy --prod --yes
    ```
    The CLI prints error-shaped JSON even on success. Trust only `"readyState": "READY"`
-   plus the `Aliased https://site-diary-eight.vercel.app` line. If neither appears, check
+   plus the `Aliased https://kbsdailydiary.me` line (the alias Vercel prints; the public address is `ims-kooboolong.net`, README R119). If neither appears, check
    `npx vercel ls` — a missing new deployment means the deploy silently failed; rerun with
    full output.
 
@@ -40,7 +40,7 @@ Tool-neutral procedure. Run in order; stop and fix on any failure.
 6. **Live smoke test.** Sign in through production exactly as a phone does. Never assume —
    the register once shipped dead. Mint a magic link with the service role
    (`auth.admin.generateLink`), open
-   `https://site-diary-eight.vercel.app/auth/confirm?token_hash=...&type=magiclink&next=%2F`
+   `https://ims-kooboolong.net/auth/confirm?token_hash=...&type=magiclink&next=%2F`
    in headless Playwright, and assert the changed surface renders.
    Use `mitchell.vanzyl@gmail.com` for Curtin. `danny.test@example.com` only sees Test
    Site, which is deliberately `active=false` — activate it for a drill and deactivate in a

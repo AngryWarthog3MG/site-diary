@@ -48,8 +48,9 @@ Next.js 16 (App Router) + TypeScript on Vercel `syd1` · Supabase Postgres 17 (p
 transcription · Anthropic `claude-sonnet-4-6` for extraction and query, `claude-haiku-4-5`
 for routing · BOM observations over anonymous FTP · Chromium via Playwright for PDF.
 
-Production: `https://kbsdailydiary.me`, moving to `https://ims-kooboolong.net` (README R119; the procedure is in
-`docs/ship.md`). The app never assumes its address — `siteUrl()` — and `CANONICAL_HOST` redirects every other host.
+Production: `https://ims-kooboolong.net` since 01/10/2026 (README R119). `kbsdailydiary.me`, its www and the `*.vercel.app`
+names redirect there permanently — dockets already issued name the old host, so it is never released. The app never
+assumes its address (`siteUrl()`); `CANONICAL_HOST` in Vercel's production env drives the redirect. Moving again: `docs/ship.md`.
 
 ## Commands
 

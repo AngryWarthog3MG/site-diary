@@ -2831,7 +2831,13 @@ attached to the Vercel project, and the switch is a configuration change — the
 (`siteUrl()`), and `CANONICAL_HOST` turns on a permanent redirect from every other host, path intact, because the
 signed dockets already in people's hands say "verify at kbsdailydiary.me" and that must answer for good. The one line of
 literal text, the verify line on the docket and client sheet, changes at cutover. The procedure, step by step, is in
-`docs/ship.md`.
+`docs/ship.md`. **Cut over 01/10/2026.** Two things the day taught: GoDaddy's change was invisible from this machine for
+an hour because the local network answers DNS from its own cache — ask Cloudflare or Google over HTTPS, not port 53,
+before deciding a record "has not taken"; and Vercel issued the certificate only when asked (`vercel certs issue`), not on
+verification. Removing an env var and re-adding it is two commands with a gap between them, and the CLI refused a
+`NEXT_PUBLIC_` value as "sensitive" until `--no-sensitive` — production ran without its address for a few minutes with no
+deploy in between, which is the only reason nothing broke. Change a value with `vercel env add --force`, never remove-then-add.
+
 
 ## Not built, and deliberately so
 
