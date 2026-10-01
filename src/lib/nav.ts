@@ -105,7 +105,7 @@ export const NAV_GROUPS: NavGroup[] = [
   {
     label: 'Library', scope: 'site',
     items: [
-      { href: '/procedures', name: 'Policies & procedures', what: 'The company documents, versioned; read the current one and sign that you have', screen: 'procedures' },
+      { href: '/procedures', name: 'Policies & procedures', what: 'The company documents, versioned — what is waiting on you to read and sign, and who has signed what', screen: 'procedures' },
       { href: '/documents', name: 'Job documents', what: 'Spec, scope, contract, drawings', screen: 'documents' },
       { href: '/ask', name: 'Ask a question', short: 'Ask', what: 'From your diary and the job documents', screen: 'ask' },
     ],

@@ -11,6 +11,7 @@ import {
 } from '@/lib/auth';
 import { MoneyLock } from '@/components/money-lock';
 import { InboxNudge } from '@/components/inbox-nudge';
+import { WaitingPanel } from '@/components/waiting-panel';
 import { canRunTalks, canReport, sees, ROLE_LABEL, type Screen } from '@/lib/roles';
 import { navFor, viewerFor } from '@/lib/nav';
 import { SignOutButton } from '@/components/sign-out-button';
@@ -93,6 +94,7 @@ export default async function TodayPage({
       {/* Anyone who sees the money and has not set up, or not entered, their code is told so here first (README R106). */}
       <MoneyLock state={moneyState(current, aal)} next={`/${q}`} />
       <InboxNudge userId={userId} />
+      <WaitingPanel userId={userId} projectId={current.project_id} />
 
       <SectionBar groups={groups} q={q} jobId={current.project_id} orgName={current.project.org.name} />
       <FirstRun role={current.role} />

@@ -124,7 +124,9 @@ export function canSee(role: MemberRole, screen: Screen): boolean {
   // the labourer is the one who needs the muster point (README R63).
   // And signing on to a SWMS as themselves (README R89): a worker must be able to read the
   // method statement for their work and put their own name to it — r. 299, r. 300.
-  if (role === 'labourer') return screen === 'today' || screen === 'inbox' || screen === 'signin' || screen === 'incidents' || screen === 'chemicals' || screen === 'emergency' || screen === 'swms_sign';
+  // The labourer's doors, plus what the law and the system put in every worker's reach: chemicals, the emergency plan,
+  // the SWMS to sign, and the policies and procedures that bind them (README R120).
+  if (role === 'labourer') return screen === 'today' || screen === 'inbox' || screen === 'signin' || screen === 'incidents' || screen === 'chemicals' || screen === 'emergency' || screen === 'swms_sign' || screen === 'procedures';
   if (role === 'leading_hand') {
     return screen === 'today' || screen === 'inbox' || screen === 'entries' || screen === 'weekly' || screen === 'prestart' || screen === 'plant' || screen === 'toolbox' || screen === 'programme' || screen === 'signin' || screen === 'swms' || screen === 'swms_sign' || screen === 'incidents' || screen === 'inspections' || screen === 'permits' || screen === 'procedures' || screen === 'safety' || screen === 'orders' || screen === 'chemicals' || screen === 'obligations' || screen === 'emergency' || screen === 'construction' || screen === 'quality' || screen === 'audits' || screen === 'asbestos' || screen === 'environment';
   }

@@ -11,6 +11,7 @@ import type { Membership } from '@/lib/auth';
 import { loadCurrentPlan } from '@/lib/emergency/load';
 import { loadHeadContractorEmergencyPlan } from '@/lib/subcontract/load';
 import { InboxNudge } from '@/components/inbox-nudge';
+import { WaitingPanel } from '@/components/waiting-panel';
 
 /**
  * The labourer's opening page: are they signed in right now, and the two
@@ -53,6 +54,7 @@ export async function LabourerHome({ current, name, userId }: { current: Members
       </header>
       <FirstRun role={current.role} />
       <InboxNudge userId={userId} />
+      <WaitingPanel userId={userId} projectId={current.project_id} />
 
       <section className={`labhome__status${open ? ' labhome__status--in' : ''}`}>
         <p className="label">{fmtDate(today)}</p>

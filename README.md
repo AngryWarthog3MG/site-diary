@@ -2839,6 +2839,31 @@ verification. Removing an env var and re-adding it is two commands with a gap be
 deploy in between, which is the only reason nothing broke. Change a value with `vercel env add --force`, never remove-then-add.
 
 
+**R120. Document control, to the standard of the system it replaces.** "Start with document control." Policies and
+procedures had versions, a frozen file per version and a hand-recorded signature; the management system at the old
+address had everything else — and that is what moved across. A document now says who must read it (an audience of roles;
+empty is everyone on the company's jobs), how many days they get, how often it is reviewed, and what the comprehension
+check's pass mark is. A version is born a DRAFT, so questions can be set beside it and a bulk import can land without a
+word to anyone; issuing it is the moment the database supersedes the last version, closes its unfinished assignments,
+assigns everyone in the audience with a due date (`document_assignments`), and writes the events; the server then tells
+each person — push to every phone they have registered, and an email — and stamps that it did. A person signs for
+THEMSELVES: open the document, pass the check where there is one (`answer_document_quiz` grades it; the right answers are
+column-locked and never reach a phone; every attempt is kept), tick that they read it to the end, type their own name
+(it must be the name on their account), sign. The database matches the acknowledgement to their assignment and closes it.
+A supervisor may still record a crew member without an account by hand, as before — never themselves, which is the one
+way round the check and is shut. Reminders go three days before due and while overdue, once per 48 hours, nightly
+(`documents=1`), and by hand from the document or the Compliance overview; waiving needs a reason and is logged. What a
+person sees: a Waiting on you panel on Home — the labourer's too — and the document's own page; the labourer may now open
+Policies and procedures, because a policy is for the people it binds (reg. 346's logic, applied to the company's own
+rules). What the office sees: who has signed each version with due dates and reminder counts, Compliance overview (the
+percentage, the overdue, each document, each person still to sign, a spreadsheet), bulk PDF import that reads code,
+title and kind off each file name for a person to check, and a new-version form carrying audience, days, review, pass
+mark and questions. Migrations 20261001100000–100300 — three follow-ups, each a lesson: a reserved word in a function's
+output; Supabase's default grants handing every new table to authenticated wholesale, so a column list hid nothing until
+the table-wide grant was revoked; and the hand-recording policy letting a supervisor sign their own name past the check.
+Suite 50. Not moved: Microsoft 365 sign-in (next), review-date reminders, per-department audiences (roles stand in for
+departments here, which is how the company is actually shaped).
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;

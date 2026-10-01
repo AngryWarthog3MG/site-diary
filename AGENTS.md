@@ -189,12 +189,23 @@ improvising; the register once shipped dead because a live smoke test was skippe
   deleted), `project_subcontractors` (engagement per job). Bucket `subcontractor-docs` `{org}/{sub}/{doc}.ext`, row
   first then file. Managing = `app.can_manage_crew` (org) / `app.can_manage_incidents` (engagement). The gate register
   flags a lapsed company on sign-in; nightly `tickets=1` also emails the subcontractor digest
-- `src/lib/documents-control/` — policies and procedures: `model.ts` (`coverage` of the crew against a version's
-  acknowledgements). Tables `controlled_documents` (org; unique title), `document_versions` (numbered under a lock;
-  issuing supersedes the current; frozen; never deleted; file in `controlled-docs` `{org}/{doc}/{version}.pdf`, file
-  first then row), `document_acknowledgements` (current version only, once per person, frozen; signature in
-  `entry-photos` `{project}/document/{ack}/sig.png`). Issuing = `app.can_manage_crew`; acknowledging = `app.can_run_talks`.
-  Outbox kind `doc_ack`. Screens under `/procedures` (not `/documents`, which is the job's reference documents for Ask)
+- `src/lib/documents-control/` — policies and procedures, to the management system's standard (README R120): `model.ts`
+  (`coverage`, `dueState`, `complianceSummary`, `wantsReminder`, `parseImportFilename`; pure), `load.ts`
+  (`loadDocumentsOverview`, `loadWaitingOnMe`), `notify.ts` (push + email per assignee, stamps via RPC), `sweep.ts`
+  (nightly `documents=1`). Tables `controlled_documents` (org; unique title; `audience` roles[] empty = everyone,
+  `ack_due_days`, `review_interval_months`, `pass_mark`), `document_versions` (born `draft`; `current` on issue — the
+  after-trigger `app.assign_document_version` supersedes the last version's pending assignments, assigns the audience,
+  writes events; frozen once issued; file in `controlled-docs` `{org}/{doc}/{version}.pdf`, file first then row),
+  `document_assignments` (pending → signed by the acknowledgement trigger | superseded | waived with a reason; never
+  deleted), `document_questions` (on a draft only; `correct_index` column-locked — graded by `answer_document_quiz`, key
+  via `document_answer_key` for managers), `document_quiz_attempts` (frozen), `document_events` (append-only),
+  `document_acknowledgements` (current version only, once per person, frozen; `typed_name`, `time_on_page_s`,
+  `quiz_attempt_id`; signature in `entry-photos` `{project}/document/{ack}/sig.png`). Signing for yourself =
+  `app.can_ack_own_document` (own name, a job you hold, check passed); by hand = `app.can_run_talks`, never your own name.
+  Reads: every member incl. the labourer (screen `procedures` is a labourer door now); acknowledgements own + record lock.
+  Routes `/api/procedures/{notify,remind,compliance}`. Screens `/procedures`, `/procedures/[id]`, `/procedures/new`,
+  `/procedures/compliance`, `/procedures/import`; `WaitingPanel` on both homes. Outbox kind `doc_ack` carries the new
+  fields. Suite 50. (Not `/documents`, which is the job's reference documents for Ask)
 - `src/lib/training/` — the training matrix: `model.ts` (`competencies` = fixed ticket types + the org's own,
   `cellFor`, `buildMatrix`, `mergePeople`; relative imports — Node-tested). Tables `org_competencies` (org's own,
   keyed) and `competency_requirements` (role → competency; role normalised). Records stay in `crew_tickets`. Screens

@@ -113,6 +113,7 @@ async function replay(item: OutboxItem): Promise<void> {
       await uploadIfMissing(p.path as string, blobs.signature, 'image/png');
       const { error } = await supabase.from('document_acknowledgements').insert({
         id: p.ackId, version_id: item.subjectId, person_name: p.name, signature_path: p.path, project_id: item.projectId, recorded_by: p.by, acknowledged_on_device_at: p.at,
+        typed_name: (p.typedName as string | undefined) ?? null, time_on_page_s: (p.timeOnPage as number | undefined) ?? null, quiz_attempt_id: (p.attemptId as string | undefined) ?? null,
       });
       // A new version was issued while this waited: the signature was to the
       // old words and can never land. Done, not retried; the nightly check

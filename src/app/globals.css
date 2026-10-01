@@ -4549,3 +4549,46 @@ a.dash-row:hover { background: var(--teal-tint); }
 .regs__pickbox { display: flex; align-items: flex-start; padding-top: 0.2rem; flex: none; }
 .regs__pickbox input { width: 1.2rem; height: 1.2rem; }
 .regs__title { flex: 1; min-width: 0; }
+
+/* ==========================================================================
+   Document control (README R120): waiting on you, read and sign, who has signed.
+   ========================================================================== */
+.waiting { margin: 0.75rem 0 0.25rem; padding: 0.85rem 1rem; border: 1px solid var(--ink-12); border-radius: 0.9rem; background: #fff; }
+.waiting__head { display: flex; justify-content: space-between; align-items: center; gap: 0.75rem; }
+.waiting__head .label { margin: 0; }
+.waiting__list { list-style: none; margin: 0.5rem 0 0; padding: 0; display: grid; gap: 0.4rem; }
+.waiting__item { display: flex; justify-content: space-between; align-items: center; gap: 0.75rem; text-decoration: none; color: inherit; padding: 0.6rem 0.75rem; border-radius: 0.7rem; background: var(--paper-2, #f6f7f5); border: 1px solid var(--ink-12); }
+.waiting__item--overdue { background: #FDECEC; border-color: #F2C9C9; }
+.waiting__text { display: flex; flex-direction: column; gap: 0.1rem; min-width: 0; }
+.waiting__title { font-weight: 600; }
+.waiting__cta { flex: none; font-weight: 700; color: #2E6B4F; }
+.waiting__item--overdue .waiting__cta { color: #9a2f2f; }
+.docs__tools { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.75rem; }
+.docs__tools .button { width: auto; margin-top: 0; }
+.docs__steps { padding-left: 1.2rem; display: grid; gap: 0.75rem; margin: 0.6rem 0 0; }
+.docs__steps > li { padding-left: 0.2rem; }
+.docs__quiz { margin-top: 0.5rem; display: grid; gap: 0.6rem; }
+.docs__q { border: 1px solid var(--ink-12); border-radius: 0.6rem; padding: 0.5rem 0.75rem 0.3rem; margin: 0; }
+.docs__q legend { font-weight: 600; padding: 0 0.25rem; }
+.docs__table { width: 100%; border-collapse: collapse; font-size: 0.92rem; margin-top: 0.5rem; }
+.docs__table th { text-align: left; font-size: 0.68rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-60, #5b6660); padding: 0.4rem 0.5rem 0.3rem; border-bottom: 1px solid var(--ink-12); }
+.docs__table td { padding: 0.5rem; border-bottom: 1px solid var(--ink-12); vertical-align: top; }
+.docs__table .field { margin: 0; }
+.docs__bar { display: inline-block; width: 6rem; height: 0.55rem; background: #ECF0ED; border-radius: 999px; overflow: hidden; vertical-align: middle; }
+.docs__bar > span { display: block; height: 100%; background: #2E6B4F; }
+.docs__tiles { grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr)); }
+.docs__big { font-size: 1.7rem; }
+.docs__qlist { padding-left: 1.2rem; display: grid; gap: 0.4rem; margin: 0.4rem 0; }
+.docs__qlist li { display: flex; justify-content: space-between; gap: 0.75rem; align-items: flex-start; }
+.docs__addq { margin-top: 0.6rem; padding-top: 0.6rem; border-top: 1px dashed var(--ink-12); display: grid; gap: 0.35rem; }
+.docs__opt { display: flex; align-items: center; gap: 0.5rem; }
+.docs__opt input[type="radio"] { width: 1.1rem; height: 1.1rem; flex: none; }
+.docs__opt .field { margin: 0; }
+.docs__hand summary { cursor: pointer; font-weight: 600; }
+.docs__draft { border-left: 3px solid #8A5A00; }
+.docs__mine { border-left: 3px solid #2E6B4F; }
+@media (max-width: 640px) {
+  .docs__table thead { display: none; }
+  .docs__table tr { display: grid; gap: 0.15rem; padding: 0.5rem 0; border-bottom: 1px solid var(--ink-12); }
+  .docs__table td { border: 0; padding: 0.1rem 0; }
+}

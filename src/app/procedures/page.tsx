@@ -1,57 +1,100 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
-import { requireUser, resolveProject } from '@/lib/auth';
-import { sees, canAuthorEntries } from '@/lib/roles';
+import { requireUser, resolveProject, guardScreen } from '@/lib/auth';
+import { canAuthorEntries } from '@/lib/roles';
 import { BrandMark } from '@/components/brand-mark';
 import { OutboxStatus } from '@/components/outbox-status';
 import { fmtDate, fmtPerthDate } from '@/lib/pdf/dates';
-import { KIND_LABEL, coverage, type ControlledKind } from '@/lib/documents-control/model';
+import { perthToday } from '@/lib/push/decide';
+import { DUE_LABEL, KIND_LABEL, audienceText, type ControlledKind } from '@/lib/documents-control/model';
+import { loadDocumentsOverview } from '@/lib/documents-control/load';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Policies & procedures · Kooboolong IMS' };
 
-interface Row {
-  id: string; title: string; kind: ControlledKind; doc_number: string | null; requires_acknowledgement: boolean; active: boolean;
-  document_versions: Array<{ id: string; version: number; status: string; issued_at: string; document_acknowledgements: Array<{ person_name: string }> }>;
-}
-
+/**
+ * The company's documents (README R120): what is waiting on you first, then
+ * the library. A manager sees who has signed each one and the doors to issue,
+ * import and the compliance overview.
+ */
 export default async function ProceduresPage({ searchParams }: { searchParams: Promise<{ project?: string }> }) {
-  const { memberships } = await requireUser();
+  const { userId, memberships } = await requireUser();
   const { project } = await searchParams;
   const current = resolveProject(memberships, project);
-  if (!current) return <main className="sheet"><p className="notice gap">You are not on an active project.</p></main>;
-  if (!sees(current, 'procedures')) redirect(`/?project=${current.project_id}`);
+  if (!current) redirect('/');
+  guardScreen(current, 'procedures');
   const supabase = await createClient();
-  const [{ data }, { data: crew }] = await Promise.all([
-    supabase.from('controlled_documents').select('id, title, kind, doc_number, requires_acknowledgement, active, document_versions(id, version, status, issued_at, document_acknowledgements(person_name))').eq('org_id', current.project.org.id).eq('active', true).order('title'),
-    supabase.from('crew').select('name').eq('project_id', current.project_id).eq('active', true),
-  ]);
-  const rows = (data ?? []) as Row[];
-  const crewNames = (crew ?? []).map((c) => String(c.name));
+  const today = perthToday();
+  const rows = await loadDocumentsOverview(supabase, current.project.org.id, userId, today);
+  const canManage = canAuthorEntries(current.role);
   const q = `?project=${current.project_id}`;
+  const waiting = rows.filter((r) => r.mine && r.mine.status === 'pending');
+  const library = rows.filter((r) => r.active);
+  const retired = rows.filter((r) => !r.active);
+  const chip = (state: string) => (state === 'overdue' ? 'status-pill status-pill--danger' : state === 'due_soon' ? 'status-pill status-pill--gap' : state === 'signed' ? 'status-pill status-pill--ready' : 'status-pill');
+
   return (
     <main className="sheet">
       <p className="label"><BrandMark size={18} /> {current.project.org.name}</p>
       <h1 className="page-title">Policies &amp; procedures</h1>
-      <p className="page-subtitle">The company&rsquo;s documents, one file per version. A new version supersedes the last and everyone reads again; the crew acknowledge on the phone with a signature.</p>
-      {canAuthorEntries(current.role) && <Link className="button" href={`/procedures/new${q}`}>Issue a document</Link>}
+      <p className="page-subtitle">
+        The company&rsquo;s documents, one file per version. A new version supersedes the last and everyone it binds reads it again and
+        signs on their own phone that they have understood it.
+      </p>
+      {canManage && (
+        <div className="docs__tools">
+          <Link className="button" href={`/procedures/new${q}`}>Issue a document</Link>
+          <Link className="button button--quiet" href={`/procedures/import${q}`}>Import PDFs</Link>
+          <Link className="button button--quiet" href={`/procedures/compliance${q}`}>Compliance overview</Link>
+        </div>
+      )}
       <OutboxStatus />
+
       <hr className="rule" />
-      {rows.length === 0 ? <p className="nil">No documents issued yet.</p> : rows.map((r) => {
-        const cur = r.document_versions.find((v) => v.status === 'current');
-        const cov = cur ? coverage(crewNames, cur.document_acknowledgements.map((a) => a.person_name)) : { read: [], unread: crewNames };
-        return (
-          <Link key={r.id} href={`/procedures/${r.id}${q}`} className={`prestart-row ${!cur ? 'prestart-row--open' : r.requires_acknowledgement && cov.unread.length > 0 ? '' : 'prestart-row--done'}`}>
-            <span>
-              <strong>{r.title}</strong>{r.doc_number ? ` · ${r.doc_number}` : ''}
-              <br />
-              <span className="caption">{KIND_LABEL[r.kind]}{cur ? ` · v${cur.version} issued ${fmtPerthDate(cur.issued_at)}` : ' · no version issued'}{cur && r.requires_acknowledgement ? ` · ${cov.read.length} of ${crewNames.length} on this job have read it` : ''}</span>
+      <p className="label">Waiting on you · {waiting.length}</p>
+      {waiting.length === 0 ? (
+        <p className="caption">Nothing. Everything assigned to you is signed.</p>
+      ) : (
+        <ul className="register-list">
+          {waiting.map((r) => (
+            <li key={r.id}>
+              <Link className="register-card" href={`/procedures/${r.id}${q}`}>
+                <div className="register-card__main">
+                  <p className="register-card__title">{r.title}</p>
+                  <p className="register-card__meta">v{r.current?.version} · read and sign by {fmtDate(r.mine!.due_on)}</p>
+                </div>
+                <span className={chip(r.mine!.state)}>{DUE_LABEL[r.mine!.state]}</span>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <hr className="rule" />
+      <p className="label">The library · {library.length}</p>
+      {library.length === 0 ? <p className="nil">No documents issued yet.</p> : library.map((r) => (
+        <Link key={r.id} href={`/procedures/${r.id}${q}`} className={`prestart-row ${!r.current ? 'prestart-row--open' : r.summary.pending > 0 ? '' : 'prestart-row--done'}`}>
+          <span>
+            <strong>{r.title}</strong>{r.doc_number ? ` · ${r.doc_number}` : ''}
+            <br />
+            <span className="caption">
+              {KIND_LABEL[r.kind as ControlledKind] ?? r.kind}
+              {r.current ? ` · v${r.current.version} issued ${r.current.issued_at ? fmtPerthDate(r.current.issued_at) : ''}` : ' · no version issued'}
+              {r.draft ? ` · draft v${r.draft.version} waiting` : ''}
+              {canManage && r.current && r.requires_acknowledgement ? ` · signed ${r.summary.signed} of ${r.summary.due}${r.summary.overdue ? ` · ${r.summary.overdue} overdue` : ''}` : ''}
+              {canManage ? ` · ${audienceText(r.audience)}` : ''}
             </span>
-            <span>Open</span>
-          </Link>
-        );
-      })}
+          </span>
+          <span>{r.mine ? DUE_LABEL[r.mine.state] : 'Open'}</span>
+        </Link>
+      ))}
+      {retired.length > 0 && (
+        <>
+          <p className="label" style={{ marginTop: '1rem' }}>Archived · {retired.length}</p>
+          {retired.map((r) => <Link key={r.id} href={`/procedures/${r.id}${q}`} className="prestart-row prestart-row--done"><span><strong>{r.title}</strong><br /><span className="caption">{KIND_LABEL[r.kind as ControlledKind] ?? r.kind} · archived</span></span><span>Open</span></Link>)}
+        </>
+      )}
     </main>
   );
 }

@@ -11,6 +11,7 @@ import { refreshProjectWeatherDays } from '@/lib/weather/days';
 import type { ProjectSite } from '@/lib/weather/resolve';
 import { classifyOrphan, isRecent, type EntryFacts, type StoredFile } from '@/lib/ops/orphans';
 import { expiring } from '@/lib/crew/tickets';
+import { documentReminderSweep } from '@/lib/documents-control/sweep';
 
 export const maxDuration = 300;
 export const runtime = 'nodejs';
@@ -69,6 +70,8 @@ export async function GET(request: Request) {
   if (url.searchParams.get('tickets') === '1') report.subcontractors = await subcontractorDigest();
   if (url.searchParams.get('tickets') === '1') report.training = await trainingGaps();
   if (url.searchParams.get('errors') === '1') report.errors = await errorDigest();
+  // Documents waiting to be read and signed: three days out and overdue, once per 48 hours (README R120).
+  if (url.searchParams.get('documents') === '1') report.documents = await documentReminderSweep(createAdminClient());
   if (url.searchParams.get('monthly') === '1') {
     report.monthly = await sendMonthlyBundles(url.searchParams.get('force') === '1');
   }
