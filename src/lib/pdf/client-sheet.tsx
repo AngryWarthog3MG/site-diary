@@ -189,7 +189,7 @@ export function ClientSheet({
         <p className="src">
           Drawn from signed site diary entry {entry.entry_no}, {fmtDate(entry.entry_date)}. The diary entry is
           immutable; its content hash is {entry.content_hash ?? '—'}. Verify this document at
-          kbsdailydiary.me/verify.
+          ims-kooboolong.net/verify.
         </p>
       </section>
     </article>

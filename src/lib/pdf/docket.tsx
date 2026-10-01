@@ -390,7 +390,7 @@ function Signature({
           </p>
           <p className="mono hash">{entry.content_hash}</p>
           <p className="src">
-            This entry is immutable. Any change is recorded as a later entry that supersedes it. Verify this document at kbsdailydiary.me/verify
+            This entry is immutable. Any change is recorded as a later entry that supersedes it. Verify this document at ims-kooboolong.net/verify
           </p>
         </>
       ) : (
