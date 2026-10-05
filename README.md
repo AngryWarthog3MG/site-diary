@@ -2920,6 +2920,20 @@ say together: a ticket expired or expiring, a job they are on with no induction,
 they do not hold. Admin screen; the labourer reads none of the table (it carries phone numbers). Suite 52. Not built: a
 rename that carries the name through every record, and a printed staff register — say the word.
 
+**R124. A client copy of the prestarts.** Asked to put two weeks of prestarts into one PDF for the head contractor, then:
+"remove all NOT INDUCTED ON THIS JOB, and if there wasn't a prestart leave it out." The marker is the app's own check:
+at sign-on the database compares the name as signed with the job's induction list and stores the answer on the sign-on.
+Of the three in that fortnight, two were a nickname ("Evan" for Evan Burke, "Matty Rogers" for Matthew Rodgers, both
+inducted weeks before) and one was a man inducted the same morning, after he signed. It is a useful prompt for the
+supervisor and a poor thing to hand a client as a finding. But the stored prestart PDF is the record and is never
+rewritten, so the answer is a second printing, not an edit: `copy=client` on the prestarts bundle renders each finished
+prestart from the same row and the same signatures with the induction check left off, lists on its cover the prestarts
+that were recorded rather than every working day, marks every page CLIENT COPY, and stores nothing. The cover says what
+the copy leaves out — the house rule from the registers (R118): a print that omits something says so. The office copy is
+unchanged, markers and empty days included. What was refused in the same conversation: writing the diary's labour list
+into prestarts as sign-ons. A sign-on is a person's own signature and fit-for-work answer; the diary says who was on
+site, not who stood at the briefing.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;

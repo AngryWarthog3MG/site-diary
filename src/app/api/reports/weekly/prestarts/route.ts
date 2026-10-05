@@ -6,7 +6,7 @@ import { DOCKET_CSS } from '@/lib/pdf/styles';
 import { EMBEDDED_FONT_CSS } from '@/lib/pdf/fonts';
 import { LOGO_DATA_URI } from '@/lib/pdf/logo';
 import { isRestDay } from '@/lib/calendar';
-import { prestartPdf, PrestartDocError } from '@/lib/prestart/document';
+import { prestartPdf, prestartClientPdf, PrestartDocError } from '@/lib/prestart/document';
 
 export const maxDuration = 300;
 export const runtime = 'nodejs';
@@ -22,6 +22,10 @@ const awst = (iso: string) => new Intl.DateTimeFormat('en-AU', { timeZone: 'Aust
  * was finished, which page it starts on, and the working days with none — then each finished prestart exactly as its
  * own PDF prints it (the stored copy, or rendered once and stored by the same builder). A prestart not finished is
  * named on the cover and left out: its PDF is the frozen record, and it has none yet.
+ *
+ * `copy=client` is the same bundle for someone outside the company (README R124): the cover lists the prestarts that
+ * were recorded and not the days without one, each prestart is printed without the app's induction check beside the
+ * sign-ons, and every page says CLIENT COPY. Nothing stored changes; the cover says what the copy leaves out.
  */
 export async function GET(request: Request) {
   const { supabase, user, response } = await requireApiUser();
@@ -30,6 +34,7 @@ export async function GET(request: Request) {
   const projectId = url.searchParams.get('project');
   const start = url.searchParams.get('start');
   const end = url.searchParams.get('end');
+  const clientCopy = url.searchParams.get('copy') === 'client';
   if (!isUuid(projectId)) return fail('bad_request', 'Bad project id.', 400);
   if (!isDate(start) || !isDate(end) || end < start) return fail('bad_request', 'start and end must be YYYY-MM-DD, start first.', 400);
   if ((Date.parse(end) - Date.parse(start)) / 86_400_000 > 31) return fail('bad_request', 'At most a month of prestarts in one PDF.', 400);
@@ -54,7 +59,7 @@ export async function GET(request: Request) {
   const docs: Array<{ row: Row; bytes: Uint8Array; pages: number }> = [];
   try {
     for (const r of list.filter((x) => x.completed_at)) {
-      const doc = await prestartPdf(supabase, r.id);
+      const doc = clientCopy ? await prestartClientPdf(supabase, r.id) : await prestartPdf(supabase, r.id);
       const pages = (await PDFDocument.load(doc.bytes, { updateMetadata: false })).getPageCount();
       docs.push({ row: r, bytes: doc.bytes, pages });
     }
@@ -75,7 +80,7 @@ export async function GET(request: Request) {
     const today = list.filter((r) => r.prestart_date === day);
     const dow = DAY[new Date(`${day}T00:00:00Z`).getUTCDay()];
     if (today.length === 0) {
-      if (!isRestDay(day)) lines.push(`<tr><td>${dow} ${esc(dmy(day))}</td><td colspan="4" class="none">No prestart recorded</td></tr>`);
+      if (!clientCopy && !isRestDay(day)) lines.push(`<tr><td>${dow} ${esc(dmy(day))}</td><td colspan="4" class="none">No prestart recorded</td></tr>`);
       continue;
     }
     for (const r of today) {
@@ -96,7 +101,9 @@ export async function GET(request: Request) {
     '<section class="sect"><table><thead><tr><th>Day</th><th>Run by</th><th class="n">Signed on</th><th>Finished</th><th class="n">Page</th></tr></thead><tbody>',
     lines.join('') || '<tr><td colspan="5" class="none">No prestarts in this range.</td></tr>',
     '</tbody></table>',
-    `<p class="src">Each prestart follows exactly as its own PDF prints it: the record as finished, with the crew's signatures. Working days with no prestart are listed; weekends only when one was run.</p>`,
+    clientCopy
+      ? `<p class="src">Client copy. The prestarts recorded in the period, each printed from the record as finished, with the crew's signatures. The app's own induction check beside each sign-on is not printed on this copy.</p>`
+      : `<p class="src">Each prestart follows exactly as its own PDF prints it: the record as finished, with the crew's signatures. Working days with no prestart are listed; weekends only when one was run.</p>`,
     '</section></div></body></html>'].join('');
 
   try {
@@ -104,8 +111,8 @@ export async function GET(request: Request) {
       title: `Prestarts ${project.code} ${start} to ${end}`, author: org.name, subject: `${project.name} — prestarts, ${start} to ${end}`,
       keywords: [org.code, project.code, 'prestarts', start],
       instant: new Date(`${start}T00:00:00Z`),
-      idSeed: createHash('sha256').update(`${projectId}${start}${end}${docs.map((d) => d.row.id).join('')}`).digest('hex'),
-      footerLeft: `${org.code}_${project.code} · PRESTARTS · ${dmy(start)} to ${dmy(end)}`,
+      idSeed: createHash('sha256').update(`${projectId}${start}${end}${clientCopy ? 'client' : ''}${docs.map((d) => d.row.id).join('')}`).digest('hex'),
+      footerLeft: `${org.code}_${project.code} · PRESTARTS${clientCopy ? ' · CLIENT COPY' : ''} · ${dmy(start)} to ${dmy(end)}`,
     });
     const merged = await PDFDocument.create();
     for (const source of [cover, ...docs.map((d) => d.bytes)]) {
@@ -116,7 +123,7 @@ export async function GET(request: Request) {
     merged.setAuthor(org.name);
     merged.setProducer('Kooboolong IMS');
     const bytes = await merged.save();
-    return new Response(Buffer.from(bytes), { status: 200, headers: { 'content-type': 'application/pdf', 'content-disposition': `inline; filename="${org.code}_${project.code}_prestarts_${start}.pdf"`, 'cache-control': 'private, no-store' } });
+    return new Response(Buffer.from(bytes), { status: 200, headers: { 'content-type': 'application/pdf', 'content-disposition': `inline; filename="${org.code}_${project.code}_prestarts_${start}${clientCopy ? '_client' : ''}.pdf"`, 'cache-control': 'private, no-store' } });
   } catch (err) {
     if (err instanceof BrowserUnavailableError) return fail('server_error', err.message, 501);
     return fail('server_error', `Could not bind the prestarts: ${err instanceof Error ? err.message : 'PDF rendering failed.'}`, 500);

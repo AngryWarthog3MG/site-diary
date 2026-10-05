@@ -94,7 +94,9 @@ improvising; the register once shipped dead because a live smoke test was skippe
   (kept on `prestarts.spec_notes`, printed on the prestart PDF)
 - `src/lib/prestart/` — prestart checklist, PDF, spec notes; `document.ts` `prestartPdf` is the ONE builder of a finished
   prestart's PDF (stored copy, else render and store) — the single button and the week's bundle (`/api/reports/weekly/prestarts`,
-  README R109) both use it; `dictate.ts` turns a spoken briefing into the
+  README R109) both use it; `prestartClientPdf` is the CLIENT COPY (README R124: same record and signatures, no induction
+  check beside the sign-ons, footer says CLIENT COPY, never stored — the bundle's `copy=client`; never write a client
+  copy into `exports`, and never add a sign-on from the diary or anywhere but the person's own hand); `dictate.ts` turns a spoken briefing into the
   form's fields (Deepgram → model, never stores, never ticks a check); `dictation-merge.ts` folds it into typed text
 - `src/lib/crew/tickets.ts` — tickets (org-wide, by person name) and what each plant kind needs; `crew_inductions`
   per job. The plant form refuses missing/expired, warns on none recorded; the prestart marks the un-inducted.
