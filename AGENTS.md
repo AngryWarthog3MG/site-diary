@@ -214,7 +214,12 @@ improvising; the register once shipped dead because a live smoke test was skippe
 - `src/lib/timesheets/` — the company timesheet (README R103): `model.ts` (`buildTimesheet` — one row per person across every
   job, a cell per day, jobs told apart; `weekOf`, `readWeek`, `normName`; pure, node-tested), `load.ts` (labour rows under the
   caller's RLS, a corrected day counted once by the claims rule, unsigned days marked not hidden). Hours come from the diary's
-  labour list ONLY — never the gate, never computed here; null is "not recorded", never 0. Names go through `makeResolver`:
+  labour list — never the gate, never computed here; null is "not recorded", never 0 — and from ONE other place (README R122):
+  `timesheet_entries`, time a company admin adds by hand for a day with no diary (office, yard, training). The DB computes
+  hours from the clocks, refuses the future, a double and an overlap; a line is never edited or deleted, only voided once
+  with a reason (`void_reason` is the one writable column). Reads `app.is_org_office`, writes `app.is_org_admin`. It enters
+  the sheet as `officeFact` with `added` set and its place as the job code — every drawing marks it; never let it read as a
+  diary row, and never add a third source without a README section. Form `src/app/timesheets/add-time.tsx`. Suite 51. Names go through `makeResolver`:
   each job's crew nicknames on its own rows, the company's `person_aliases` everywhere (README R107); a person on two jobs at
   overlapping clocks is flagged, never adjusted. Screen `timesheets` (pm/admin,
   company scope, under People): `/timesheets?week=<Monday>`, PDF `/api/timesheets/pdf` (in `outputFileTracingIncludes`)

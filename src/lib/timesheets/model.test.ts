@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { buildTimesheet, makeResolver, readWeek, weekOf, weekDays, normName, fmtHours, type LabourFact } from './model.ts';
+import { buildTimesheet, makeResolver, readWeek, weekOf, weekDays, normName, fmtHours, hoursFromClocks, officeFact, officeJobId, type LabourFact, type OfficeTime } from './model.ts';
 
 const fact = (over: Partial<LabourFact>): LabourFact => ({
   entryId: 'e1', projectId: 'p1', projectCode: 'C001', projectName: 'Curtin', date: '2026-09-22', signed: true,
@@ -112,4 +112,65 @@ test('two jobs at the same time on one day is flagged; two jobs one after the ot
   assert.equal(p.days['2026-09-24'].clash, false);
   assert.equal(p.days['2026-09-23'].clash, true); // no clocks, 16 h across two jobs
   assert.equal(sheet.clashes, 2);
+});
+
+const office = (over: Partial<OfficeTime>): OfficeTime => ({
+  id: 'o1', orgId: 'org', personName: 'Evan Burke', date: '2026-09-29', start: '06:30', finish: '13:00', breakMins: 0, hours: 6.5,
+  place: 'Office', note: null, addedBy: 'Mitchell Van Zyl', addedAt: '2026-10-05T02:00:00Z', voidedAt: null, voidReason: null, ...over,
+});
+
+test('hours between two clocks, less the break — and never a guess', () => {
+  assert.equal(hoursFromClocks('06:30', '13:00'), 6.5);
+  assert.equal(hoursFromClocks('06:30', '15:00', 30), 8);
+  assert.equal(hoursFromClocks('06:30:00', '16:30:00'), 10);
+  assert.equal(hoursFromClocks('06:30', null), null);
+  assert.equal(hoursFromClocks('', '13:00'), null);
+  assert.equal(hoursFromClocks('13:00', '06:30'), null); // past midnight is typed as hours, not assumed
+  assert.equal(hoursFromClocks('06:30', '07:00', 30), null);
+});
+
+test('time the office adds is on the sheet, counted in the totals and said apart (README R122)', () => {
+  const sheet = buildTimesheet([
+    officeFact(office({})),
+    officeFact(office({ id: 'o2', personName: 'Matthew Rodgers' })),
+    fact({ personName: 'Evan Burke', date: '2026-09-30', hours: 10, entryId: 'e30' }),
+  ], '2026-09-28');
+  const evan = sheet.people.find((p) => p.name === 'Evan Burke')!;
+  assert.equal(evan.total, 16.5);
+  assert.deepEqual(evan.byJob, { Office: 6.5, C001: 10 });
+  const tue = evan.days['2026-09-29'];
+  assert.equal(tue.hours, 6.5);
+  assert.equal(tue.added, 1);
+  assert.deepEqual(tue.entryIds, []); // no diary behind it, so nothing to link to
+  assert.equal(tue.unsigned, false);
+  assert.deepEqual(tue.jobs, ['Office']);
+  assert.equal(evan.days['2026-09-30'].added, 0);
+  assert.equal(sheet.addedRows, 2);
+  assert.equal(sheet.addedHours, 13);
+  assert.equal(sheet.total, 23);
+  assert.equal(sheet.dayTotals['2026-09-29'], 13);
+  // The place is listed after the jobs and marked as not a job.
+  assert.deepEqual(sheet.jobs.map((j) => [j.code, Boolean(j.office), j.hours, j.people]), [['C001', false, 10, 1], ['Office', true, 13, 2]]);
+  assert.equal(sheet.jobs[1].projectId, officeJobId(' office '));
+});
+
+test('an added line follows the company\'s list of names, and clashes with a diary at the same clocks', () => {
+  const resolve = makeResolver([], [{ alias: 'Matt Rodgers', name: 'Matthew Rodgers' }]);
+  const f = officeFact(office({ personName: 'Matt Rodgers' }), (n) => resolve(n, ''));
+  assert.equal(f.personName, 'Matthew Rodgers');
+  assert.equal(f.saidAs, 'Matt Rodgers');
+  const sheet = buildTimesheet([
+    f,
+    fact({ personName: 'Matthew Rodgers', date: '2026-09-29', hours: 10, start: '06:30', finish: '16:30', entryId: 'e29' }),
+  ], '2026-09-28');
+  assert.equal(sheet.people.length, 1);
+  assert.equal(sheet.people[0].days['2026-09-29'].clash, true); // at the office and on site at once: someone should check
+  assert.equal(sheet.clashes, 1);
+  // After the site day is no clash.
+  const later = buildTimesheet([
+    officeFact(office({ personName: 'Matthew Rodgers', start: '17:00', finish: '19:00', hours: 2 })),
+    fact({ personName: 'Matthew Rodgers', date: '2026-09-29', hours: 10, start: '06:30', finish: '16:30', entryId: 'e29' }),
+  ], '2026-09-28');
+  assert.equal(later.clashes, 0);
+  assert.equal(later.people[0].days['2026-09-29'].hours, 12);
 });

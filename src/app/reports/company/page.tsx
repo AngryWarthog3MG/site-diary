@@ -45,7 +45,7 @@ export default async function CompanyWeeklyPage({ searchParams }: { searchParams
   const end = addDays(start, 6);
   // Everyone's hours for pay across this company's jobs (README R109): the Timesheets page's loader and table, so the
   // hours read the same in both — names combined, two-jobs-at-once flagged.
-  const pay = await loadTimesheet(supabase, start, { projectIds: ours.filter((m) => m.project.active).map((m) => m.project_id) });
+  const pay = await loadTimesheet(supabase, start, { projectIds: ours.filter((m) => m.project.active).map((m) => m.project_id), orgIds: [current.project.org.id] });
   const at = (m: string) => `/reports/company?project=${current.project_id}&week=${m}`;
   const t = data.totals;
 

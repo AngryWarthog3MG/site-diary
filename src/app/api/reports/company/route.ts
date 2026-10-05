@@ -43,7 +43,7 @@ export async function GET(request: Request) {
   const end = addDays(start, 6);
   const ours = memberships.filter((m) => m.project.org.id === org.id);
   const data = await loadCompanyWeek(supabase, ours, start, end);
-  const pay = await loadTimesheet(supabase, start, { projectIds: ours.filter((m) => m.project.active).map((m) => m.project_id) });
+  const pay = await loadTimesheet(supabase, start, { projectIds: ours.filter((m) => m.project.active).map((m) => m.project_id), orgIds: [org.id] });
   const t = data.totals;
 
   const html = ['<!doctype html>', '<html lang="en-AU"><head><meta charset="utf-8">', `<title>Weekly report, all jobs — ${esc(dmy(start))}</title>`,

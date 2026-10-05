@@ -31,14 +31,15 @@ export async function GET(request: Request) {
   if (!project) return fail('not_found', 'That project is not on your account.', 404);
   const org = (Array.isArray(project.org) ? project.org[0] : project.org) as { id: string; name: string; code: string };
   const monday = readWeek(url.searchParams.get('week') ?? undefined, perthToday());
-  const { sheet, pendingCorrections } = await loadTimesheet(supabase, monday);
+  const { sheet, pendingCorrections } = await loadTimesheet(supabase, monday, { orgIds: [org.id] });
+  const jobCount = sheet.jobs.filter((j) => !j.office).length;
 
   const html = ['<!doctype html>', '<html lang="en-AU"><head><meta charset="utf-8">', `<title>Timesheet — week of ${esc(dmy(monday))}</title>`,
     `<style>${EMBEDDED_FONT_CSS}</style>`, `<style>${DOCKET_CSS}</style>`,
     `<style>${TIMESHEET_PDF_CSS}</style>`,
     '</head><body><div class="docket ts">',
     `<header class="head"><div class="head__left"><p class="lbl"><img class="brandmark" src="${LOGO_DATA_URI}" alt="" /> ${esc(org.name)}</p><h1>Timesheet</h1><p class="lbl">Week of ${esc(dmy(monday))} to ${esc(dmy(sheet.to))} · all jobs</p></div>`,
-    `<div class="head__right"><p class="lbl">${sheet.people.length} ${sheet.people.length === 1 ? 'person' : 'people'} · ${sheet.jobs.length} ${sheet.jobs.length === 1 ? 'job' : 'jobs'}</p><p class="lbl">${esc(fmtHours(sheet.total))} h${sheet.overtime ? ` + ${esc(fmtHours(sheet.overtime))} h overtime` : ''}</p></div></header>`,
+    `<div class="head__right"><p class="lbl">${sheet.people.length} ${sheet.people.length === 1 ? 'person' : 'people'} · ${jobCount} ${jobCount === 1 ? 'job' : 'jobs'}</p><p class="lbl">${esc(fmtHours(sheet.total))} h${sheet.overtime ? ` + ${esc(fmtHours(sheet.overtime))} h overtime` : ''}</p></div></header>`,
     '<section class="sect">',
     timesheetTableHtml(sheet, pendingCorrections),
     '</section></div></body></html>'].join('');

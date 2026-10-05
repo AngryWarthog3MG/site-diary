@@ -2881,6 +2881,24 @@ feeding a day's first draft until it is signed, as before. Proven on the sandbox
 carries them exactly. The five superseded versions stay as they are — signed entries are the record, including the record
 of a morning spent fighting the software.
 
+**R122. Time the office adds to the timesheet.** "Under Staff, Timesheets, allow me to add custom times and dates. Evan
+and Matthew both worked at the office on Tuesday the 29th, 6:30 till 1 — I need to add them into the timesheet to get
+paid." R103 made the timesheet read the diaries' labour lists and nothing else, which is right for a day on a job and
+leaves a day at the office, the yard or a training room with nowhere to stand: no job, no diary, no pay line. The
+alternatives were worse — a fake "Office" job with a diary to sign, or hours typed into a spreadsheet beside the sheet.
+So there is now exactly one other source of an hour: `timesheet_entries`, a line a company admin types, naming the
+person, the day, the clocks or the hours, and where the time was worked. With clocks the database does the arithmetic
+(finish less start less break) and ignores any figure sent with them; without, the figure typed is the figure. Nothing in
+the future, nothing twice (a second tap of Save is not a second day's pay), no clocks overlapping a line the person
+already has. Like the rest of the record it is not edited and not deleted, service role included: a wrong line is removed
+once with its reason, stays on the page as removed, and the right one is added. Pm and admin read it (the company
+weekly prints the same sheet); only an admin writes; a site role reads none of it. On the sheet it is never dressed as a
+diary row: the cell carries its place where a job would be, has no diary to link to, the caption and the PDF count the
+added rows and hours apart, and the place sits after the jobs marked "not a job". It folds into the same person row
+through the company's list of names, and a line whose clocks overlap a diary's on the same day is flagged like two jobs
+at once. Time on a job still belongs in that job's diary — the form says so — because that is the record a claim stands on.
+Suite 51.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;
