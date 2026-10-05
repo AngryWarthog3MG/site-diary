@@ -2934,6 +2934,16 @@ unchanged, markers and empty days included. What was refused in the same convers
 into prestarts as sign-ons. A sign-on is a person's own signature and fit-for-work answer; the diary says who was on
 site, not who stood at the briefing.
 
+Printing seven prestarts fresh in one request is what found the renderer's fault. The serverless Chromium runs
+single-process, and closing a page takes the browser down with it: the logs showed a launch for every render, no close of
+ours between them, and each dead browser leaving about 150 MB on the 512 MB temporary disk that the profile sweep (R110)
+does not find — so the fourth fresh render in any request died, "Target page, context or browser has been closed". One
+render per request never showed it, and the office bundle mostly reads stored copies. `holdBrowser()` in
+`src/lib/pdf/render.ts` now gives a run of renders one browser and ONE PAGE, printed on in turn and closed only after the
+response; the prestarts bundle uses it (seven prestarts and a cover: one launch, 26 seconds). A launch with under 200 MB
+free now logs what the temporary disk holds, so the leftover itself can be named and swept next. The month bundle and the
+all-jobs weekly still render one document per request and are unchanged.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;

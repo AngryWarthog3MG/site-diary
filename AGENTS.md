@@ -601,6 +601,9 @@ Change four of them and the app silently stops capturing what supervisors say. I
   browser kept across requests — and sweeps stale Playwright profiles before every launch (README R110). A
   new render path must go through `renderPdfDocument`; never launch Chromium elsewhere, and never write into the
   temporary directory without removing it — a full disk kills every PDF on that instance until it is recycled.
+  **Closing a page kills this Chromium** (single-process; README R124), and each dead browser strands ~150 MB there. A
+  route that renders MORE THAN ONE document per request wraps the run in `holdBrowser()` (release in a `finally`): one
+  browser, one page, renders strictly one after another. Three fresh renders in a request without it is the limit.
 - **`supabase config push` rewrites the WHOLE auth config** from `supabase/config.toml`, filling anything the file omits
   with the CLI's defaults — and the default for TOTP is off (README R114). The `[auth.mfa]` block must stay in the file.
   Push without `--yes` first and read the diff; a non-tty push applies anyway. Sign-ups are off (`enable_signup = false` under `[auth]`;
