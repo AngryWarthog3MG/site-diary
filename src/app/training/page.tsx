@@ -23,14 +23,16 @@ export default async function TrainingPage({ searchParams }: { searchParams: Pro
   const orgId = current.project.org.id;
   const wholeCompany = scope === 'company';
   const crewQuery = supabase.from('crew').select('name, role, project:projects!inner(org_id)').eq('active', true);
-  const [{ data: crew }, { data: tickets }, { data: reqs }, { data: custom }] = await Promise.all([
+  const [{ data: crew }, { data: tickets }, { data: reqs }, { data: custom }, { data: staff }] = await Promise.all([
     wholeCompany ? crewQuery.eq('project.org_id', orgId) : crewQuery.eq('project_id', current.project_id),
     supabase.from('crew_tickets').select('person_name, ticket_type, expires_on, active, issued_on').eq('org_id', orgId),
     supabase.from('competency_requirements').select('role, competency').eq('org_id', orgId),
     supabase.from('org_competencies').select('key, label, valid_months, active').eq('org_id', orgId).order('label'),
+    // Whole company: the staff list too (README R123), so someone on no job yet still shows with what their role needs.
+    wholeCompany ? supabase.from('staff').select('name, role').eq('org_id', orgId).eq('active', true) : Promise.resolve({ data: [] as Array<{ name: string; role: string | null }> }),
   ]);
   const today = perthToday();
-  const crewList = ((crew ?? []) as Array<{ name: string; role: string | null }>).map((c) => ({ name: c.name, role: c.role }));
+  const crewList = [...((crew ?? []) as Array<{ name: string; role: string | null }>), ...((staff ?? []) as Array<{ name: string; role: string | null }>)].map((c) => ({ name: c.name, role: c.role }));
   const ticketRows = ((tickets ?? []) as Array<TicketFacts & { person_name: string; issued_on: string | null }>);
   // On a job: its crew, with their tickets. Whole company: everyone with a ticket too.
   const people = mergePeople(crewList, wholeCompany ? ticketRows : ticketRows.filter((t) => crewList.some((c) => c.name.trim().toLowerCase().replace(/\s+/g, ' ') === t.person_name.trim().toLowerCase().replace(/\s+/g, ' '))));

@@ -2899,6 +2899,27 @@ through the company's list of names, and a line whose clocks overlap a diary's o
 at once. Time on a job still belongs in that job's diary — the form says so — because that is the record a claim stands on.
 Suite 51.
 
+**R123. The staff list: everyone who works for the company, in one place.** "Under the staff tab, add a tab that has all
+ops that work for Kooboolong with all their inductions, their roles, certificates — all in one place. From here I'd then
+be able to assign ops to certain jobs that will then be used in the daily diary." Everything asked for already existed,
+scattered and keyed by name: a job's crew list (`crew`, what the diary's labour dropdown, the extraction, the prestart
+and the gate offer), the company's tickets (`crew_tickets`), a job's inductions (`crew_inductions`), the training matrix
+that sets one against the other. What did not exist was the person. Someone was only ever a row on one job's list, so a
+role was retyped per job, a new starter on no job yet was nobody, and nothing said who works here. `staff` is that list:
+one row per person per company — name, role, phone, employer when it is not the company, notes, and whether they are
+still with us. It is deliberately NOT a new home for anything already recorded. Tickets, inductions and crew rows stay
+where they are and stay keyed by name, so no signed day, sign-on or register moves; the page (`/staff`, All staff, under
+Staff) joins them by name and edits each in place. Ticking a job writes that job's crew row — insert, or un-hide the one
+it had — which is the whole of "assign to a job": every screen that reads the crew list has them from the next load.
+Two database rules keep it one list rather than a second one to forget: anyone put on a crew list or given a ticket
+joins the staff list (triggers, so the job's own Settings screen and the matrix feed it too), and what is set here
+flows out — a role reaches the person's crew rows wherever a job has not given them a different one, and marking someone
+as no longer with the company takes them off every crew list. A name is not changed, because the tickets, inductions and
+diaries are filed under it; a row is never deleted, because the record keeps the name. The page flags what the pieces
+say together: a ticket expired or expiring, a job they are on with no induction, a competency their role requires and
+they do not hold. Admin screen; the labourer reads none of the table (it carries phone numbers). Suite 52. Not built: a
+rename that carries the name through every record, and a printed staff register — say the word.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;

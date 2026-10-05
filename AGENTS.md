@@ -104,6 +104,14 @@ improvising; the register once shipped dead because a live smoke test was skippe
   Add member (`POST /api/projects/[id]/members`) makes the account when none exists and sends the welcome note
   (`src/lib/members/welcome.ts`, README R102 — email + title is the whole of adding someone; the bulk and cards routes
   stay for a terminal but no screen offers them)
+- `src/lib/staff/` — the company's staff list (README R123): table `staff` (one row per person per company, by the name on
+  the sheets: role, phone, employer if not the company, notes, `active`; name never changed, row never deleted; reads
+  `app.reads_org_record`, writes `app.can_manage_crew`). It is the PERSON, not a new home for their records: `crew`,
+  `crew_tickets` and `crew_inductions` stay where they are, keyed by name, and `model.ts` (`buildStaff`, `summarise`,
+  `filterStaff`, `assignStep`; pure, node-tested) joins them. Triggers keep it the one list: a crew insert or a ticket insert
+  adds the person (`app.crew_joins_staff`, `app.ticket_holder_joins_staff`); a role change flows to crew rows that carried the
+  old role, and `active=false` hides every crew row (`app.staff_flows_to_crews`). Screen `staff` (admin, Company › Staff),
+  `/staff`: assigning to a job IS writing that job's `crew` row — never a second assignment table. Suite 52
 - `src/lib/members/account.ts` — removed from their last job, the account is CLOSED, never deleted (README R115): a ban in
   the auth service, the profile and the record kept, `account_closed` / `account_reopened` in `member_access_events`. The
   members DELETE calls `closeAccountIfOrphaned`; add and bulk add call `reopenAccount`. Never `auth.admin.deleteUser` —

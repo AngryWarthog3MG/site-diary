@@ -136,6 +136,7 @@ export const NAV_GROUPS: NavGroup[] = [
   {
     label: 'Staff', scope: 'company',
     items: [
+      { href: '/staff', name: 'All staff', short: 'Staff list', what: 'Everyone who works for the company — roles, tickets, inductions, and which jobs they are on', screen: 'staff' },
       { href: '/timesheets', name: 'Timesheets', what: 'Everyone’s hours for the week, across every job, on one sheet', screen: 'timesheets' },
       { href: '/health', name: 'Health monitoring', short: 'Health', what: 'Confidential — blood lead, asbestos and Schedule 14 monitoring, for named record keepers only', screen: 'health' },
       { href: '/subcontractors', name: 'Subcontractors', what: 'Insurances, SWMS and licences, chased before they lapse', screen: 'subcontractors' },

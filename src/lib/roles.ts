@@ -64,11 +64,11 @@ export function canExportReports(role: MemberRole): boolean {
 }
 
 export type Screen =
-  | 'today' | 'entries' | 'weekly' | 'prestart' | 'plant' | 'toolbox' | 'signin' | 'swms' | 'swms_sign' | 'incidents' | 'inspections' | 'permits' | 'subcontractors' | 'procedures' | 'training' | 'timesheets' | 'company_weekly' | 'rates' | 'messages' | 'inbox' | 'registers' | 'safety' | 'orders' | 'chemicals' | 'obligations' | 'emergency' | 'construction' | 'quality' | 'audits' | 'asbestos' | 'health' | 'environment'
+  | 'today' | 'entries' | 'weekly' | 'prestart' | 'plant' | 'toolbox' | 'signin' | 'swms' | 'swms_sign' | 'incidents' | 'inspections' | 'permits' | 'subcontractors' | 'procedures' | 'training' | 'staff' | 'timesheets' | 'company_weekly' | 'rates' | 'messages' | 'inbox' | 'registers' | 'safety' | 'orders' | 'chemicals' | 'obligations' | 'emergency' | 'construction' | 'quality' | 'audits' | 'asbestos' | 'health' | 'environment'
   | 'claims' | 'variations' | 'notices' | 'templates' | 'start_gate' | 'programme' | 'progress' | 'ask' | 'documents' | 'settings';
 
 /** Every screen there is, in the order the Members screen lists them. */
-export const SCREENS: Screen[] = ['today', 'entries', 'weekly', 'signin', 'claims', 'variations', 'notices', 'templates', 'start_gate', 'programme', 'progress', 'quality', 'audits', 'safety', 'obligations', 'emergency', 'incidents', 'inspections', 'permits', 'swms', 'swms_sign', 'chemicals', 'asbestos', 'environment', 'construction', 'prestart', 'toolbox', 'plant', 'orders', 'training', 'timesheets', 'company_weekly', 'rates', 'messages', 'inbox', 'registers', 'health', 'subcontractors', 'procedures', 'documents', 'ask', 'settings'];
+export const SCREENS: Screen[] = ['today', 'entries', 'weekly', 'signin', 'claims', 'variations', 'notices', 'templates', 'start_gate', 'programme', 'progress', 'quality', 'audits', 'safety', 'obligations', 'emergency', 'incidents', 'inspections', 'permits', 'swms', 'swms_sign', 'chemicals', 'asbestos', 'environment', 'construction', 'prestart', 'toolbox', 'plant', 'orders', 'training', 'staff', 'timesheets', 'company_weekly', 'rates', 'messages', 'inbox', 'registers', 'health', 'subcontractors', 'procedures', 'documents', 'ask', 'settings'];
 
 /** A membership as the gates read it: the role, and the screens ticked for this person (null = the role's list). */
 export interface Access { role: MemberRole; screens?: readonly string[] | null; finance?: boolean | null }
@@ -142,6 +142,8 @@ export function canSee(role: MemberRole, screen: Screen): boolean {
   if (screen === 'rates') return role === 'admin';
   // The company's screens are the admin's alone (README R103, R111): everyone's hours, every job's week, the rate card, the templates.
   if (screen === 'timesheets') return role === 'admin';
+  // The company's staff list — everyone, their roles, tickets, inductions and jobs (README R123) — is the admin's too.
+  if (screen === 'staff') return role === 'admin';
   // The company's weekly report, every job side by side, is the office's too (README R108).
   if (screen === 'company_weekly') return role === 'admin';
   // Messages from the office are sent by an admin (README R112); the inbox is everyone's, the labourer's included.
