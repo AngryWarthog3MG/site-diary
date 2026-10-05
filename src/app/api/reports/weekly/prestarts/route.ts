@@ -6,6 +6,7 @@ import { DOCKET_CSS } from '@/lib/pdf/styles';
 import { EMBEDDED_FONT_CSS } from '@/lib/pdf/fonts';
 import { LOGO_DATA_URI } from '@/lib/pdf/logo';
 import { isRestDay } from '@/lib/calendar';
+import { perthDate } from '@/lib/pdf/dates';
 import { prestartPdf, prestartClientPdf, PrestartDocError } from '@/lib/prestart/document';
 
 export const maxDuration = 300;
@@ -87,9 +88,10 @@ export async function GET(request: Request) {
       continue;
     }
     for (const r of today) {
+      // A prestart finished on a later day says which day: a bare clock would read as that morning's (README R124).
       const count = r.prestart_attendees?.[0]?.count ?? 0;
       lines.push(r.completed_at
-        ? `<tr><td>${dow} ${esc(dmy(day))}</td><td>${esc(r.supervisor_name ?? '—')}</td><td class="n">${count}</td><td>${esc(awst(r.completed_at))} AWST</td><td class="n">${startsAt.get(r.id)}</td></tr>`
+        ? `<tr><td>${dow} ${esc(dmy(day))}</td><td>${esc(r.supervisor_name ?? '—')}</td><td class="n">${count}</td><td>${esc(awst(r.completed_at))} AWST${perthDate(r.completed_at) !== day ? ` on ${esc(dmy(perthDate(r.completed_at)).slice(0, 5))}` : ''}</td><td class="n">${startsAt.get(r.id)}</td></tr>`
         : `<tr><td>${dow} ${esc(dmy(day))}</td><td>${esc(r.supervisor_name ?? '—')}</td><td class="n">${count}</td><td class="none">Not finished — not in this PDF</td><td></td></tr>`);
     }
   }
