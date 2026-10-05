@@ -6,9 +6,9 @@ import { sees, canManageRegisters } from '@/lib/roles';
 import { BrandMark } from '@/components/brand-mark';
 import { fmtDate } from '@/lib/pdf/dates';
 import { perthToday } from '@/lib/push/decide';
-import { readRange, type RangeKey } from '@/lib/dayworks/schedule';
+import { readRange, scheduleLines, type RangeKey } from '@/lib/dayworks/schedule';
 import { loadDayworksSchedule, type DayworksScheduleData } from '@/lib/dayworks/load';
-import type { DayworkSignoff } from '@/lib/dayworks/signoff';
+import { approvalOf, snapshotLines, type DayworkSignoff } from '@/lib/dayworks/signoff';
 import { SignoffBlock } from './signoff-block';
 
 export const dynamic = 'force-dynamic';
@@ -20,6 +20,8 @@ const hrs = (n: number) => (Number.isInteger(n) ? String(n) : n.toFixed(2).repla
  * The dayworks schedule: every daywork on a signed day, the works completed,
  * who and what did it, the docket, and the hours — week by week, totalled —
  * for a period. Printable as the schedule that goes with a claim (README R72).
+ * Each daywork is approved once the head contractor has signed for it — on this
+ * screen, or on a paper sheet recorded here (README R125).
  */
 export default async function DayworksPage({ searchParams }: { searchParams: Promise<{ project?: string; range?: string; from?: string; to?: string }> }) {
   const { memberships } = await requireUser();
@@ -39,7 +41,7 @@ export default async function DayworksPage({ searchParams }: { searchParams: Pro
   // who does not reach this screen anyway.
   const { data: signoffRows } = await supabase
     .from('dayworks_signoffs')
-    .select('id, period_from, period_to, period_label, items, hours, hours_not_recorded, photos, signed_by_name, signed_by_position, signed_on, file_path, note')
+    .select('id, period_from, period_to, period_label, items, hours, hours_not_recorded, photos, signed_by_name, signed_by_position, signed_on, file_path, note, signed_how, signature_path, declaration, signed_at, lines')
     .eq('project_id', current.project_id)
     .order('signed_on', { ascending: false });
   const signoffs = ((signoffRows ?? []) as unknown as DayworkSignoff[]).map((s) => ({ ...s, hours: Number(s.hours) }));
@@ -52,6 +54,10 @@ export default async function DayworksPage({ searchParams }: { searchParams: Pro
     loadError = err instanceof Error ? err.message : 'Could not load the schedule.';
   }
 
+  // Which of the period's dayworks the client has signed for, line by line (README R125).
+  const lines = data ? scheduleLines(data) : [];
+  const approval = approvalOf(lines, signoffs);
+  const approvedBy = new Map(lines.map((l, i) => [l, approval.by[i]] as const));
   const p = current.project_id;
   const href = (key: RangeKey) => `/dayworks?project=${p}${key === 'all' ? '' : `&range=${key}`}`;
   const pdfHref = `/api/dayworks/pdf?project=${p}${range.key === 'all' ? '' : `&range=${range.key}`}${range.key === 'custom' ? `${range.from ? `&from=${range.from}` : ''}${range.to ? `&to=${range.to}` : ''}` : ''}`;
@@ -81,7 +87,7 @@ export default async function DayworksPage({ searchParams }: { searchParams: Pro
       {data && (
         <>
           <p className="label">{range.label}</p>
-          <div className="claims-summary" aria-label="Totals">
+          <div className="claims-summary" aria-label="Totals" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(11rem, 1fr))' }}>
             <div className="claims-tile">
               <span className="label">Total daywork hours</span>
               <strong>{hrs(data.totals.hours)}h</strong>
@@ -96,6 +102,11 @@ export default async function DayworksPage({ searchParams }: { searchParams: Pro
               <span className="label">Dockets</span>
               <strong>{data.totals.docketed}</strong>
               <span>{data.totals.toChase ? `${data.totals.toChase} to chase` : 'all docketed'}</span>
+            </div>
+            <div className={`claims-tile${approval.awaiting > 0 ? ' claims-tile--amber' : ''}`}>
+              <span className="label">Approved by {clientName}</span>
+              <strong>{hrs(approval.approvedHours)}h</strong>
+              <span>{approval.awaiting > 0 ? `${hrs(approval.awaitingHours)}h on ${approval.awaiting} item${approval.awaiting === 1 ? '' : 's'} waiting for a signature` : approval.state === 'nothing' ? 'nothing to approve' : 'every item signed for'}</span>
             </div>
           </div>
 
@@ -116,13 +127,17 @@ export default async function DayworksPage({ searchParams }: { searchParams: Pro
             projectId={p}
             period={{ from: range.from ?? null, to: range.to ?? null }}
             periodLabel={range.label}
-            now={{ items: data.totals.items, hours: data.totals.hours, hoursNotRecorded: data.totals.hoursNotRecorded }}
+            summary={{ state: approval.state, approved: approval.approved, approvedHours: approval.approvedHours, awaiting: approval.awaiting, awaitingHours: approval.awaitingHours, awaitingNoHours: approval.awaitingNoHours }}
+            awaiting={snapshotLines(lines.filter((_, i) => !approval.by[i]))}
+            allLines={snapshotLines(lines)}
+            hoursNotRecorded={data.totals.hoursNotRecorded}
             signoffs={signoffs}
-            canRecord={canManageRegisters(current.role)}
+            canRecord={canManageRegisters(current.role) && !data.truncated}
             clientName={clientName}
+            pendingCorrectionDays={data.pendingCorrectionDays}
           />
 
-          <p className="caption">The sign-off sheet itemises every daywork with its labour, plant, materials, docket and photographs, and carries a block for {clientName} to sign. It acknowledges what was expended, not rates or value.</p>
+          <p className="caption">A daywork is approved once {clientName} has signed for it, here on the screen or on the sign-off sheet. The sheet itemises every daywork with its labour, plant, materials, docket and photographs. A signature acknowledges what was expended, not rates or value.</p>
 
           {data.truncated && (
             <p className="alert">More than 1,000 dayworks in this period — only the first 1,000 are shown and totalled. Choose a shorter period.</p>
@@ -137,20 +152,21 @@ export default async function DayworksPage({ searchParams }: { searchParams: Pro
             <div className="claims-tablewrap">
               <table className="claims-table">
                 <thead>
-                  <tr><th>Date</th><th>Works completed</th><th className="n">Hours</th><th>Docket</th><th>Labour</th><th>Plant</th><th>Materials</th></tr>
+                  <tr><th>Date</th><th>Works completed</th><th className="n">Hours</th><th>Approved</th><th>Docket</th><th>Labour</th><th>Plant</th><th>Materials</th></tr>
                 </thead>
                 <tbody>
                   {data.weeks.map((w) => [
                     <tr key={`wk-${w.start}`} className="dw-week">
                       <td colSpan={2}><strong>Week {fmtDate(w.start)} to {fmtDate(w.end)}</strong></td>
                       <td className="n mono"><strong>{hrs(w.hours)}</strong>{w.hoursNotRecorded ? <span className="claims-flag"> +{w.hoursNotRecorded} not recorded</span> : null}</td>
-                      <td colSpan={4} />
+                      <td colSpan={5} />
                     </tr>,
                     ...w.lines.map((l, i) => (
                       <tr key={`${w.start}-${i}`}>
                         <td className="mono">{l.entryId ? <Link className="claims-cite" href={`/entries/${l.entryId}/signed`}>{fmtDate(l.date)}</Link> : fmtDate(l.date)}</td>
                         <td>{l.works}</td>
                         <td className={`n mono${l.hours == null ? ' claims-flag' : ''}`}>{l.hours == null ? 'Not recorded' : hrs(l.hours)}</td>
+                        <td className={approvedBy.get(l) ? undefined : 'claims-flag'}>{approvedBy.get(l) ? <>Signed {fmtDate(approvedBy.get(l)!.signed_on)}<span className="vr-note">{approvedBy.get(l)!.signed_by_name}</span></> : 'Not yet'}</td>
                         <td className={l.docket ? 'mono' : 'claims-flag'}>{l.docket ?? 'To chase'}{l.docketAddedOn ? <span className="vr-note">added {fmtDate(l.docketAddedOn)}</span> : null}</td>
                         <td>{l.labour ?? '—'}</td>
                         <td>{l.plant ?? '—'}</td>
@@ -161,7 +177,7 @@ export default async function DayworksPage({ searchParams }: { searchParams: Pro
                   <tr className="dw-total">
                     <td colSpan={2}><strong>Total: {data.totals.items} item{data.totals.items === 1 ? '' : 's'} of work over {data.totals.days} day{data.totals.days === 1 ? '' : 's'}</strong></td>
                     <td className="n mono"><strong>{hrs(data.totals.hours)}</strong></td>
-                    <td colSpan={4} />
+                    <td colSpan={5} />
                   </tr>
                 </tbody>
               </table>

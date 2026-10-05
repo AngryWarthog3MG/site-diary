@@ -2944,6 +2944,35 @@ response; the prestarts bundle uses it (seven prestarts and a cover: one launch,
 free now logs what the temporary disk holds, so the leftover itself can be named and swept next. The month bundle and the
 all-jobs weekly still render one document per request and are unchanged.
 
+**R125. The client signs for dayworks, and a daywork is approved when they have.** "Add a section in the day works
+where the client, Lendlease, has to sign for the day works to be approved." R86 recorded a sign-off after the fact: the
+sheet went out as a PDF, came back signed, and was typed in with the countersigned file. Two things were missing. The
+signature itself could only happen on paper, so the common case — the site manager standing at the ute on Friday — had
+no way to sign. And a sign-off was two totals against a period, which cannot answer the question a claim asks: is THIS
+daywork approved?
+
+So the Dayworks screen has an approval section. The head contractor's person reads the lines waiting, the declaration
+above the pad — the sheet's own words (R83): signing acknowledges the labour, plant and materials expended, and leaves
+rates, entitlement and value to the contract — prints their name and position, and signs on the screen. The row keeps
+the drawn signature, the words it was given under, and **the lines it was given for** as they read at that moment: day,
+works, hours, docket, labour, plant, materials. The database dates it (from the signing device's clock when that is
+believable, because the signature goes through the outbox and may arrive after a dead spot), refuses a signature for
+nothing or for work not yet done, and freezes it like every other signature here. A sheet signed on paper is still
+recorded as before, and now keeps its lines too.
+
+Approval is then read line by line (`approvalOf`): a daywork is approved when a sign-off holds a line with the same day,
+works and hours. The schedule shows it against every row, the tiles say how many hours are approved and how many wait,
+and the sheet printed for the client carries each signature already given — name, position, time, the signature itself,
+and the item numbers it covers — with the blank box left only for what still waits. The reason for lines rather than
+totals is the correction: a day corrected after the client signed has different hours on that line, so it no longer
+matches and reads "not yet" again. R86 could only say "the schedule has changed since"; this says which line. A
+signature never approves more than it saw — two identical lines need two signatures' worth — and one recorded before
+lines were kept stays on the job's list and approves nothing by itself.
+
+It will not take a signature while a correction in the period is written but unsigned (the client would be signing
+rows about to change), and it does not touch the diary, the dockets or any figure: approval is a fact about the
+client, kept beside the record, not in it. Register keepers give it; the labourer reads none of it. Suite 53.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;

@@ -421,7 +421,12 @@ improvising; the register once shipped dead because a live smoke test was skippe
   screen. `signoff.ts` + table `dayworks_signoffs`: the head contractor's signature on a sheet, with the countersigned
   file and what the sheet said AT THE TIME — frozen, so a later correction cannot change what they signed; `driftFrom`
   says when the schedule has moved since. `app.can_manage_registers` writes it; the labourer reads none of it. Suite 34,
-  README R86
+  README R86. CLIENT APPROVAL (README R125): a sign-off is also the signature itself, drawn on the screen (`signature_path`
+  `{project}/{signoff}.png` in the same bucket, `declaration`, `signed_how`, `signed_at`, `signed_on_device_at`; the DB dates
+  it and refuses one for nothing or for work not yet done), and EVERY new sign-off keeps `lines` — what it was given for.
+  `approvalOf(lines, signoffs)` is the one answer to "is this daywork approved": a line matches by day, works and hours
+  (`lineKey`), so a corrected line waits again; never infer approval from a period or a total. On-screen signing goes
+  through outbox kind `dayworks_approval`; the sheet prints signatures already given via `SheetApproval`. Suite 53
 - `src/lib/claims/` — the claims register loader and the variation register (`register.ts`:
   statuses, summary arithmetic; `warnings.ts`: what the register is quietly getting wrong about money — a variation
   valued at 0 with work behind it, days recorded against it with no hours, README R85. `load.ts` counts a corrected day

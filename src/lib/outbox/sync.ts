@@ -230,6 +230,15 @@ async function replay(item: OutboxItem): Promise<void> {
       if (error && !isAlreadyDone(error)) throw error;
       return;
     }
+    case 'dayworks_approval': {
+      // The client's signature on the screen (README R125): the drawn signature first, then the row that names it.
+      // The row's id is the phone's, so a replay after a dropped reply meets its own row and stops.
+      if (!blobs.signature) throw Object.assign(new Error('The signature was lost from this phone. Ask them to sign again.'), { code: '42501' });
+      await uploadIfMissing(p.path as string, blobs.signature, 'image/png', 'dayworks-signoffs');
+      const { error } = await supabase.from('dayworks_signoffs').insert(p.row as Record<string, unknown>);
+      if (error && !isAlreadyDone(error)) throw error;
+      return;
+    }
     case 'hc_document': {
       // The copy first, then the row that names it, then the older copy marked superseded.
       if (p.path && !blobs.file) {

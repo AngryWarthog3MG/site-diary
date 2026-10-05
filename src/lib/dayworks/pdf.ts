@@ -5,6 +5,20 @@ import { fmtDate } from '@/lib/pdf/dates';
 import { scheduleLines } from './schedule';
 import type { DayworksScheduleData } from './load';
 import type { DayworkPhotos } from './photos';
+import { itemRanges } from './signoff';
+
+/** A signature already given for items on the sheet (README R125): which items, by whom, when, and the drawn signature. */
+export interface SheetApproval {
+  items: number[];
+  name: string;
+  position: string | null;
+  signedOn: string;
+  /** "05/10/2026 16:40 AWST" for a signature drawn on the screen. */
+  signedAt: string | null;
+  how: 'paper' | 'on_screen';
+  /** The drawn signature as a data URI; null for a paper sheet, or when the image could not be read. */
+  src: string | null;
+}
 
 const esc = (v: unknown) => String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 const hrs = (n: number) => `${Number.isInteger(n) ? n : n.toFixed(2).replace(/0$/, '')}`;
@@ -53,7 +67,7 @@ export function dayworksScheduleHtml(s: DayworksScheduleData, meta: { orgName: s
 export function dayworksSignoffHtml(
   s: DayworksScheduleData,
   photos: DayworkPhotos,
-  meta: { orgName: string; orgCode: string; projectName: string; projectCode: string; periodLabel: string; today: string; clientName: string | null; preparedBy: string },
+  meta: { orgName: string; orgCode: string; projectName: string; projectCode: string; periodLabel: string; today: string; clientName: string | null; preparedBy: string; approvals?: SheetApproval[] },
 ): { html: string; images: Record<string, string> } {
   const t = s.totals;
   const lines = scheduleLines(s);
@@ -86,12 +100,28 @@ export function dayworksSignoffHtml(
 
   const sign = (role: string, who: string) => `<div class="dws__box"><p class="lbl">${esc(role)}</p><p class="dws__who">${esc(who)}</p><div class="dws__line"><span class="lbl">Name</span></div><div class="dws__line"><span class="lbl">Position</span></div><div class="dws__line dws__line--tall"><span class="lbl">Signature</span></div><div class="dws__line"><span class="lbl">Date</span></div></div>`;
 
+  // What the client has already signed for is printed as signed; the blank box is for what still waits (README R125).
+  const approvals = meta.approvals ?? [];
+  const signedItems = new Set(approvals.flatMap((a) => a.items));
+  const waiting = lines.map((_, i) => i + 1).filter((n) => !signedItems.has(n));
+  const approved = approvals.map((a) => [
+    '<div class="dws__appr">',
+    `<p class="dws__who">Approved for ${esc(client)} · item${a.items.length === 1 ? '' : 's'} ${esc(itemRanges(a.items))}</p>`,
+    a.src ? `<img class="dws__sig" src="${a.src}" alt="Signature" />` : '',
+    `<p class="dws__by">${esc(a.name)}${a.position ? `, ${esc(a.position)}` : ''}</p>`,
+    `<p class="lbl">${a.how === 'on_screen' ? `Signed on the screen, ${esc(a.signedAt ?? fmtDate(a.signedOn))}` : `Signed on paper, ${esc(fmtDate(a.signedOn))} — the signed sheet is on file`}</p>`,
+    '</div>',
+  ].join('')).join('');
+  const clientBox = waiting.length > 0 || approvals.length === 0
+    ? sign(`Signed for ${client}${approvals.length ? ` · item${waiting.length === 1 ? '' : 's'} ${itemRanges(waiting)}` : ''}`, '')
+    : '';
+
   const html = [
     '<!doctype html>', '<html lang="en-AU"><head><meta charset="utf-8">',
     `<title>Dayworks sign-off — ${esc(meta.projectName)}</title>`,
     `<style>${EMBEDDED_FONT_CSS}</style>`, `<style>${DOCKET_CSS}</style>`,
     '<style>.dw table{width:100%;table-layout:fixed;border-collapse:collapse}.dw col.c-no{width:8mm}.dw col.c-date{width:20mm}.dw col.c-lab{width:26mm}.dw col.c-plant{width:24mm}.dw col.c-mat{width:20mm}.dw col.c-dock{width:20mm}.dw col.c-pic{width:12mm}.dw col.c-hrs{width:16mm}.dw td.d{white-space:nowrap}.dw td,.dw th{font-size:8pt;vertical-align:top;overflow-wrap:break-word}.dw td.n,.dw th.n{text-align:right;white-space:nowrap}.dw td.c,.dw th.c{text-align:center}.dw tr.tot td{border-top:1pt solid #16211F;font-weight:700;font-size:9pt}.dw .amber{color:#9A6A09}'
-    + '.dws{break-inside:avoid;margin-top:6mm}.dws__dec{border:0.4pt solid #C9D3CE;border-radius:2mm;padding:3mm 4mm;font-size:8.5pt;line-height:1.45}.dws__grid{display:grid;grid-template-columns:1fr 1fr;gap:6mm;margin-top:4mm}.dws__box{border:0.4pt solid #C9D3CE;border-radius:2mm;padding:3mm 4mm}.dws__who{margin:0 0 2mm;font-weight:700;font-size:9pt}.dws__line{border-bottom:0.6pt solid #16211F;height:9mm;margin-top:3mm;position:relative}.dws__line--tall{height:16mm}.dws__line .lbl{position:absolute;bottom:0.6mm;left:0;font-size:6.5pt}'
+    + '.dws{break-inside:avoid;margin-top:6mm}.dws__dec{border:0.4pt solid #C9D3CE;border-radius:2mm;padding:3mm 4mm;font-size:8.5pt;line-height:1.45}.dws__grid{display:grid;grid-template-columns:1fr 1fr;gap:6mm;margin-top:4mm}.dws__box{border:0.4pt solid #C9D3CE;border-radius:2mm;padding:3mm 4mm}.dws__who{margin:0 0 2mm;font-weight:700;font-size:9pt}.dws__line{border-bottom:0.6pt solid #16211F;height:9mm;margin-top:3mm;position:relative}.dws__line--tall{height:16mm}.dws__line .lbl{position:absolute;bottom:0.6mm;left:0;font-size:6.5pt}.dws__done{display:grid;grid-template-columns:1fr 1fr;gap:6mm;margin-top:4mm}.dws__appr{border:0.6pt solid #1F5C4A;border-radius:2mm;padding:3mm 4mm;break-inside:avoid}.dws__sig{display:block;height:16mm;max-width:100%;object-fit:contain;margin:1mm 0}.dws__by{margin:0 0 1mm;font-size:9pt;font-weight:700}'
     + '.dwp{break-before:page}.dwp__item{break-inside:avoid;margin-top:4mm}.dwp__head{margin:0 0 1.5mm;font-size:8.5pt;font-weight:700;color:#16211F}.dwp .photos__grid{grid-template-columns:1fr 1fr 1fr;gap:3.5mm}.dwp img{height:48mm;width:100%;object-fit:cover;border-radius:1.5mm;background:#EEF3F0}</style>',
     '</head><body><div class="docket dw">',
     `<header class="head"><div class="head__left"><p class="lbl"><img class="brandmark" src="${LOGO_DATA_URI}" alt="" /> ${esc(meta.orgName)}</p><h1>Dayworks sheet for sign-off</h1><p class="mono sub">${esc(meta.projectName)} · ${esc(meta.orgCode)}_${esc(meta.projectCode)} · ${esc(meta.periodLabel)}</p></div><div class="head__right"><p class="lbl">Total daywork hours</p><p class="serial mono">${hrs(t.hours)}${t.hoursNotRecorded ? '*' : ''}</p><p class="lbl">${t.items} item${t.items === 1 ? '' : 's'} over ${t.days} day${t.days === 1 ? '' : 's'}</p></div></header>`,
@@ -107,7 +137,7 @@ export function dayworksSignoffHtml(
         s.truncated ? '<p class="src amber">More than 1,000 dayworks in this period — only the first 1,000 are on this sheet. Choose a shorter period.</p>' : '',
         '</section>',
       ].join(''),
-    `<section class="sect dws"><div class="dws__dec"><p><strong>For signature by ${esc(client)}.</strong> The ${t.items} item${t.items === 1 ? '' : 's'} of work listed above ${t.items === 1 ? 'was' : 'were'} carried out on the dates shown, with the labour, plant and materials recorded against ${t.items === 1 ? 'it' : 'each'}${photos.total > 0 ? `, and the ${photos.total} photograph${photos.total === 1 ? '' : 's'} attached ${photos.total === 1 ? 'was' : 'were'} taken on site on ${t.days === 1 ? 'the day' : 'those days'}` : ''}.</p><p>Signing acknowledges the labour, plant and materials expended. Rates, entitlement and value are dealt with under the contract.</p></div><div class="dws__grid">${sign(`Signed for ${client}`, '')}${sign(`Signed for ${meta.orgName}`, meta.preparedBy)}</div></section>`,
+    `<section class="sect dws"><div class="dws__dec"><p><strong>For signature by ${esc(client)}.</strong> The ${t.items} item${t.items === 1 ? '' : 's'} of work listed above ${t.items === 1 ? 'was' : 'were'} carried out on the dates shown, with the labour, plant and materials recorded against ${t.items === 1 ? 'it' : 'each'}${photos.total > 0 ? `, and the ${photos.total} photograph${photos.total === 1 ? '' : 's'} attached ${photos.total === 1 ? 'was' : 'were'} taken on site on ${t.days === 1 ? 'the day' : 'those days'}` : ''}.</p><p>Signing acknowledges the labour, plant and materials expended. Rates, entitlement and value are dealt with under the contract.</p></div>${approved ? `<div class="dws__done">${approved}</div>` : ''}<div class="dws__grid">${clientBox}${sign(`Signed for ${meta.orgName}`, meta.preparedBy)}</div></section>`,
     `<p class="src">Every line is taken from a signed diary entry and can be checked against its daily docket, which carries its own serial and content hash. A corrected day is counted once.${s.unsignedItems ? ` ${s.unsignedItems} further daywork${s.unsignedItems === 1 ? ' is' : 's are'} on ${s.unsignedDays} day${s.unsignedDays === 1 ? '' : 's'} not yet signed and ${s.unsignedItems === 1 ? 'is' : 'are'} not on this sheet.` : ''}${photos.omitted ? ` ${photos.omitted} further photograph${photos.omitted === 1 ? ' is' : 's are'} in the daily dockets.` : ''} Prepared ${esc(fmtDate(meta.today))}.</p>`,
     plates ? `<section class="sect dwp"><h2>Photographs</h2>${plates}</section>` : '',
     '</div></body></html>',

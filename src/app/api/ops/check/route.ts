@@ -511,8 +511,9 @@ async function reconcileStorage(): Promise<Record<string, unknown>> {
   // Countersigned dayworks sheets: a file with no sign-off row is a signature
   // that never landed, and a row whose file is gone is worse.
   const signoffFiles = await walk('dayworks-signoffs');
-  const { data: signoffRows } = await admin.from('dayworks_signoffs').select('file_path').not('file_path', 'is', null);
-  const signoffPaths = new Set((signoffRows ?? []).map((r) => r.file_path as string));
+  // A sign-off names up to two files: the countersigned sheet, and the signature drawn on the screen (README R125).
+  const { data: signoffRows } = await admin.from('dayworks_signoffs').select('file_path, signature_path');
+  const signoffPaths = new Set((signoffRows ?? []).flatMap((r) => [r.file_path as string | null, r.signature_path as string | null]).filter((v): v is string => Boolean(v)));
   const signoffFileSet = new Set(signoffFiles.map((f) => f.path));
   const signoffOrphans = signoffFiles.filter((f) => !signoffPaths.has(f.path)).map((f) => f.path);
   const signoffMissing = [...signoffPaths].filter((p) => !signoffFileSet.has(p));

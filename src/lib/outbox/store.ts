@@ -34,7 +34,8 @@ export type OutboxKind =
   | 'hc_notice'
   | 'swms_review'
   | 'env_monitoring'
-  | 'hc_document';
+  | 'hc_document'
+  | 'dayworks_approval';
 
 export type OutboxState = 'queued' | 'syncing' | 'blocked' | 'failed';
 
@@ -77,6 +78,7 @@ export const KIND_LABEL: Record<OutboxKind, string> = {
   swms_review: 'a SWMS review step',
   env_monitoring: 'a monitoring reading',
   hc_document: 'a head contractor plan received',
+  dayworks_approval: 'a dayworks approval signature',
 };
 
 const CHANGED = 'outbox-changed';

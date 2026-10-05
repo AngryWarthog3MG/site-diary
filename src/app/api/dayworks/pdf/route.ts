@@ -6,7 +6,9 @@ import { readRange } from '@/lib/dayworks/schedule';
 import { loadDayworksSchedule } from '@/lib/dayworks/load';
 import { scheduleLines } from '@/lib/dayworks/schedule';
 import { loadDayworkPhotos } from '@/lib/dayworks/photos';
-import { dayworksScheduleHtml, dayworksSignoffHtml } from '@/lib/dayworks/pdf';
+import { dayworksScheduleHtml, dayworksSignoffHtml, type SheetApproval } from '@/lib/dayworks/pdf';
+import { approvalOf, type DayworkSignoff } from '@/lib/dayworks/signoff';
+import { fmtDate } from '@/lib/pdf/dates';
 
 export const maxDuration = 300;
 export const runtime = 'nodejs';
@@ -47,10 +49,33 @@ export async function GET(request: Request) {
     // The photographs run under the caller's RLS, like everything else here.
     const { data: me } = await supabase.from('profiles').select('full_name').eq('id', user.id).maybeSingle();
     const photos = await loadDayworkPhotos(supabase, scheduleLines(data));
+    // What the client has already signed for is printed as signed, with the signature drawn on the screen (README R125).
+    const { data: signoffRows } = await supabase.from('dayworks_signoffs')
+      .select('id, period_from, period_to, period_label, items, hours, hours_not_recorded, photos, signed_by_name, signed_by_position, signed_on, file_path, note, signed_how, signature_path, signed_at, lines')
+      .eq('project_id', projectId);
+    const signoffs = ((signoffRows ?? []) as unknown as DayworkSignoff[]).map((s) => ({ ...s, hours: Number(s.hours) }));
+    const approval = approvalOf(scheduleLines(data), signoffs);
+    const itemsOf = new Map<string, number[]>();
+    approval.by.forEach((s, i) => { if (s) itemsOf.set(s.id, [...(itemsOf.get(s.id) ?? []), i + 1]); });
+    const approvals: SheetApproval[] = [];
+    for (const s of signoffs.filter((x) => itemsOf.has(x.id)).sort((a, b) => (itemsOf.get(a.id)![0] ?? 0) - (itemsOf.get(b.id)![0] ?? 0))) {
+      let src: string | null = null;
+      if (s.signature_path) {
+        const { data: blob } = await supabase.storage.from('dayworks-signoffs').download(s.signature_path);
+        if (blob) src = `data:image/png;base64,${Buffer.from(await blob.arrayBuffer()).toString('base64')}`;
+      }
+      const at = s.signed_at ? new Date(Date.parse(s.signed_at) + 8 * 3_600_000).toISOString() : null;
+      approvals.push({
+        items: itemsOf.get(s.id)!, name: s.signed_by_name, position: s.signed_by_position, signedOn: s.signed_on,
+        signedAt: at ? `${fmtDate(at.slice(0, 10))} ${at.slice(11, 16)} AWST` : null,
+        how: s.signed_how === 'on_screen' ? 'on_screen' : 'paper', src,
+      });
+    }
     const built = dayworksSignoffHtml(data, photos, {
       ...common,
       clientName: (project.principal_contractor as string | null) ?? null,
       preparedBy: (me?.full_name as string | null) ?? '',
+      approvals,
     });
     html = built.html;
     images = built.images;
