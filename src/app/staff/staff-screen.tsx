@@ -39,6 +39,9 @@ export function StaffScreen({ orgId, orgName, projectId, userId, today, people, 
   const [inductNotes, setInductNotes] = useState('');
   const [leaving, setLeaving] = useState(false);
   const [cards, setCards] = useState<Record<string, string>>({});
+  // A job tick shows the moment it is tapped; the page's own answer replaces it when the save has been re-read.
+  const [ticked, setTicked] = useState<Record<string, boolean>>({});
+  useEffect(() => { setTicked({}); }, [people]);
 
   const shown = filterStaff(people, q, jobFilter, showLeft);
   const left = people.filter((p) => !p.active).length;
@@ -108,14 +111,23 @@ export function StaffScreen({ orgId, orgName, projectId, userId, today, people, 
     return `${name} added${on.length ? ` and put on ${on.join(', ')}` : ''}.`;
   });
 
-  const setJob = (p: Person, j: PersonJob, on: boolean) => run(async () => {
-    if (on) { await putOnJob(p.name, p.role, j); return `${p.name} is on ${j.code}’s crew list.`; }
-    if (!j.crewId) return '';
-    const { data, error: e } = await createClient().from('crew').update({ active: false }).eq('id', j.crewId).select('id');
-    if (e) throw new Error(e.message);
-    if (!data?.length) throw refused('That');
-    return `${p.name} is off ${j.code}’s crew list. Days already recorded are unchanged.`;
-  });
+  const setJob = (p: Person, j: PersonJob, on: boolean) => {
+    const key = `${p.id}|${j.projectId}`;
+    setTicked((t) => ({ ...t, [key]: on }));
+    return run(async () => {
+      try {
+        if (on) { await putOnJob(p.name, p.role, j); return `${p.name} is on ${j.code}’s crew list.`; }
+        if (!j.crewId) return '';
+        const { data, error: e } = await createClient().from('crew').update({ active: false }).eq('id', j.crewId).select('id');
+        if (e) throw new Error(e.message);
+        if (!data?.length) throw refused('That');
+        return `${p.name} is off ${j.code}’s crew list. Days already recorded are unchanged.`;
+      } catch (e) {
+        setTicked((t) => { const { [key]: _gone, ...rest } = t; void _gone; return rest; });
+        throw e;
+      }
+    });
+  };
 
   const induct = (p: Person, j: PersonJob) => run(async () => {
     if (!inductDate) throw new Error('Pick the day they were inducted.');
@@ -264,7 +276,7 @@ export function StaffScreen({ orgId, orgName, projectId, userId, today, people, 
                     return (
                       <div key={j.projectId} className="staff__job">
                         <label className="regs__tick">
-                          <input type="checkbox" checked={j.onCrew} disabled={busy || !p.active || !job?.canAssign} onChange={(e) => void setJob(p, j, e.target.checked)} />
+                          <input type="checkbox" checked={ticked[key] ?? j.onCrew} disabled={busy || !p.active || !job?.canAssign} onChange={(e) => void setJob(p, j, e.target.checked)} />
                           <span><b>{j.code}</b> {j.name}{j.jobRole ? <span className="caption"> · {j.jobRole} on this job</span> : null}</span>
                         </label>
                         <span className="staff__ind">
