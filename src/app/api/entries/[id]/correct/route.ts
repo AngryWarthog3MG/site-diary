@@ -1,5 +1,6 @@
 import { sees } from '@/lib/roles';
 import type { MemberRole } from '@/types/database';
+import { copyColumns, type CopiedTable } from '@/lib/review/correction-copy';
 import { fail, ok, requireApiUser, isUuid } from '@/lib/api';
 import { createAdminClient } from '@/lib/supabase/admin';
 
@@ -88,19 +89,17 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
   // Prefill: everything the signed entry recorded, through the same contract
   // the review screen submits — so the draft opens as a complete docket and
   // the person only adds what was missed.
-  const [labour, plant, workItems, variations, delays, pours, quantities, dayworks, photos, sections] =
+  // The column lists are in src/lib/review/correction-copy.ts, held by a test to the review contract (README R121):
+  // a field left off a list here is a fact the correction silently drops.
+  const copy = (table: CopiedTable) => supabase.from(table).select(copyColumns(table)).eq('entry_id', entry.id);
+  const [labour, plant, workItems, variations, delays, pours, quantities, dayworks, siteEvents, photos, sections] =
     await Promise.all([
-      supabase.from('labour').select('person_name, role, area, hours, overtime_hours, source_quote, confidence').eq('entry_id', entry.id),
-      supabase.from('plant').select('item, hire_type, hours, idle_hours, supplier, source_quote, confidence').eq('entry_id', entry.id),
-      supabase.from('work_items').select('area, description, percent_complete, source_quote, confidence').eq('entry_id', entry.id),
-      supabase.from('variations').select('description, directed_by, directed_at, vr_ref, estimated_cost, crew, register_seq, variation_number, hours, photo_urls, source_quote, confidence').eq('entry_id', entry.id),
-      supabase.from('delays').select('start_time, end_time, duration_mins, cause, personnel_affected, category, source_quote, confidence').eq('entry_id', entry.id),
-      supabase.from('pours').select('location, volume_m3, mix_spec, supplier, docket_nos, start_time, finish_time, docket_photo_urls, source_quote, confidence').eq('entry_id', entry.id),
-      supabase.from('quantities').select('item_type, area, quantity, unit, source_quote, confidence').eq('entry_id', entry.id),
-      supabase.from('dayworks').select('description, labour, plant, materials, hours, docket_ref, photo_urls, source_quote, confidence').eq('entry_id', entry.id),
-      supabase.from('photos').select('url, caption, category, taken_at, lat, lng').eq('entry_id', entry.id),
+      copy('labour'), copy('plant'), copy('work_items'), copy('variations'), copy('delays'), copy('pours'),
+      copy('quantities'), copy('dayworks'), copy('site_events'), copy('photos'),
       supabase.from('entry_sections').select('section, state, note').eq('entry_id', entry.id),
     ]);
+  const failed = [labour, plant, workItems, variations, delays, pours, quantities, dayworks, siteEvents, photos, sections].find((r) => r.error);
+  if (failed?.error) return fail('server_error', `Could not read the signed day to copy it: ${failed.error.message}`, 500);
 
   const { data: weatherRow } = await supabase
     .from('weather')
@@ -114,7 +113,7 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
     work_items: workItems.data ?? [],
     // A correction carries the day's number forward; a signed row from before
     // numbers lived on the day has it only through the register link.
-    variations: (variations.data ?? []).map(({ variation_number, ...v }) => ({
+    variations: ((variations.data ?? []) as unknown as Array<Record<string, unknown> & { register_seq: number | null; variation_number: number | null }>).map(({ variation_number, ...v }) => ({
       ...v,
       register_seq: v.register_seq ?? variation_number ?? null,
     })),
@@ -122,6 +121,7 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
     pours: pours.data ?? [],
     quantities: quantities.data ?? [],
     dayworks: dayworks.data ?? [],
+    site_events: siteEvents.data ?? [],
     photos: photos.data ?? [],
     sections: sections.data ?? [],
     weather_impact: (weatherRow?.observed_impact as string | null) ?? null,

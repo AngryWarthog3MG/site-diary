@@ -2864,6 +2864,23 @@ the table-wide grant was revoked; and the hand-recording policy letting a superv
 Suite 50. Not moved: Microsoft 365 sign-in (next), review-date reminders, per-department audiences (roles stand in for
 departments here, which is how the company is actually shaped).
 
+**R121. A correction dropped the clocks, and the gate wrote its own over them.** "Please fix the times for the ops on
+Wednesday the 30th, because they didn't clock out — it needs to be 6:30 to 4:30 — and generate the daily docket." By the
+time he asked, the day had been signed FIVE times in forty minutes. Version 4 held exactly what he wanted; every correction
+opened after it came up with the starts back at the gate's 06:39 and no finish. Two faults, compounding. The correction
+route copied the signed day's labour rows by a hand-written column list that predated the clocks — `start_time`,
+`finish_time` and `break_mins` were never on it, so every correction opened with hours and no clocks. And the review
+screen's gate sync, seeing a blank start on a row whose person was at the gate, filled it from the gate; with nobody
+signed out there was no finish to fill, and a person taken off the list was put straight back. The same list left the
+whole site events section out, so a correction silently dropped any instruction or event recorded that day — the very
+rows notices to the head contractor stand on. Fixed in the shape of the problem: the copy lists now live in
+`src/lib/review/correction-copy.ts`, and a test holds each one to every field of its review schema and every row section of
+the payload, so a field added to the contract and not to the copy fails the build; and a correction draft is no longer
+fed by the gate at all — it starts from what was signed and changes only by the supervisor's hand. The gate goes on
+feeding a day's first draft until it is signed, as before. Proven on the sandbox: a correction of a signed day with clocks
+carries them exactly. The five superseded versions stay as they are — signed entries are the record, including the record
+of a morning spent fighting the software.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;

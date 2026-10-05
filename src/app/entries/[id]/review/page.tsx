@@ -33,7 +33,7 @@ export default async function ReviewPage({ params }: { params: Promise<{ id: str
   const { data: entry } = await supabase
     .from('entries')
     .select(
-      `id, project_id, entry_date, status, author_id, transcript_raw, entry_no, notes,
+      `id, project_id, entry_date, status, author_id, transcript_raw, entry_no, notes, supersedes_entry_id,
        project:projects!inner(id, name, code, org:organisations!inner(code)),
        labour(*), plant(*), work_items(*), variations(*), delays(*), pours(*),
        quantities(*), dayworks(*), site_events(*), photos(*), entry_signatures(*), entry_sections(*), weather(*)`,
@@ -244,6 +244,7 @@ export default async function ReviewPage({ params }: { params: Promise<{ id: str
       weather={weather as ReviewWeather | null}
       hasProposal={Boolean(extraction)}
       hasStored={hasStored}
+      isCorrection={entry.supersedes_entry_id != null}
       startedBy={startedBy}
       plantPrestarted={plantPrestarted}
       plantRegister={plantRegister}

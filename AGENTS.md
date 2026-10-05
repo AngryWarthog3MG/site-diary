@@ -575,6 +575,10 @@ Change four of them and the app silently stops capturing what supervisors say. I
   (`src/lib/auth.ts`) for the job it actually resolved, which is what catches a mixed-role account; and an
   API route addressed by a record id (a PDF, an export) calls `forbidUnlessSees` (`src/lib/api.ts`) after
   its RLS row load, for the same reason.
+- **A correction copies the signed day through `src/lib/review/correction-copy.ts`** (README R121): one column list per
+  table, held by a test to every field of the review schemas and every row section of the payload. A field added to the
+  contract and left off the copy is silently dropped from every correction — add it there too. And a correction draft
+  (`supersedes_entry_id` set) is never fed by the gate: `isCorrection` stops the review screen's gate sync
 - **Serials are issued at signing** and follow signing order, not entry date. Sort any
   register by `entry_date`.
 - **Chromium on Vercel shares a 512 MB temporary disk with its own leftovers.** `src/lib/pdf/render.ts` keeps one browser

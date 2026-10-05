@@ -144,6 +144,8 @@ export function ReviewScreen(props: {
   weather: ReviewWeather | null;
   hasProposal: boolean;
   hasStored: boolean;
+  /** A correction of a signed day: it starts from what was signed and changes only by hand — the gate does not feed it (README R121). */
+  isCorrection?: boolean;
   /** Set when someone else started this day and the viewer is helping with it. */
   startedBy?: string | null;
   /** Register names of plant with a signed plant prestart on this day. */
@@ -421,6 +423,9 @@ export function ReviewScreen(props: {
     let cancelled = false;
     const supabase = createClient();
     async function syncGate() {
+      // A correction is the supervisor's hand on a confirmed day. The gate fed the day before it was signed; feeding it
+      // again put back people who had been taken off and wrote gate clocks over corrected ones (README R121).
+      if (props.isCorrection) return;
       if (typeof document !== 'undefined' && document.visibilityState === 'hidden') return;
       try {
         const [{ data: gate }, { data: crewRows }] = await Promise.all([
