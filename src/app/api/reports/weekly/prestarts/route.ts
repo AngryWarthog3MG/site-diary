@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
 import { PDFDocument } from 'pdf-lib';
 import { fail, forbidUnlessSees, isDate, isUuid, requireApiUser } from '@/lib/api';
-import { renderPdfDocument, BrowserUnavailableError } from '@/lib/pdf/render';
+import { renderPdfDocument, holdBrowser, BrowserUnavailableError } from '@/lib/pdf/render';
 import { DOCKET_CSS } from '@/lib/pdf/styles';
 import { EMBEDDED_FONT_CSS } from '@/lib/pdf/fonts';
 import { LOGO_DATA_URI } from '@/lib/pdf/logo';
@@ -55,7 +55,9 @@ export async function GET(request: Request) {
   type Row = { id: string; prestart_date: string; supervisor_name: string | null; completed_at: string | null; prestart_attendees: Array<{ count: number }> };
   const list = (rows ?? []) as unknown as Row[];
 
-  // Each finished prestart's own PDF, one at a time (Chromium is heavy; stored copies cost nothing).
+  // Each finished prestart's own PDF, one at a time (Chromium is heavy; stored copies cost nothing) — and one browser
+  // for the lot, cover included: a relaunch per prestart ran the temporary disk out on the fourth (README R124).
+  const release = holdBrowser();
   const docs: Array<{ row: Row; bytes: Uint8Array; pages: number }> = [];
   try {
     for (const r of list.filter((x) => x.completed_at)) {
@@ -64,9 +66,10 @@ export async function GET(request: Request) {
       docs.push({ row: r, bytes: doc.bytes, pages });
     }
   } catch (err) {
+    await release();
     if (err instanceof BrowserUnavailableError) return fail('server_error', err.message, 501);
     if (err instanceof PrestartDocError) return fail('server_error', err.message, err.status);
-    return fail('server_error', `Could not build the week's prestarts: ${err instanceof Error ? err.message : 'PDF rendering failed.'}`, 500);
+    return fail('server_error', `Could not build the week's prestarts: ${err instanceof Error ? err.message.split('\n')[0] : 'PDF rendering failed.'}`, 500);
   }
 
   // The cover: every day of the range, what happened, and where to turn to.
@@ -126,6 +129,8 @@ export async function GET(request: Request) {
     return new Response(Buffer.from(bytes), { status: 200, headers: { 'content-type': 'application/pdf', 'content-disposition': `inline; filename="${org.code}_${project.code}_prestarts_${start}${clientCopy ? '_client' : ''}.pdf"`, 'cache-control': 'private, no-store' } });
   } catch (err) {
     if (err instanceof BrowserUnavailableError) return fail('server_error', err.message, 501);
-    return fail('server_error', `Could not bind the prestarts: ${err instanceof Error ? err.message : 'PDF rendering failed.'}`, 500);
+    return fail('server_error', `Could not bind the prestarts: ${err instanceof Error ? err.message.split('\n')[0] : 'PDF rendering failed.'}`, 500);
+  } finally {
+    await release();
   }
 }

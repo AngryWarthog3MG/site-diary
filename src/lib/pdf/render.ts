@@ -127,8 +127,12 @@ async function launch(): Promise<Browser> {
   return chromium.launch({ args: ['--font-render-hinting=none'] });
 }
 
+const onVercel = () => Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME);
+
 async function browser(): Promise<Browser> {
   if (shared?.isConnected()) return shared;
+  // A browser we still hold that has gone away on its own is worth a line: it is a crash, not a close of ours.
+  if (shared && onVercel()) console.info('pdf: the browser was gone before this render (disconnected, not closed here)');
   try {
     shared = await launch();
   } catch (error) {
@@ -139,6 +143,25 @@ async function browser(): Promise<Browser> {
 
 /** Renders in progress on this instance; the browser is closed only when none is. */
 let inFlight = 0;
+/** Runs of renders that have asked to keep the browser between them (README R124). */
+let holds = 0;
+
+/**
+ * Keep one browser for a run of renders in one request — a bundle of prestarts, a month of dockets. Between two
+ * renders nothing is in flight, and anything that closes an idle browser would close it there; every relaunch costs
+ * about 150 MB of the 512 MB temporary disk that is not given back within the request, so the fourth fresh render in
+ * a request killed Chromium (README R124). Call the returned function when the run is over, in a `finally`.
+ */
+export function holdBrowser(): () => Promise<void> {
+  holds += 1;
+  let released = false;
+  return async () => {
+    if (released) return;
+    released = true;
+    holds -= 1;
+    await releaseAfterRequest();
+  };
+}
 
 /**
  * On Vercel the instance is frozen the moment the response is out, and a browser kept across that freeze never
@@ -149,13 +172,13 @@ let inFlight = 0;
  * Outside a request scope — a script — `after` refuses, and the browser is closed at once if nothing is using it.
  */
 async function releaseAfterRequest(): Promise<void> {
-  if (!(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME)) return;
-  const closeIfIdle = async () => { if (inFlight === 0) await closeBrowser(); };
+  if (!onVercel()) return;
+  const closeIfIdle = async (why: string) => { if (inFlight === 0 && holds === 0 && shared) { console.info(`pdf: close · ${why}`); await closeBrowser(); } };
   try {
     const { after } = await import('next/server');
-    after(closeIfIdle);
+    after(() => closeIfIdle('after the response'));
   } catch {
-    await closeIfIdle();
+    await closeIfIdle('at once — no request scope for after()');
   }
 }
 
