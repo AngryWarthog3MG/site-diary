@@ -168,7 +168,7 @@ export default async function WeeklyReportPage({
                 </a>
               )}
               {prestarts.some((r) => r.completed_at) && (
-                <a className="button button--quiet" href={`/api/reports/weekly/prestarts?project=${current.project_id}&start=${start}&end=${end}&copy=client`} target="_blank" rel="noopener" title="For the head contractor: the prestarts that were recorded, without the app's induction check beside the sign-ons">
+                <a className="button button--quiet" href={`/api/reports/weekly/prestarts?project=${current.project_id}&start=${start}&end=${end}&copy=client&cover=0`} target="_blank" rel="noopener" title="For the head contractor: the finished prestarts alone — no summary page, and without the app's induction check beside the sign-ons">
                   Client copy — one PDF
                 </a>
               )}

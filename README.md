@@ -2930,7 +2930,9 @@ rewritten, so the answer is a second printing, not an edit: `copy=client` on the
 prestart from the same row and the same signatures with the induction check left off, lists on its cover the prestarts
 that were recorded rather than every working day, marks every page CLIENT COPY, and stores nothing. The cover says what
 the copy leaves out — the house rule from the registers (R118): a print that omits something says so. The office copy is
-unchanged, markers and empty days included. What was refused in the same conversation: writing the diary's labour list
+unchanged, markers and empty days included. Asked next to drop the summary page from what goes to the client: `cover=0` binds the finished
+prestarts alone, and the Client copy button uses it. Each page still says CLIENT COPY in its footer; the office bundle
+keeps its cover. What was refused in the same conversation: writing the diary's labour list
 into prestarts as sign-ons. A sign-on is a person's own signature and fit-for-work answer; the diary says who was on
 site, not who stood at the briefing.
 

@@ -27,6 +27,7 @@ const awst = (iso: string) => new Intl.DateTimeFormat('en-AU', { timeZone: 'Aust
  * `copy=client` is the same bundle for someone outside the company (README R124): the cover lists the prestarts that
  * were recorded and not the days without one, each prestart is printed without the app's induction check beside the
  * sign-ons, and every page says CLIENT COPY. Nothing stored changes; the cover says what the copy leaves out.
+ * `cover=0` leaves the summary page off: the finished prestarts and nothing else.
  */
 export async function GET(request: Request) {
   const { supabase, user, response } = await requireApiUser();
@@ -36,6 +37,8 @@ export async function GET(request: Request) {
   const start = url.searchParams.get('start');
   const end = url.searchParams.get('end');
   const clientCopy = url.searchParams.get('copy') === 'client';
+  // `cover=0`: the prestarts alone, no summary page in front (README R124) — what goes to the head contractor.
+  const withCover = url.searchParams.get('cover') !== '0';
   if (!isUuid(projectId)) return fail('bad_request', 'Bad project id.', 400);
   if (!isDate(start) || !isDate(end) || end < start) return fail('bad_request', 'start and end must be YYYY-MM-DD, start first.', 400);
   if ((Date.parse(end) - Date.parse(start)) / 86_400_000 > 31) return fail('bad_request', 'At most a month of prestarts in one PDF.', 400);
@@ -111,8 +114,9 @@ export async function GET(request: Request) {
       : `<p class="src">Each prestart follows exactly as its own PDF prints it: the record as finished, with the crew's signatures. Working days with no prestart are listed; weekends only when one was run.</p>`,
     '</section></div></body></html>'].join('');
 
+  if (!withCover && docs.length === 0) { await release(); return fail('not_found', 'No finished prestarts in this period.', 404); }
   try {
-    const cover = await renderPdfDocument(html, {
+    const cover = !withCover ? null : await renderPdfDocument(html, {
       title: `Prestarts ${project.code} ${start} to ${end}`, author: org.name, subject: `${project.name} — prestarts, ${start} to ${end}`,
       keywords: [org.code, project.code, 'prestarts', start],
       instant: new Date(`${start}T00:00:00Z`),
@@ -120,7 +124,7 @@ export async function GET(request: Request) {
       footerLeft: `${org.code}_${project.code} · PRESTARTS${clientCopy ? ' · CLIENT COPY' : ''} · ${dmy(start)} to ${dmy(end)}`,
     });
     const merged = await PDFDocument.create();
-    for (const source of [cover, ...docs.map((d) => d.bytes)]) {
+    for (const source of [...(cover ? [cover] : []), ...docs.map((d) => d.bytes)]) {
       const doc = await PDFDocument.load(source, { updateMetadata: false });
       for (const p of await merged.copyPages(doc, doc.getPageIndices())) merged.addPage(p);
     }
