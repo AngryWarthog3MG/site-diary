@@ -1,5 +1,5 @@
 import { PDFDocument } from 'pdf-lib';
-import { sweepStaleProfiles, tmpFreeBytes } from './tmp-sweep';
+import { sweepStaleProfiles, tmpFreeBytes, tmpListing } from './tmp-sweep';
 import type { Browser } from 'playwright-core';
 import { DailyDocket, type PhotoImage } from './docket';
 import { ClientSheet, CLIENT_SHEET_CSS } from './client-sheet';
@@ -112,6 +112,8 @@ async function launch(): Promise<Browser> {
     const free = await tmpFreeBytes();
     // One line per launch, so `vercel logs` shows the instance's state over time.
     console.info(`pdf: launch · swept ${swept.removed} stale Chromium profile(s)${swept.failed ? `, ${swept.failed} would not go` : ''} · /tmp free ${free == null ? 'unknown' : `${Math.round(free / 1048576)} MB`}`);
+    // Short of room and nothing swept: name what is there, so the next fix is aimed at the right files (README R124).
+    if (free != null && free < 200 * 1048576) console.info(`pdf: /tmp holds ${await tmpListing()}`);
     const [{ default: packed }, { chromium }] = await Promise.all([
       import('@sparticuz/chromium'),
       import('playwright-core'),
@@ -145,12 +147,16 @@ async function browser(): Promise<Browser> {
 let inFlight = 0;
 /** Runs of renders that have asked to keep the browser between them (README R124). */
 let holds = 0;
+/** The one page a held run prints every document on. Closing a page is what kills this Chromium (see holdBrowser). */
+let heldPage: Awaited<ReturnType<typeof openPage>> | null = null;
 
 /**
- * Keep one browser for a run of renders in one request — a bundle of prestarts, a month of dockets. Between two
- * renders nothing is in flight, and anything that closes an idle browser would close it there; every relaunch costs
- * about 150 MB of the 512 MB temporary disk that is not given back within the request, so the fourth fresh render in
- * a request killed Chromium (README R124). Call the returned function when the run is over, in a `finally`.
+ * Keep one browser AND ONE PAGE for a run of renders in one request — a bundle of prestarts. The serverless Chromium
+ * runs single-process, and closing a page takes the whole browser down with it: the logs showed a launch per render,
+ * no close of ours between them, and each dead browser leaving about 150 MB in the 512 MB temporary disk that the
+ * sweep does not find — so the fourth fresh render in a request died for want of disk (README R124). A held run
+ * therefore prints every document on the same page, one after another, and closes nothing until the response has
+ * gone. Renders in a held run must be sequential. Call the returned function when the run is over, in a `finally`.
  */
 export function holdBrowser(): () => Promise<void> {
   holds += 1;
@@ -185,6 +191,7 @@ async function releaseAfterRequest(): Promise<void> {
 export async function closeBrowser(): Promise<void> {
   const b = shared;
   shared = null;
+  heldPage = null;
   // A browser from a paused instance may never answer close either; do not wait on it for long.
   await Promise.race([b?.close().catch(() => undefined), new Promise((resolve) => setTimeout(resolve, 3000))]);
 }
@@ -358,8 +365,14 @@ export async function renderPdfDocument(html: string, meta: DocumentMeta): Promi
 async function renderOnce(html: string, meta: DocumentMeta): Promise<Uint8Array> {
   inFlight += 1;
   let page: Awaited<ReturnType<typeof openPage>> | null = null;
+  const held = holds > 0;
   try {
-    page = await openPage();
+    if (held) {
+      if (!heldPage || heldPage.isClosed()) heldPage = await openPage();
+      page = heldPage;
+    } else {
+      page = await openPage();
+    }
     await page.setContent(html, { waitUntil: 'load' });
     // Everything is embedded, so this resolves immediately — but laying out
     // before the faces are ready would silently produce a fallback-font PDF.
@@ -388,8 +401,12 @@ async function renderOnce(html: string, meta: DocumentMeta): Promise<Uint8Array>
     });
 
     return normalise(raw, meta);
+  } catch (error) {
+    // A held page that failed is not trusted with the next document.
+    if (held && page === heldPage) heldPage = null;
+    throw error;
   } finally {
-    await page?.close().catch(() => undefined);
+    if (!held) await page?.close().catch(() => undefined);
     inFlight -= 1;
     await releaseAfterRequest();
   }
