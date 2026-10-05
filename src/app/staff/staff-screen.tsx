@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { compressPhoto } from '@/lib/photos/compress';
@@ -9,6 +9,9 @@ import { assignStep, filterStaff, type JobFilter, type Person, type PersonJob } 
 
 interface Job { id: string; code: string; name: string; canAssign: boolean }
 interface Details { role: string; phone: string; employer: string; notes: string }
+/** Where on the page a save's answer is shown: beside the thing that was pressed, never off the top of the screen. */
+type Where = 'top' | 'jobs' | 'tickets' | 'details';
+interface Msg { where: Where; kind: 'ok' | 'bad' | 'warn'; text: string }
 const BLANK_TICKET = { key: 'white_card', no: '', issued: '', expires: '', photo: null as File | null };
 
 /**
@@ -27,8 +30,8 @@ export function StaffScreen({ orgId, orgName, projectId, userId, today, people, 
   const [showLeft, setShowLeft] = useState(false);
   const [openId, setOpenId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [saved, setSaved] = useState<string | null>(null);
+  const [msg, setMsg] = useState<Msg | null>(null);
+  const ticketsRef = useRef<HTMLDivElement | null>(null);
 
   const [adding, setAdding] = useState(false);
   const [fresh, setFresh] = useState({ name: '', role: '', phone: '', employer: '', jobs: [] as string[] });
@@ -42,6 +45,30 @@ export function StaffScreen({ orgId, orgName, projectId, userId, today, people, 
   // A job tick shows the moment it is tapped; the page's own answer replaces it when the save has been re-read.
   const [ticked, setTicked] = useState<Record<string, boolean>>({});
   useEffect(() => { setTicked({}); }, [people]);
+
+  // A card that has been picked but not saved is the easiest thing on this page to lose: say so, show it, and do not
+  // let the row close or the tab go without a word.
+  const ticketDirty = Boolean(ticket.photo || ticket.no.trim() || ticket.issued || ticket.expires);
+  const [preview, setPreview] = useState<string | null>(null);
+  useEffect(() => {
+    if (!ticket.photo || !ticket.photo.type.startsWith('image/')) { setPreview(null); return; }
+    const url = URL.createObjectURL(ticket.photo);
+    setPreview(url);
+    return () => URL.revokeObjectURL(url);
+  }, [ticket.photo]);
+  useEffect(() => {
+    if (!ticketDirty) return;
+    const warn = (e: BeforeUnloadEvent) => { e.preventDefault(); };
+    window.addEventListener('beforeunload', warn);
+    return () => window.removeEventListener('beforeunload', warn);
+  }, [ticketDirty]);
+  const pointAtTicket = (text: string) => {
+    setMsg({ where: 'tickets', kind: 'warn', text });
+    ticketsRef.current?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  };
+  const say = (where: Where) => (msg && msg.where === where
+    ? <p className={msg.kind === 'bad' ? 'alert' : msg.kind === 'warn' ? 'notice gap' : 'notice'} role={msg.kind === 'ok' ? 'status' : 'alert'}>{msg.text}</p>
+    : null);
 
   const shown = filterStaff(people, q, jobFilter, showLeft);
   const left = people.filter((p) => !p.active).length;
@@ -66,16 +93,17 @@ export function StaffScreen({ orgId, orgName, projectId, userId, today, people, 
   }, [cardPaths]);
 
   function toggle(p: Person) {
-    setError(null); setSaved(null); setLeaving(false); setInducting(null); setTicket(BLANK_TICKET);
+    if (ticketDirty && openId) { pointAtTicket('This ticket is not saved yet. Press Save ticket, or Clear to drop it.'); return; }
+    setMsg(null); setLeaving(false); setInducting(null); setTicket(BLANK_TICKET);
     if (openId === p.id) { setOpenId(null); setDetails(null); return; }
     setOpenId(p.id);
     setDetails({ role: p.role ?? '', phone: p.phone ?? '', employer: p.employer ?? '', notes: p.notes ?? '' });
   }
 
-  async function run(fn: () => Promise<string>) {
-    setBusy(true); setError(null); setSaved(null);
-    try { setSaved(await fn()); }
-    catch (e) { setError(e instanceof Error ? e.message : 'That did not save.'); }
+  async function run(where: Where, fn: () => Promise<string>) {
+    setBusy(true); setMsg(null);
+    try { const text = await fn(); setMsg(text ? { where, kind: 'ok', text } : null); }
+    catch (e) { setMsg({ where, kind: 'bad', text: e instanceof Error ? e.message : 'That did not save.' }); }
     // Re-read whatever happened: a save that half-landed (a person added, a job refused) must show as it stands.
     finally { setBusy(false); router.refresh(); }
   }
@@ -95,7 +123,7 @@ export function StaffScreen({ orgId, orgName, projectId, userId, today, people, 
     if (e) throw new Error(/row-level security/i.test(e.message) ? refused('That').message : e.message);
   }
 
-  const addPerson = () => run(async () => {
+  const addPerson = () => run('top', async () => {
     const name = fresh.name.replace(/\s+/g, ' ').trim();
     if (!name) throw new Error('Give the person’s name as it goes on the sheets.');
     const role = fresh.role.trim() || null;
@@ -114,7 +142,7 @@ export function StaffScreen({ orgId, orgName, projectId, userId, today, people, 
   const setJob = (p: Person, j: PersonJob, on: boolean) => {
     const key = `${p.id}|${j.projectId}`;
     setTicked((t) => ({ ...t, [key]: on }));
-    return run(async () => {
+    return run('jobs', async () => {
       try {
         if (on) { await putOnJob(p.name, p.role, j); return `${p.name} is on ${j.code}’s crew list.`; }
         if (!j.crewId) return '';
@@ -129,7 +157,7 @@ export function StaffScreen({ orgId, orgName, projectId, userId, today, people, 
     });
   };
 
-  const induct = (p: Person, j: PersonJob) => run(async () => {
+  const induct = (p: Person, j: PersonJob) => run('jobs', async () => {
     if (!inductDate) throw new Error('Pick the day they were inducted.');
     if (inductDate > today) throw new Error('Record an induction once it has happened.');
     const { error: e } = await createClient().from('crew_inductions').insert({ project_id: j.projectId, person_name: p.name, inducted_on: inductDate, notes: inductNotes.trim() || null, inducted_by: userId });
@@ -138,7 +166,7 @@ export function StaffScreen({ orgId, orgName, projectId, userId, today, people, 
     return `${p.name} inducted on ${j.code}, ${fmtDate(inductDate)}.`;
   });
 
-  const addTicket = (p: Person) => run(async () => {
+  const addTicket = (p: Person) => run('tickets', async () => {
     if (ticket.issued && ticket.issued > today) throw new Error('The issue date is in the future.');
     if (ticket.issued && ticket.expires && ticket.expires < ticket.issued) throw new Error('The expiry is before the issue date.');
     const supabase = createClient();
@@ -160,26 +188,28 @@ export function StaffScreen({ orgId, orgName, projectId, userId, today, people, 
       } catch { note = ' The card could not be read, so the ticket was saved without it.'; }
     }
     const label = competencies.find((c) => c.key === ticket.key)?.label ?? 'Ticket';
+    const withCard = Boolean(ticket.photo) && !note;
     setTicket(BLANK_TICKET);
-    return `${label} recorded for ${p.name}.${note}`;
+    if (note) throw new Error(`${label} recorded for ${p.name}, without its card.${note} Remove the ticket and add it again with the card, or leave it as it is.`);
+    return `${label} recorded for ${p.name}${withCard ? ', with its card' : ''}.`;
   });
 
-  const retire = (p: Person, id: string, label: string) => run(async () => {
+  const retire = (p: Person, id: string, label: string) => run('tickets', async () => {
     const { data, error: e } = await createClient().from('crew_tickets').update({ active: false }).eq('id', id).select('id');
     if (e) throw new Error(e.message);
     if (!data?.length) throw new Error('That ticket could not be removed.');
     return `${label} removed from ${p.name}.`;
   });
 
-  const saveDetails = (p: Person) => run(async () => {
+  const saveDetails = (p: Person) => run('details', async () => {
     if (!details) return '';
     const { data, error: e } = await createClient().from('staff').update({ role: details.role.trim() || null, phone: details.phone.trim() || null, employer: details.employer.trim() || null, notes: details.notes.trim() || null }).eq('id', p.id).select('id');
     if (e) throw new Error(e.message);
     if (!data?.length) throw new Error('Those details could not be saved.');
-    return `${p.name}’s details saved.${(details.role.trim() || null) !== p.role ? ' The role has gone to their crew lists too.' : ''}`;
+    return `${p.name}’s details saved.${(details.role.trim() || null) !== p.role ? ' The role has gone to their crew lists too.' : ''}${ticketDirty ? ' The ticket above is NOT saved yet — press Save ticket.' : ''}`;
   });
 
-  const setActive = (p: Person, active: boolean) => run(async () => {
+  const setActive = (p: Person, active: boolean) => run(active ? 'details' : 'top', async () => {
     const { data, error: e } = await createClient().from('staff').update({ active }).eq('id', p.id).select('id');
     if (e) throw new Error(e.message);
     if (!data?.length) throw new Error('That could not be saved.');
@@ -211,11 +241,10 @@ export function StaffScreen({ orgId, orgName, projectId, userId, today, people, 
         </select>
         {left > 0 && <label className="regs__tick"><input type="checkbox" checked={showLeft} onChange={(e) => setShowLeft(e.target.checked)} /><span>Show {left} no longer with the company</span></label>}
       </div>
-      {error && <p className="alert" role="alert">{error}</p>}
-      {saved && <p className="notice" role="status">{saved}</p>}
+      {say('top')}
 
       {!adding ? (
-        <div className="regs__actions"><button type="button" className="button" onClick={() => { setAdding(true); setError(null); setSaved(null); }}>Add a person</button></div>
+        <div className="regs__actions"><button type="button" className="button" onClick={() => { setAdding(true); setMsg(null); }}>Add a person</button></div>
       ) : (
         <div className="item staff__add">
           <p className="label">New person</p>
@@ -284,7 +313,7 @@ export function StaffScreen({ orgId, orgName, projectId, userId, today, people, 
                             ? <span className="caption">Inducted {fmtDate(j.inductedOn)}{j.inductionNotes ? ` · ${j.inductionNotes}` : ''}</span>
                             : <span className={j.onCrew ? 'staff__flag' : 'caption'}>Not inducted here</span>}
                           {!j.inductedOn && job?.canAssign && inducting !== key && (
-                            <button type="button" className="quotebtn" disabled={busy} onClick={() => { setInducting(key); setInductDate(today); setInductNotes(''); setError(null); }}>Record induction</button>
+                            <button type="button" className="quotebtn" disabled={busy} onClick={() => { setInducting(key); setInductDate(today); setInductNotes(''); setMsg(null); }}>Record induction</button>
                           )}
                         </span>
                         {inducting === key && (
@@ -300,6 +329,8 @@ export function StaffScreen({ orgId, orgName, projectId, userId, today, people, 
                       </div>
                     );
                   })}
+
+                  {say('jobs')}
 
                   <p className="label staff__head">Tickets and certificates · {p.tickets.length}</p>
                   {p.gaps.length > 0 && <p className="staff__flag staff__flag--bad">Their role needs, and they do not hold in date: {p.gaps.join(', ')}.</p>}
@@ -317,7 +348,8 @@ export function StaffScreen({ orgId, orgName, projectId, userId, today, people, 
                     </div>
                   ))}
                   {p.active && (
-                    <div className="addticket">
+                    <div className={`addticket${ticketDirty ? ' staff__unsaved' : ''}`} ref={ticketsRef}>
+                      <p className="label">Add a ticket or certificate</p>
                       <div className="regs__fields">
                         <label className="fieldcell regs__field"><span className="label">Ticket or certificate</span>
                           <select className="field field--sm" value={ticket.key} onChange={(e) => setTicket({ ...ticket, key: e.target.value })}>
@@ -331,15 +363,25 @@ export function StaffScreen({ orgId, orgName, projectId, userId, today, people, 
                         <label className="fieldcell regs__field"><span className="label">Expires · blank if never</span>
                           <input className="field field--sm" type="date" value={ticket.expires} onChange={(e) => setTicket({ ...ticket, expires: e.target.value })} /></label>
                       </div>
+                      {ticket.photo && (
+                        <div className="staff__card">
+                          {preview ? <img src={preview} alt="The card as picked" className="staff__thumb" /> : null}
+                          <span><b>{ticket.photo.name}</b><span className="caption"> · {(ticket.photo.size / 1048576).toFixed(1)} MB · picked, not saved yet</span></span>
+                        </div>
+                      )}
+                      {ticketDirty && !(msg && msg.where === 'tickets') && <p className="staff__flag" role="status">Not saved yet — press Save ticket.</p>}
+                      {say('tickets')}
                       <div className="regs__actions">
                         <label className="button button--quiet">
-                          {ticket.photo ? 'Card attached' : 'Photo of the card'}
-                          <input type="file" accept="image/*" hidden onChange={(e) => setTicket({ ...ticket, photo: e.target.files?.[0] ?? null })} />
+                          {ticket.photo ? 'Pick a different card' : 'Attach the card · photo or PDF'}
+                          <input type="file" accept="image/*,application/pdf" hidden onChange={(e) => { const f = e.target.files?.[0] ?? null; e.target.value = ''; if (f) { setTicket({ ...ticket, photo: f }); setMsg(null); } }} />
                         </label>
-                        <button type="button" className="button button--quiet" disabled={busy} onClick={() => void addTicket(p)}>{busy ? 'Saving…' : 'Add ticket'}</button>
+                        <button type="button" className={`button${ticketDirty ? '' : ' button--quiet'}`} disabled={busy} onClick={() => void addTicket(p)}>{busy ? 'Saving…' : ticket.photo ? 'Save ticket with its card' : 'Save ticket'}</button>
+                        {ticketDirty && <button type="button" className="quotebtn" disabled={busy} onClick={() => { setTicket(BLANK_TICKET); setMsg(null); }}>Clear</button>}
                       </div>
                     </div>
                   )}
+                  {!p.active && say('tickets')}
 
                   <p className="label staff__head">Details</p>
                   <div className="regs__fields">
@@ -357,6 +399,7 @@ export function StaffScreen({ orgId, orgName, projectId, userId, today, people, 
                     {p.active && !leaving && <button type="button" className="quotebtn quotebtn--remove" disabled={busy} onClick={() => setLeaving(true)}>No longer with the company</button>}
                     {!p.active && <button type="button" className="quotebtn" disabled={busy} onClick={() => void setActive(p, true)}>Back with the company</button>}
                   </div>
+                  {say('details')}
                   {leaving && p.active && (
                     <div className="staff__leave">
                       <p className="caption">{p.name} comes off every job’s crew list and stays on the record: the tickets, inductions and every day already signed keep the name.</p>

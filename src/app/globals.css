@@ -4623,3 +4623,7 @@ a.dash-row:hover { background: var(--teal-tint); }
 @media (max-width: 700px) {
   .staff__tools { grid-template-columns: 1fr; }
 }
+.staff__unsaved { border: 1px solid rgba(154, 106, 9, 0.55); border-radius: 0.6rem; padding: 0.75rem; background: #fffaf0; }
+.staff__card { display: flex; align-items: center; gap: 0.75rem; margin-top: 0.6rem; }
+.staff__thumb { width: 5.5rem; height: 3.75rem; object-fit: cover; border-radius: 0.4rem; border: 1px solid var(--ink-08); }
+.staff .addticket .regs__actions .button { width: auto; margin-top: 0; }
