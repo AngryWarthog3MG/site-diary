@@ -651,7 +651,7 @@ export function TodayPanel({
               ? <>Arriving today: {deliveries.today.map((d) => d.text).join('; ')}{deliveries.tomorrow > 0 ? ` · ${deliveries.tomorrow} booked for tomorrow` : ''}</>
               : <>{deliveries.tomorrow} deliver{deliveries.tomorrow === 1 ? 'y' : 'ies'} booked for tomorrow</>}
           </span>
-          <Link href={`/deliveries?project=${projectId}`}>Deliveries</Link>
+          <Link href={`/deliveries?project=${projectId}`}>Calendar</Link>
         </div>
       )}
 

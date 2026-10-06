@@ -11,7 +11,7 @@ import { monthLabel, nextMonth, prevMonth, readMonth, summarise } from '@/lib/de
 import { DeliveriesScreen } from './deliveries-screen';
 
 export const dynamic = 'force-dynamic';
-export const metadata = { title: 'Deliveries · Kooboolong IMS' };
+export const metadata = { title: 'Calendar · Kooboolong IMS' };
 
 /**
  * The deliveries calendar (README R127): what is booked to arrive on this job, day by day, with the material orders
@@ -42,9 +42,9 @@ export default async function DeliveriesPage({ searchParams }: { searchParams: P
     <main className="sheet sheet--wide">
       <p className="label"><BrandMark size={18} /> {wholeCompany ? current.project.org.name : current.project.name}</p>
       <OutboxStatus />
-      <h1 className="page-title">Deliveries</h1>
+      <h1 className="page-title">Calendar</h1>
       <p className="page-subtitle">
-        What is booked to arrive, day by day, and the material orders still waiting for a day. A delivery booked here shows on
+        Deliveries booked to arrive, day by day, and the material orders still waiting for a day. A delivery booked here shows on
         the job’s home page on the day and on that day’s diary.
       </p>
       {office && (
