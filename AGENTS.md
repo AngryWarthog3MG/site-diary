@@ -187,6 +187,12 @@ improvising; the register once shipped dead because a live smoke test was skippe
   `/orders` (raise form inline), `/orders/[id]`. Outbox kinds `order_raise` (photos as blobs), `order_status`.
   An urgent request emails `projects.report_emails` once via `notify.ts` (`notified_at` server-only; nightly retry).
   A plant issue is NOT a prestart defect and never becomes one — Mitchell's decision; see README R46
+- `src/lib/deliveries/` — the deliveries calendar (README R127): `model.ts` (pure, node-tested: `calendarItems` — bookings
+  where booked plus unfinished material orders on their needed-by day, an order with a booking shown once; `monthGrid`,
+  `toneFor`, `summarise`, `describe`), `load.ts`. Table `deliveries` (booked → received | cancelled, then frozen; every
+  earlier day kept in `moved_from`; never deleted; `order_id` must be the job's). Writes = `app.can_run_talks`; labourer
+  reads none. Screen `deliveries` (Works; `?scope=company` for pm/admin), outbox kinds `delivery_book` / `delivery_update`.
+  The home's today panel and the day's review read it as a PROMPT — a booking is never a diary row. Suite 55
 - `src/lib/gate/` — the visitor gate: `model.ts` (`newGateToken`, `gateUrl`, `DEFAULT_RULES`, `validateGateSignIn`).
   Table `gate_tokens` (one active per job; rotate = revoke + new). Public routes `/gate/[token]` and
   `/api/gate/[token]/{signin,signout}` (listed in `PUBLIC_PATHS`; service role; rate limit 60/10 min per job) write

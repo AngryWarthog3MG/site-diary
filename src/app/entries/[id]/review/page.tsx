@@ -237,6 +237,10 @@ export default async function ReviewPage({ params }: { params: Promise<{ id: str
 
   guardScreen(memberships.find((m) => m.project_id === entry.project_id), 'entries');
   const neighbours = await loadDayNeighbours(supabase, entry.project_id, entry.entry_date);
+  // What was booked to arrive this day (README R127): a prompt for the materials, never a row on its own.
+  const { data: booked } = await supabase.from('deliveries').select('id, item, quantity, supplier, window_text, status, docket_ref').eq('project_id', entry.project_id).eq('booked_for', entry.entry_date).neq('status', 'cancelled').order('created_at');
+  const deliveriesToday = ((booked ?? []) as Array<{ id: string; item: string; quantity: string | null; supplier: string | null; window_text: string | null; status: string; docket_ref: string | null }>)
+    .map((d) => ({ id: d.id, text: [d.item, d.quantity, d.supplier, d.window_text].filter(Boolean).join(' · '), received: d.status === 'received', docket: d.docket_ref }));
 
   return (
     <ReviewScreen
@@ -262,6 +266,7 @@ export default async function ReviewPage({ params }: { params: Promise<{ id: str
       closer={closer}
       viewerId={userId}
       handedOver={handedOver}
+      deliveriesToday={deliveriesToday}
     />
   );
 }

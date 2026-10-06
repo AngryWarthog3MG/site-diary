@@ -2993,6 +2993,24 @@ still feeds it, and the closer reviews it as it stands before signing. Nothing i
 names its keys and `ready_*` are not among them — so every signed day verifies as before. The supervisor's and the
 client's drawn marks are untouched, which is the point: their sign-off is still theirs; the closing is his. Suite 54.
 
+**R127. Deliveries.** "A calendar of deliveries: I add upcoming deliveries, they show up per job on the day — plants
+booked for the 12th for Curtin show on Curtin's page that day — and a full calendar gives a snapshot of everything
+ordered to come in." Orders (R46) already said what was asked for and whether it had been placed, with a needed-by
+day; what nobody had written down was the booking — the supplier said Tuesday, AM — and what happened to it. A
+delivery is now a row of its own: booked for a day on a job, with what, how much, from whom and when in the day, as the
+supplier said it. On the day it is received, by whoever takes it, with the docket number; or cancelled, with a reason;
+or moved — and every day it was ever booked for stays on the row, because "they said the 12th, then the 14th" is half of
+every supply dispute. Received and cancelled are frozen; nothing is deleted. A booking may point at the order it
+fulfils, and the calendar shows unfinished material orders on their needed-by day beside the bookings, dashed, so the
+asked-for and the booked sit on one page and an order with a booking is not shown twice.
+
+Where it goes: Works, beside Orders, as `/deliveries` — one job's month, or for the office every job on one calendar.
+Where it shows: the job's home page says what is arriving today and how many are booked for tomorrow, and the day's
+diary review opens with what was booked to arrive, as a prompt to record what actually came under Materials — never as a
+row written for the supervisor. The calendar is the only place a booking is made or changed, and every change goes
+through the outbox: a truck arriving in a dead spot is exactly when the receipt is taken. Booking, receiving, moving
+and cancelling belong to whoever runs the day (the people who raise orders); the labourer reads none of it. Suite 55.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;

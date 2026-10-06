@@ -94,6 +94,8 @@ export function TodayPanel({
   const [othersToday, setOthersToday] = useState<{ id: string; who: string; labour: number } | null>(null);
   // Machines whose last plant prestart today said Not to be used.
   const [taggedOut, setTaggedOut] = useState<string[]>([]);
+  // Deliveries booked for today on this job, and how many for tomorrow (README R127).
+  const [deliveries, setDeliveries] = useState<{ today: Array<{ id: string; text: string }>; tomorrow: number }>({ today: [], tomorrow: 0 });
   const [prestart, setPrestart] = useState<{ id: string; done: boolean; signed: number } | null>(null);
   const [tomorrowPrestart, setTomorrowPrestart] = useState<{ id: string; date: string } | null>(null);
   // The diary opens after the shift (README R97). False on the server so the first paint matches; the clock ticks once a minute.
@@ -239,6 +241,19 @@ export function TodayPanel({
           latest.set(r.plant_id as string, { fit: Boolean(r.fit_for_use), name: pl?.name ?? 'A machine' });
         }
         setTaggedOut([...latest.values()].filter((v) => !v.fit).map((v) => v.name));
+        // What is booked to arrive today, and tomorrow's count — booked only; received and cancelled are history.
+        const tomorrow = new Date(`${today}T00:00:00Z`); tomorrow.setUTCDate(tomorrow.getUTCDate() + 1);
+        const { data: dl } = await supabase
+          .from('deliveries')
+          .select('id, booked_for, item, quantity, supplier, window_text')
+          .eq('project_id', projectId)
+          .eq('status', 'booked')
+          .in('booked_for', [today, tomorrow.toISOString().slice(0, 10)])
+          .order('created_at');
+        setDeliveries({
+          today: (dl ?? []).filter((r) => r.booked_for === today).map((r) => ({ id: r.id as string, text: [r.item, r.quantity, r.supplier, r.window_text].filter(Boolean).join(' · ') })),
+          tomorrow: (dl ?? []).filter((r) => r.booked_for !== today).length,
+        });
       }
 
       {
@@ -626,6 +641,17 @@ export function TodayPanel({
         <div className={`prestart-row ${safety.overdue > 0 ? 'prestart-row--open' : ''}`}>
           <span>{safety.open} safety report{safety.open === 1 ? '' : 's'} open{safety.overdue > 0 ? ` · ${safety.overdue} action${safety.overdue === 1 ? '' : 's'} overdue` : ''}</span>
           <Link href={`/incidents?project=${projectId}`}>Open</Link>
+        </div>
+      )}
+
+      {(deliveries.today.length > 0 || deliveries.tomorrow > 0) && (
+        <div className="prestart-row home-deliveries">
+          <span>
+            {deliveries.today.length > 0
+              ? <>Arriving today: {deliveries.today.map((d) => d.text).join('; ')}{deliveries.tomorrow > 0 ? ` · ${deliveries.tomorrow} booked for tomorrow` : ''}</>
+              : <>{deliveries.tomorrow} deliver{deliveries.tomorrow === 1 ? 'y' : 'ies'} booked for tomorrow</>}
+          </span>
+          <Link href={`/deliveries?project=${projectId}`}>Deliveries</Link>
         </div>
       )}
 

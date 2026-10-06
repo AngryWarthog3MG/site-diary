@@ -4632,3 +4632,43 @@ a.dash-row:hover { background: var(--teal-tint); }
 .dws-sign { display: grid; gap: 0.7rem; }
 .dws-sign__dec { margin: 0; padding: 0.7rem 0.85rem; border: 1px solid var(--ink-08); border-radius: 0.5rem; font-size: 0.92rem; line-height: 1.45; }
 .dws-sign__lines td, .dws-sign__lines th { font-size: 0.85rem; }
+
+/* The deliveries calendar (README R127). */
+.dcal { display: grid; gap: 0.9rem; margin-top: 0.75rem; }
+.dcal__grid { width: 100%; table-layout: fixed; border-collapse: collapse; }
+.dcal__grid th { font-size: 0.68rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-60); padding: 0.3rem 0.2rem; text-align: left; }
+.dcal__day { vertical-align: top; border: 1px solid var(--ink-08); padding: 0; height: 5.5rem; }
+.dcal__day--out { background: rgba(0, 0, 0, 0.025); }
+.dcal__day--today .dcal__num { background: var(--teal); color: #f2f5f2; border-radius: 999px; }
+.dcal__day--on { outline: 2px solid var(--teal); outline-offset: -2px; }
+.dcal__pick { display: flex; flex-direction: column; align-items: stretch; gap: 0.15rem; width: 100%; height: 100%; min-height: 5.5rem; padding: 0.3rem; background: none; border: 0; text-align: left; cursor: pointer; font: inherit; color: inherit; }
+.dcal__num { align-self: flex-start; font-size: 0.78rem; font-weight: 600; padding: 0.05rem 0.35rem; }
+.dcal__day--out .dcal__num { color: var(--ink-40); }
+.dcal__chip { display: block; font-size: 0.68rem; line-height: 1.25; padding: 0.1rem 0.3rem; border-radius: 0.3rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; border: 1px solid transparent; }
+.dcal__chip--booked { background: #e6f0ec; color: #1f5c4a; }
+.dcal__chip--today { background: var(--teal); color: #f2f5f2; }
+.dcal__chip--overdue { background: #fbecec; color: #9a2b2b; }
+.dcal__chip--received { background: #eef3f0; color: var(--ink-60); text-decoration: none; }
+.dcal__chip--cancelled { background: transparent; color: var(--ink-40); text-decoration: line-through; border-color: var(--ink-08); }
+.dcal__chip--order { background: #fff7e4; color: #8a5a00; border-style: dashed; border-color: #d9b56a; }
+.dcal__more { font-size: 0.68rem; color: var(--ink-60); }
+.dcal__key { display: flex; flex-wrap: wrap; gap: 0.4rem; align-items: center; }
+.dcal__key .dcal__chip { display: inline-block; }
+.dcal__detail { display: grid; gap: 0.6rem; }
+.dcal__form { display: grid; gap: 0.6rem; }
+.dcal__list li.dcal__row { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0.4rem 1rem; padding: 0.6rem 0; border-bottom: 1px solid var(--ink-08); }
+.dcal__row-main { flex: 1 1 18rem; }
+.dcal__row-title { margin: 0; font-weight: 600; }
+.dcal__row--overdue .dcal__row-title { color: #9a2b2b; }
+.dcal__row--cancelled .dcal__row-title { color: var(--ink-40); text-decoration: line-through; }
+.dcal__row--received .dcal__row-title { color: var(--ink-60); }
+.dcal__row-actions { display: flex; gap: 0.9rem; align-items: center; flex-wrap: wrap; }
+.dcal__act { flex: 1 1 100%; display: flex; flex-wrap: wrap; gap: 0.6rem 0.75rem; align-items: end; padding: 0.3rem 0 0.2rem; }
+.dcal__act .button { width: auto; margin-top: 0; }
+.dcal__grow { flex: 1 1 14rem; }
+@media (max-width: 700px) {
+  .dcal__day, .dcal__pick { min-height: 3.6rem; height: auto; }
+  .dcal__chip { font-size: 0; height: 0.45rem; width: 0.45rem; border-radius: 999px; display: inline-block; margin-right: 0.15rem; padding: 0; }
+  .dcal__key .dcal__chip { font-size: 0.68rem; height: auto; width: auto; border-radius: 0.3rem; padding: 0.1rem 0.3rem; }
+  .dcal__more { font-size: 0.6rem; }
+}

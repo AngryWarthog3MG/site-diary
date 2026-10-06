@@ -165,6 +165,8 @@ export function ReviewScreen(props: {
   viewerId?: string;
   /** When the day was handed over for the closer's sign-off, and by whom. */
   handedOver?: { at: string; byName: string; note: string | null } | null;
+  /** Deliveries booked for this day (README R127) — a prompt for what to record, not a record itself. */
+  deliveriesToday?: Array<{ id: string; text: string; received: boolean; docket: string | null }>;
 }) {
   const router = useRouter();
   const [payload, setPayload] = useState<ReviewPayload>(props.initial);
@@ -699,6 +701,12 @@ export function ReviewScreen(props: {
           <p className="notice" style={{ marginTop: '0.75rem' }}>
             Started by {props.startedBy}. You are both working on this day — whoever saves last
             wins, so agree who finishes it. Whoever signs puts their name to it.
+          </p>
+        )}
+        {(props.deliveriesToday?.length ?? 0) > 0 && (
+          <p className="notice" style={{ marginTop: '0.75rem' }}>
+            Booked to arrive this day: {props.deliveriesToday!.map((d) => `${d.text}${d.received ? ` (received${d.docket ? `, docket ${d.docket}` : ''})` : ''}`).join('; ')}.
+            {' '}Record what actually came, and the docket, under Materials.
           </p>
         )}
         <p className="review-intro">

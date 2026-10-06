@@ -230,6 +230,23 @@ async function replay(item: OutboxItem): Promise<void> {
       if (error && !isAlreadyDone(error)) throw error;
       return;
     }
+    case 'delivery_book': {
+      // A booking made with no signal (README R127): the id is the phone's, so a replay meets its own row and stops.
+      const { error } = await supabase.from('deliveries').insert(p.row as Record<string, unknown>);
+      if (error && !isAlreadyDone(error)) throw error;
+      return;
+    }
+    case 'delivery_update': {
+      // Received, moved or cancelled with no signal. One already finished by someone else is frozen: done is done.
+      const { data, error } = await supabase.from('deliveries').update(p.patch as Record<string, unknown>).eq('id', item.subjectId).select('id');
+      if (error && !isFrozen(error)) throw error;
+      if (!error && (!data || data.length === 0)) {
+        const { data: row } = await supabase.from('deliveries').select('status').eq('id', item.subjectId).maybeSingle();
+        if (!row) throw Object.assign(new Error('That delivery no longer exists.'), { code: '42501' });
+        if (row.status === 'booked') throw Object.assign(new Error('The delivery could not be changed from this account; it is still booked.'), { code: '42501' });
+      }
+      return;
+    }
     case 'dayworks_approval': {
       // The client's signature on the screen (README R125): the drawn signature first, then the row that names it.
       // The row's id is the phone's, so a replay after a dropped reply meets its own row and stops.

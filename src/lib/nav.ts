@@ -60,6 +60,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { href: '/construction', name: 'Construction records', short: 'Construction', what: 'WHS management plan, services and trenches for each dig, white cards', screen: 'construction' },
       { href: '/plant', name: 'Plant', what: 'Machine prestarts, defects and the register', screen: 'plant' },
       { href: '/orders', name: 'Orders & plant issues', short: 'Orders', what: 'Diesel, consumables, anything to order — and a light out on a machine', screen: 'orders' },
+      { href: '/deliveries', name: 'Deliveries', what: 'What is booked to arrive, day by day — on this job, or every job on one calendar', screen: 'deliveries' },
     ],
   },
   {
