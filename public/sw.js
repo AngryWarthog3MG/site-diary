@@ -22,7 +22,9 @@
 // app with no signal was handed a page shell from weeks ago and kept it.
 // Bumped alongside the update check in sw-register.tsx, which is the real fix.
 // v10: /health is confidential and is never cached — a revoked keeper's phone must not still show it offline.
-const VERSION = 'v11';
+// v12: ten deploys shipped on v11 in one day (06/10) and a supervisor's phone stopped mid-morning; bumped so every
+// phone drops the day's stale shells on its next load.
+const VERSION = 'v12';
 const PAGES = `pages-${VERSION}`;
 const ASSETS = `assets-${VERSION}`;
 const OFFLINE_URL = '/offline.html';
