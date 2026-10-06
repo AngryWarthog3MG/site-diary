@@ -109,9 +109,16 @@ export const ReviewQuantity = z.object({
   confidence,
 });
 
+/** One person on a daywork and their own hours (README R129); null hours = not stated, never a share of a total. */
+export const ReviewDayworkPerson = z.object({
+  person_name: z.string().trim().min(1),
+  hours: nullableNumber,
+});
+
 export const ReviewDaywork = z.object({
   description: z.string().trim().min(1),
   labour: nullableText,
+  labour_rows: z.array(ReviewDayworkPerson).nullable().default(null),
   plant: nullableText,
   materials: nullableText,
   hours: nullableNumber,
@@ -259,6 +266,7 @@ export type ReviewQualityWarning =
   | 'weather_impact_without_weather_delay'
   | 'weather_delay_without_impact'
   | 'daywork_without_docket'
+  | 'daywork_labour_missing_hours'
   | 'plant_without_prestart'
   | 'low_confidence_items';
 
@@ -317,6 +325,10 @@ export function reviewQualityWarnings(payload: ReviewPayload, context: ReviewCon
   }
   // Money leaks here: a variation with no figure prints as "worth $0" on the
   // register, and a daywork with no docket is the one that never gets paid.
+  // A person on a daywork with no hours of their own (README R129): asked about, never blocked, never shared out.
+  if (payload.dayworks.some((item) => (item.labour_rows ?? []).some((p) => p.hours == null))) {
+    warnings.add('daywork_labour_missing_hours');
+  }
   if (payload.dayworks.some((item) => !item.docket_ref?.trim() && item.photo_urls.length === 0)) {
     warnings.add('daywork_without_docket');
   }
@@ -400,6 +412,8 @@ export const WARNING_PROMPTS: Record<string, string> = {
     'A weather delay is listed, but the Weather tab has no impact note. Add what the weather did to the work.',
   plant_without_prestart:
     'A machine worked today with no signed plant prestart for it. Do the walk-around and sign it under Plant, or note why it was not done.',
+  daywork_labour_missing_hours:
+    'Someone on a daywork has no hours against their name. Add their hours, or leave it blank if you do not know — the total is never split between people.',
   daywork_without_docket:
     'A daywork has no photo. Add one if you can; the docket itself is chased after signing and prints as “docket to chase” on the client sheet until it is recorded.',
   low_confidence_items:
@@ -417,4 +431,5 @@ export const WARNING_GROUPS: Partial<Record<ReviewQualityWarning, ItemGroup | 'w
   weather_delay_without_impact: 'weather',
   plant_without_prestart: 'plant',
   daywork_without_docket: 'dayworks',
+  daywork_labour_missing_hours: 'dayworks',
 };

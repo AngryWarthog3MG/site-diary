@@ -505,6 +505,7 @@ export const FIXTURES: Fixture[] = [
         {
           description: 'Exposing the Telstra conduit for the principal',
           labour: 'Kel Brady, Toby Nguyen',
+          labour_rows: [{ person_name: 'Kel Brady', hours: 4 }, { person_name: 'Toby Nguyen', hours: 4 }],
           plant: null,
           materials: null,
           hours: 4,

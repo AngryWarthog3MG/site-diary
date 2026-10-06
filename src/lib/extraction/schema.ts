@@ -136,9 +136,16 @@ const QuantityItem = z.object({
   confidence,
 });
 
+const DayworkPerson = z.object({
+  person_name: z.string().min(1),
+  hours: nullableNumber,
+});
+
 const DayworkItem = z.object({
   description: z.string().min(1),
   labour: nullableText,
+  // Each person on the daywork with THEIR OWN hours when stated for them (README R129); null = not stated.
+  labour_rows: z.array(DayworkPerson).nullable().default(null).catch(null),
   plant: nullableText,
   materials: nullableText,
   hours: nullableNumber,

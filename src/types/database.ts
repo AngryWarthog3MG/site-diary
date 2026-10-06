@@ -141,6 +141,8 @@ export interface Daywork {
   plant: string | null;
   materials: string | null;
   hours: number | null;
+  /** The people on it and each one's hours (README R129); null on rows recorded before the column. */
+  labour_rows?: Array<{ person_name: string; hours: number | null }> | null;
   docket_ref: string | null;
   photo_urls: string[];
   source_quote: string | null;

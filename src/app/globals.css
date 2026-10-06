@@ -4672,3 +4672,9 @@ a.dash-row:hover { background: var(--teal-tint); }
   .dcal__key .dcal__chip { font-size: 0.68rem; height: auto; width: auto; border-radius: 0.3rem; padding: 0.1rem 0.3rem; }
   .dcal__more { font-size: 0.6rem; }
 }
+
+/* People on a daywork and their hours (README R129). */
+.crewhours { display: grid; gap: 0.4rem; }
+.crewhours__row { display: grid; grid-template-columns: 1fr 6.5rem auto; gap: 0.5rem; align-items: center; }
+.crewhours__name { font-weight: 600; }
+.crewhours__hours { margin: 0; }

@@ -437,6 +437,11 @@ improvising; the register once shipped dead because a live smoke test was skippe
   `approvalOf(lines, signoffs)` is the one answer to "is this daywork approved": a line matches by day, works and hours
   (`lineKey`), so a corrected line waits again; never infer approval from a period or a total. On-screen signing goes
   through outbox kind `dayworks_approval`; the sheet prints signatures already given via `SheetApproval`. Suite 53
+- Dayworks carry `labour_rows` (README R129): the people on the item and each one's hours, `[{person_name, hours|null}]`.
+  `apply_entry_review` sums them into `hours` only when every person has theirs; the hash carries the key only where rows
+  exist; `app.entry_warnings` / `reviewQualityWarnings` raise `daywork_labour_missing_hours`. Print them through
+  `src/lib/pdf/labour-rows.ts` (`labourRowsText`, dependency-free, so the docket can) and fall back to the `labour` text.
+  Never divide a total across people, in SQL, TS or the prompt. Suite 56
 - `src/lib/claims/` — the claims register loader and the variation register (`register.ts`:
   statuses, summary arithmetic; `warnings.ts`: what the register is quietly getting wrong about money — a variation
   valued at 0 with work behind it, days recorded against it with no hours, README R85. `load.ts` counts a corrected day

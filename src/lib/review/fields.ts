@@ -14,7 +14,7 @@ import {
  * rather than a new form.
  */
 
-export type FieldKind = 'text' | 'textarea' | 'number' | 'time' | 'select' | 'datetime' | 'list' | 'plant' | 'names' | 'regno' | 'person';
+export type FieldKind = 'text' | 'textarea' | 'number' | 'time' | 'select' | 'datetime' | 'list' | 'plant' | 'names' | 'regno' | 'person' | 'crewhours';
 
 export interface FieldDef {
   key: string;
@@ -268,8 +268,9 @@ export const SECTIONS: SectionDef[] = [
       // not typed here: the sheet is what was done, the docket is the paper
       // that follows it. docket_ref stays in the record for the dockets that
       // were typed before this changed.
+      // The people on it and each one's hours (README R129); the daywork's hours are their sum when all are given.
+      { key: 'labour_rows', label: 'People on it, and their hours', kind: 'crewhours' },
       { key: 'hours', label: 'Hours', kind: 'number', step: '0.25', narrow: true },
-      { key: 'labour', label: 'Labour', kind: 'text', placeholder: 'Who, and how many' },
       { key: 'plant', label: 'Plant', kind: 'plant', placeholder: 'Other plant — Stihl saw, plate compactor…' },
       { key: 'materials', label: 'Materials', kind: 'text', narrow: true },
       { key: 'photo_urls', label: 'Dayworks photos', kind: 'list' },
@@ -277,6 +278,7 @@ export const SECTIONS: SectionDef[] = [
     blank: () => ({
       description: '',
       labour: null,
+      labour_rows: null,
       plant: null,
       materials: null,
       hours: null,

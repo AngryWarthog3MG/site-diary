@@ -6,6 +6,7 @@ import type { ReviewDaywork, ReviewPayload } from './schema.ts';
 const daywork = (over: Partial<ReviewDaywork> = {}): ReviewDaywork => ({
   description: 'Marcus, Hamish on vac trailer widening trench',
   labour: null,
+  labour_rows: null,
   plant: null,
   materials: null,
   hours: 10,

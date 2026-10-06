@@ -20,9 +20,10 @@
 import type { ReviewDaywork, ReviewPayload, ReviewVariation } from './schema';
 
 /** The parts of a daywork a variation has nowhere to put, in the words that were typed. */
-export function carriedOver(daywork: Pick<ReviewDaywork, 'labour' | 'plant' | 'materials' | 'docket_ref'>): string | null {
+export function carriedOver(daywork: Pick<ReviewDaywork, 'labour' | 'plant' | 'materials' | 'docket_ref'> & { labour_rows?: ReviewDaywork['labour_rows'] }): string | null {
+  const people = (daywork.labour_rows ?? []).map((p) => `${p.person_name}${p.hours == null ? '' : ` ${p.hours} h`}`).join(', ');
   const parts = [
-    ['labour', daywork.labour],
+    ['labour', people || daywork.labour],
     ['plant', daywork.plant],
     ['materials', daywork.materials],
     ['docket', daywork.docket_ref],

@@ -3027,6 +3027,25 @@ the right name. Two things were kept on purpose: signed days keep the names as t
 and the Timesheets page's "same person, different name" list (R107) stays, because that is how those old rows fold into
 one person for pay — it is history, not a nickname anyone picks.
 
+**R129. Hours per person on a daywork.** "Add hours in the dayworks tab" — and, asked which, hours per person. A
+daywork carried one Hours box, hidden behind Edit on a folded row, and a free-text Labour line. The record showed what
+that gives: "Matt/evan, 18 hours", "2x Marcus Hayden", a dozen items with no hours at all. What the client is billed, and
+what the sign-off sheet (R83) has to say, is each person's hours on each item.
+
+`dayworks.labour_rows` holds the people on the daywork, picked from the job's list like labour names (R128), each with
+their own hours — null when not stated, never a share of a total. When everyone has hours, the daywork's hours are their
+sum: set at save by `apply_entry_review`, the way labour's hours come from its clocks, and shown locked on the screen
+with the reason; one person without hours leaves the typed total alone and raises a prompt (`daywork_labour_missing_hours`,
+in both halves — the SQL `app.entry_warnings` and `reviewQualityWarnings`). The extraction step is taught the same rule:
+"Kel and Toby spent four hours" is four each; "eighteen hours between them" is a total on the item and nothing on the
+people. Known names apply to these rows as they do to labour. The docket, the weekly, the schedule and the client sheet
+print "Matthew Rodgers 6.5 h, Evan Burke 6.5 h" where the rows exist and the words as said where they do not; moving a
+daywork to a variation carries the people into its description verbatim (R82). The six places were all touched:
+migration (with the diary view and the hash — the key joins the canonical JSON only where rows exist, and all 62 signed
+days verified unchanged after the migration), extraction schema, prompt and fixture, review schema and screen, both gap
+halves, the docket, and the reports. The free-text labour column stays for every daywork recorded before today and for
+what was said. Suite 56.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;

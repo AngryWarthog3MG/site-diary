@@ -1,4 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { labourRowsText, readLabourRows } from '@/lib/pdf/labour-rows';
 import { loadDocketsAdded } from '@/lib/weekly/load';
 import { buildSchedule, type DayworkLine, type DayworksSchedule, type Range } from './schedule';
 
@@ -56,7 +57,7 @@ export async function loadDayworksSchedule(supabase: SupabaseClient, projectId: 
   if (range.to) pending = pending.lte('entry_date', range.to);
 
   const [rows, entries, { data: open, error: openError }, { data: pendingRows }] = await Promise.all([
-    diaryQuery(supabase, `select entry_no, entry_date, description, labour, plant, materials, hours, docket_ref, daywork_id from diary.dayworks where ${where} order by entry_date`),
+    diaryQuery(supabase, `select entry_no, entry_date, description, labour, labour_rows, plant, materials, hours, docket_ref, daywork_id from diary.dayworks where ${where} order by entry_date`),
     diaryQuery(supabase, `select entry_no, entry_id from diary.entries where ${where}`),
     unsigned,
     pending,
@@ -76,7 +77,7 @@ export async function loadDayworksSchedule(supabase: SupabaseClient, projectId: 
       entryId: entryIds.get(String(row.entry_no)) ?? null,
       dayworkId: id,
       works: String(row.description ?? ''),
-      labour: ((row.labour as string | null) ?? '').trim() || null,
+      labour: labourRowsText(readLabourRows(row.labour_rows)) ?? (((row.labour as string | null) ?? '').trim() || null),
       plant: ((row.plant as string | null) ?? '').trim() || null,
       materials: ((row.materials as string | null) ?? '').trim() || null,
       hours: hours != null && Number.isFinite(hours) ? hours : null,

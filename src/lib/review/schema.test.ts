@@ -242,6 +242,20 @@ test('quality warnings catch soft review issues without becoming blocking gaps',
   ]);
 });
 
+test('a person on a daywork without hours is asked about, never blocked (README R129)', () => {
+  const payload = ReviewPayload.parse({
+    ...empty,
+    dayworks: [{ description: 'Moving light poles', hours: 13, docket_ref: 'DW-1', labour_rows: [{ person_name: 'Matthew Rodgers', hours: 6.5 }, { person_name: 'Evan Burke', hours: null }] }],
+  });
+  assert.deepEqual(reviewBlockingGaps(payload), []);
+  assert.deepEqual(reviewQualityWarnings(payload), ['daywork_labour_missing_hours']);
+  const complete = ReviewPayload.parse({
+    ...empty,
+    dayworks: [{ description: 'Moving light poles', hours: 13, docket_ref: 'DW-1', labour_rows: [{ person_name: 'Matthew Rodgers', hours: 6.5 }, { person_name: 'Evan Burke', hours: 6.5 }] }],
+  });
+  assert.deepEqual(reviewQualityWarnings(complete), []);
+});
+
 test('a variation without a value and a daywork without a docket are asked about, never blocked', () => {
   const payload = ReviewPayload.parse({
     ...empty,

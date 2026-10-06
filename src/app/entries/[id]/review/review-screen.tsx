@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, createContext, useCo
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
+import { labourRowsText, labourRowsTotal, readLabourRows } from '@/lib/pdf/labour-rows';
 import { begin, record, undo as undoStep, redo as redoStep, canUndo, canRedo, depth, type History } from '@/lib/undo/history';
 import { SECTIONS, PHOTO_FIELDS, type FieldDef, type SectionDef } from '@/lib/review/fields';
 import {
@@ -1287,6 +1288,58 @@ function loadRoster(projectId: string, entryId: string): Promise<RosterPerson[]>
 }
 
 /**
+ * The people on a daywork and each one's hours (README R129). Names are picked from the job's list, as labour names
+ * are; hours are typed per person and never derived from a total. What was said about the labour, when nobody has
+ * been listed yet, is shown so the supervisor can turn it into names.
+ */
+function CrewHoursField({ field, value, projectId, entryId, onChange, asSaid }: {
+  field: FieldDef; value: Array<{ person_name: string; hours: number | null }>; projectId: string; entryId: string;
+  onChange: (value: unknown) => void; asSaid: string | null;
+}) {
+  const [roster, setRoster] = useState<RosterPerson[]>([]);
+  useEffect(() => {
+    let cancelled = false;
+    loadRoster(projectId, entryId).then((r) => { if (!cancelled) setRoster(r); }).catch(() => undefined);
+    return () => { cancelled = true; };
+  }, [projectId, entryId]);
+  const have = new Set(value.map((p) => p.person_name.trim().toLowerCase()));
+  const offer = roster.filter((r) => !have.has(r.name.trim().toLowerCase()));
+  const set = (rows: Array<{ person_name: string; hours: number | null }>) => onChange(rows.length ? rows : null);
+  return (
+    <div className="fieldcell crewhours">
+      <span className="label">{field.label}</span>
+      {value.length === 0 && asSaid && <p className="caption">As said: “{asSaid}”. Add each person below with their own hours.</p>}
+      {value.map((p, i) => (
+        <div key={`${p.person_name}-${i}`} className="crewhours__row">
+          <span className="crewhours__name">{p.person_name}</span>
+          <input
+            className="field field--sm crewhours__hours"
+            type="number" inputMode="decimal" step="0.25" min="0" placeholder="hours"
+            aria-label={`${p.person_name}’s hours`}
+            value={p.hours == null ? '' : String(p.hours)}
+            onChange={(e) => {
+              const n = e.target.value === '' ? null : Number(e.target.value);
+              set(value.map((q, j) => (j === i ? { ...q, hours: n != null && Number.isFinite(n) && n >= 0 ? n : null } : q)));
+            }}
+          />
+          <button type="button" className="quotebtn quotebtn--remove" aria-label={`Take ${p.person_name} off`} onClick={() => set(value.filter((_, j) => j !== i))}>×</button>
+        </div>
+      ))}
+      <select
+        className="field field--sm"
+        value=""
+        aria-label="Add a person to the daywork"
+        onChange={(e) => { const v = e.target.value; if (v) set([...value, { person_name: v, hours: null }]); }}
+      >
+        <option value="">Add a person…</option>
+        {offer.filter((r) => r.from === 'crew').length > 0 && <optgroup label="Crew list">{offer.filter((r) => r.from === 'crew').map((r) => <option key={r.name} value={r.name}>{r.name}{r.role ? ` — ${r.role}` : ''}</option>)}</optgroup>}
+        {offer.filter((r) => r.from === 'gate').length > 0 && <optgroup label="Signed in at the gate">{offer.filter((r) => r.from === 'gate').map((r) => <option key={r.name} value={r.name}>{r.name}</option>)}</optgroup>}
+      </select>
+    </div>
+  );
+}
+
+/**
  * The labour row's name (README R128): a pick from the people on the job, never typed as a nickname. The crew list first,
  * then anyone else who signed in at the gate that day. A name already on the row that is on neither list is kept and
  * said to be off the list; "Someone else" opens a plain field for the one-off — a subbie's operator, a visitor who
@@ -1563,6 +1616,7 @@ function ItemCard({
       .map((f) => {
         const v = item[f.key];
         if (v == null || v === '' || (Array.isArray(v) && v.length === 0)) return null;
+        if (f.kind === 'crewhours') return labourRowsText(readLabourRows(v));
         const text = Array.isArray(v) ? v.join(', ') : clock(v) ?? String(v);
         if (f.kind === 'regno') return `V-${String(v).padStart(3, '0')}`;
         if (f.key === 'hours' || f.key === 'duration_mins') return f.key === 'hours' ? `${text} h` : `${text} min`;
@@ -1684,9 +1738,22 @@ function ItemCard({
             entryId={entryId}
             // Both clocks present: hours are arithmetic, and the record recomputes them at save
             // (apply_entry_review). Typing over the box would look like it worked and not have.
-            lockedBecause={section.group === 'labour' && field.key === 'hours' && item.start_time && item.finish_time ? 'From the start, finish and break — change one of those' : undefined}
+            lockedBecause={
+              section.group === 'labour' && field.key === 'hours' && item.start_time && item.finish_time
+                ? 'From the start, finish and break — change one of those'
+                : section.group === 'dayworks' && field.key === 'hours' && labourRowsTotal(readLabourRows(item.labour_rows)) != null
+                  ? 'The people’s hours added up — change theirs'
+                  : undefined
+            }
+            asSaid={section.group === 'dayworks' && field.key === 'labour_rows' ? ((item.labour as string | null) ?? null) : null}
             onChange={(value) => {
               onChange(section.group, index, field.key, value);
+              // The people's hours are the daywork's hours when everyone has theirs (README R129) — the record
+              // recomputes it at save; the screen shows the same figure as it goes.
+              if (section.group === 'dayworks' && field.key === 'labour_rows') {
+                const total = labourRowsTotal(readLabourRows(value));
+                if (total != null) onPatch(section.group, index, { hours: total });
+              }
               // A clock touched by hand hands the row over from the gate; it stops following sign-outs.
               if (section.group === 'labour' && GATE_CLOCK_FIELDS.has(field.key) && fromGate(item)) {
                 onPatch(section.group, index, { source_quote: GATE_EDITED });
@@ -1778,6 +1845,7 @@ function Field({
   entryId,
   onChange,
   lockedBecause,
+  asSaid,
 }: {
   field: FieldDef;
   fieldId: string;
@@ -1787,6 +1855,8 @@ function Field({
   onChange: (value: unknown) => void;
   /** Set when the value is arithmetic over other fields and cannot be typed over; says which. */
   lockedBecause?: string;
+  /** For the people-and-hours editor: the labour as it was said, when nobody has been listed yet (README R129). */
+  asSaid?: string | null;
 }) {
   const id = fieldId;
 
@@ -1812,6 +1882,9 @@ function Field({
   }
   if (field.kind === 'person') {
     return <PersonNameField field={field} value={(value as string | null) ?? null} projectId={projectId} entryId={entryId} onChange={onChange} />;
+  }
+  if (field.kind === 'crewhours') {
+    return <CrewHoursField field={field} value={readLabourRows(value)} projectId={projectId} entryId={entryId} onChange={onChange} asSaid={asSaid ?? null} />;
   }
 
   const common = {

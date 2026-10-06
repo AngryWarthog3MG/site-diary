@@ -112,5 +112,19 @@ export function applyKnownNames(
     };
   });
 
-  return { proposal: { ...proposal, labour, plant: plantRows }, matched };
+  // The people on a daywork (README R129) answer to the same names.
+  const dayworks = proposal.dayworks.map((item) => {
+    if (!item.labour_rows) return item;
+    return {
+      ...item,
+      labour_rows: item.labour_rows.map((p) => {
+        const known = matchPerson(String(p.person_name), crew);
+        if (!known) return p;
+        matched += 1;
+        return { ...p, person_name: known.name };
+      }),
+    };
+  });
+
+  return { proposal: { ...proposal, labour, plant: plantRows, dayworks }, matched };
 }

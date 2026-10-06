@@ -149,7 +149,8 @@ Dayworks (also said as "day labour", "on dayworks", "T and M", "time and materia
 
 - description: what was done, e.g. "Clearing the blocked culvert for the principal"
 - labour / plant / materials: who and what was on it, as said
-- hours: only if stated
+- labour_rows: each person on the daywork by name (from the vocabulary where it matches), with hours ONLY when stated for that person — "Kel and Toby spent four hours" is four each; "Matt and Evan, 18 hours between them" is Matt null and Evan null with hours 18 on the item. Never divide a total between people. Null when nobody is named
+- hours: the daywork's total, only if stated
 - docket_ref: a dayworks docket number ONLY if the supervisor read one out (e.g. "docket DW-114"); never invented
 
 "Two blokes on dayworks exposing the Telstra conduit, four hours" is one daywork item — the people are NOT also duplicated into labour unless the supervisor separately accounts for their day there. Ordinary contract work is never a daywork; when in doubt, it is a work_item.

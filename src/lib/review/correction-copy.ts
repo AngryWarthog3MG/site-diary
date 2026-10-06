@@ -21,7 +21,7 @@ export const CORRECTION_COPY = {
   delays: ['start_time', 'end_time', 'duration_mins', 'cause', 'personnel_affected', 'category', 'source_quote', 'confidence'],
   pours: ['location', 'volume_m3', 'mix_spec', 'supplier', 'docket_nos', 'start_time', 'finish_time', 'docket_photo_urls', 'source_quote', 'confidence'],
   quantities: ['item_type', 'area', 'quantity', 'unit', 'source_quote', 'confidence'],
-  dayworks: ['description', 'labour', 'plant', 'materials', 'hours', 'docket_ref', 'photo_urls', 'source_quote', 'confidence'],
+  dayworks: ['description', 'labour', 'labour_rows', 'plant', 'materials', 'hours', 'docket_ref', 'photo_urls', 'source_quote', 'confidence'],
   site_events: ['said_text', 'location', 'directed_by', 'occurred_time', 'photo_urls', 'source_quote', 'confidence'],
   photos: ['url', 'caption', 'category', 'taken_at', 'lat', 'lng'],
 } as const;

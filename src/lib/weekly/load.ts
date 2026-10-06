@@ -1,4 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { labourRowsText, readLabourRows } from '../pdf/labour-rows.ts';
 import { isRestDay } from '../calendar.ts';
 
 /**
@@ -556,7 +557,7 @@ export function aggregateDayworks(
         date: String(row.entry_date ?? ''),
         entry_no: String(row.entry_no ?? ''),
         description: String(row.description ?? ''),
-        labour: (row.labour as string | null) ?? null,
+        labour: labourRowsText(readLabourRows(row.labour_rows)) ?? (row.labour as string | null) ?? null,
         plant: (row.plant as string | null) ?? null,
         materials: (row.materials as string | null) ?? null,
         hours: row.hours == null ? null : num(row.hours),
@@ -662,7 +663,7 @@ export async function loadWeeklyData(
       ),
       diaryQuery(
         supabase,
-        scope('dayworks', 'entry_no, entry_date, description, labour, plant, materials, hours, docket_ref, daywork_id'),
+        scope('dayworks', 'entry_no, entry_date, description, labour, labour_rows, plant, materials, hours, docket_ref, daywork_id'),
       ),
       diaryQuery(supabase, scope('site_events', 'entry_no, entry_date, said_text, location, directed_by, occurred_time')),
     ]);
@@ -692,7 +693,7 @@ export async function loadWeeklyData(
          delays(cause, category, start_time, end_time, duration_mins, personnel_affected),
          pours(location, volume_m3, mix_spec, supplier),
          quantities(item_type, area, quantity, unit),
-         dayworks(id, description, labour, plant, materials, hours, docket_ref),
+         dayworks(id, description, labour, labour_rows, plant, materials, hours, docket_ref),
          site_events(said_text, location, directed_by, occurred_time),
          weather(temp_min, temp_max, rainfall_mm, wind_dir, wind_kmh, source, observed_impact)`,
       )

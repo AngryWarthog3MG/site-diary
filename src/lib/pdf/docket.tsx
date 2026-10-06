@@ -2,6 +2,7 @@ import { BOM_ATTRIBUTION } from '../weather/attribution';
 import { LOGO_DATA_URI } from './logo';
 import type { DocketEntry, Row } from './load';
 import type { SignatureImage } from './photos';
+import { labourRowsText, readLabourRows } from './labour-rows';
 import { formatInstant, num, text, timeOnly } from './load';
 import { fmtDate } from './dates';
 
@@ -158,7 +159,8 @@ export function DailyDocket({
             ['Description', (r) => text(r.description), 'w'],
             ['Docket / ref', (r) => text(r.docket_ref), 'k'],
             ['Hours', (r) => num(r.hours), 'n'],
-            ['Labour', (r) => text(r.labour)],
+            // The people and their own hours (README R129) where recorded; the words as said before that.
+            ['Labour', (r) => labourRowsText(readLabourRows(r.labour_rows)) ?? text(r.labour)],
             ['Plant', (r) => text(r.plant)],
             ['Materials', (r) => text(r.materials)],
             ['Photos', (r) => String(((r.photo_urls as string[] | null) ?? []).length), 'n'],
