@@ -160,6 +160,11 @@ export function ReviewScreen(props: {
   moneyLock?: MoneyState;
   /** The day before and after, as recorded — back/forward from this day. */
   neighbours?: DayNeighbours;
+  /** The one account that closes the day on this job (README R126); null = anyone with an authoring role. */
+  closer?: { id: string; name: string } | null;
+  viewerId?: string;
+  /** When the day was handed over for the closer's sign-off, and by whom. */
+  handedOver?: { at: string; byName: string; note: string | null } | null;
 }) {
   const router = useRouter();
   const [payload, setPayload] = useState<ReviewPayload>(props.initial);
@@ -173,7 +178,7 @@ export function ReviewScreen(props: {
   const [nilConfirmed, setNilConfirmed] = useState<Set<SectionKey>>(
     new Set(props.initialNilConfirmed),
   );
-  const [busy, setBusy] = useState<null | 'saving' | 'signing'>(null);
+  const [busy, setBusy] = useState<null | 'saving' | 'signing' | 'handing'>(null);
   // Signing is the one thing here that cannot be undone, so it takes two
   // taps: the first arms it and says so, the second signs. It disarms on
   // its own if the second tap does not come.
@@ -502,7 +507,9 @@ export function ReviewScreen(props: {
     });
   }
 
-  async function submit(mode: 'saving' | 'signing') {
+  const canClose = !props.closer || props.closer.id === props.viewerId;
+
+  async function submit(mode: 'saving' | 'signing' | 'handing') {
     setBusy(mode);
     setError(null);
     // Sign and save carry the whole payload themselves. Nothing older may be
@@ -534,6 +541,12 @@ export function ReviewScreen(props: {
       if (mode === 'signing') {
         router.push(`/entries/${props.entryId}/signed`);
         return;
+      }
+      if (mode === 'handing') {
+        // Saved; now the hand-over itself, which stamps the day and tells the closer (README R126).
+        const handed = await fetch(`/api/entries/${props.entryId}/ready`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({}) });
+        const hj = await handed.json().catch(() => ({}));
+        if (!handed.ok) { setError(hj?.error?.message ?? 'Saved, but the hand-over did not go through. Try again.'); return; }
       }
 
       router.push('/');
@@ -814,6 +827,7 @@ export function ReviewScreen(props: {
             projectId={props.projectId}
             entryId={props.entryId}
             signatures={payload.signatures}
+            closerName={props.closer?.name ?? null}
             onChange={(signatures) => { urgentRef.current = true; setPayload((prev) => ({ ...prev, signatures })); }}
           />
         )}
@@ -894,26 +908,44 @@ export function ReviewScreen(props: {
 
       {error && <p className="alert">{error}</p>}
 
-      <button
-        type="button"
-        className={`button${signArmed ? ' button--armed' : ''}`}
-        disabled={busy !== null || gaps.length > 0}
-        onClick={() => {
-          if (!signArmed) {
-            setSignArmed(true);
-            return;
-          }
-          setSignArmed(false);
-          submit('signing');
-        }}
-      >
-        {busy === 'signing'
-          ? 'Signing…'
-          : signArmed
-            ? 'Tap again to sign — this locks the day'
-            : 'Sign this entry'}
-      </button>
-      {signArmed && busy === null && (
+      {props.handedOver && (
+        <p className="notice" style={{ marginBottom: '0.75rem' }}>
+          Handed over for sign-off by {props.handedOver.byName} at {new Date(props.handedOver.at).toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit', timeZone: 'Australia/Perth' })}
+          {props.handedOver.note ? ` — “${props.handedOver.note}”` : ''}.{canClose ? ' Review it, then sign to close the day.' : ''}
+        </p>
+      )}
+      {canClose ? (
+        <button
+          type="button"
+          className={`button${signArmed ? ' button--armed' : ''}`}
+          disabled={busy !== null || gaps.length > 0}
+          onClick={() => {
+            if (!signArmed) {
+              setSignArmed(true);
+              return;
+            }
+            setSignArmed(false);
+            submit('signing');
+          }}
+        >
+          {busy === 'signing'
+            ? 'Signing…'
+            : signArmed
+              ? 'Tap again to sign — this locks the day'
+              : 'Sign this entry'}
+        </button>
+      ) : (
+        <>
+          <button type="button" className="button" disabled={busy !== null || gaps.length > 0} onClick={() => submit('handing')}>
+            {busy === 'handing' ? 'Handing over…' : props.handedOver ? `Hand over to ${props.closer?.name} again` : `Hand over to ${props.closer?.name} for sign-off`}
+          </button>
+          <p className="way-hint" style={{ marginTop: '0.4rem' }}>
+            On this job only {props.closer?.name} signs and closes the day. This saves what is on the screen and tells them it is ready;
+            the day stays open until they sign. Your own sign-off is your drawn mark on the Sign-off tab.
+          </p>
+        </>
+      )}
+      {canClose && signArmed && busy === null && (
         <p className="way-hint" style={{ marginTop: '0.4rem' }}>
           Once signed, nothing in this day can be changed. Not ready? Use &ldquo;Save and finish
           later&rdquo; and come back to it — you can edit as much as you like until you sign.
@@ -922,7 +954,7 @@ export function ReviewScreen(props: {
 
       {gaps.length > 0 && (
         <p style={{ marginTop: '0.5rem', color: 'var(--amber)', fontSize: '0.875rem' }}>
-          {gaps.length} thing{gaps.length === 1 ? '' : 's'} to clear before you can sign.
+          {gaps.length} thing{gaps.length === 1 ? '' : 's'} to clear before {canClose ? 'you can sign' : 'it can be handed over'}.
         </p>
       )}
 
@@ -2324,11 +2356,14 @@ function SignaturesBlock({
   entryId,
   signatures,
   onChange,
+  closerName,
 }: {
   projectId: string;
   entryId: string;
   signatures: ReviewSignature[];
   onChange: (signatures: ReviewSignature[]) => void;
+  /** Who closes the day on this job (README R126), when the job names one. */
+  closerName?: string | null;
 }) {
   const urls = useSignedUrls(signatures.map((s) => s.image_path));
 
@@ -2342,7 +2377,8 @@ function SignaturesBlock({
       </div>
       <p style={{ margin: '0.25rem 0 1rem', color: 'var(--ink-60)', fontSize: '0.875rem' }}>
         Sign with a finger. Both marks print on the docket beside the entry&apos;s serial and
-        hash. The client&apos;s is optional — capture it when they are on site.
+        hash. The client&apos;s is optional — capture it when they are on site. Neither closes the day: that is the signature
+        on the Summary tab{closerName ? `, which on this job only ${closerName} gives` : ''}.
       </p>
       {(['supervisor', 'client'] as const).map((role) => (
         <SignatureSlot

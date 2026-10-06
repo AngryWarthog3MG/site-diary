@@ -18,6 +18,9 @@ export interface SettingsData {
   bomStationId: string | null;
   active: boolean;
   reportEmails: string;
+  /** The one account that closes a diary day on this job (README R126); null = anyone with an authoring role. */
+  dayCloserId: string | null;
+  closerOptions: Array<{ id: string; name: string }>;
   canEdit: boolean;
   codeLocked: boolean;
   orgCodeLocked: boolean;
@@ -69,6 +72,7 @@ export function SettingsForm({ initial }: { initial: SettingsData }) {
           .filter((address) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(address)),
         name: form.projectName.trim(),
         principal_contractor: clean(form.principalContractor),
+        day_closer_id: form.dayCloserId,
         site_lat: form.siteLat,
         site_lng: form.siteLng,
         bom_station_id: clean(form.bomStationId),
@@ -193,6 +197,19 @@ export function SettingsForm({ initial }: { initial: SettingsData }) {
         disabled={locked}
         onChange={(v) => set('principalContractor', v)}
       />
+
+      <label className="fieldcell">
+        <span className="label">Who closes the day</span>
+        <select className="field" value={form.dayCloserId ?? ''} disabled={locked} onChange={(e) => set('dayCloserId', e.target.value || null)}>
+          <option value="">Anyone with an authoring role on this job</option>
+          {form.closerOptions.map((o) => <option key={o.id} value={o.id}>{o.name} only</option>)}
+        </select>
+        <span className="fieldhint">
+          The signature that closes a diary day and issues its number. Name one person and nobody else&apos;s is taken:
+          supervisors hand the day over instead, and that person is told it is waiting. The supervisor&apos;s and the client&apos;s drawn
+          sign-offs on the day are unchanged.
+        </span>
+      </label>
 
       <hr className="rule" />
 

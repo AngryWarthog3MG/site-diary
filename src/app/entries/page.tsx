@@ -33,7 +33,7 @@ export default async function EntriesPage({
   const supabase = await createClient();
   const { data: entries } = await supabase
     .from('entries')
-    .select('id, entry_no, entry_date, status, author_id, signed_at, supersedes_entry_id, author:profiles!entries_author_profiles_fkey(full_name, email)')
+    .select('id, entry_no, entry_date, status, author_id, signed_at, supersedes_entry_id, ready_at, author:profiles!entries_author_profiles_fkey(full_name, email)')
     .eq('project_id', current.project_id)
     .order('entry_date', { ascending: false })
     .order('created_at', { ascending: false })
@@ -87,6 +87,7 @@ export default async function EntriesPage({
               authorName: author?.full_name ?? author?.email ?? '—',
               correction: Boolean(entry.supersedes_entry_id),
               supersedes: (entry.supersedes_entry_id as string | null) ?? null,
+              ready: entry.status !== 'signed' && Boolean(entry.ready_at),
             };
           })}
         />

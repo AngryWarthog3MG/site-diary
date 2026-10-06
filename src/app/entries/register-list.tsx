@@ -15,6 +15,8 @@ export interface RegisterRow {
   authorName: string;
   correction: boolean;
   supersedes: string | null;
+  /** Handed over for the closer's sign-off, still open (README R126). */
+  ready?: boolean;
 }
 
 /**
@@ -220,7 +222,7 @@ export function RegisterList({ rows, projectId }: { rows: RegisterRow[]; project
                                 : ' status-pill--draft'
                           }`}
                         >
-                          {signed ? 'Signed PDF' : entry.mine ? 'Resume draft' : 'Draft'}
+                          {signed ? 'Signed PDF' : entry.ready ? 'Ready for sign-off' : entry.mine ? 'Resume draft' : 'Draft'}
                         </span>
                       </div>
                     </Link>

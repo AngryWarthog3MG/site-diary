@@ -47,14 +47,20 @@ interface Card { key: string; name: string; attention: boolean; node: React.Reac
  * with nothing to act on fold into one line naming them, so a supervisor
  * still sees what was checked. The Safety screen keeps every figure.
  */
-export async function DashboardCards({ projectId, orgId, member }: { projectId: string; orgId: string; member: Access }) {
+export async function DashboardCards({ projectId, orgId, member, userId }: { projectId: string; orgId: string; member: Access; userId?: string }) {
   const supabase = await createClient();
   const today = perthToday();
-  const [d, due, setup] = await Promise.all([
+  const [d, due, setup, closer, waiting] = await Promise.all([
     loadDashboard(supabase, projectId, orgId, today),
     sees(member, 'obligations') ? loadObligations(supabase, projectId, orgId, today) : Promise.resolve(null),
     sees(member, 'start_gate') ? loadSetupCard(supabase, projectId, orgId, today) : Promise.resolve(null),
+    supabase.from('projects').select('day_closer_id').eq('id', projectId).maybeSingle(),
+    // Days handed over for sign-off and still open (README R126) — drawn for the person who closes them.
+    supabase.from('entries').select('id, entry_date, ready_at, ready_note, by:profiles!entries_ready_by_fkey(full_name)').eq('project_id', projectId).eq('status', 'draft').not('ready_at', 'is', null).order('entry_date'),
   ]);
+  const isCloser = Boolean(userId) && (closer.data?.day_closer_id as string | null | undefined) === userId;
+  type Waiting = { id: string; entry_date: string; ready_at: string; ready_note: string | null; by: { full_name: string | null } | Array<{ full_name: string | null }> | null };
+  const waitingRows = isCloser ? ((waiting.data ?? []) as unknown as Waiting[]) : [];
   const s = d.safety;
   const q = `?project=${projectId}`;
   const see = (screen: Screen) => sees(member, screen);
@@ -64,6 +70,32 @@ export async function DashboardCards({ projectId, orgId, member }: { projectId: 
   const reportsThisYear = s.incidents.months.reduce((acc, m) => acc + m.total, 0);
 
   const cards: Card[] = [];
+  if (isCloser && waitingRows.length > 0) cards.push({
+    key: 'waiting', name: 'days waiting for your sign-off', attention: true,
+    node: (
+      <section className="dash-card dash-card--list">
+        <p className="dash-card__title">Waiting for your sign-off</p>
+        <ul className="dash-list">
+          {waitingRows.slice(0, OPEN_LIST).map((w) => {
+            const by = Array.isArray(w.by) ? w.by[0] : w.by;
+            return (
+              <li key={w.id}>
+                <Link className="dash-row" href={`/entries/${w.id}/review${q}`}>
+                  <Badge iso={`${w.entry_date}T04:00:00Z`} />
+                  <span className="dash-row__text">
+                    <span className="dash-row__name">Diary {w.entry_date.slice(8, 10)}/{w.entry_date.slice(5, 7)}</span>
+                    <span className="dash-row__what">handed over by {by?.full_name ?? 'the supervisor'}{w.ready_note ? ` — ${trunc(w.ready_note, 50)}` : ''}</span>
+                  </span>
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
+        {waitingRows.length > OPEN_LIST && <p className="dash-card__sub">and {waitingRows.length - OPEN_LIST} more</p>}
+        <Foot href={`/entries${q}`} label="All entries" />
+      </section>
+    ),
+  });
   // The setup board (README R92): what the job still needs before and as it starts. Only the office sees it,
   // and a job never set up is only worth a nudge once the library has something to stamp.
   if (setup && (setup.setUp || setup.libraryItems > 0)) cards.push({

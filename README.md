@@ -2975,6 +2975,24 @@ It will not take a signature while a correction in the period is written but uns
 rows about to change), and it does not touch the diary, the dockets or any figure: approval is a fact about the
 client, kept beside the record, not in it. Register keepers give it; the labourer reads none of it. Suite 53.
 
+**R126. Who closes the day.** "Do not allow anybody to do the sign-off for the day apart from me. Still allow the
+supervisor to do sign-off and the client to do sign-off, but the overall closing of the day needs to be done by me only.
+This just allows me to review and verify everything that has gone on during the day." Three signatures already meet on
+a diary day. Two are drawn marks on the Sign-off tab — the supervisor's and the client's (R? 20260907) — attachments to
+the record. The third is the one the database cares about: the status change that issues the serial, stamps `signed_by`
+and computes the hash. That is the closing of the day, and until now anyone with an authoring role could make it.
+
+`projects.day_closer_id` names the one account whose closing signature a job takes; null keeps the old rule. It is
+enforced where the serial is issued — the signing trigger refuses anyone else by name, whatever path they came by — so
+the Settings dropdown is a preference the database holds, not a hidden button. Everyone else gets a hand-over instead:
+the review screen's button becomes "Hand over to Mitchell for sign-off", which saves what is on the screen, stamps
+`entries.ready_at` / `ready_by` (the database's clock, the caller's identity) and sends the closer a push. The entries
+list marks the day "Ready for sign-off", the closer's home draws a card of days waiting, and the review screen tells the
+closer who handed it over and when. The day stays an open draft throughout: the supervisor can still edit it, the gate
+still feeds it, and the closer reviews it as it stands before signing. Nothing in the hash moves — the canonical JSON
+names its keys and `ready_*` are not among them — so every signed day verifies as before. The supervisor's and the
+client's drawn marks are untouched, which is the point: their sign-off is still theirs; the closing is his. Suite 54.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;

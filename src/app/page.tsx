@@ -122,7 +122,7 @@ export default async function TodayPage({
         </section>
         <div className="dash-grid">
           <Suspense fallback={<DashboardSkeleton />}>
-            <DashboardCards projectId={current.project_id} orgId={current.project.org.id} member={current} />
+            <DashboardCards projectId={current.project_id} orgId={current.project.org.id} member={current} userId={userId} />
           </Suspense>
         </div>
       </div>

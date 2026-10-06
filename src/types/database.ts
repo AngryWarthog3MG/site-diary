@@ -44,6 +44,8 @@ export interface Project {
   /** BOM state observation product, e.g. IDW60920. Inferred from coordinates when null. */
   bom_product_id: string | null;
   principal_contractor: string | null;
+  /** The one account that closes a diary day on this job (README R126); null = anyone with an authoring role. */
+  day_closer_id?: string | null;
   active: boolean;
   next_entry_seq: number;
   created_at: string;
@@ -71,6 +73,10 @@ export interface Entry {
   audio_url: string | null;
   transcript_raw: string | null;
   supersedes_entry_id: string | null;
+  /** Handed over for the closer's sign-off (README R126); stamped by the database, not in the hash. */
+  ready_at?: string | null;
+  ready_by?: string | null;
+  ready_note?: string | null;
   created_at: string;
 }
 

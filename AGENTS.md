@@ -556,6 +556,10 @@ Change four of them and the app silently stops capturing what supervisors say. I
   day is signed; a correction carries the day's date and supersedes the current version).
   The API returns 409 `day_open` / `day_signed` first; the queue never turns a blocked
   recording into a correction on its own — that is the supervisor's tap.
+- **Who closes the day is the job's choice (README R126).** `projects.day_closer_id` null = any authoring role signs; set =
+  the signing trigger refuses everyone else by name, on every path. The others hand the day over: `POST /api/entries/[id]/ready`
+  stamps `ready_at`/`ready_by` (DB clock, caller) and pushes the closer. `ready_*` are NOT in the content hash and never may be.
+  The supervisor's and client's drawn marks (`entry_signatures`) are separate and unchanged.
 - **A draft is writable by any authoring role on the job, not only its author** — `app.can_write_entry`
   (SQL) and `canEditEntry` (`src/lib/entries/access.ts`) are the two halves; the signature names the
   signer (`signed_by := auth.uid()`), `author_id` names who started the day. Deleting a draft stays author-only.

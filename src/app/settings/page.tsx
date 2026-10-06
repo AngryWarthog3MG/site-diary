@@ -1,7 +1,8 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { requireUser, resolveProject } from '@/lib/auth';
-import { sees } from '@/lib/roles';
+import { sees, canAuthorEntries } from '@/lib/roles';
+import type { MemberRole } from '@/types/database';
 import { SettingsForm, type SettingsData } from './settings-form';
 import { CrewList, type CrewRow } from './crew-list';
 import Link from 'next/link';
@@ -27,7 +28,7 @@ export default async function SettingsPage({
   const [{ data: row }, { data: state }, { data: crew }] = await Promise.all([
     supabase
       .from('projects')
-      .select('id, name, code, principal_contractor, site_lat, site_lng, bom_station_id, active, report_emails, org:organisations!inner(id, name, code)')
+      .select('id, name, code, principal_contractor, site_lat, site_lng, bom_station_id, active, report_emails, day_closer_id, org:organisations!inner(id, name, code)')
       .eq('id', current.project_id)
       .single(),
     supabase.rpc('project_settings_state', { p_project_id: current.project_id }),
@@ -40,6 +41,13 @@ export default async function SettingsPage({
   ]);
 
   if (!row) redirect('/');
+  // Who may be named to close the day (README R126): the job's members with an authoring role, by name.
+  const { data: memberRows } = await supabase.from('project_members').select('user_id, role').eq('project_id', current.project_id);
+  const closerIds = ((memberRows ?? []) as Array<{ user_id: string; role: string }>).filter((m) => canAuthorEntries(m.role as MemberRole)).map((m) => m.user_id);
+  const { data: closerProfiles } = closerIds.length ? await supabase.from('profiles').select('id, full_name, email').in('id', closerIds) : { data: [] };
+  const closerOptions = ((closerProfiles ?? []) as Array<{ id: string; full_name: string | null; email: string | null }>)
+    .map((p) => ({ id: p.id, name: (p.full_name ?? p.email ?? 'Unnamed') as string }))
+    .sort((a, b) => a.name.localeCompare(b.name));
   const orgIdForTickets = ((Array.isArray(row.org) ? row.org[0] : row.org) as { id: string }).id;
   const [{ data: tickets }, { data: inductions }] = await Promise.all([
     supabase.from('crew_tickets').select('id, person_name, ticket_type, ticket_no, issued_on, expires_on, photo_path, active').eq('org_id', orgIdForTickets).eq('active', true).order('expires_on'),
@@ -71,6 +79,8 @@ export default async function SettingsPage({
     bomStationId: row.bom_station_id,
     active: row.active,
     reportEmails: ((row.report_emails as string[] | null) ?? []).join(', '),
+    dayCloserId: (row.day_closer_id as string | null) ?? null,
+    closerOptions,
     canEdit: Boolean(flags.can_edit),
     codeLocked: Boolean(flags.code_locked),
     orgCodeLocked: Boolean(flags.org_code_locked),

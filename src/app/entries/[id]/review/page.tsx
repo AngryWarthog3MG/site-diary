@@ -33,8 +33,8 @@ export default async function ReviewPage({ params }: { params: Promise<{ id: str
   const { data: entry } = await supabase
     .from('entries')
     .select(
-      `id, project_id, entry_date, status, author_id, transcript_raw, entry_no, notes, supersedes_entry_id,
-       project:projects!inner(id, name, code, org:organisations!inner(code)),
+      `id, project_id, entry_date, status, author_id, transcript_raw, entry_no, notes, supersedes_entry_id, ready_at, ready_by, ready_note,
+       project:projects!inner(id, name, code, day_closer_id, org:organisations!inner(code)),
        labour(*), plant(*), work_items(*), variations(*), delays(*), pours(*),
        quantities(*), dayworks(*), site_events(*), photos(*), entry_signatures(*), entry_sections(*), weather(*)`,
     )
@@ -223,8 +223,15 @@ export default async function ReviewPage({ params }: { params: Promise<{ id: str
   }
 
   const project = firstOrNull(stored.project) as
-    | { id: string; name: string; code: string; org: { code: string } | { code: string }[] }
+    | { id: string; name: string; code: string; day_closer_id?: string | null; org: { code: string } | { code: string }[] }
     | null;
+  // Who closes the day on this job (README R126), and whether it has been handed over already.
+  const closerId = project?.day_closer_id ?? null;
+  const nameIds = [closerId, entry.ready_at ? (entry.ready_by as string | null) : null].filter((v): v is string => Boolean(v));
+  const { data: named } = nameIds.length ? await supabase.from('profiles').select('id, full_name').in('id', nameIds) : { data: [] };
+  const nameOf = (uid: string | null) => (uid ? ((named ?? []).find((n) => n.id === uid)?.full_name as string | null) ?? 'the person named in Settings' : null);
+  const closer = closerId ? { id: closerId, name: nameOf(closerId) ?? 'the person named in Settings' } : null;
+  const handedOver = entry.ready_at ? { at: entry.ready_at as string, byName: nameOf(entry.ready_by as string | null) ?? 'someone', note: (entry.ready_note as string | null) ?? null } : null;
   const orgCode =
     (Array.isArray(project?.org) ? project?.org[0]?.code : project?.org?.code) ?? '';
 
@@ -252,6 +259,9 @@ export default async function ReviewPage({ params }: { params: Promise<{ id: str
       seesMoney={moneyState(memberships.find((m) => m.project_id === entry.project_id), aal) === 'open'}
       moneyLock={moneyState(memberships.find((m) => m.project_id === entry.project_id), aal)}
       neighbours={neighbours}
+      closer={closer}
+      viewerId={userId}
+      handedOver={handedOver}
     />
   );
 }
