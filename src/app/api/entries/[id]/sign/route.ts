@@ -40,6 +40,10 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
   });
 
   if (signError) {
+    // The job names who closes the day (README R126): say so by name rather than as a generic refusal.
+    if (/closes the day on this job/.test(signError.message)) {
+      return fail('forbidden', signError.message.replace(/^[^O]*(Only .*)$/s, '$1').split('\n')[0], 403);
+    }
     if (signError.code === '42501' || /not an open draft/.test(signError.message)) {
       return fail('forbidden', 'That entry is not an open draft you can sign.', 403);
     }
