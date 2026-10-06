@@ -363,6 +363,10 @@ improvising; the register once shipped dead because a live smoke test was skippe
   is computed anywhere the Safety screen does not also compute it. A card is drawn only when it has something
   in it; the rest fold into one "Nothing needs attention" line naming what was checked (README R56). A new card
   declares its own `attention` test
+- Labour names are PICKED, never typed as nicknames (README R128): the review screen's `person` field offers the job's
+  `crew` (active) then the day's gate sign-ins, with "Someone else…" for a one-off; the add-person dropdown lists the same
+  and nothing harvested. `crew.aliases` is kept as a column for the extraction step's matching but has no screen and was
+  cleared — do not bring a nickname field back; fix the name on the staff list instead
 - `src/lib/review/warning-targets.ts` — a quality warning's door (README R99): `plantNeedingPrestart`, `matchRegister`
   (diary name → register machine by containment, longest wins), `prestartHref` (`/plant/new?project=…&plant=<id>`). The
   review page passes `plantRegister`; the screen draws a link per machine and a "Go to <section>" per warning

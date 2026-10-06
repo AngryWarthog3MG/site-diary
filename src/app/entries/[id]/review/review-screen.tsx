@@ -1255,6 +1255,88 @@ function RegisterNumberField({ field, value, projectId, onChange }: {
  * A list of people: tap a name from the job's crew, or type one. Used for who
  * did a variation, so the register can say whose hours it was.
  */
+/** The people who can be labour on a day: the job's crew list, then whoever else signed in at the gate that day. */
+interface RosterPerson { name: string; role: string | null; from: 'crew' | 'gate' }
+const rosterCache = new Map<string, Promise<RosterPerson[]>>();
+function loadRoster(projectId: string, entryId: string): Promise<RosterPerson[]> {
+  const key = `${projectId}|${entryId}`;
+  const cached = rosterCache.get(key);
+  if (cached) return cached;
+  const p = (async () => {
+    const supabase = createClient();
+    const { data: entry } = await supabase.from('entries').select('entry_date').eq('id', entryId).maybeSingle();
+    const [{ data: crew }, { data: gate }] = await Promise.all([
+      supabase.from('crew').select('name, role').eq('project_id', projectId).eq('active', true).order('sort_order').order('name'),
+      entry?.entry_date
+        ? supabase.from('site_signins').select('person_name, company').eq('project_id', projectId).eq('signin_date', entry.entry_date as string).in('person_kind', ['crew', 'subcontractor'])
+        : Promise.resolve({ data: [] as Array<{ person_name: string; company: string | null }> }),
+    ]);
+    const out: RosterPerson[] = ((crew ?? []) as Array<{ name: string; role: string | null }>).map((c) => ({ name: c.name, role: c.role, from: 'crew' as const }));
+    const seen = new Set(out.map((r) => r.name.trim().toLowerCase()));
+    for (const g of (gate ?? []) as Array<{ person_name: string; company: string | null }>) {
+      const k = g.person_name.trim().toLowerCase();
+      if (seen.has(k)) continue;
+      seen.add(k);
+      out.push({ name: g.person_name, role: g.company ? `${g.company} · signed in` : 'signed in at the gate', from: 'gate' });
+    }
+    return out;
+  })();
+  rosterCache.set(key, p);
+  p.catch(() => rosterCache.delete(key));
+  return p;
+}
+
+/**
+ * The labour row's name (README R128): a pick from the people on the job, never typed as a nickname. The crew list first,
+ * then anyone else who signed in at the gate that day. A name already on the row that is on neither list is kept and
+ * said to be off the list; "Someone else" opens a plain field for the one-off — a subbie's operator, a visitor who
+ * worked — so nothing a supervisor needs to record is refused.
+ */
+function PersonNameField({ field, value, projectId, entryId, onChange }: {
+  field: FieldDef; value: string | null; projectId: string; entryId: string; onChange: (value: unknown) => void;
+}) {
+  const [roster, setRoster] = useState<RosterPerson[]>([]);
+  const [typing, setTyping] = useState(false);
+  useEffect(() => {
+    let cancelled = false;
+    loadRoster(projectId, entryId).then((r) => { if (!cancelled) setRoster(r); }).catch(() => undefined);
+    return () => { cancelled = true; };
+  }, [projectId, entryId]);
+  const current = (value ?? '').trim();
+  const onList = roster.some((r) => r.name.trim().toLowerCase() === current.toLowerCase());
+  const crew = roster.filter((r) => r.from === 'crew');
+  const gate = roster.filter((r) => r.from === 'gate');
+  if (typing) {
+    return (
+      <label className="fieldcell">
+        <span className="label">{field.label}</span>
+        <input className="field field--sm" value={current} placeholder="Their name" autoComplete="off" onChange={(e) => onChange(e.target.value === '' ? null : e.target.value)} />
+        <button type="button" className="quotebtn" onClick={() => setTyping(false)}>Pick from the list instead</button>
+      </label>
+    );
+  }
+  return (
+    <label className="fieldcell">
+      <span className="label">{field.label}</span>
+      <select
+        className="field field--sm"
+        value={current}
+        onChange={(e) => {
+          const v = e.target.value;
+          if (v === '__other__') { setTyping(true); return; }
+          onChange(v === '' ? null : v);
+        }}
+      >
+        <option value="">Choose a name…</option>
+        {current && !onList && <option value={current}>{current} — not on the list</option>}
+        {crew.length > 0 && <optgroup label="Crew list">{crew.map((r) => <option key={r.name} value={r.name}>{r.name}{r.role ? ` — ${r.role}` : ''}</option>)}</optgroup>}
+        {gate.length > 0 && <optgroup label="Signed in at the gate">{gate.map((r) => <option key={r.name} value={r.name}>{r.name}{r.role ? ` — ${r.role}` : ''}</option>)}</optgroup>}
+        <option value="__other__">Someone else…</option>
+      </select>
+    </label>
+  );
+}
+
 function NamesField({ field, value, projectId, onChange }: {
   field: FieldDef; value: string[]; projectId: string; onChange: (value: unknown) => void;
 }) {
@@ -1728,6 +1810,9 @@ function Field({
   if (field.kind === 'regno') {
     return <RegisterNumberField field={field} value={(value as number | null) ?? null} projectId={projectId} onChange={onChange} />;
   }
+  if (field.kind === 'person') {
+    return <PersonNameField field={field} value={(value as string | null) ?? null} projectId={projectId} entryId={entryId} onChange={onChange} />;
+  }
 
   const common = {
     id,
@@ -2116,7 +2201,6 @@ function CrewShortcuts({
     labour: Item[];
     plant: Item[];
   }>(null);
-  const [crew, setCrew] = useState<string[]>([]);
   const [copied, setCopied] = useState(false);
   // The project's own crew list — name and role — kept in Settings.
   const [roster, setRoster] = useState<Array<{ name: string; role: string | null }>>([]);
@@ -2125,7 +2209,7 @@ function CrewShortcuts({
     let cancelled = false;
     void (async () => {
       const supabase = createClient();
-      const [{ data: prev }, { data: keywords }, { data: crewRows }, { data: gate }] = await Promise.all([
+      const [{ data: prev }, { data: crewRows }, { data: gate }] = await Promise.all([
         supabase
           .from('entries')
           .select('id, entry_no, entry_date')
@@ -2136,12 +2220,6 @@ function CrewShortcuts({
           .order('signed_at', { ascending: false })
           .limit(1)
           .maybeSingle(),
-        supabase
-          .from('project_keywords')
-          .select('term')
-          .eq('project_id', projectId)
-          .eq('category', 'person')
-          .limit(30),
         supabase
           .from('crew')
           .select('name, role')
@@ -2170,7 +2248,6 @@ function CrewShortcuts({
       }
       setRoster(rosterRows);
 
-      const names = new Set((keywords ?? []).map((k) => String(k.term)));
       if (prev) {
         const [{ data: labour }, { data: plant }] = await Promise.all([
           supabase
@@ -2183,7 +2260,6 @@ function CrewShortcuts({
             .eq('entry_id', prev.id),
         ]);
         if (cancelled) return;
-        for (const row of labour ?? []) names.add(String(row.person_name));
         setLast({
           entryNo: String(prev.entry_no),
           date: String(prev.entry_date),
@@ -2191,7 +2267,6 @@ function CrewShortcuts({
           plant: (plant ?? []) as Item[],
         });
       }
-      setCrew([...names].sort());
     })();
     return () => {
       cancelled = true;
@@ -2199,11 +2274,9 @@ function CrewShortcuts({
   }, [projectId, entryId, entryDate]);
 
   const have = new Set(existingNames.map((name) => name.trim().toLowerCase()).filter(Boolean));
-  const onRoster = new Set(roster.map((r) => r.name.trim().toLowerCase()));
+  // Only the people on the job (README R128): the crew list and the day's gate — never names harvested from old
+  // recordings, which is where the nicknames came from.
   const listed = roster.filter((r) => !have.has(r.name.trim().toLowerCase()));
-  const others = crew.filter(
-    (name) => !have.has(name.trim().toLowerCase()) && !onRoster.has(name.trim().toLowerCase()),
-  );
 
   const byHand = { source_quote: null, confidence: null };
 
@@ -2238,7 +2311,7 @@ function CrewShortcuts({
     setCopied(true);
   }
 
-  if (!last && listed.length === 0 && others.length === 0) return null;
+  if (!last && listed.length === 0) return null;
 
   return (
     <div className="crew-shortcuts">
@@ -2249,7 +2322,7 @@ function CrewShortcuts({
           {last.plant.length > 0 ? `, ${last.plant.length} plant` : ''})
         </button>
       )}
-      {(listed.length > 0 || others.length > 0) && (
+      {listed.length > 0 && (
         <label className="crew-select">
           <span className="label">Add from the crew list</span>
           <select
@@ -2269,13 +2342,6 @@ function CrewShortcuts({
                   <option key={r.name} value={r.name}>
                     {r.name}{r.role ? ` — ${r.role}` : ''}
                   </option>
-                ))}
-              </optgroup>
-            )}
-            {others.length > 0 && (
-              <optgroup label="Others this job has seen">
-                {others.map((name) => (
-                  <option key={name} value={name}>{name}</option>
                 ))}
               </optgroup>
             )}

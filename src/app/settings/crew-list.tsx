@@ -8,7 +8,6 @@ export interface CrewRow {
   name: string;
   role: string | null;
   active: boolean;
-  aliases: string[];
 }
 
 /**
@@ -33,7 +32,7 @@ export function CrewList({ projectId, initial, canEdit }: { projectId: string; i
       const { data, error: insertError } = await supabase
         .from('crew')
         .insert({ project_id: projectId, name: trimmed, role: role.trim() || null, sort_order: rows.length + 1 })
-        .select('id, name, role, active, aliases')
+        .select('id, name, role, active')
         .single();
       if (insertError) throw new Error(/duplicate/i.test(insertError.message) ? `${trimmed} is already on the list.` : insertError.message);
       setRows([...rows, data as CrewRow]);
@@ -72,8 +71,9 @@ export function CrewList({ projectId, initial, canEdit }: { projectId: string; i
     <section className="crewlist">
       <p className="label">Crew list</p>
       <p className="way-hint" style={{ marginTop: '0.25rem' }}>
-        The names and roles the entry screen offers when you add labour. Pick from the list
-        instead of typing. Taking someone off never changes a day already recorded.
+        The people the diary offers when you add labour — picked from this list, never typed. Everyone here is on the
+        company&rsquo;s staff list (Staff › All staff), where they are put on and taken off jobs. Taking someone off
+        never changes a day already recorded.
       </p>
 
       {rows.length === 0 && <p className="claims-nil">Nobody on the list yet.</p>}
@@ -104,22 +104,6 @@ export function CrewList({ projectId, initial, canEdit }: { projectId: string; i
               </button>
             </div>
           )}
-          {canEdit ? (
-            <label className="crewrow__aka">
-              <span className="label">Also known as</span>
-              <input
-                className="field field--sm"
-                defaultValue={(row.aliases ?? []).join(', ')}
-                placeholder="Matty, Matt — what the recording might call them"
-                onBlur={(e) => {
-                  const next = e.target.value.split(/[,;]+/).map((v) => v.trim()).filter(Boolean);
-                  if (next.join('|') !== (row.aliases ?? []).join('|')) void patch(row, { aliases: next });
-                }}
-              />
-            </label>
-          ) : (row.aliases ?? []).length > 0 ? (
-            <p className="crewrow__akastatic">also {row.aliases.join(', ')}</p>
-          ) : null}
         </div>
       ))}
 

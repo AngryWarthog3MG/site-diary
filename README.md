@@ -3011,6 +3011,22 @@ row written for the supervisor. The calendar is the only place a booking is made
 through the outbox: a truck arriving in a dead spot is exactly when the receipt is taken. Booking, receiving, moving
 and cancelling belong to whoever runs the day (the people who raise orders); the labourer reads none of it. Suite 55.
 
+**R128. Names, not nicknames.** "I need to clean up the labour — the names and the nicknames. Remove all nicknames and
+just have the list of ops on site that we can choose from." The labour row's name was a free text field, and the
+dropdown beside it offered the crew list plus "others this job has seen" — names harvested from old recordings and
+vocabulary, which is exactly where "Matty", "Markus" and an email address came from. Each crew row also carried an
+"also known as" list, typed in Settings, that fed the extraction step.
+
+Now the name on a labour row is a pick: the job's crew list first (the people put on the job from Staff › All staff,
+R123), then anyone else who signed in at the gate that day — a subbie who worked is labour — and "Someone else…" for the
+one-off, because refusing a name a supervisor needs to record would be worse than a free field. A name already on a row
+that is on neither list stays and says so. The "others" list is gone, the Settings nickname field is gone, and the
+nickname lists on every crew row were cleared. The extraction step still matches a spoken first name to the one crew
+member who has it, and the model is given the crew list; a nickname it cannot place arrives as said and is one tap from
+the right name. Two things were kept on purpose: signed days keep the names as they were recorded (they are the record),
+and the Timesheets page's "same person, different name" list (R107) stays, because that is how those old rows fold into
+one person for pay — it is history, not a nickname anyone picks.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;

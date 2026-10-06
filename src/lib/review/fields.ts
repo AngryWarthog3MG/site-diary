@@ -14,7 +14,7 @@ import {
  * rather than a new form.
  */
 
-export type FieldKind = 'text' | 'textarea' | 'number' | 'time' | 'select' | 'datetime' | 'list' | 'plant' | 'names' | 'regno';
+export type FieldKind = 'text' | 'textarea' | 'number' | 'time' | 'select' | 'datetime' | 'list' | 'plant' | 'names' | 'regno' | 'person';
 
 export interface FieldDef {
   key: string;
@@ -50,7 +50,8 @@ export const SECTIONS: SectionDef[] = [
     noun: 'person',
     identity: 'person_name',
     fields: [
-      { key: 'person_name', label: 'Name', kind: 'text' },
+      // A pick from the people on the job — the crew list and the day's gate — never a nickname (README R128).
+      { key: 'person_name', label: 'Name', kind: 'person' },
       { key: 'role', label: 'Role', kind: 'text', narrow: true },
       { key: 'area', label: 'Area', kind: 'text', narrow: true },
       { key: 'start_time', label: 'Start', kind: 'time', narrow: true },
