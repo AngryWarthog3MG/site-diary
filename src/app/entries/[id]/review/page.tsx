@@ -8,6 +8,7 @@ import { canManageRegisters } from '@/lib/roles';
 import { ReviewPayload } from '@/lib/review/schema';
 import type { SectionKey } from '@/lib/extraction/schema';
 import { ReviewScreen } from './review-screen';
+import { PhotoZoom } from '@/components/photo-zoom';
 import { fillDelayMinutes } from '@/lib/review/minutes';
 import { parseRegisterNumber } from '@/lib/review/register-number';
 import { loadDayNeighbours } from '@/lib/entries/neighbours';
@@ -243,6 +244,7 @@ export default async function ReviewPage({ params }: { params: Promise<{ id: str
     .map((d) => ({ id: d.id, text: [d.item, d.quantity, d.supplier, d.window_text].filter(Boolean).join(' · '), received: d.status === 'received', docket: d.docket_ref }));
 
   return (
+    <PhotoZoom>
     <ReviewScreen
       entryId={entry.id}
       projectId={entry.project_id}
@@ -268,6 +270,7 @@ export default async function ReviewPage({ params }: { params: Promise<{ id: str
       handedOver={handedOver}
       deliveriesToday={deliveriesToday}
     />
+    </PhotoZoom>
   );
 }
 

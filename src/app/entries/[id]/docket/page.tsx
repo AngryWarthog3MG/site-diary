@@ -4,6 +4,7 @@ import { requireUser, guardScreen } from '@/lib/auth';
 import { loadDocketEntry } from '@/lib/pdf/load';
 import { DailyDocket, type PhotoImage } from '@/lib/pdf/docket';
 import { collectPhotoPaths } from '@/lib/pdf/photos';
+import { PhotoZoom } from '@/components/photo-zoom';
 import { DOCKET_CSS } from '@/lib/pdf/styles';
 import { DayNav } from '@/components/day-nav';
 import { loadDayNeighbours } from '@/lib/entries/neighbours';
@@ -49,7 +50,9 @@ export default async function DocketPage({ params }: { params: Promise<{ id: str
       <div className="docket-daynav">
         <DayNav neighbours={neighbours} target="docket" />
       </div>
-      <DailyDocket entry={entry} photos={photos} />
+      <PhotoZoom>
+        <DailyDocket entry={entry} photos={photos} />
+      </PhotoZoom>
     </>
   );
 }

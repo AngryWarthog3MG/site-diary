@@ -3046,6 +3046,13 @@ days verified unchanged after the migration), extraction schema, prompt and fixt
 halves, the docket, and the reports. The free-text labour column stays for every daywork recorded before today and for
 what was said. Suite 56.
 
+**R130. Tap a photograph, see it big.** "Allow me to open all photos so I can view them bigger." Thumbnails on the
+review screen, the Photos tab and the on-screen docket were just thumbnails. `src/components/photo-zoom.tsx` wraps a
+screen and listens for a tap on any image inside one of the app's photo grids; it opens that grid in a full-screen
+viewer — arrows, the keyboard or a swipe to move through, Escape or Close to leave, a counter, the caption, and "Open full
+size" for a pinch-zoom in a new tab. It reads the page as drawn rather than changing it, which is what lets it sit over
+the docket template without touching the bytes the PDF check pins.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;
