@@ -4681,7 +4681,7 @@ a.dash-row:hover { background: var(--teal-tint); }
 
 /* Tap a photograph, see it big (README R130). */
 .photo-review-grid img, .inline-photo-grid img, .photos__grid img, .photo-zoom-gallery img { cursor: zoom-in; }
-.photo-zoom { position: fixed; inset: 0; z-index: 1000; display: grid; grid-template-rows: auto 1fr auto; background: rgba(8, 14, 13, 0.94); color: #f2f5f2; padding: env(safe-area-inset-top, 0) 0 env(safe-area-inset-bottom, 0); touch-action: pan-y; }
+.photo-zoom { position: fixed; inset: 0; z-index: 3000; display: grid; grid-template-rows: auto 1fr auto; background: rgb(8, 14, 13); color: #f2f5f2; padding: env(safe-area-inset-top, 0) 0 env(safe-area-inset-bottom, 0); touch-action: pan-y; }
 .photo-zoom__bar { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 0.6rem 0.9rem; }
 .photo-zoom__count { font-size: 0.85rem; opacity: 0.85; }
 .photo-zoom__open { color: #cfe3da; font-size: 0.85rem; text-decoration: underline; }

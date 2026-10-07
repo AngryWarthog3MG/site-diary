@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 
 /**
  * Tap a photograph, see it big (README R130). Wraps a screen; any image inside one of the app's photo grids opens in a
@@ -55,10 +56,8 @@ export function PhotoZoom({ children }: { children: React.ReactNode }) {
   }, [at, close, step]);
 
   const shot = at == null ? null : shots[at];
-  return (
-    <>
-      {children}
-      {shot && (
+  // Drawn on the document itself, not inside the screen: nothing an ancestor sets — opacity, transforms, stacking — reaches it.
+  const viewer = shot && typeof document !== 'undefined' ? createPortal(
         <div className="photo-zoom" role="dialog" aria-modal="true" aria-label="Photograph" onClick={close}
           onPointerDown={(e) => { swipe.current = { x: e.clientX, y: e.clientY }; }}
           onPointerUp={(e) => {
@@ -82,8 +81,13 @@ export function PhotoZoom({ children }: { children: React.ReactNode }) {
               <button type="button" className="photo-zoom__nav photo-zoom__nav--next" aria-label="Next photo" onClick={(e) => { e.stopPropagation(); step(1); }}>›</button>
             </>
           )}
-        </div>
-      )}
+        </div>,
+        document.body,
+      ) : null;
+  return (
+    <>
+      {children}
+      {viewer}
     </>
   );
 }
