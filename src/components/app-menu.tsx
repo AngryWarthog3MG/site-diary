@@ -96,7 +96,7 @@ export function AppMenu({ slotId }: { slotId: string }) {
       {groups.map((group, i) => {
         // Two parts (README R111): "Site · this job" captions the site's headings, "Company · <name>" the company's.
         const firstOfPart = i === 0 || groups[i - 1].scope !== group.scope;
-        const caption = !firstOfPart ? null : group.scope === 'company' ? `${COMPANY_LABEL}${me?.project?.org ? ` · ${me.project.org.name}` : ''}` : `${SITE_LABEL} · this job`;
+        const caption = !firstOfPart ? null : group.scope === 'company' ? `${COMPANY_LABEL}${me?.project?.org ? ` · ${me.project.org.name}` : ''}` : SITE_LABEL;
         const heading = group.label;
         return (
           <section key={group.label} className={`navgroup${group.scope === 'company' ? ' navgroup--company' : ''}${caption && group.scope === 'company' ? ' navgroup--first-company' : ''}`}>

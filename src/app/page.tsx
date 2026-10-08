@@ -74,20 +74,16 @@ export default async function TodayPage({
   return (
     <main className="app-shell home-shell dash">
       <header className="dash-head">
-        <div className="dash-head__brand">
-          <BrandMark size={34} />
-          <div>
-            <p className="dash-head__app">Kooboolong IMS</p>
-            <p className="dash-head__job">{current.project.name} <span className="mono">{current.project.org.code}_{current.project.code}</span></p>
-          </div>
+        <div className="dash-head__title">
+          <p className="label">{new Intl.DateTimeFormat('en-AU', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Australia/Perth' }).format(new Date())}</p>
+          <h1 className="dash-title"><BrandMark size={26} /> {current.project.name}</h1>
+          <p className="caption dash-head__sub">
+            <span className="mono">{current.project.org.code}_{current.project.code}</span> · {current.project.org.name} · signed in as {profile?.full_name ?? email}, {ROLE_LABEL[current.role].toLowerCase()}
+          </p>
         </div>
-        <div className="dash-head__who">
-          <p className="dash-head__name">{profile?.full_name ?? email}</p>
-          <p className="caption">{ROLE_LABEL[current.role]} · {current.project.org.name}</p>
-          <div className="dash-head__tools">
-            <RefreshButton />
-            <SignOutButton />
-          </div>
+        <div className="dash-head__tools">
+          <RefreshButton />
+          <SignOutButton />
         </div>
       </header>
       <ProjectSwitcher memberships={memberships} currentId={current.project_id} />
@@ -100,6 +96,8 @@ export default async function TodayPage({
       <FirstRun role={current.role} />
 
       {((reports && opens('incidents')) || (!talks && reports && opens('signin')) || (talks && (opens('inspections') || opens('prestart') || opens('orders'))) || (authors && opens('permits'))) && (
+        <section className="dash-quick" aria-label="Quick actions">
+        <p className="label">Quick actions</p>
         <div className="dash-actions">
           {reports && opens('incidents') && <Link className="dash-action" href={`/incidents/new${q}`}><span aria-hidden>⚠</span> New hazard</Link>}
           {!talks && reports && opens('signin') && <Link className="dash-action" href={`/signin${q}`}><span aria-hidden>⇥</span> Sign in / out</Link>}
@@ -108,6 +106,7 @@ export default async function TodayPage({
           {talks && opens('prestart') && <Link className="dash-action" href={`/prestart/new${q}`}><span aria-hidden>☀</span> New prestart</Link>}
           {talks && opens('orders') && <Link className="dash-action" href={`/orders${q}#raise`}><span aria-hidden>▣</span> Order / plant issue</Link>}
         </div>
+        </section>
       )}
 
       <div className="dash-body">
@@ -120,10 +119,13 @@ export default async function TodayPage({
             roleLabel={ROLE_LABEL[current.role].toLowerCase() === 'project manager' ? 'the project manager' : `the ${ROLE_LABEL[current.role].toLowerCase()}`}
           />
         </section>
-        <div className="dash-grid">
-          <Suspense fallback={<DashboardSkeleton />}>
-            <DashboardCards projectId={current.project_id} orgId={current.project.org.id} member={current} userId={userId} />
-          </Suspense>
+        <div className="dash-side">
+          <p className="label dash-side__label">At a glance</p>
+          <div className="dash-grid">
+            <Suspense fallback={<DashboardSkeleton />}>
+              <DashboardCards projectId={current.project_id} orgId={current.project.org.id} member={current} userId={userId} />
+            </Suspense>
+          </div>
         </div>
       </div>
     </main>

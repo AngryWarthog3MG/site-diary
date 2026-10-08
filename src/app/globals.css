@@ -3496,7 +3496,7 @@ main.sheet--wide .vr-list { grid-template-columns: repeat(auto-fill, minmax(22re
     padding-bottom: 0.9rem;
     border-bottom: 1px solid var(--ink-08);
   }
-  .rail__jobname { font-size: 0.95rem; font-weight: 600; line-height: 1.25; }
+  .rail__jobname { font-size: 0.95rem; font-weight: 600; line-height: 1.25; white-space: normal; }
   .rail__jobcode { font-size: 0.75rem; color: var(--ink-40); }
   /* Where the rail's scope changes: the job's headings, then the company's (README R87). */
   .rail__scope {
@@ -3715,7 +3715,7 @@ main.sheet--wide .vr-list { grid-template-columns: repeat(auto-fill, minmax(22re
 .dash-head__who { text-align: right; flex: 0 0 auto; }
 .dash-head__who .caption { margin: 0.1rem 0 0; }
 .dash-head__name { margin: 0; font-weight: 600; }
-.dash-head__tools { display: flex; justify-content: flex-end; align-items: center; gap: 0.5rem; margin-top: 0.5rem; }
+.dash-head__tools { display: flex; justify-content: flex-end; align-items: center; gap: 0.5rem; margin-top: 0.5rem; flex: 0 0 auto; }
 .dash-head__tools .button { width: auto; margin: 0; min-height: 34px; padding: 0 0.8rem; font-size: 0.8125rem; }
 .dash .home-switcher { margin: 0 0 0.75rem; }
 
@@ -3821,10 +3821,10 @@ a.dash-row:hover { background: var(--teal-tint); }
   .dash > .dash-head { order: 0; }
   .dash > .home-switcher { order: 1; }
   .dash > .dash-body > .dash-card--diary { order: 2; margin-top: 0.25rem; }
-  .dash > .dash-actions { order: 3; margin-top: 0.75rem; }
+  .dash > .dash-quick { order: 3; margin-top: 0.75rem; }
   .dash > .secbar { order: 4; margin-top: 0.75rem; }
   .dash > .first-run, .dash > .notice { order: 5; }
-  .dash > .dash-body > .dash-grid { order: 6; margin-top: 0.75rem; }
+  .dash > .dash-body > .dash-side { order: 6; margin-top: 0.75rem; }
   /* Gloves: every row is a thumb high and its link is a button. */
   .dash-card--diary { padding: 0.85rem 0.9rem; }
   .home-today .home-date { font-size: 1.35rem; }
@@ -3840,7 +3840,8 @@ a.dash-row:hover { background: var(--teal-tint); }
   /* With the rail beside the page there is one navigation: the heading bar and the
      brand it repeats go, the person and Sign out stay. */
   body:has(> .rail) .dash .secbar, body:has(> .rail) .dash-head__brand { display: none; }
-  body:has(> .rail) .dash-head { justify-content: flex-end; padding-top: 0; padding-bottom: 0.6rem; }
+  body:has(> .rail) .dash-head { justify-content: space-between; padding-top: 0; padding-bottom: 0.6rem; }
+  body:has(> .rail) .dash-quick { margin-top: 0.75rem; }
   body:has(> .rail) .dash-head__who { display: flex; align-items: center; gap: 0.75rem; text-align: left; }
   body:has(> .rail) .dash-head__who .caption { margin: 0; }
   body:has(> .rail) .dash-head__tools { margin-top: 0; }
@@ -4725,4 +4726,23 @@ a.diarycal__day:hover { box-shadow: var(--shadow-ui); transform: translateY(-1px
   .diarycal__day { min-height: 3.1rem; padding: 0.3rem 0.3rem; border-radius: 7px; }
   .diarycal__word { display: none; }
   .diarycal__short { display: block; }
+}
+
+/* The home, read top to bottom by someone new (README R132). */
+.dash-head__title { min-width: 0; flex: 1 1 auto; }
+.dash-title { display: flex; align-items: center; gap: 0.5rem; margin: 0.1rem 0 0; font-size: 1.6rem; line-height: 1.15; }
+.dash-head__sub { margin: 0.3rem 0 0; }
+.dash-quick { margin-top: 1rem; }
+.dash-quick .label { margin: 0 0 0.35rem; }
+.dash-quick .dash-actions { margin-top: 0; }
+.dash-side { display: grid; gap: 0.5rem; align-content: start; }
+.dash-side__label { margin: 0.1rem 0 0; }
+.home-today .home-date { margin: 0.1rem 0 0.25rem; font-size: 1.35rem; }
+.row-kicker { display: inline-block; min-width: 5.2rem; margin-right: 0.35rem; font-size: 0.66rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-60); vertical-align: 0.05em; }
+@media (min-width: 900px) {
+  .dash .home-switcher { display: none; }
+}
+@media (max-width: 560px) {
+  .row-kicker { display: block; min-width: 0; margin: 0 0 0.1rem; }
+  .dash-title { font-size: 1.35rem; }
 }

@@ -545,20 +545,22 @@ export function TodayPanel({
 
   return (
     <section className="home-today" aria-label="Today">
-      <h1 className="home-date">
+      <p className="label">Today on site</p>
+      <h2 className="home-date">
         {weekday || ' '} <span className="mono home-date__num">{date ? fmtDate(date) : ''}</span>
-      </h1>
+      </h2>
       {status && <p className="today-status">{status}</p>}
 
       {!loading && doors.signin && (
         <div className={`prestart-row ${onSite > 0 ? 'prestart-row--done' : ''}`}>
-          <span>{onSite > 0 ? `On site now · ${onSite}` : 'Nobody signed in at the gate yet'}</span>
+          <span><b className="row-kicker">Gate</b>{onSite > 0 ? `On site now · ${onSite}` : 'Nobody signed in at the gate yet'}</span>
           <Link href={`/signin?project=${projectId}`}>{canPrestart ? 'Sign-in' : 'Look'}</Link>
         </div>
       )}
       {!loading && canPrestart && doors.prestart && (
         <div className={`prestart-row ${prestart?.done ? 'prestart-row--done' : prestart ? 'prestart-row--open' : ''}`}>
           <span>
+            <b className="row-kicker">Prestart</b>
             {prestart?.done
               ? `Prestart done · ${prestart.signed} signed on`
               : prestart
@@ -576,7 +578,7 @@ export function TodayPanel({
       )}
       {!loading && canPrestart && doors.prestart && tomorrowPrestart && (
         <div className="prestart-row prestart-row--done">
-          <span>Tomorrow&rsquo;s prestart is ready · {fmtDate(tomorrowPrestart.date)}</span>
+          <span><b className="row-kicker">Prestart</b>Tomorrow&rsquo;s prestart is ready · {fmtDate(tomorrowPrestart.date)}</span>
           <Link href={`/prestart/${tomorrowPrestart.id}`}>Look it over</Link>
         </div>
       )}
@@ -594,6 +596,7 @@ export function TodayPanel({
         ) : othersToday && !entry ? (
           <div className="prestart-row prestart-row--open home-theirs">
             <span>
+              <b className="row-kicker">Diary</b>
               {othersToday.who} has today&rsquo;s diary open
               {othersToday.labour > 0 ? ` · ${othersToday.labour} on labour so far` : ''}
             </span>
@@ -611,7 +614,7 @@ export function TodayPanel({
             </>
           ) : (
             <div className="prestart-row home-later">
-              <span>Works today — after the shift · from {shiftEndLabel()}</span>
+              <span><b className="row-kicker">Diary</b>Works today — after the shift · from {shiftEndLabel()}</span>
               <Link href={`/record?project=${projectId}`}>Start it now</Link>
             </div>
           )
@@ -633,13 +636,13 @@ export function TodayPanel({
 
       {!loading && doors.permits && (permits.live > 0 || permits.expired > 0) && (
         <div className={`prestart-row ${permits.expired > 0 ? 'prestart-row--open' : 'prestart-row--done'}`}>
-          <span>{permits.live > 0 ? `${permits.live} permit${permits.live === 1 ? '' : 's'} to work live` : ''}{permits.live > 0 && permits.expired > 0 ? ' · ' : ''}{permits.expired > 0 ? `${permits.expired} past ${permits.expired === 1 ? 'its' : 'their'} window, not closed` : ''}</span>
+          <span><b className="row-kicker">Permits</b>{permits.live > 0 ? `${permits.live} permit${permits.live === 1 ? '' : 's'} to work live` : ''}{permits.live > 0 && permits.expired > 0 ? ' · ' : ''}{permits.expired > 0 ? `${permits.expired} past ${permits.expired === 1 ? 'its' : 'their'} window, not closed` : ''}</span>
           <Link href={`/permits?project=${projectId}`}>Permits</Link>
         </div>
       )}
       {!loading && doors.incidents && (safety.open > 0 || safety.overdue > 0) && (
         <div className={`prestart-row ${safety.overdue > 0 ? 'prestart-row--open' : ''}`}>
-          <span>{safety.open} safety report{safety.open === 1 ? '' : 's'} open{safety.overdue > 0 ? ` · ${safety.overdue} action${safety.overdue === 1 ? '' : 's'} overdue` : ''}</span>
+          <span><b className="row-kicker">Safety</b>{safety.open} safety report{safety.open === 1 ? '' : 's'} open{safety.overdue > 0 ? ` · ${safety.overdue} action${safety.overdue === 1 ? '' : 's'} overdue` : ''}</span>
           <Link href={`/incidents?project=${projectId}`}>Open</Link>
         </div>
       )}
@@ -647,6 +650,7 @@ export function TodayPanel({
       {(deliveries.today.length > 0 || deliveries.tomorrow > 0) && (
         <div className="prestart-row home-deliveries">
           <span>
+            <b className="row-kicker">Deliveries</b>
             {deliveries.today.length > 0
               ? <>Arriving today: {deliveries.today.map((d) => d.text).join('; ')}{deliveries.tomorrow > 0 ? ` · ${deliveries.tomorrow} booked for tomorrow` : ''}</>
               : <>{deliveries.tomorrow} deliver{deliveries.tomorrow === 1 ? 'y' : 'ies'} booked for tomorrow</>}
@@ -657,7 +661,7 @@ export function TodayPanel({
 
       {taggedOut.length > 0 && (
         <div className="prestart-row prestart-row--open home-tagged">
-          <span>Not to be used today: {taggedOut.join(', ')}</span>
+          <span><b className="row-kicker">Plant</b>Not to be used today: {taggedOut.join(', ')}</span>
           {doors.plant && <Link href={`/plant?project=${projectId}`}>Plant</Link>}
         </div>
       )}

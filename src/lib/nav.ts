@@ -35,8 +35,8 @@ export type NavScope = 'site' | 'company';
 export interface NavGroup { label: string; items: NavItem[]; scope: NavScope }
 
 /** The two parts' names: the site's headings are captioned as this job's; the company's carry its name. */
-export const SITE_LABEL = 'Site';
-export const COMPANY_LABEL = 'Company';
+export const SITE_LABEL = 'This job';
+export const COMPANY_LABEL = 'The company';
 
 export const HOME_ITEM: NavItem = { href: '/', name: 'Home', what: 'Today’s diary — record it, or type it in', screen: 'today' };
 
@@ -53,7 +53,7 @@ export const NAV_GROUPS: NavGroup[] = [
     ],
   },
   {
-    label: 'Works', scope: 'site',
+    label: 'Site works', scope: 'site',
     items: [
       { href: '/programme', name: 'Programme', what: 'The construction programme as issued, and the two-week look-aheads', screen: 'programme' },
       { href: '/toolbox', name: 'Toolbox talks', what: 'Weekly talk and sign-on', screen: 'toolbox' },
@@ -104,7 +104,7 @@ export const NAV_GROUPS: NavGroup[] = [
     ],
   },
   {
-    label: 'Library', scope: 'site',
+    label: 'Documents', scope: 'site',
     items: [
       { href: '/procedures', name: 'Policies & procedures', what: 'The company documents, versioned — what is waiting on you to read and sign, and who has signed what', screen: 'procedures' },
       { href: '/documents', name: 'Job documents', what: 'Spec, scope, contract, drawings', screen: 'documents' },
@@ -112,7 +112,7 @@ export const NAV_GROUPS: NavGroup[] = [
     ],
   },
   {
-    label: 'Setup', scope: 'site',
+    label: 'Job setup', scope: 'site',
     items: [
       { href: '/mobilisation', name: 'Mobilisation', what: 'What this job needs before and as it starts — stamped from the company’s templates', screen: 'start_gate' },
       { href: '/settings', name: 'Settings', what: 'Hours, emails, crew and plant lists', screen: 'settings' },

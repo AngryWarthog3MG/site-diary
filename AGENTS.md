@@ -338,7 +338,8 @@ improvising; the register once shipped dead because a live smoke test was skippe
 - `src/lib/nav.ts` — the ONE list of the app's sections (`NAV_GROUPS` under seven headings, `showNav`, `navFor`).
   The home page draws it as the heading bar (`src/components/section-bar.tsx`), the phone's Menu drawer as a
   list, the desktop rail as links. A section is added, renamed or moved there and nowhere else; each drawing
-  filters it by role through `canSee`. Two parts (README R111): a GROUP's `scope` is 'site' (this job's record) or
+  filters it by role through `canSee`. Group labels are written for someone new (README R132: Site works, Documents,
+  Job setup; parts captioned `SITE_LABEL` "This job" / `COMPANY_LABEL` "The company"). Two parts (README R111): a GROUP's `scope` is 'site' (this job's record) or
   'company' (the office's, the same on every job — Reports, Staff, Money, Standards — drawn for ADMINS ONLY); `navFor` keeps site then company,
   `partsFor` splits them for the home bar's two tabs; the rail and drawer caption the two runs. A new section goes in
   the part its RECORD belongs to. A screen that is both (Plant, Chemicals) stays with the site and names the company

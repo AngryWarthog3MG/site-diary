@@ -112,7 +112,7 @@ export function SideNav() {
           const holdsHere = isHereGroup(group.label);
           // Two parts (README R111): "Site · this job" captions the site's headings, "Company · <name>" the company's.
           const firstOfPart = i === 0 || groups[i - 1].scope !== group.scope;
-          const caption = !firstOfPart ? null : group.scope === 'company' ? `${COMPANY_LABEL}${me?.project?.org ? ` · ${me.project.org.name}` : ''}` : `${SITE_LABEL} · this job`;
+          const caption = !firstOfPart ? null : group.scope === 'company' ? `${COMPANY_LABEL}${me?.project?.org ? ` · ${me.project.org.name}` : ''}` : SITE_LABEL;
           const heading = group.label;
           return (
             <li key={group.label} className={`rail__group${opened ? ' rail__group--open' : ''}${group.scope === 'company' ? ' rail__group--company' : ''}${caption && group.scope === 'company' ? ' rail__group--first-company' : ''}`}>

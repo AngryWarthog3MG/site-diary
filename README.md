@@ -3062,6 +3062,22 @@ the list already has, by the register's own rules: a signed correction replaces 
 day as a correction in progress. The list stays underneath, unchanged, because the holes and the earlier versions are
 still best read as a timeline. Nothing on the tiles is typed for the screen.
 
+**R132. The home and the rail, read by someone new.** "Clean up the main page, clean up the side banner — improve the
+layout and headings so it aligns and makes sense to someone who's never seen the app." The page read as a control
+panel built up one feature at a time: the brand in the top-left corner, a job name in small grey text under it, a row
+of buttons with no name, a grid of cards with no name, and a rail captioned `Site · this job` / `Company · Kooboolong`
+whose middle headings (Works, Library, Setup) only make sense once you know what is in them. Now the page reads top to
+bottom like a document: the date, then the job's name as the one title (with the mark beside it), then one caption
+line saying the code, the company and who is signed in as what. Under it the two notices, then a labelled row of
+**Quick actions**, then the two columns each with a label: **Today on site** (the gate, the prestart, the diary — each
+row now carries its own small heading: Gate, Prestart, Diary, Deliveries, Permits, Safety, Plant) and **At a glance**
+(the cards). The rail's two parts are captioned **This job** and **The company · Kooboolong**, so the switch from the
+job's record to the office's is said in words, not inferred from a thin rule; `Works` is **Site works**, `Library` is
+**Documents**, `Setup` is **Job setup**. The home's job chips go once the rail is beside the page, because the rail has
+the switcher. On a phone the order is the one R97 set (the day first) — the wrapping sections carry the `order` now, so
+the quick actions and the cards keep their places. Nothing moved between sections and no address changed: `nav.ts` is
+still the one list, and the labels are the only change to it.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;
