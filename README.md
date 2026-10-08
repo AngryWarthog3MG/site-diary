@@ -3087,6 +3087,16 @@ in place of the tiles — one list on the screen at a time, with an **All sectio
 disappear and only show the lower tab"). The component keeps its name (`SectionBar`) and the groups still come from
 `nav.ts`; only the drawing changed. The rail replaces it from 900 px, as R116 says.
 
+**R134. Role requirements as cards, not a matrix.** "Tidy this up, make it more user friendly." The page that says what
+each role must hold was a fifteen-column matrix with the ticket names written sideways — the one thing a person had to
+turn their head to read. It is now a card per role, with every ticket and induction as a chip the manager taps on or
+off; the required ones are solid green with a tick, the rest outlined with a plus, and the card's corner says how many
+are required. The two forms underneath are labelled and explained in a line each: a role added by hand starts with the
+white card (everyone on a construction site holds one, reg. 317) and can be removed while no crew list carries it;
+a company competency says whether it expires. The data did not change — `competency_requirements` and `org_competencies`
+as before, the matrix still reads them — only the drawing. The role Mitchell typed by mistake
+("machine op- excavator ticket") was removed by its key at his request; it had never been on a crew list.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;

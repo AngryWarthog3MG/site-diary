@@ -27,7 +27,7 @@ export default async function RequirementsPage({ searchParams }: { searchParams:
     <main className="sheet sheet--wide">
       <p className="label"><BrandMark size={18} /> {current.project.org.name}</p>
       <h1 className="page-title">What each role must hold</h1>
-      <p className="page-subtitle">Roles come from the crew lists (the Role column). Tick the competencies each must hold; the matrix shows a gap wherever someone in that role does not. Add the company&rsquo;s own competencies below.</p>
+      <p className="page-subtitle">For each role, tap the tickets and inductions it must hold. The training matrix then flags anyone in that role who is missing one.</p>
       <RequirementsEditor orgId={orgId} userId={userId} roles={roles} requirements={(reqs ?? []) as Array<{ role: string; competency: string }>} competencies={competencies((custom ?? []) as Array<{ key: string; label: string; active: boolean }>)} custom={(custom ?? []) as Array<{ id: string; key: string; label: string; valid_months: number | null; active: boolean }>} />
     </main>
   );

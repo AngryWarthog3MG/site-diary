@@ -4773,3 +4773,36 @@ a.diarycal__day:hover { box-shadow: var(--shadow-ui); transform: translateY(-1px
 .secmenu__panel .navitem { padding: 0.6rem 0.7rem; border-radius: 10px; }
 .secmenu__panel .navitem__name { font-size: 0.9rem; line-height: 1.2; color: var(--teal); }
 .secmenu__panel .navitem__what { margin-top: 0.2rem; font-size: 0.75rem; line-height: 1.3; }
+
+/* Role requirements (README R134): a card per role, the competencies as chips you tap on or off. */
+.reqs { display: grid; gap: 1rem; margin-top: 0.75rem; }
+.reqs__roles { display: grid; gap: 0.6rem; }
+.reqs__roles > .label { margin: 0; }
+.reqs__role { padding: 0.85rem 1rem 0.95rem; background: var(--paper); border: 1px solid var(--ink-12); border-radius: 12px; box-shadow: var(--shadow-ui); }
+.reqs__role-head { display: flex; align-items: baseline; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 0.6rem; }
+.reqs__role-name { margin: 0; font-size: 1.1rem; line-height: 1.2; }
+.reqs__role-meta { margin: 0; }
+.reqs__role-meta .linklike { margin-left: 0.25rem; }
+.reqs__chips { gap: 0.4rem; }
+.reqs__chip { gap: 0.35rem; cursor: pointer; text-transform: none; letter-spacing: 0; font-family: inherit; font-size: 0.8125rem; font-weight: 600; color: var(--ink-60); }
+.reqs__chip:not(.chip--on):hover { border-color: var(--teal); color: var(--teal); }
+.reqs__chip:disabled { opacity: 0.45; cursor: default; }
+.reqs__tick { display: inline-grid; place-items: center; width: 1.05rem; height: 1.05rem; border-radius: 50%; border: 1px solid currentColor; font-size: 0.7rem; line-height: 1; }
+.chip--on .reqs__tick { background: #fff; color: var(--teal); border-color: #fff; }
+.reqs__chip.chip--on::before { content: none; }
+.reqs__block { margin-top: 0; }
+.reqs__block > .caption { margin: 0.2rem 0 0.6rem; }
+.reqs__form { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0.5rem; align-items: end; }
+.reqs__form--two { grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr) auto; }
+.reqs__field { display: grid; gap: 0.25rem; min-width: 0; }
+.reqs__field .caption { margin: 0; }
+.reqs__button { margin: 0; width: auto; white-space: nowrap; }
+.reqs__custom { list-style: none; margin: 0 0 0.75rem; padding: 0; display: grid; gap: 0.35rem; }
+.reqs__custom-row { display: flex; align-items: baseline; gap: 0.6rem; flex-wrap: wrap; padding: 0.45rem 0.6rem; background: var(--paper); border: 1px solid var(--ink-08); border-radius: 8px; }
+.reqs__custom-row .caption { margin: 0; flex: 1 1 auto; }
+.reqs__custom-name { font-weight: 600; }
+.reqs__custom-row--retired .reqs__custom-name { color: var(--ink-40); text-decoration: line-through; }
+@media (max-width: 640px) {
+  .reqs__form, .reqs__form--two { grid-template-columns: minmax(0, 1fr); }
+  .reqs__button { width: 100%; }
+}
