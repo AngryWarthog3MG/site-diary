@@ -4705,7 +4705,7 @@ a.dash-row:hover { background: var(--teal-tint); }
 a.diarycal__day:hover { box-shadow: var(--shadow-ui); transform: translateY(-1px); }
 .diarycal__num { font-weight: 650; font-size: 0.95rem; }
 .diarycal__word { font-size: 0.7rem; line-height: 1.2; }
-.diarycal__no { font-size: 0.66rem; color: var(--ink-60); margin-top: auto; }
+.diarycal__short { display: none; font-size: 0.6rem; line-height: 1.2; }
 .diarycal__day--out { opacity: 0.35; }
 .diarycal__day--today { outline: 2px solid var(--teal); outline-offset: -2px; }
 .diarycal__day--signed { background: #e6f0ec; border-color: #bfd8cd; color: #1f5c4a; }
@@ -4723,6 +4723,6 @@ a.diarycal__day:hover { box-shadow: var(--shadow-ui); transform: translateY(-1px
   .diarycal { padding: 0.75rem 0.6rem 0.6rem; }
   .diarycal__grid { gap: 0.2rem; }
   .diarycal__day { min-height: 3.1rem; padding: 0.3rem 0.3rem; border-radius: 7px; }
-  .diarycal__word { font-size: 0.58rem; }
-  .diarycal__no { display: none; }
+  .diarycal__word { display: none; }
+  .diarycal__short { display: block; }
 }

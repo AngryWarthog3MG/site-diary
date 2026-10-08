@@ -6,6 +6,7 @@ import { monthLabel, monthOf, monthTiles, nextMonth, prevMonth, summariseMonth, 
 
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 const WORD: Record<DayState, string> = { signed: 'Signed', draft: 'Draft', ready: 'Ready to sign', correction: 'Correction', gap: 'No record', rest: 'Rest', future: '', before: '' };
+const SHORT: Record<DayState, string> = { signed: 'Signed', draft: 'Draft', ready: 'Ready', correction: 'Corr.', gap: 'Hole', rest: 'Rest', future: '', before: '' };
 
 /**
  * The diary as a month (README R131): a tile a day, coloured by what the record holds, and a tap opens the day. The
@@ -42,8 +43,7 @@ export function DiaryCalendar({ rows, projectId, today }: { rows: CalendarRow[];
           const body = (
             <>
               <span className="diarycal__num">{Number(t.date.slice(8, 10))}</span>
-              {t.inMonth && WORD[t.state] && <span className="diarycal__word">{WORD[t.state]}</span>}
-              {t.inMonth && t.state === 'signed' && t.entryNo && <span className="diarycal__no mono">{t.entryNo.replace(/^.*?-(\d{4}-\d{2}-\d{2})/, '$1').slice(-5)}</span>}
+              {t.inMonth && WORD[t.state] && <><span className="diarycal__word">{WORD[t.state]}</span><span className="diarycal__short">{SHORT[t.state]}</span></>}
             </>
           );
           const title = `${t.date}${WORD[t.state] ? ` · ${WORD[t.state]}` : ''}`;
