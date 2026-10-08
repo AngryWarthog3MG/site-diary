@@ -3822,7 +3822,7 @@ a.dash-row:hover { background: var(--teal-tint); }
   .dash > .home-switcher { order: 1; }
   .dash > .dash-body > .dash-card--diary { order: 2; margin-top: 0.25rem; }
   .dash > .dash-quick { order: 3; margin-top: 0.75rem; }
-  .dash > .secbar { order: 4; margin-top: 0.75rem; }
+  .dash > .secmenu { order: 4; margin-top: 0.75rem; }
   .dash > .first-run, .dash > .notice { order: 5; }
   .dash > .dash-body > .dash-side { order: 6; margin-top: 0.75rem; }
   /* Gloves: every row is a thumb high and its link is a button. */
@@ -3839,7 +3839,7 @@ a.dash-row:hover { background: var(--teal-tint); }
   .dash-head .refresh-button { display: none; }
   /* With the rail beside the page there is one navigation: the heading bar and the
      brand it repeats go, the person and Sign out stay. */
-  body:has(> .rail) .dash .secbar, body:has(> .rail) .dash-head__brand { display: none; }
+  body:has(> .rail) .dash .secmenu, body:has(> .rail) .dash-head__brand { display: none; }
   body:has(> .rail) .dash-head { justify-content: space-between; padding-top: 0; padding-bottom: 0.6rem; }
   body:has(> .rail) .dash-quick { margin-top: 0.75rem; }
   body:has(> .rail) .dash-head__who { display: flex; align-items: center; gap: 0.75rem; text-align: left; }
@@ -4746,3 +4746,27 @@ a.diarycal__day:hover { box-shadow: var(--shadow-ui); transform: translateY(-1px
   .row-kicker { display: block; min-width: 0; margin: 0 0 0.1rem; }
   .dash-title { font-size: 1.35rem; }
 }
+
+/* The phone's section menu (README R133): paper, not a green strip. A label, a two-way switch, then a tile per
+   heading naming what is inside; a tapped tile opens its list underneath and pushes the page down. */
+.secmenu { padding: 0.9rem 0.9rem 0.75rem; background: var(--paper); border: 1px solid var(--ink-12); border-radius: 12px; box-shadow: var(--shadow-ui); }
+.secmenu__head { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; }
+.secmenu__head .label { margin: 0; }
+.secmenu__parts { display: inline-flex; padding: 0.15rem; border: 1px solid var(--ink-12); border-radius: 999px; background: var(--ink-04, rgba(0,0,0,0.04)); }
+.secmenu__part { padding: 0.35rem 0.8rem; border: 0; border-radius: 999px; background: transparent; color: var(--ink-60); font: inherit; font-size: 0.8125rem; font-weight: 600; cursor: pointer; }
+.secmenu__part--on { background: var(--teal); color: #fff; }
+.secmenu__org { margin: 0.4rem 0 0; }
+.secmenu__grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.5rem; margin-top: 0.75rem; }
+.secmenu__tile {
+  display: grid; gap: 0.2rem; align-content: start; min-height: 4.4rem; padding: 0.65rem 0.75rem; text-align: left;
+  border: 1px solid var(--ink-12); border-radius: 10px; background: #fff; font: inherit; cursor: pointer;
+}
+.secmenu__tile--open { border-color: var(--teal); background: var(--teal-tint); }
+.secmenu__name { display: flex; justify-content: space-between; align-items: center; gap: 0.4rem; font-weight: 700; color: var(--teal); font-size: 0.9375rem; line-height: 1.2; }
+.secmenu__caret { font-size: 0.7rem; color: var(--ink-40); }
+.secmenu__what { font-size: 0.75rem; line-height: 1.3; color: var(--ink-60); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.secmenu__panel { margin-top: 0.6rem; padding: 0.6rem 0.25rem 0; border-top: 1px solid var(--ink-08); }
+.secmenu__panel-title { margin: 0 0 0.35rem 0.45rem; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-60); }
+.secmenu__panel .navitem { padding: 0.6rem 0.7rem; border-radius: 10px; }
+.secmenu__panel .navitem__name { font-size: 0.9rem; line-height: 1.2; color: var(--teal); }
+.secmenu__panel .navitem__what { margin-top: 0.2rem; font-size: 0.75rem; line-height: 1.3; }

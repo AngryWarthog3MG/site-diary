@@ -3078,6 +3078,14 @@ the switcher. On a phone the order is the one R97 set (the day first) — the wr
 the quick actions and the cards keep their places. Nothing moved between sections and no address changed: `nav.ts` is
 still the one list, and the labels are the only change to it.
 
+**R133. The phone's section menu is paper, not a strip.** "I don't like the bottom part where the menu is on the mobile."
+The green heading bar — two pills, then headings scrolling sideways off the edge of the screen — was the one thing on the
+home that did not look like the rest of it, and a sideways scroll hides half of what it holds. It is now a card like the
+others: a **Sections** label, a two-way switch (This job / The company), and a tile per heading that names the first
+three things inside it, two across, so every heading is on the screen at once. Tapping a tile opens its list underneath,
+as before. The component keeps its name (`SectionBar`) and the groups still come from `nav.ts`; only the drawing
+changed. The rail replaces it from 900 px, as R116 says.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;

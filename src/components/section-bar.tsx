@@ -33,31 +33,37 @@ export function SectionBar({ groups, q, jobId, orgName }: { groups: NavGroup[]; 
     return () => document.removeEventListener('keydown', onKey);
   }, [open]);
   const group = open == null ? null : shown[open];
+  const summary = (g: NavGroup) => g.items.slice(0, 3).map((it) => it.name).join(' · ') + (g.items.length > 3 ? ` · +${g.items.length - 3}` : '');
   return (
-    <nav className="secbar" aria-label="Sections">
-      {parts.company.length > 0 && (
-        <div className="secbar__parts" role="tablist" aria-label="Site or company">
-          <button type="button" role="tab" aria-selected={part === 'site'} className={`secbar__part${part === 'site' ? ' secbar__part--on' : ''}`} onClick={() => choose('site')}>{SITE_LABEL}</button>
-          <button type="button" role="tab" aria-selected={part === 'company'} className={`secbar__part${part === 'company' ? ' secbar__part--on' : ''}`} onClick={() => choose('company')}>{orgName ? `${COMPANY_LABEL} · ${orgName}` : COMPANY_LABEL}</button>
-        </div>
-      )}
-      <div className="secbar__row">
-        <Link className="secbar__item secbar__item--here" href={`/${q}`}>Home</Link>
+    <nav className="secmenu" aria-label="Sections">
+      <div className="secmenu__head">
+        <p className="label">Sections</p>
+        {parts.company.length > 0 && (
+          <div className="secmenu__parts" role="tablist" aria-label="This job or the company">
+            <button type="button" role="tab" aria-selected={part === 'site'} className={`secmenu__part${part === 'site' ? ' secmenu__part--on' : ''}`} onClick={() => choose('site')}>{SITE_LABEL}</button>
+            <button type="button" role="tab" aria-selected={part === 'company'} className={`secmenu__part${part === 'company' ? ' secmenu__part--on' : ''}`} onClick={() => choose('company')}>{COMPANY_LABEL}</button>
+          </div>
+        )}
+      </div>
+      {part === 'company' && orgName && <p className="caption secmenu__org">{orgName} · the same on every job</p>}
+      <div className="secmenu__grid">
         {shown.map((g, i) => (
           <button
             key={g.label}
             type="button"
-            className={`secbar__item${open === i ? ' secbar__item--open' : ''}${g.scope === 'company' ? ' secbar__item--company' : ''}`}
+            className={`secmenu__tile${open === i ? ' secmenu__tile--open' : ''}`}
             aria-expanded={open === i}
             aria-controls="secbar-panel"
             onClick={() => setOpen(open === i ? null : i)}
           >
-            {g.label}<span className="secbar__caret" aria-hidden>▾</span>
+            <span className="secmenu__name">{g.label}<span className="secmenu__caret" aria-hidden>{open === i ? '▴' : '▾'}</span></span>
+            <span className="secmenu__what">{summary(g)}</span>
           </button>
         ))}
       </div>
       {group && (
-        <div id="secbar-panel" className="secbar__panel">
+        <div id="secbar-panel" className="secmenu__panel">
+          <p className="secmenu__panel-title">{group.label}</p>
           <div className="navgrid">
             {group.items.map((it) => (
               <Link key={it.href} className="navitem" href={jobId ? onJob(it.href, jobId) : it.href === '/portfolio' ? it.href : `${it.href}${q}`} onClick={() => setOpen(null)}>
