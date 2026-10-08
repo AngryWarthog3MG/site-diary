@@ -3083,8 +3083,9 @@ The green heading bar — two pills, then headings scrolling sideways off the ed
 home that did not look like the rest of it, and a sideways scroll hides half of what it holds. It is now a card like the
 others: a **Sections** label, a two-way switch (This job / The company), and a tile per heading that names the first
 three things inside it, two across, so every heading is on the screen at once. Tapping a tile opens its list underneath,
-as before. The component keeps its name (`SectionBar`) and the groups still come from `nav.ts`; only the drawing
-changed. The rail replaces it from 900 px, as R116 says.
+in place of the tiles — one list on the screen at a time, with an **All sections** button back ("make the above tab
+disappear and only show the lower tab"). The component keeps its name (`SectionBar`) and the groups still come from
+`nav.ts`; only the drawing changed. The rail replaces it from 900 px, as R116 says.
 
 ## Not built, and deliberately so
 

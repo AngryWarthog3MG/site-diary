@@ -9,8 +9,8 @@ import { onJob } from '@/lib/jobs';
 /**
  * The heading bar across the top of the home page: Home, then every section
  * heading. Tapping a heading opens a panel under the bar listing what is in
- * it; tapping again, or Escape, closes it. The panel is part of the page and
- * pushes what follows down — nothing floats. The groups arrive already
+ * it IN PLACE of the tiles — one list on the screen at a time — with an
+ * "All sections" button back; Escape does the same. Nothing floats. The groups arrive already
  * filtered by role from the server, so the bar draws nothing it has to hide.
  */
 export function SectionBar({ groups, q, jobId, orgName }: { groups: NavGroup[]; q: string; jobId?: string | null; orgName?: string | null }) {
@@ -46,7 +46,7 @@ export function SectionBar({ groups, q, jobId, orgName }: { groups: NavGroup[]; 
         )}
       </div>
       {part === 'company' && orgName && <p className="caption secmenu__org">{orgName} · the same on every job</p>}
-      <div className="secmenu__grid">
+      {!group && <div className="secmenu__grid">
         {shown.map((g, i) => (
           <button
             key={g.label}
@@ -60,10 +60,13 @@ export function SectionBar({ groups, q, jobId, orgName }: { groups: NavGroup[]; 
             <span className="secmenu__what">{summary(g)}</span>
           </button>
         ))}
-      </div>
+      </div>}
       {group && (
         <div id="secbar-panel" className="secmenu__panel">
-          <p className="secmenu__panel-title">{group.label}</p>
+          <div className="secmenu__panel-head">
+            <button type="button" className="secmenu__back" onClick={() => setOpen(null)}><span aria-hidden>‹</span> All sections</button>
+            <p className="secmenu__panel-title">{group.label}</p>
+          </div>
           <div className="navgrid">
             {group.items.map((it) => (
               <Link key={it.href} className="navitem" href={jobId ? onJob(it.href, jobId) : it.href === '/portfolio' ? it.href : `${it.href}${q}`} onClick={() => setOpen(null)}>
