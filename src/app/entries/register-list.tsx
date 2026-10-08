@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { localDate } from '@/lib/capture/queue';
 import { fmtDate } from '@/lib/pdf/dates';
 import { isRestDay } from '@/lib/calendar';
+import { DiaryCalendar } from './diary-calendar';
 
 export interface RegisterRow {
   id: string;
@@ -94,6 +95,7 @@ export function RegisterList({ rows, projectId }: { rows: RegisterRow[]; project
 
   return (
     <section className="entries-timeline" aria-label="Entry register">
+      <DiaryCalendar rows={rows} projectId={projectId} today={today} />
       <div className="register-search">
         <input
           className="field field--sm"

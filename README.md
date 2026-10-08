@@ -3053,6 +3053,15 @@ viewer — arrows, the keyboard or a swipe to move through, Escape or Close to l
 size" for a pinch-zoom in a new tab. It reads the page as drawn rather than changing it, which is what lets it sit over
 the docket template without touching the bytes the PDF check pins.
 
+**R131. The diary as a month.** "Make this screen more visually appealing, maybe a calendar view." The Daily Diary list
+is the register with its conscience (the gap rows): right, and a wall of cards. Above it now sits the month: a tile a
+day, coloured by what the record holds — signed, draft, ready to sign, correction open, a working day with no record,
+a rest day — with the figures for the month read from the same tiles, and a tap opening the day (the signed version, the
+open draft, or the record screen for a hole). `src/lib/entries/calendar-month.ts` decides a day's state from the rows
+the list already has, by the register's own rules: a signed correction replaces its original; an unsigned one shows the
+day as a correction in progress. The list stays underneath, unchanged, because the holes and the earlier versions are
+still best read as a timeline. Nothing on the tiles is typed for the screen.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;

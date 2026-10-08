@@ -4692,3 +4692,37 @@ a.dash-row:hover { background: var(--teal-tint); }
 .photo-zoom__nav--prev { left: 0.5rem; }
 .photo-zoom__nav--next { right: 0.5rem; }
 @media (max-width: 700px) { .photo-zoom__nav { display: none; } }
+
+/* The diary as a month (README R131). */
+.diarycal { margin: 0 0 1.25rem; padding: 1rem 1rem 0.75rem; background: rgba(253, 253, 252, 0.82); border: 1px solid var(--ink-08); border-radius: 14px; box-shadow: var(--shadow-ui); }
+.diarycal__head { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap; }
+.diarycal__title { margin: 0; font-size: 1.15rem; }
+.diarycal__nav { display: flex; gap: 0.5rem; align-items: center; }
+.diarycal__sum { margin: 0.25rem 0 0.75rem; }
+.diarycal__grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 0.35rem; }
+.diarycal__dow { font-size: 0.68rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-60); padding: 0 0.2rem 0.15rem; }
+.diarycal__day { display: flex; flex-direction: column; gap: 0.15rem; min-height: 4.6rem; padding: 0.45rem 0.5rem; border-radius: 10px; border: 1px solid var(--ink-08); background: #fff; color: inherit; text-decoration: none; position: relative; }
+a.diarycal__day:hover { box-shadow: var(--shadow-ui); transform: translateY(-1px); }
+.diarycal__num { font-weight: 650; font-size: 0.95rem; }
+.diarycal__word { font-size: 0.7rem; line-height: 1.2; }
+.diarycal__no { font-size: 0.66rem; color: var(--ink-60); margin-top: auto; }
+.diarycal__day--out { opacity: 0.35; }
+.diarycal__day--today { outline: 2px solid var(--teal); outline-offset: -2px; }
+.diarycal__day--signed { background: #e6f0ec; border-color: #bfd8cd; color: #1f5c4a; }
+.diarycal__day--draft { background: #fff7e4; border-color: #e9d4a0; color: #7a4f00; }
+.diarycal__day--ready { background: #fff1cc; border-color: #e3bd5a; color: #6b4300; }
+.diarycal__day--correction { background: #f3ecfa; border-color: #d4c3ea; color: #5a3b8a; }
+.diarycal__day--gap { background: #fbecec; border-color: #efc5c5; color: #9a2b2b; }
+.diarycal__day--rest { background: rgba(0, 0, 0, 0.025); color: var(--ink-40); }
+.diarycal__day--future, .diarycal__day--before { background: transparent; border-style: dashed; color: var(--ink-40); }
+.diarycal__key { display: flex; flex-wrap: wrap; align-items: center; gap: 0.3rem 0.5rem; margin: 0.75rem 0 0; }
+.diarycal__swatch { display: inline-block; width: 0.8rem; height: 0.8rem; border-radius: 3px; border: 1px solid var(--ink-08); margin-left: 0.4rem; }
+.diarycal__swatch--signed { background: #e6f0ec; } .diarycal__swatch--draft { background: #fff7e4; } .diarycal__swatch--ready { background: #fff1cc; }
+.diarycal__swatch--correction { background: #f3ecfa; } .diarycal__swatch--gap { background: #fbecec; } .diarycal__swatch--rest { background: rgba(0, 0, 0, 0.05); }
+@media (max-width: 700px) {
+  .diarycal { padding: 0.75rem 0.6rem 0.6rem; }
+  .diarycal__grid { gap: 0.2rem; }
+  .diarycal__day { min-height: 3.1rem; padding: 0.3rem 0.3rem; border-radius: 7px; }
+  .diarycal__word { font-size: 0.58rem; }
+  .diarycal__no { display: none; }
+}
