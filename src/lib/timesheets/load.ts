@@ -1,5 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { addDays, buildTimesheet, makeResolver, normName, officeFact, type LabourFact, type OfficeTime, type Timesheet } from './model';
+import { addDays, buildTimesheet, gateOnlyRow, makeResolver, normName, officeFact, type LabourFact, type OfficeTime, type Timesheet } from './model';
 
 export interface TimesheetLoad {
   sheet: Timesheet;
@@ -56,7 +56,7 @@ export async function loadTimesheet(supabase: SupabaseClient, monday: string, op
   const byId = new Map(current.map((e) => [e.id, e]));
   const ids = current.map((e) => e.id);
   const labour = ids.length
-    ? await supabase.from('labour').select('entry_id, person_name, role, hours, overtime_hours, start_time, finish_time').in('entry_id', ids)
+    ? await supabase.from('labour').select('entry_id, person_name, role, hours, overtime_hours, start_time, finish_time, source_quote').in('entry_id', ids)
     : { data: [], error: null };
   if (labour.error) throw new Error(labour.error.message);
 
@@ -75,7 +75,7 @@ export async function loadTimesheet(supabase: SupabaseClient, monday: string, op
     ((crew.data ?? []) as Array<{ project_id: string; name: string; aliases: string[] | null }>).map((c) => ({ projectId: c.project_id, name: c.name, aliases: c.aliases })),
     combined,
   );
-  type L = { entry_id: string; person_name: string; role: string | null; hours: number | string | null; overtime_hours: number | string | null; start_time: string | null; finish_time: string | null };
+  type L = { entry_id: string; person_name: string; role: string | null; hours: number | string | null; overtime_hours: number | string | null; start_time: string | null; finish_time: string | null; source_quote: string | null };
   const num = (v: number | string | null) => (v == null || v === '' ? null : Number(v));
   const facts: LabourFact[] = [];
   for (const l of (labour.data ?? []) as L[]) {
@@ -88,6 +88,8 @@ export async function loadTimesheet(supabase: SupabaseClient, monday: string, op
       personName: resolve(l.person_name ?? '', e.project_id), role: l.role, hours: num(l.hours), overtimeHours: num(l.overtime_hours),
       saidAs: normName(resolve(l.person_name ?? '', e.project_id)) !== normName(l.person_name ?? '') ? (l.person_name ?? '').trim() : undefined,
       start: l.start_time, finish: l.finish_time,
+      // The gate's clocks alone are attendance, not pay (README R135); edited by hand, the row is the supervisor's.
+      ...(gateOnlyRow(l.source_quote) ? { gateOnly: true } : {}),
     });
   }
   // The office's lines last: the company's list of names applies; a job's own nicknames do not, there is no job.

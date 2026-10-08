@@ -122,3 +122,8 @@ test('two old-format gate rows for one name: the fallback declines, and the gate
   assert.equal(r.items.length, 3);
   assert.equal(r.items[2].source_quote, `${GATE_PREFIX} ABC Civil · in 07:00 · out 17:00`);
 });
+
+test('the timesheet reads the same gate mark this module writes (README R135)', async () => {
+  const { GATE_QUOTE_PREFIX } = await import('../timesheets/model.ts');
+  assert.equal(GATE_QUOTE_PREFIX, GATE_PREFIX);
+});

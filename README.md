@@ -3097,6 +3097,19 @@ a company competency says whether it expires. The data did not change — `compe
 as before, the matrix still reads them — only the drawing. The role Mitchell typed by mistake
 ("machine op- excavator ticket") was removed by its key at his request; it had never been on a crew list.
 
+**R135. The gate's clocks are not hours for pay.** "Don't use the sign-in feature to the timesheet, that needs to be
+separate." The gate feeds the diary's labour list (R: `mergeGateIntoLabour`): a sign-in puts the person on the day
+with the gate's clocks, and until a supervisor edits a clock the row's `source_quote` still begins `Gate:`. The
+timesheet reads the diary's labour rows (R103), so a day saved without touching those rows paid the gate's in and out
+times — 06:48 at the turnstile, not the 06:30 the crew actually start. Now the loader carries `gateOnly` on any row
+whose quote still begins with the gate's mark, and `buildTimesheet` lists the row but counts neither its hours nor its
+overtime: the cell reads "—" with "gate only" under it, the caption and the PDF's footnote say how many, and every total
+is the hours a person typed, said or edited. A hand-edited row ("From the gate, then edited by hand") is the
+supervisor's and counts as before. Nothing in the diary changed — the gate still says who was on site, which is what it
+is for. `GATE_QUOTE_PREFIX` in the timesheet model is pinned to `GATE_PREFIX` by `labour.test.ts`, so the two cannot
+drift apart. Where the sign-in should stop writing clocks onto the diary at all, that is a change to the diary (R: the
+gate FEEDS the labour list) and a decision for another day.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;

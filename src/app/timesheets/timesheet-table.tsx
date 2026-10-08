@@ -15,6 +15,7 @@ export function TimesheetTable({ sheet, pendingCorrections }: { sheet: Timesheet
               {sheet.overtime ? ` (+ ${fmtHours(sheet.overtime)} h overtime)` : ''}
               {sheet.unsignedRows ? ` · ${sheet.unsignedRows} ${sheet.unsignedRows === 1 ? 'row' : 'rows'} on days not signed yet` : ''}
               {sheet.noHours ? ` · ${sheet.noHours} ${sheet.noHours === 1 ? 'row' : 'rows'} with no hours recorded` : ''}
+              {sheet.gateOnlyRows ? ` (${sheet.gateOnlyRows} of them only signed in at the gate — the gate's clocks are not hours for pay)` : ''}
               {pendingCorrections ? ` · ${pendingCorrections} correction${pendingCorrections === 1 ? '' : 's'} not signed yet (the original counts until it is)` : ''}
               {sheet.addedRows ? ` · ${sheet.addedRows} ${sheet.addedRows === 1 ? 'row' : 'rows'} added by the office (${fmtHours(sheet.addedHours)} h)` : ''}
               {sheet.clashes ? ` · ${sheet.clashes} day${sheet.clashes === 1 ? '' : 's'} where someone is in two places at once — check` : ''}
@@ -47,10 +48,11 @@ export function TimesheetTable({ sheet, pendingCorrections }: { sheet: Timesheet
                           const href = cell.entryIds.length === 1 ? `/entries/${cell.entryIds[0]}/${cell.unsigned ? 'review' : 'signed'}` : null;
                           const text = `${fmtHours(cell.hours)}${cell.overtime ? ` +${fmtHours(cell.overtime)}` : ''}`;
                           return (
-                            <td key={d} className={[cell.unsigned ? 'ts-unsigned' : '', cell.clash ? 'ts-clash' : ''].filter(Boolean).join(' ') || undefined} title={cell.clash ? 'In two places at the same time — check both' : cell.unsigned ? 'Day not signed yet' : cell.noHours ? 'Hours not recorded' : cell.added ? 'Added by the office — not from a diary' : undefined}>
+                            <td key={d} className={[cell.unsigned ? 'ts-unsigned' : '', cell.clash ? 'ts-clash' : ''].filter(Boolean).join(' ') || undefined} title={cell.clash ? 'In two places at the same time — check both' : cell.unsigned ? 'Day not signed yet' : cell.gateOnly ? 'Only signed in at the gate — hours not recorded by the supervisor' : cell.noHours ? 'Hours not recorded' : cell.added ? 'Added by the office — not from a diary' : undefined}>
                               {href ? <Link href={href} className="ts-cell">{text}</Link> : text}
                               {(multi || cell.added > 0) && <span className="ts-job">{cell.jobs.join(' + ')}</span>}
                               {cell.unsigned && <span className="ts-job">not signed</span>}
+                              {cell.gateOnly > 0 && cell.hours == null && <span className="ts-job">gate only</span>}
                               {cell.clash && <span className="ts-job ts-clash__note">two places at once</span>}
                             </td>
                           );

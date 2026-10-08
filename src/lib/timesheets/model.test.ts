@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { buildTimesheet, makeResolver, readWeek, weekOf, weekDays, normName, fmtHours, hoursFromClocks, officeFact, officeJobId, type LabourFact, type OfficeTime } from './model.ts';
+import { buildTimesheet, gateOnlyRow, makeResolver, readWeek, weekOf, weekDays, normName, fmtHours, hoursFromClocks, officeFact, officeJobId, type LabourFact, type OfficeTime } from './model.ts';
 
 const fact = (over: Partial<LabourFact>): LabourFact => ({
   entryId: 'e1', projectId: 'p1', projectCode: 'C001', projectName: 'Curtin', date: '2026-09-22', signed: true,
@@ -173,4 +173,31 @@ test('an added line follows the company\'s list of names, and clashes with a dia
   ], '2026-09-28');
   assert.equal(later.clashes, 0);
   assert.equal(later.people[0].days['2026-09-29'].hours, 12);
+});
+
+test('a row the gate alone filled is listed but its hours never reach the sheet (README R135)', () => {
+  const sheet = buildTimesheet([
+    fact({ personName: 'Drill Alpha', hours: 8.25, overtimeHours: 1, start: '06:48', finish: '15:03', gateOnly: true }),
+    fact({ personName: 'Drill Beta', hours: 10, start: '06:30', finish: '16:30' }),
+  ], '2026-09-21');
+  const alpha = sheet.people.find((p) => p.name === 'Drill Alpha')!;
+  assert.equal(alpha.days['2026-09-22'].hours, null);
+  assert.equal(alpha.days['2026-09-22'].gateOnly, 1);
+  assert.equal(alpha.days['2026-09-22'].noHours, 1);
+  assert.equal(alpha.total, 0);
+  assert.equal(alpha.overtime, 0);
+  assert.equal(sheet.gateOnlyRows, 1);
+  assert.equal(sheet.noHours, 1);
+  assert.equal(sheet.total, 10);
+  assert.equal(sheet.overtime, 0);
+  assert.equal(sheet.jobs[0].hours, 10);
+  assert.equal(sheet.jobs[0].rows, 2);
+});
+
+test('gateOnlyRow reads the gate\'s mark and nothing else', () => {
+  assert.equal(gateOnlyRow('Gate: in 06:48 · still on site'), true);
+  assert.equal(gateOnlyRow('Gate: ABC Civil · in 07:00 · out 17:00'), true);
+  assert.equal(gateOnlyRow('From the gate, then edited by hand'), false);
+  assert.equal(gateOnlyRow(''), false);
+  assert.equal(gateOnlyRow(null), false);
 });

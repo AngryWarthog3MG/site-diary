@@ -1,7 +1,8 @@
 /**
  * The company timesheet (README R103): everyone's hours for one week across every
  * job the caller is on, read from the diary's labour rows — the record the
- * supervisor confirmed — never from the gate on its own. Pure, relative imports
+ * supervisor confirmed — never from the gate on its own (README R135: a row the gate
+ * alone filled is listed but its hours are not). Pure, relative imports
  * only; node-tested. Nothing here invents an hour: a row with no hours is "not
  * recorded", never 0, and is counted apart so the sheet says so.
  *
@@ -29,7 +30,14 @@ export interface LabourFact {
   finish?: string | null;
   /** Added by the office, not read from a diary (README R122): `projectCode` is then the place it was worked. */
   added?: boolean;
+  /** The row still carries only what the gate saw — nobody has recorded its hours (README R135). Never counted for pay. */
+  gateOnly?: boolean;
 }
+
+/** The gate's provenance mark on a diary labour row (`src/lib/signin/labour.ts` writes it; kept in step by its test). */
+export const GATE_QUOTE_PREFIX = 'Gate:';
+/** True when the row's hours are the gate's alone: its quote still begins with the gate's mark, so no hand has touched the clocks. */
+export const gateOnlyRow = (sourceQuote: string | null | undefined): boolean => typeof sourceQuote === 'string' && sourceQuote.startsWith(GATE_QUOTE_PREFIX);
 
 /** A line the office added to the timesheet (README R122) — `timesheet_entries` as the screen reads it. */
 export interface OfficeTime {
@@ -110,6 +118,8 @@ export interface DayCell {
   jobs: string[];
   rows: number;
   noHours: number;
+  /** Rows whose only clocks are the gate's — shown as not recorded, never as hours (README R135). */
+  gateOnly: number;
   unsigned: boolean;
   entryIds: string[];
   /** Rows the office added by hand (README R122), not read from a diary. */
@@ -128,6 +138,7 @@ export interface PersonRow {
   overtime: number;
   byJob: Record<string, number>;
   noHours: number;
+  gateOnly: number;
   unsigned: boolean;
   /** Other spellings folded into this row, as the diaries wrote them. */
   aka: string[];
@@ -148,6 +159,8 @@ export interface Timesheet {
   total: number;
   overtime: number;
   noHours: number;
+  /** Rows the gate alone recorded, left out of every total (README R135). */
+  gateOnlyRows: number;
   unsignedRows: number;
   clashes: number;
   /** Rows the office added by hand, and the hours on them — counted in every total above, and said apart. */
@@ -206,6 +219,7 @@ export function buildTimesheet(facts: readonly LabourFact[], monday: string): Ti
   let total = 0;
   let overtime = 0;
   let noHours = 0;
+  let gateOnlyRows = 0;
   let unsignedRows = 0;
   let addedRows = 0;
   let addedHours = 0;
@@ -214,7 +228,7 @@ export function buildTimesheet(facts: readonly LabourFact[], monday: string): Ti
     const key = normName(f.personName);
     let p = people.get(key);
     if (!p) {
-      p = { key, name: f.personName.trim(), roles: [], days: {}, total: 0, overtime: 0, byJob: {}, noHours: 0, unsigned: false, aka: [], clashes: 0, added: 0, spellings: new Map() };
+      p = { key, name: f.personName.trim(), roles: [], days: {}, total: 0, overtime: 0, byJob: {}, noHours: 0, gateOnly: 0, unsigned: false, aka: [], clashes: 0, added: 0, spellings: new Map() };
       people.set(key, p);
     }
     p.spellings.set(f.personName.trim(), (p.spellings.get(f.personName.trim()) ?? 0) + 1);
@@ -223,26 +237,30 @@ export function buildTimesheet(facts: readonly LabourFact[], monday: string): Ti
     const role = f.role?.trim();
     if (role && !p.roles.some((r) => r.toLowerCase() === role.toLowerCase())) p.roles.push(role);
     let cell = p.days[f.date];
-    if (!cell) { cell = { hours: null, overtime: 0, jobs: [], rows: 0, noHours: 0, unsigned: false, entryIds: [], added: 0, clash: false, spans: [] }; p.days[f.date] = cell; }
-    cell.spans.push({ code: f.projectCode, start: minutes(f.start), finish: minutes(f.finish), hours: f.hours });
+    if (!cell) { cell = { hours: null, overtime: 0, jobs: [], rows: 0, noHours: 0, gateOnly: 0, unsigned: false, entryIds: [], added: 0, clash: false, spans: [] }; p.days[f.date] = cell; }
+    // The gate's clocks are attendance, not hours for pay (README R135): the row is here, its hours are not, its overtime is not.
+    const hours = f.gateOnly ? null : f.hours;
+    const overtimeHours = f.gateOnly ? null : f.overtimeHours;
+    if (f.gateOnly) { cell.gateOnly += 1; p.gateOnly += 1; gateOnlyRows += 1; }
+    cell.spans.push({ code: f.projectCode, start: minutes(f.start), finish: minutes(f.finish), hours });
     cell.rows += 1;
     if (!cell.jobs.includes(f.projectCode)) cell.jobs.push(f.projectCode);
     if (f.entryId && !cell.entryIds.includes(f.entryId)) cell.entryIds.push(f.entryId);
-    if (f.added) { cell.added += 1; p.added += 1; addedRows += 1; addedHours = round2(addedHours + (f.hours ?? 0)); }
+    if (f.added) { cell.added += 1; p.added += 1; addedRows += 1; addedHours = round2(addedHours + (hours ?? 0)); }
     if (!f.signed) { cell.unsigned = true; p.unsigned = true; unsignedRows += 1; }
-    const ot = f.overtimeHours ?? 0;
+    const ot = overtimeHours ?? 0;
     if (ot) { cell.overtime = round2(cell.overtime + ot); p.overtime = round2(p.overtime + ot); overtime = round2(overtime + ot); }
     let j = jobs.get(f.projectId);
     if (!j) { j = { projectId: f.projectId, code: f.projectCode, name: f.projectName, hours: 0, people: 0, rows: 0, names: new Set(), ...(f.added ? { office: true } : {}) }; jobs.set(f.projectId, j); }
     j.rows += 1;
     j.names.add(key);
-    if (f.hours == null) { cell.noHours += 1; p.noHours += 1; noHours += 1; continue; }
-    cell.hours = round2((cell.hours ?? 0) + f.hours);
-    p.total = round2(p.total + f.hours);
-    p.byJob[f.projectCode] = round2((p.byJob[f.projectCode] ?? 0) + f.hours);
-    dayTotals[f.date] = round2(dayTotals[f.date] + f.hours);
-    total = round2(total + f.hours);
-    j.hours = round2(j.hours + f.hours);
+    if (hours == null) { cell.noHours += 1; p.noHours += 1; noHours += 1; continue; }
+    cell.hours = round2((cell.hours ?? 0) + hours);
+    p.total = round2(p.total + hours);
+    p.byJob[f.projectCode] = round2((p.byJob[f.projectCode] ?? 0) + hours);
+    dayTotals[f.date] = round2(dayTotals[f.date] + hours);
+    total = round2(total + hours);
+    j.hours = round2(j.hours + hours);
   }
 
   // Two jobs at once: spans on different jobs whose clocks overlap; with a clock missing, more than 14 h between them.
@@ -273,5 +291,5 @@ export function buildTimesheet(facts: readonly LabourFact[], monday: string): Ti
 
   const jobRows: JobTotal[] = Array.from(jobs.values()).map(({ names, ...j }) => ({ ...j, people: names.size })).sort((a, b) => Number(Boolean(a.office)) - Number(Boolean(b.office)) || a.code.localeCompare(b.code));
 
-  return { from: monday, to, days, people: rows, jobs: jobRows, dayTotals, total, overtime, noHours, unsignedRows, clashes, addedRows, addedHours };
+  return { from: monday, to, days, people: rows, jobs: jobRows, dayTotals, total, overtime, noHours, gateOnlyRows, unsignedRows, clashes, addedRows, addedHours };
 }

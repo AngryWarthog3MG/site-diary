@@ -230,7 +230,8 @@ improvising; the register once shipped dead because a live smoke test was skippe
 - `src/lib/timesheets/` — the company timesheet (README R103): `model.ts` (`buildTimesheet` — one row per person across every
   job, a cell per day, jobs told apart; `weekOf`, `readWeek`, `normName`; pure, node-tested), `load.ts` (labour rows under the
   caller's RLS, a corrected day counted once by the claims rule, unsigned days marked not hidden). Hours come from the diary's
-  labour list — never the gate, never computed here; null is "not recorded", never 0 — and from ONE other place (README R122):
+  labour list — never the gate, never computed here; null is "not recorded", never 0; a row whose `source_quote` still begins
+  `Gate:` is listed with its hours left out, `gateOnly` (README R135) — and from ONE other place (README R122):
   `timesheet_entries`, time a company admin adds by hand for a day with no diary (office, yard, training). The DB computes
   hours from the clocks, refuses the future, a double and an overlap; a line is never edited or deleted, only voided once
   with a reason (`void_reason` is the one writable column). Reads `app.is_org_office`, writes `app.is_org_admin`. It enters
