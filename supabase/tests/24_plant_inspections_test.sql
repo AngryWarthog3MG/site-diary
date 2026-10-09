@@ -91,10 +91,16 @@ set local role authenticated;
 do $$ begin
   assert (select count(*) from public.plant_maintenance_records) = 1, 'the PM cannot read the plant records';
 end $$;
-select tests.expect_error($q$
-  insert into public.plant_maintenance_records (plant_id, kind, done_on, performed_by_name)
-  values ('cccccccc-0000-0000-0000-000000000001', 'maintenance', current_date, 'PM')
-$q$, 'row-level security');
+do $$ begin
+  begin
+    insert into public.plant_maintenance_records (plant_id, kind, done_on, performed_by_name)
+    values ('cccccccc-0000-0000-0000-000000000001', 'maintenance', current_date, 'PM Fixer');
+    raise exception 'ROLLBACKOK';
+  exception when others then
+    if sqlerrm <> 'ROLLBACKOK' then raise exception 'TESTFAIL: the PM should record maintenance (R136): %', sqlerrm; end if;
+  end;
+  raise notice 'PASS  the PM records maintenance too (R136)';
+end $$;
 reset role;
 select set_config('request.jwt.claims', '{"sub":"55555555-5555-5555-5555-555555555555","role":"authenticated"}', true);
 set local role authenticated;

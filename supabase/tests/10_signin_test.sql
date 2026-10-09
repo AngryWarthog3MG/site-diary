@@ -172,18 +172,23 @@ $q$, 'through the gate');
 do $$ begin raise notice 'PASS  gate sign-ins come only through the server and carry no account'; end $$;
 reset role;
 
--- The PM reads the register and writes nothing.
+-- The PM reads the register and signs people in (R136).
 reset role;
 select set_config('request.jwt.claims', '{"sub":"33333333-3333-3333-3333-333333333333","role":"authenticated"}', true);
 set local role authenticated;
 do $$ begin
   assert (select count(*) from public.site_signins where project_id = 'bbbbbbbb-0000-0000-0000-000000000001') = 3, 'the PM cannot read the register';
 end $$;
-select tests.expect_error($q$
-  insert into public.site_signins (project_id, signin_date, person_name, signed_in_by)
-  values ('bbbbbbbb-0000-0000-0000-000000000001', date '2026-09-14', 'Kel Brady', '33333333-3333-3333-3333-333333333333')
-$q$, 'row-level security');
-do $$ begin raise notice 'PASS  the PM reads and cannot write'; end $$;
+do $$ begin
+  begin
+    insert into public.site_signins (project_id, signin_date, person_name, signed_in_by)
+    values ('bbbbbbbb-0000-0000-0000-000000000001', date '2026-09-14', 'Kel Brady', '33333333-3333-3333-3333-333333333333');
+    raise exception 'ROLLBACKOK';
+  exception when others then
+    if sqlerrm <> 'ROLLBACKOK' then raise exception 'TESTFAIL: the PM should write here (R136): %', sqlerrm; end if;
+  end;
+  raise notice 'PASS  the PM reads and signs people in (R136)';
+end $$;
 
 -- An outsider sees nothing.
 reset role;

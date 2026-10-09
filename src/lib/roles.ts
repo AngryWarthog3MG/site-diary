@@ -6,7 +6,8 @@ import type { MemberRole } from '@/types/database';
  *
  *   supervisor    writes and signs the record; runs prestarts and talks
  *   admin         supervisor, plus membership and project settings
- *   pm            reads everything; writes nothing
+ *   pm            runs the job: everything an admin does but the rate card, the money
+ *                 (off unless switched on), membership and the money switch (README R136)
  *   leading_hand  runs prestarts and talks; reads the diary and the weekly
  *   labourer      signs in and out at the gate and reports hazards; nothing else
  */
@@ -25,7 +26,7 @@ export const ROLE_HINT: Record<MemberRole, string> = {
   supervisor: 'Records and signs their own diary; runs prestarts and toolbox talks',
   leading_hand: 'Runs prestarts, plant prestarts, toolbox talks and the site sign-in; sees the daily diary, the weekly and Today',
   labourer: 'Signs in and out at the gate and reports hazards and incidents — nothing else',
-  pm: 'Reads everything — diary, claims, variations, reports — and writes nothing',
+  pm: 'Runs the job: the diary, the registers and the company screens — but not the rate card, and no money unless switched on',
   admin: 'Everything a supervisor can, plus who is on the job and its settings',
 };
 
@@ -39,14 +40,14 @@ export function canReport(role: MemberRole): boolean {
   return canRunTalks(role) || role === 'labourer';
 }
 
-/** Supervisors and admins write the record. */
+/** Supervisors, admins and project managers write the record (README R136). */
 export function canAuthorEntries(role: MemberRole): boolean {
-  return role === 'supervisor' || role === 'admin';
+  return role === 'supervisor' || role === 'admin' || role === 'pm';
 }
 
 /** Who can run a prestart or a toolbox talk. Mirrors app.can_run_talks(). */
 export function canRunTalks(role: MemberRole): boolean {
-  return role === 'supervisor' || role === 'admin' || role === 'leading_hand';
+  return role === 'supervisor' || role === 'admin' || role === 'pm' || role === 'leading_hand';
 }
 
 /**
@@ -75,12 +76,12 @@ export interface Access { role: MemberRole; screens?: readonly string[] | null; 
 
 /**
  * Whether this person sees the money on this job (README R105) — the TS half of app.role_sees_money; the database
- * wins. An admin always; a PM unless switched off; a supervisor only if switched on; a leading hand or labourer never.
+ * wins. An admin always; a PM or a supervisor only if switched on (README R136); a leading hand or labourer never.
  */
 export function seesMoney(member: Pick<Access, 'role' | 'finance'> | null | undefined): boolean {
   if (!member) return false;
   if (member.role === 'admin') return true;
-  if (member.role === 'pm' || member.role === 'supervisor') return member.finance ?? member.role === 'pm';
+  if (member.role === 'pm' || member.role === 'supervisor') return member.finance ?? false;
   return false;
 }
 
@@ -134,22 +135,22 @@ export function canSee(role: MemberRole, screen: Screen): boolean {
   // they have, but what we send the head contractor, and why, is not theirs.
   if (screen === 'notices') return role === 'pm' || role === 'admin';
   // The company's templates are set up by the office (README R91).
-  if (screen === 'templates') return role === 'admin';
+  if (screen === 'templates') return role === 'pm' || role === 'admin';
   // The job's setup board is the office's too (README R92): mobilisation items, risks and
   // submittals stay away from site roles, as the brief asks.
   if (screen === 'start_gate') return role === 'pm' || role === 'admin';
-  // The rate card's default follows the money's (README R105): admin and PM; a supervisor gets it with the switch.
+  // The rate card is the admin's alone (README R136), and opens only with the money (R105).
   if (screen === 'rates') return role === 'admin';
-  // The company's screens are the admin's alone (README R103, R111): everyone's hours, every job's week, the rate card, the templates.
-  if (screen === 'timesheets') return role === 'admin';
+  // The company's screens are the office's — admin and PM (README R103, R111, R136): everyone's hours, every job's week, the templates.
+  if (screen === 'timesheets') return role === 'pm' || role === 'admin';
   // The company's staff list — everyone, their roles, tickets, inductions and jobs (README R123) — is the admin's too.
-  if (screen === 'staff') return role === 'admin';
+  if (screen === 'staff') return role === 'pm' || role === 'admin';
   // The company's weekly report, every job side by side, is the office's too (README R108).
-  if (screen === 'company_weekly') return role === 'admin';
+  if (screen === 'company_weekly') return role === 'pm' || role === 'admin';
   // Messages from the office are sent by an admin (README R112); the inbox is everyone's, the labourer's included.
-  if (screen === 'messages') return role === 'admin';
+  if (screen === 'messages') return role === 'pm' || role === 'admin';
   // Registers edits the company's own records in place — plant, chemicals, calibration (README R118) — so it is the admin's.
-  if (screen === 'registers') return role === 'admin';
+  if (screen === 'registers') return role === 'pm' || role === 'admin';
   if (screen === 'settings') return canAuthorEntries(role);
   return true;
 }

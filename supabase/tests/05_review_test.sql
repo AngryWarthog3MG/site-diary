@@ -274,16 +274,22 @@ set local role authenticated;
 
 do $$
 begin
-  -- A PM reads the record, including its gaps. They do not write it.
+  -- A PM reads the record, including its gaps — and writes it too (R136).
   assert public.entry_review_state('cccccccc-0000-0000-0000-000000000002') is not null,
          'a PM cannot read the review state';
 end;
 $$;
 
-select tests.expect_error($q$
-  select public.apply_entry_review('cccccccc-0000-0000-0000-000000000002',
-    '{"labour":[{"person_name":"Ghost"}]}'::jsonb)
-$q$, 'not an open draft');
+do $$ begin
+  begin
+    perform public.apply_entry_review('cccccccc-0000-0000-0000-000000000002',
+      '{"labour":[{"person_name":"Ghost"}]}'::jsonb);
+    raise exception 'ROLLBACKOK';
+  exception when others then
+    if sqlerrm <> 'ROLLBACKOK' then raise exception 'TESTFAIL: the PM should write here (R136): %', sqlerrm; end if;
+  end;
+  raise notice 'PASS  a PM applies a review (R136)';
+end $$;
 
 reset role;
 select set_config('request.jwt.claims', '', true);
@@ -296,7 +302,7 @@ do $$
 begin
   assert public.entry_review_state('cccccccc-0000-0000-0000-000000000002') is null,
          'a non-member can read another project''s review state';
-  raise notice 'PASS  PMs read but never apply; non-members see nothing';
+  raise notice 'PASS  PMs read and apply; non-members see nothing';
 end;
 $$;
 
@@ -345,7 +351,7 @@ $$;
 reset role;
 select set_config('request.jwt.claims', '', true);
 
--- The PM still cannot: the same shape on the pm's session touches nothing.
+-- The PM may write a draft (R136), but this day is signed now: the same refusal as for anyone.
 select set_config('request.jwt.claims',
   '{"sub":"22222222-2222-2222-2222-222222222222","role":"authenticated"}', true);
 set local role authenticated;

@@ -95,7 +95,7 @@ export default async function SettingsPage({
           <CrewList
             projectId={current.project_id}
             initial={(crew ?? []) as CrewRow[]}
-            canEdit={current.role === 'supervisor' || current.role === 'admin'}
+            canEdit={canAuthorEntries(current.role)}
           />
         </section>
         <section className="sheet" style={{ marginTop: '1rem' }}>
@@ -105,7 +105,7 @@ export default async function SettingsPage({
             people={((crew ?? []) as CrewRow[]).filter((c) => c.active).map((c) => c.name)}
             tickets={(tickets ?? []) as TicketRow[]}
             inductions={(inductions ?? []) as InductionRow[]}
-            canEdit={current.role === 'supervisor' || current.role === 'admin'}
+            canEdit={canAuthorEntries(current.role)}
             today={perthToday()}
           />
         </section>

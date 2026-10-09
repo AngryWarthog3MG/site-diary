@@ -30,8 +30,8 @@ insert into public.organisations (id, name, code) values ('aaaaaaaa-eeee-0000-00
 insert into public.projects (id, org_id, name, code) values ('bbbbbbbb-eeee-0000-0000-000000000001', 'aaaaaaaa-eeee-0000-0000-000000000001', 'Finance Job', 'X301');
 insert into public.project_members (project_id, user_id, role, finance) values
   ('bbbbbbbb-eeee-0000-0000-000000000001', '11111111-eeee-0000-0000-000000000001', 'admin', false),        -- an admin always sees it, whatever this says
-  ('bbbbbbbb-eeee-0000-0000-000000000001', '11111111-eeee-0000-0000-000000000002', 'pm', null),            -- a PM by default
-  ('bbbbbbbb-eeee-0000-0000-000000000001', '11111111-eeee-0000-0000-000000000003', 'pm', false),           -- a PM switched off
+  ('bbbbbbbb-eeee-0000-0000-000000000001', '11111111-eeee-0000-0000-000000000002', 'pm', true),            -- a PM switched on (by default a PM sees none of it — R136)
+  ('bbbbbbbb-eeee-0000-0000-000000000001', '11111111-eeee-0000-0000-000000000003', 'pm', null),            -- a PM by default: no (R136)
   ('bbbbbbbb-eeee-0000-0000-000000000001', '11111111-eeee-0000-0000-000000000004', 'supervisor', null),    -- a supervisor by default: no
   ('bbbbbbbb-eeee-0000-0000-000000000001', '11111111-eeee-0000-0000-000000000005', 'supervisor', true),    -- a supervisor switched on
   ('bbbbbbbb-eeee-0000-0000-000000000001', '11111111-eeee-0000-0000-000000000006', 'leading_hand', true);  -- a leading hand never, whatever this says
@@ -97,13 +97,13 @@ insert into public.variation_cost_lines (register_id, project_id, kind, descript
   ('cccccccc-eeee-0000-0000-000000000001', 'bbbbbbbb-eeee-0000-0000-000000000001', 'labour', 'Labourer', 8, 95);
 select tests.expect_error($$ insert into public.rate_items (org_id, kind, label, rate) values ('aaaaaaaa-eeee-0000-0000-000000000001', 'labour', 'Operator', 120) $$, 'row-level security');
 
--- ---- A PM by default sees it and sets rates; a PM switched off does neither ------------------------------------
+-- ---- A PM switched on sees it but never writes the rate card (R136); a PM by default sees none of it -------------
 set local request.jwt.claims = '{"sub":"11111111-eeee-0000-0000-000000000002","role":"authenticated","aal":"aal2"}';
 do $$
 begin
   if (select estimated_cost from public.variation_values('bbbbbbbb-eeee-0000-0000-000000000001')) <> 760 then raise exception 'TESTFAIL: PM should see the built-up 760'; end if;
 end; $$;
-insert into public.rate_items (org_id, kind, label, rate) values ('aaaaaaaa-eeee-0000-0000-000000000001', 'labour', 'Operator', 120);
+select tests.expect_error($$ insert into public.rate_items (org_id, kind, label, rate) values ('aaaaaaaa-eeee-0000-0000-000000000001', 'labour', 'Operator', 120) $$, 'row-level security');
 select public.set_variation_status('cccccccc-eeee-0000-0000-000000000001', 'submitted', 'sent');
 do $$ begin if (select claimed_total from public.variation_submissions('cccccccc-eeee-0000-0000-000000000001')) <> 760 then raise exception 'TESTFAIL: PM should read what was claimed'; end if; end; $$;
 

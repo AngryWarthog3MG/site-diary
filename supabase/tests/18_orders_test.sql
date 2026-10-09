@@ -67,9 +67,15 @@ do $$ declare o public.orders; begin
   assert o.status = 'open' and o.ordered_at is null and o.supplier is null and o.order_ref is null, 'back to open kept order details';
 end $$;
 update public.orders set status = 'ordered', supplier = 'Ampol', order_ref = 'PO-118' where id = 'dddddddd-0000-0000-0000-000000000001';
-select tests.expect_error($q$
-  insert into public.orders (project_id, kind, item, raised_by) values ('bbbbbbbb-0000-0000-0000-000000000001', 'material', 'PM cannot raise', '33333333-3333-3333-3333-333333333333')
-$q$, 'row-level security');
+do $$ begin
+  begin
+    insert into public.orders (project_id, kind, item, raised_by) values ('bbbbbbbb-0000-0000-0000-000000000001', 'material', 'PM raises', '33333333-3333-3333-3333-333333333333');
+    raise exception 'ROLLBACKOK';
+  exception when others then
+    if sqlerrm <> 'ROLLBACKOK' then raise exception 'TESTFAIL: the PM should write here (R136): %', sqlerrm; end if;
+  end;
+  raise notice 'PASS  the PM raises an order too (R136)';
+end $$;
 reset role;
 select set_config('request.jwt.claims', '{"sub":"11111111-1111-1111-1111-111111111111","role":"authenticated"}', true);
 set local role authenticated;

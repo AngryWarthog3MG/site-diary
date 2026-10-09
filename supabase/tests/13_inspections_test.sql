@@ -129,17 +129,22 @@ select tests.expect_error($q$
 $q$, 'part of the record');
 do $$ begin raise notice 'PASS  actions are stamped by the database and kept once done'; end $$;
 
--- The PM reads and writes nothing.
+-- The PM reads and writes (R136).
 select set_config('request.jwt.claims', '{"sub":"33333333-3333-3333-3333-333333333333","role":"authenticated"}', true);
 set local role authenticated;
 do $$ begin
   assert (select count(*) from public.inspections) = 2, 'the PM cannot read inspections';
 end $$;
-select tests.expect_error($q$
-  insert into public.inspections (project_id, template_name, inspection_date, inspector_name, conducted_by)
-  values ('bbbbbbbb-0000-0000-0000-000000000001', 'PM walk', current_date, 'PM', '33333333-3333-3333-3333-333333333333')
-$q$, 'row-level security');
-do $$ begin raise notice 'PASS  the PM reads and cannot write'; end $$;
+do $$ begin
+  begin
+    insert into public.inspections (project_id, template_name, inspection_date, inspector_name, conducted_by)
+    values ('bbbbbbbb-0000-0000-0000-000000000001', 'PM walk', current_date, 'PM', '33333333-3333-3333-3333-333333333333');
+    raise exception 'ROLLBACKOK';
+  exception when others then
+    if sqlerrm <> 'ROLLBACKOK' then raise exception 'TESTFAIL: the PM should write here (R136): %', sqlerrm; end if;
+  end;
+  raise notice 'PASS  the PM reads and inspects (R136)';
+end $$;
 reset role;
 select set_config('request.jwt.claims', '', true);
 

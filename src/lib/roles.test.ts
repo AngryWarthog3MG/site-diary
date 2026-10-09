@@ -41,14 +41,16 @@ test('an admin keeps Settings — the screen the ticks are set from', () => {
 
 test('the default list is the role table minus Home, and grantable is every screen minus Home and Rates (the money switch opens Rates) for non-labourers', () => {
   assert.equal(defaultScreens('pm').includes('today'), false);
-  assert.equal(defaultScreens('pm').includes('settings'), false);
+  assert.equal(defaultScreens('pm').includes('settings'), true); // the PM runs the job (R136)
+  assert.equal(defaultScreens('pm').includes('rates'), false);
   assert.equal(defaultScreens('admin').includes('settings'), true);
   assert.equal(grantableScreens('pm').length, SCREENS.length - 2);
 });
 
-test('money is its own permission: admin always, PM by default, supervisor only when switched on, crew never (R105)', () => {
+test('money is its own permission: admin always, PM and supervisor only when switched on, crew never (R105, R136)', () => {
   assert.equal(seesMoney({ role: 'admin', finance: false }), true);
-  assert.equal(seesMoney({ role: 'pm', finance: null }), true);
+  assert.equal(seesMoney({ role: 'pm', finance: null }), false);
+  assert.equal(seesMoney({ role: 'pm', finance: true }), true);
   assert.equal(seesMoney({ role: 'pm', finance: false }), false);
   assert.equal(seesMoney({ role: 'supervisor', finance: null }), false);
   assert.equal(seesMoney({ role: 'supervisor' }), false);
@@ -62,6 +64,7 @@ test('money is its own permission: admin always, PM by default, supervisor only 
   assert.equal(sees({ role: 'supervisor', screens: ['entries', 'signin'], finance: true }, 'rates'), false);
   assert.equal(sees({ role: 'admin', screens: ['entries'], finance: null }, 'rates'), true);
   assert.equal(sees({ role: 'supervisor', screens: null, finance: true }, 'rates'), false);
-  assert.equal(sees({ role: 'pm', screens: null, finance: null }, 'rates'), false); // company screens are the admin's (R111)
+  assert.equal(sees({ role: 'pm', screens: null, finance: null }, 'rates'), false); // the rate card is the admin's (R136)
+  assert.equal(sees({ role: 'pm', screens: null, finance: true }, 'rates'), false); // even with the money switched on
   assert.equal(sees({ role: 'admin', screens: null, finance: null }, 'rates'), true);
 });

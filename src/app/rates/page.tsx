@@ -54,7 +54,8 @@ export default async function RatesPage({ searchParams }: { searchParams: Promis
     if (lastChange[c.rate_item_id] || c.old_rate == null || Number(c.old_rate) === Number(c.new_rate)) continue;
     lastChange[c.rate_item_id] = { from: Number(c.old_rate), at: c.changed_at };
   }
-  const office = current.role === 'pm' || current.role === 'admin';
+  // The rate card is written by an admin alone (README R136).
+  const office = current.role === 'admin';
 
   return (
     <main className="sheet sheet--wide">

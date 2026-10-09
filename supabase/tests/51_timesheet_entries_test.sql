@@ -1,6 +1,6 @@
 -- Time the office adds to the timesheet (README R122): an admin adds a line and removes it once with a reason; the
 -- hours are the clocks' arithmetic when clocks are given; nothing in the future, nothing twice, nothing overlapping;
--- a PM reads and cannot write; a supervisor and a labourer read nothing; nobody edits or deletes.
+-- a PM reads and writes (R136); a supervisor and a labourer read nothing; nobody edits or deletes.
 begin;
 create schema tests;
 grant usage on schema tests to public;
@@ -82,17 +82,18 @@ select tests.expect_error($$ update public.timesheet_entries set person_name = '
 select tests.expect_error($$ delete from public.timesheet_entries where id = 'cccccccc-5151-0000-0000-000000000001' $$, 'permission denied');
 select tests.expect_error($$ update public.timesheet_entries set void_reason = '   ' where id = 'cccccccc-5151-0000-0000-000000000001' $$, 'Say why');
 
--- The PM reads the sheet's lines and writes none.
+-- The PM reads the sheet's lines and adds to them (R136).
 set local request.jwt.claims = '{"sub":"11111111-5151-0000-0000-000000000002","role":"authenticated"}';
 do $$ begin if (select count(*) from public.timesheet_entries) <> 4 then raise exception 'TESTFAIL: a PM should read the added time'; end if; end; $$;
-select tests.expect_error($$ insert into public.timesheet_entries (org_id, person_name, work_date, hours) values ('aaaaaaaa-5151-0000-0000-000000000001', 'AJ', '2026-09-29', 8) $$, 'row-level security');
-do $$
-declare n integer;
-begin
-  update public.timesheet_entries set void_reason = 'PM trying' where id = 'cccccccc-5151-0000-0000-000000000001';
-  get diagnostics n = row_count;
-  if n <> 0 then raise exception 'TESTFAIL: a PM removed a line'; end if;
-end; $$;
+do $$ begin
+  begin
+    insert into public.timesheet_entries (org_id, person_name, work_date, hours) values ('aaaaaaaa-5151-0000-0000-000000000001', 'AJ', '2026-09-29', 8);
+    raise exception 'ROLLBACKOK';
+  exception when others then
+    if sqlerrm <> 'ROLLBACKOK' then raise exception 'TESTFAIL: the PM should write here (R136): %', sqlerrm; end if;
+  end;
+  raise notice 'PASS  a PM adds office time too (R136)';
+end $$;
 -- Site roles read none of it; nor does another company's admin.
 set local request.jwt.claims = '{"sub":"11111111-5151-0000-0000-000000000003","role":"authenticated"}';
 do $$ begin if (select count(*) from public.timesheet_entries) <> 0 then raise exception 'TESTFAIL: a supervisor reads added time'; end if; end; $$;

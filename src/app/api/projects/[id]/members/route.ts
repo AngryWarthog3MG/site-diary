@@ -170,7 +170,7 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
     if (member.role !== 'pm' && member.role !== 'supervisor') return fail('bad_request', `A ${ROLE_LABEL[member.role as MemberRole].toLowerCase()} never sees the money.`, 400);
     const { error } = await auth.supabase.from('project_members').update({ finance: raw as boolean | null }).eq('project_id', projectId).eq('user_id', userId);
     if (error) return fail('server_error', error.message, 500);
-    const effective = raw === null ? member.role === 'pm' : raw;
+    const effective = raw === null ? false : raw;
     return ok({ message: effective ? 'They can see the money on this job.' : 'The money on this job is hidden from them.', finance: raw });
   }
 

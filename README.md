@@ -3110,6 +3110,19 @@ is for. `GATE_QUOTE_PREFIX` in the timesheet model is pinned to `GATE_PREFIX` by
 drift apart. Where the sign-in should stop writing clocks onto the diary at all, that is a change to the diary (R: the
 gate FEEDS the labour list) and a decision for another day.
 
+**R136. The project manager runs the job.** "Project manager has all rights apart from Rates and can't see money — make
+Matty project manager." The PM had been a reader's role (R105's "reads everything, writes nothing"), so the moment Mitchell
+made Matty a PM to take the money away, Matty lost the diary too. The role is now the office's working role: everything an
+admin does on the job and in the company, with four things kept back. The money is off by default (`role_sees_money` gives
+a PM and a supervisor the same `coalesce(finance, false)`; the admin's switch still turns it on by hand). The rate card is
+written by an admin alone, whatever the switch says (`can_write_rates`, the `rates` screen); a PM switched on still reads
+rates to price a build-up. Membership, roles and the money switch stay the admin's, because a role that could set roles
+could give itself the money (R105/R106) — so does appointing health record keepers and creating a job. Everything else
+opened: `can_author_entries`, `can_run_talks`, `can_sign_in`, `can_report`, `can_manage_crew`, `can_manage_incidents`,
+`can_write_swms`, `can_manage_plant`, and the company's screens and nav part (timesheets, staff, company weekly, messages,
+registers, templates — their write policies moved from `is_org_admin` to `is_org_office`). Fifteen SQL suites had pinned
+"the PM cannot write"; each now proves the write and rolls it back. Matty is a PM on Curtin again, with the money hidden.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;

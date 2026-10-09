@@ -45,7 +45,7 @@ export default async function ReviewPage({ params }: { params: Promise<{ id: str
   if (!entry) notFound();
   if (entry.status === 'signed') redirect(`/entries/${id}/signed`);
   // A day belongs to the job. Its author works on it, and so may anyone with
-  // an authoring role there; a PM or leading hand reads it instead.
+  // an authoring role there — supervisor, admin, PM (README R136); a leading hand reads it instead.
   const canEdit =
     entry.author_id === userId ||
     memberships.some((m) => m.project_id === entry.project_id && canAuthorEntries(m.role));

@@ -91,12 +91,20 @@ begin
   if not exists (select 1 from public.crew where name = 'Hamish Hayden' and active) then raise exception 'TESTFAIL: someone else was taken off'; end if;
 end; $$;
 
--- A supervisor keeps the list too (they keep the tickets); a PM reads it; a labourer reads none; another company neither.
+-- A supervisor keeps the list too (they keep the tickets); a PM keeps it too (R136); a labourer reads none; another company neither.
 set local request.jwt.claims = '{"sub":"11111111-5252-0000-0000-000000000002","role":"authenticated"}';
 insert into public.staff (org_id, name, role) values ('aaaaaaaa-5252-0000-0000-000000000001', 'AJ', 'Landscaper');
 set local request.jwt.claims = '{"sub":"11111111-5252-0000-0000-000000000004","role":"authenticated"}';
 do $$ begin if (select count(*) from public.staff) <> 4 then raise exception 'TESTFAIL: a PM should read the staff list'; end if; end; $$;
-select tests.expect_error($$ insert into public.staff (org_id, name) values ('aaaaaaaa-5252-0000-0000-000000000001', 'PM Adds') $$, 'row-level security');
+do $$ begin
+  begin
+    insert into public.staff (org_id, name) values ('aaaaaaaa-5252-0000-0000-000000000001', 'PM Adds');
+    raise exception 'ROLLBACKOK';
+  exception when others then
+    if sqlerrm <> 'ROLLBACKOK' then raise exception 'TESTFAIL: the PM should write here (R136): %', sqlerrm; end if;
+  end;
+  raise notice 'PASS  a PM keeps the staff list too (R136)';
+end $$;
 set local request.jwt.claims = '{"sub":"11111111-5252-0000-0000-000000000003","role":"authenticated"}';
 do $$ begin if (select count(*) from public.staff) <> 0 then raise exception 'TESTFAIL: a labourer reads the staff list'; end if; end; $$;
 set local request.jwt.claims = '{"sub":"11111111-5252-0000-0000-000000000005","role":"authenticated"}';

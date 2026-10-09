@@ -32,7 +32,7 @@ insert into public.projects (id, org_id, name, code) values
   ('bbbbbbbb-dddd-0000-0000-000000000001', 'aaaaaaaa-dddd-0000-0000-000000000001', 'Cost Job A', 'X201'),
   ('bbbbbbbb-dddd-0000-0000-000000000002', 'aaaaaaaa-dddd-0000-0000-000000000001', 'Cost Job B', 'X202');
 insert into public.project_members (project_id, user_id, role) values
-  ('bbbbbbbb-dddd-0000-0000-000000000001', '11111111-dddd-0000-0000-000000000001', 'pm'),
+  ('bbbbbbbb-dddd-0000-0000-000000000001', '11111111-dddd-0000-0000-000000000001', 'admin'),  -- the rate card is the admin's (R136)
   ('bbbbbbbb-dddd-0000-0000-000000000001', '11111111-dddd-0000-0000-000000000002', 'supervisor'),
   ('bbbbbbbb-dddd-0000-0000-000000000001', '11111111-dddd-0000-0000-000000000003', 'leading_hand'),
   ('bbbbbbbb-dddd-0000-0000-000000000001', '11111111-dddd-0000-0000-000000000004', 'labourer'),
@@ -56,7 +56,7 @@ insert into public.variations (id, entry_id, description, register_seq, hours) v
 set local role authenticated;
 
 -- ---- The rate card ----------------------------------------------------------------------------------------------
--- The PM writes the company's rates and job A's own.
+-- The admin writes the company's rates and job A's own (a PM may not — R136).
 set local request.jwt.claims = '{"sub":"11111111-dddd-0000-0000-000000000001","role":"authenticated","aal":"aal2"}';
 insert into public.rate_items (id, org_id, kind, label, unit, rate) values
   ('ffffffff-dddd-0000-0000-000000000001', 'aaaaaaaa-dddd-0000-0000-000000000001', 'labour', '  Labourer ', 'hour', 95),
@@ -70,7 +70,7 @@ begin
 end; $$;
 -- One live rate per label per card: the company card already has a Labourer.
 select tests.expect_error($$ insert into public.rate_items (org_id, kind, label, rate) values ('aaaaaaaa-dddd-0000-0000-000000000001', 'labour', 'labourer', 90) $$, 'duplicate key');
--- A machine from another company, and a rate for a job the PM is not on, are refused.
+-- A machine from another company, and a rate for a job the admin is not on, are refused.
 select tests.expect_error($$ insert into public.rate_items (org_id, kind, label, plant_id, rate) values ('aaaaaaaa-dddd-0000-0000-000000000001', 'plant', 'Roller', 'eeeeeeee-dddd-0000-0000-000000000002', 80) $$, 'plant register');
 select tests.expect_error($$ insert into public.rate_items (org_id, project_id, kind, label, rate) values ('aaaaaaaa-dddd-0000-0000-000000000001', 'bbbbbbbb-dddd-0000-0000-000000000002', 'labour', 'Operator', 120) $$, 'row-level security');
 -- A change is kept.

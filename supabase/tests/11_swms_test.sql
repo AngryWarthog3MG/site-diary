@@ -167,7 +167,7 @@ do $$ begin
   raise notice 'PASS  drafts go; versions in use stay';
 end $$;
 
--- The PM reads and writes nothing.
+-- The PM reads and writes (R136).
 reset role;
 select set_config('request.jwt.claims', '{"sub":"33333333-3333-3333-3333-333333333333","role":"authenticated"}', true);
 set local role authenticated;
@@ -175,10 +175,15 @@ do $$ begin
   assert (select count(*) from public.swms) = 3, 'the PM cannot read the SWMS list';
   assert (select count(*) from public.swms_signons) = 1, 'the PM cannot read sign-ons';
 end $$;
-select tests.expect_error($q$
-  insert into public.swms (project_id, title, created_by) values ('bbbbbbbb-0000-0000-0000-000000000001', 'PM draft', '33333333-3333-3333-3333-333333333333')
-$q$, 'row-level security');
-do $$ begin raise notice 'PASS  the PM reads and cannot write'; end $$;
+do $$ begin
+  begin
+    insert into public.swms (project_id, title, created_by) values ('bbbbbbbb-0000-0000-0000-000000000001', 'PM draft', '33333333-3333-3333-3333-333333333333');
+    raise exception 'ROLLBACKOK';
+  exception when others then
+    if sqlerrm <> 'ROLLBACKOK' then raise exception 'TESTFAIL: the PM should write here (R136): %', sqlerrm; end if;
+  end;
+  raise notice 'PASS  the PM reads and drafts a SWMS (R136)';
+end $$;
 reset role;
 select set_config('request.jwt.claims', '', true);
 

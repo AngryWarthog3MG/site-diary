@@ -11,7 +11,7 @@
 --   * corrections are made by superseding, and are exempt from the
 --     one-entry-per-author-per-day rule
 --   * abandoned drafts consume no serial
---   * RLS: PMs are read-only, non-members see nothing
+--   * RLS: PMs write like supervisors (R136), non-members see nothing
 --
 -- Run against a local stack:
 --     supabase db reset
@@ -440,11 +440,17 @@ begin
 end;
 $$;
 
-select tests.expect_error($q$
-  insert into public.entries (project_id, entry_date, author_id)
-  values ('bbbbbbbb-0000-0000-0000-000000000001', date '2026-08-26',
-          '33333333-3333-3333-3333-333333333333')
-$q$, 'row-level security');
+-- A PM starts a day too (R136); rolled back here so the day stays free for the supervisor below.
+do $$ begin
+  begin
+    insert into public.entries (project_id, entry_date, author_id)
+    values ('bbbbbbbb-0000-0000-0000-000000000001', date '2026-08-26', '33333333-3333-3333-3333-333333333333');
+    raise exception 'ROLLBACKOK';
+  exception when others then
+    if sqlerrm <> 'ROLLBACKOK' then raise exception 'TESTFAIL: the PM should start a day (R136): %', sqlerrm; end if;
+  end;
+  raise notice 'PASS  a PM starts a day (R136)';
+end $$;
 
 reset role;
 select set_config('request.jwt.claims', '', true);
@@ -496,22 +502,27 @@ $$;
 reset role;
 select set_config('request.jwt.claims', '', true);
 
--- A PM on the job reads the day and cannot write it, own or otherwise.
+-- A PM on the job runs it (README R136): they write any open draft, as a supervisor does.
 select set_config('request.jwt.claims',
   '{"sub":"33333333-3333-3333-3333-333333333333","role":"authenticated"}', true);
 set local role authenticated;  -- pm
-select tests.expect_error($q$
-  insert into public.labour (entry_id, person_name, hours)
-  values ('cccccccc-0000-0000-0000-000000000004', 'Nobody', 8)
-$q$, 'row-level security');
--- Under RLS an update the policy excludes touches no rows rather than erroring.
-update public.entries set notes = 'pm note'
- where id = 'cccccccc-0000-0000-0000-000000000004';
+do $$ begin
+  begin
+    insert into public.labour (entry_id, person_name, hours)
+    values ('cccccccc-0000-0000-0000-000000000004', 'Nobody', 8);
+    raise exception 'ROLLBACKOK';
+  exception when others then
+    if sqlerrm <> 'ROLLBACKOK' then raise exception 'TESTFAIL: the PM should write here (R136): %', sqlerrm; end if;
+  end;
+  raise notice 'PASS  a PM writes a colleague''s draft (R136)';
+end $$;
 do $$
+declare n integer;
 begin
-  assert (select notes from public.entries where id = 'cccccccc-0000-0000-0000-000000000004') is null,
-         'a PM updated a supervisor''s draft';
-  raise notice 'PASS  a PM cannot write or sign anyone''s draft';
+  update public.entries set notes = 'pm note' where id = 'cccccccc-0000-0000-0000-000000000004';
+  get diagnostics n = row_count;
+  assert n = 1, 'a PM could not update a supervisor''s draft';
+  update public.entries set notes = null where id = 'cccccccc-0000-0000-0000-000000000004';
 end;
 $$;
 reset role;
@@ -807,7 +818,7 @@ begin
 end;
 $$;
 
--- A PM may not record a variation on anyone's day.
+-- A PM records a variation on a colleague's open day too (R136) — once; the day already carries it.
 reset role;
 select set_config('request.jwt.claims',
   '{"sub":"33333333-3333-3333-3333-333333333333","role":"authenticated"}', true);
@@ -819,12 +830,12 @@ begin
    where project_id = 'bbbbbbbb-0000-0000-0000-000000000001' and vr_ref = 'vr-014';
   begin
     perform public.record_variation_on_day(v_signed.id, 'cccccccc-0000-0000-0000-000000000089');
-    raise exception 'TESTFAIL: a PM recorded a variation on a day';
+    raise exception 'TESTFAIL: a PM recorded the same variation twice on one day';
   exception when others then
     if sqlerrm like 'TESTFAIL%' then raise; end if;
-    assert sqlerrm like '%not an open draft you can write to%' or sqlerrm like '%not on one of your projects%', sqlerrm;
+    assert sqlerrm like '%already records%', sqlerrm;
   end;
-  raise notice 'PASS  a PM cannot record a variation on a day';
+  raise notice 'PASS  a PM may record on a colleague''s day, and the once-per-day rule still holds (R136)';
 end;
 $$;
 reset role;

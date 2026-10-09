@@ -29,8 +29,8 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
   if (people.length === 0) return fail('bad_request', 'Paste at least one line: a name and an email address.', 400);
   if (people.length > MAX) return fail('bad_request', `Up to ${MAX} at a time.`, 400);
   // This route writes with the service role, which the database's grant check does not see; a role that sees the
-  // money by default (PM, admin) needs the admin's own code here instead (README R106).
-  if (role === 'pm' || role === 'admin') {
+  // money by default (admin — a PM no longer does, README R136) needs the admin's own code here instead (README R106).
+  if (role === 'admin') {
     const { data: level } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
     if (level?.currentLevel !== 'aal2') return fail('forbidden', 'Adding someone who sees the money needs your two-factor code. Enter it under Security, then try again.', 403);
   }

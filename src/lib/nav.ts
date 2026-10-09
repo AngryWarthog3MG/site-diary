@@ -181,8 +181,8 @@ export interface NavViewer { role: MemberRole | null; screens?: readonly string[
  */
 export function navFor(viewer: NavViewer): NavGroup[] {
   return NAV_GROUPS
-    // The Company part is the admin's alone (README R111); the site's doors follow the role table as ever.
-    .filter((g) => g.scope !== 'company' || viewer.role === 'admin')
+    // The Company part is the office's — admin and PM (README R111, R136); the site's doors follow the role table as ever.
+    .filter((g) => g.scope !== 'company' || viewer.role === 'admin' || viewer.role === 'pm')
     .map((g) => ({ ...g, items: g.items.filter((it) => showNav(it, viewer)) }))
     .filter((g) => g.items.length > 0);
 }
@@ -197,7 +197,7 @@ export function showNav(item: NavItem, viewer: NavViewer): boolean {
   // The crew pages live under Settings: an authoring role gets them, unless Settings is unticked for this person.
   if (item.when === 'canRecord') return viewer.canRecord && (member ? sees(member, 'settings') : true);
   // All jobs is the owner's screen: several jobs, and a role that reads the record on them.
-  if (item.when === 'multiJob') return viewer.multiJob && viewer.role === 'admin';
+  if (item.when === 'multiJob') return viewer.multiJob && (viewer.role === 'admin' || viewer.role === 'pm');
   if (!item.screen) return true;
   return member ? sees(member, item.screen) : EVERY_ROLE.includes(item.screen);
 }

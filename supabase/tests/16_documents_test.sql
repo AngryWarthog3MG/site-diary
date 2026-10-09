@@ -87,16 +87,21 @@ select tests.expect_error($q$
 $q$, 'never changed or removed');
 do $$ begin raise notice 'PASS  a new version supersedes; the old keeps its signatures and takes no more; nothing is edited'; end $$;
 
--- The PM reads and writes nothing.
+-- The PM reads and writes (R136).
 select set_config('request.jwt.claims', '{"sub":"33333333-3333-3333-3333-333333333333","role":"authenticated"}', true);
 set local role authenticated;
 do $$ begin
   assert (select count(*) from public.document_versions) = 2, 'the PM cannot read versions';
 end $$;
-select tests.expect_error($q$
-  insert into public.controlled_documents (org_id, title) values ('aaaaaaaa-0000-0000-0000-000000000001', 'PM doc')
-$q$, 'row-level security');
-do $$ begin raise notice 'PASS  the PM reads and cannot write'; end $$;
+do $$ begin
+  begin
+    insert into public.controlled_documents (org_id, title) values ('aaaaaaaa-0000-0000-0000-000000000001', 'PM doc');
+    raise exception 'ROLLBACKOK';
+  exception when others then
+    if sqlerrm <> 'ROLLBACKOK' then raise exception 'TESTFAIL: the PM should write here (R136): %', sqlerrm; end if;
+  end;
+  raise notice 'PASS  the PM reads and files a document (R136)';
+end $$;
 reset role;
 select set_config('request.jwt.claims', '', true);
 

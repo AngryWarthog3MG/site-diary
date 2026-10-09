@@ -234,7 +234,7 @@ improvising; the register once shipped dead because a live smoke test was skippe
   `Gate:` is listed with its hours left out, `gateOnly` (README R135) — and from ONE other place (README R122):
   `timesheet_entries`, time a company admin adds by hand for a day with no diary (office, yard, training). The DB computes
   hours from the clocks, refuses the future, a double and an overlap; a line is never edited or deleted, only voided once
-  with a reason (`void_reason` is the one writable column). Reads `app.is_org_office`, writes `app.is_org_admin`. It enters
+  with a reason (`void_reason` is the one writable column). Reads and writes `app.is_org_office` (R136). It enters
   the sheet as `officeFact` with `added` set and its place as the job code — every drawing marks it; never let it read as a
   diary row, and never add a third source without a README section. Form `src/app/timesheets/add-time.tsx`. Suite 51. Names go through `makeResolver`:
   each job's crew nicknames on its own rows, the company's `person_aliases` everywhere (README R107); a person on two jobs at
@@ -341,7 +341,7 @@ improvising; the register once shipped dead because a live smoke test was skippe
   list, the desktop rail as links. A section is added, renamed or moved there and nowhere else; each drawing
   filters it by role through `canSee`. Group labels are written for someone new (README R132: Site works, Documents,
   Job setup; parts captioned `SITE_LABEL` "This job" / `COMPANY_LABEL` "The company"). Two parts (README R111): a GROUP's `scope` is 'site' (this job's record) or
-  'company' (the office's, the same on every job — Reports, Staff, Money, Standards — drawn for ADMINS ONLY); `navFor` keeps site then company,
+  'company' (the office's, the same on every job — Reports, Staff, Money, Standards — drawn for the OFFICE, admin and PM, README R136); `navFor` keeps site then company,
   `partsFor` splits them for the home bar's two tabs; the rail and drawer caption the two runs. A new section goes in
   the part its RECORD belongs to. A screen that is both (Plant, Chemicals) stays with the site and names the company
   on its company half. Never reuse a heading label across the two parts — the rail keys its open state by label. The
@@ -466,7 +466,7 @@ improvising; the register once shipped dead because a live smoke test was skippe
   cannot type over it); a submission stamps `claimed_total`/`claimed_lines` on its status event. Screens `/rates` (screen
   `rates`, under Claims) and `/variations/[id]` (the build-up, screen `variations`); links carry `?project=`. `src/lib/money.ts`
   `fmtMoney` for new money on screen. Suite 45
-- `src/lib/messages/` — messages from the office to a person (README R112): table `messages` (admin of the org sends to a
+- `src/lib/messages/` — messages from the office to a person (README R112): table `messages` (the office — admin or PM, R136 — sends to a
   member of its jobs; body and parties frozen; NEVER deleted, service role included; read/acknowledged stamped only by the
   recipient through `mark_message_read` / `acknowledge_message`; push outcome via `record_message_push`). Send through
   `POST /api/messages` (row first, then `sendPush` to each `push_subscriptions` row, outcome stamped). Screens `messages`
@@ -580,7 +580,8 @@ Change four of them and the app silently stops capturing what supervisors say. I
 - **A draft is writable by any authoring role on the job, not only its author** — `app.can_write_entry`
   (SQL) and `canEditEntry` (`src/lib/entries/access.ts`) are the two halves; the signature names the
   signer (`signed_by := auth.uid()`), `author_id` names who started the day. Deleting a draft stays author-only.
-- **Roles live in one table.** `src/lib/roles.ts` (`canAuthorEntries`, `canRunTalks`, `canSignIn`, `canReport`,
+- **Roles live in one table.** The PM is the office's working role (README R136): everything an admin does but the rate card, the money
+  by default, membership and the money switch. `src/lib/roles.ts` (`canAuthorEntries`, `canRunTalks`, `canSignIn`, `canReport`,
   `canSee`, `canManageRegisters`, `canExportReports`) is what the menu, the page guards and the APIs read.
   **Which screens open is asked through `sees(member, screen)`, never `canSee(role, …)` directly**: a project
   admin ticks screens per person (`project_members.screens`, null = the role's list, README R57), and only
@@ -589,7 +590,7 @@ Change four of them and the app silently stops capturing what supervisors say. I
   SQL. A new role goes in both, plus the `member_role` enum, `MemberRole` in `src/types/database.ts` and the
   members API's `ROLES` set.
 - **Money is its own permission, enforced by the database (README R105).** `project_members.finance` (null = role default:
-  admin always, pm yes, supervisor no; leading hand and labourer never) — `app.sees_money(project)` in SQL, `seesMoney(member)`
+  admin always, pm and supervisor no unless switched on — README R136; leading hand and labourer never) — `app.sees_money(project)` in SQL, `seesMoney(member)`
   in `src/lib/roles.ts`; load `finance` with `role` and `screens` wherever a membership is read. The register's value columns
   and a submission's claimed total are column-locked: never `select *` on `variation_register` or `variation_status_events`
   from the app; read values through `variation_values(project)` / `variation_submissions(register)`. A NEW table or column

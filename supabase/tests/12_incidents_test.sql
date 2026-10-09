@@ -133,18 +133,23 @@ select tests.expect_error($q$
 $q$, 'never changed or removed');
 do $$ begin raise notice 'PASS  closed is frozen; updates are append-only'; end $$;
 
--- The PM reads everything and writes nothing.
+-- The PM reads everything and writes too (R136).
 select set_config('request.jwt.claims', '{"sub":"33333333-3333-3333-3333-333333333333","role":"authenticated"}', true);
 set local role authenticated;
 do $$ begin
   assert (select count(*) from public.incidents) = 2, 'the PM cannot read the register';
   assert (select count(*) from public.incident_actions) = 1, 'the PM cannot read actions';
 end $$;
-select tests.expect_error($q$
-  insert into public.incidents (project_id, kind, occurred_at, description, reported_by)
-  values ('bbbbbbbb-0000-0000-0000-000000000001', 'hazard', now(), 'PM report', '33333333-3333-3333-3333-333333333333')
-$q$, 'row-level security');
-do $$ begin raise notice 'PASS  the PM reads and cannot write'; end $$;
+do $$ begin
+  begin
+    insert into public.incidents (project_id, kind, occurred_at, description, reported_by)
+    values ('bbbbbbbb-0000-0000-0000-000000000001', 'hazard', now(), 'PM report', '33333333-3333-3333-3333-333333333333');
+    raise exception 'ROLLBACKOK';
+  exception when others then
+    if sqlerrm <> 'ROLLBACKOK' then raise exception 'TESTFAIL: the PM should write here (R136): %', sqlerrm; end if;
+  end;
+  raise notice 'PASS  the PM reads and reports (R136)';
+end $$;
 reset role;
 select set_config('request.jwt.claims', '', true);
 

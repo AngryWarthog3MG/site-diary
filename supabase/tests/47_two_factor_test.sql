@@ -27,8 +27,9 @@ insert into public.organisations (id, name, code) values ('aaaaaaaa-ffff-0000-00
 insert into public.projects (id, org_id, name, code) values ('bbbbbbbb-ffff-0000-0000-000000000001', 'aaaaaaaa-ffff-0000-0000-000000000001', 'Code Job', 'X401');
 insert into public.project_members (project_id, user_id, role) values
   ('bbbbbbbb-ffff-0000-0000-000000000001', '11111111-ffff-0000-0000-000000000001', 'admin'),
-  ('bbbbbbbb-ffff-0000-0000-000000000001', '11111111-ffff-0000-0000-000000000002', 'pm'),
+  ('bbbbbbbb-ffff-0000-0000-000000000001', '11111111-ffff-0000-0000-000000000002', 'pm'),  -- switched on below: by default a PM sees none of it (R136)
   ('bbbbbbbb-ffff-0000-0000-000000000001', '11111111-ffff-0000-0000-000000000003', 'supervisor');
+update public.project_members set finance = true where user_id = '11111111-ffff-0000-0000-000000000002';
 insert into public.variation_register (id, project_id, title, raised_on, estimated_cost) values
   ('cccccccc-ffff-0000-0000-000000000001', 'bbbbbbbb-ffff-0000-0000-000000000001', 'Extra drainage', '2026-09-21', 2500);
 insert into public.rate_items (org_id, kind, label, rate) values ('aaaaaaaa-ffff-0000-0000-000000000001', 'labour', 'Labourer', 95);
@@ -72,7 +73,7 @@ do $$ begin if public.sees_money('bbbbbbbb-ffff-0000-0000-000000000001') then ra
 -- ---- Granting the money needs the admin's code ---------------------------------------------------------------------
 set local request.jwt.claims = '{"sub":"11111111-ffff-0000-0000-000000000001","role":"authenticated","aal":"aal1"}';
 select tests.expect_error($$ update public.project_members set finance = true where user_id = '11111111-ffff-0000-0000-000000000003' $$, 'two-factor code');
-select tests.expect_error($$ insert into public.project_members (project_id, user_id, role) values ('bbbbbbbb-ffff-0000-0000-000000000001', '11111111-ffff-0000-0000-000000000004', 'pm') $$, 'two-factor code');
+select tests.expect_error($$ insert into public.project_members (project_id, user_id, role, finance) values ('bbbbbbbb-ffff-0000-0000-000000000001', '11111111-ffff-0000-0000-000000000004', 'pm', true) $$, 'two-factor code');
 select tests.expect_error($$ update public.project_members set role = 'admin' where user_id = '11111111-ffff-0000-0000-000000000003' $$, 'two-factor code');
 -- Changes that give no money do not need it: a supervisor added, screens ticked, money taken away.
 insert into public.project_members (project_id, user_id, role) values ('bbbbbbbb-ffff-0000-0000-000000000001', '11111111-ffff-0000-0000-000000000004', 'supervisor');

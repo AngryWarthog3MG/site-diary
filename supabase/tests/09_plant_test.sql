@@ -173,26 +173,45 @@ end $$;
 reset role;
 select set_config('request.jwt.claims', '', true);
 
--- The PM reads and writes nothing.
+-- The PM reads, and writes too (R136): the register, the job's machines.
 select set_config('request.jwt.claims', '{"sub":"33333333-3333-3333-3333-333333333333","role":"authenticated"}', true);
 set local role authenticated;
 do $$ begin
   assert (select count(*) from public.plant_register) = 1, 'the PM cannot read the register';
   assert (select count(*) from public.plant_prestarts) = 3, 'the PM cannot read plant prestarts';
 end $$;
-select tests.expect_error($q$
-  insert into public.plant_register (org_id, name, kind) values ('aaaaaaaa-0000-0000-0000-000000000001', 'Roller', 'roller')
-$q$, 'row-level security');
-update public.project_plant set active = false where project_id = 'bbbbbbbb-0000-0000-0000-000000000001';
 do $$ begin
-  assert (select active from public.project_plant where project_id = 'bbbbbbbb-0000-0000-0000-000000000001' and plant_id = 'dddddddd-0000-0000-0000-000000000001'),
-         'a PM took a machine off the job';
+  begin
+    insert into public.plant_register (org_id, name, kind) values ('aaaaaaaa-0000-0000-0000-000000000001', 'Roller', 'roller');
+    raise exception 'ROLLBACKOK';
+  exception when others then
+    if sqlerrm <> 'ROLLBACKOK' then raise exception 'TESTFAIL: the PM should write here (R136): %', sqlerrm; end if;
+  end;
+  raise notice 'PASS  a PM keeps the plant register (R136)';
 end $$;
-select tests.expect_error($q$
-  insert into public.plant_prestarts (project_id, plant_id, prestart_date, operator_name, conducted_by)
+do $$ begin
+  begin
+    update public.project_plant set active = false where project_id = 'bbbbbbbb-0000-0000-0000-000000000001';
+    if (select active from public.project_plant where project_id = 'bbbbbbbb-0000-0000-0000-000000000001' and plant_id = 'dddddddd-0000-0000-0000-000000000001') then
+      raise exception 'TESTFAIL: a PM could not take a machine off the job';
+    end if;
+    raise exception 'ROLLBACKOK';
+  exception when others then
+    if sqlerrm <> 'ROLLBACKOK' then raise exception 'TESTFAIL: the PM should write here (R136): %', sqlerrm; end if;
+  end;
+  raise notice 'PASS  a PM takes a machine off the job (R136)';
+end $$;
+do $$ begin
+  begin
+    insert into public.plant_prestarts (project_id, plant_id, prestart_date, operator_name, conducted_by)
   values ('bbbbbbbb-0000-0000-0000-000000000001', 'dddddddd-0000-0000-0000-000000000001', date '2026-09-09', 'PM',
-          '33333333-3333-3333-3333-333333333333')
-$q$, 'row-level security');
+          '33333333-3333-3333-3333-333333333333');
+    raise exception 'ROLLBACKOK';
+  exception when others then
+    if sqlerrm <> 'ROLLBACKOK' then raise exception 'TESTFAIL: the PM should write here (R136): %', sqlerrm; end if;
+  end;
+  raise notice 'PASS  the PM writes here too (R136)';
+end $$;
 do $$ begin raise notice 'PASS  a PM reads plant records and writes none'; end $$;
 reset role;
 select set_config('request.jwt.claims', '', true);
