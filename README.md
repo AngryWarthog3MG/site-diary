@@ -3151,6 +3151,17 @@ same size on the page, same quality — and the client still signs photographs e
 cannot read a file, the original goes through and the renderer shrinks it as before. `sharp` is now a declared
 dependency rather than one borrowed from Next.
 
+**R140. Renaming someone on the staff list.** "In staff list change Florian to Florian Feugas, and AJ to Armand
+Lemonnier." R123 refused a name change by hand because the tickets, inductions and signed diaries are filed under the
+name, and left the rename that carries it as not built — "say the word". Said. `rename_staff(staff_id, name, note)` is
+the one way a name changes: the staff row, every crew row of the company's jobs (the old name kept in `crew.aliases` so
+a day spoken with it still matches — matching only, no nickname on any screen, R128), the tickets and the inductions
+take the new name. What is signed keeps the name it was signed under — labour rows, sign-ons, sign-ins — and a
+`person_aliases` row (R107) folds the old name into the new everywhere names are added up: the timesheet, the company
+weekly, the matrix. Renamed back onto a folded-in name, the alias that would point at itself goes. Refused: a name
+already on the list (that is a combine, on the Timesheets page), a blank, a role below the office. The Rename control
+sits with the person's details on `/staff`. Suite 52. Florian and AJ were renamed under Mitchell's account that day.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;

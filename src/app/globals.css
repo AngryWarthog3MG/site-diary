@@ -4621,6 +4621,7 @@ a.dash-row:hover { background: var(--teal-tint); }
 .staff__flag { color: #8a5a00; font-weight: 600; font-size: 0.85rem; }
 .staff__flag--bad { color: #9a2f2f; }
 .staff__leave { padding: 0.6rem 0.75rem; border: 1px solid rgba(154, 47, 47, 0.35); border-radius: 0.5rem; }
+.staff__rename { margin-top: 0.6rem; padding: 0.6rem 0.75rem; border: 1px solid var(--ink-12); border-radius: 0.5rem; }
 @media (max-width: 700px) {
   .staff__tools { grid-template-columns: 1fr; }
 }

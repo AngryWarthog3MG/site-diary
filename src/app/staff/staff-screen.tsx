@@ -10,7 +10,7 @@ import { assignStep, filterStaff, type JobFilter, type Person, type PersonJob } 
 interface Job { id: string; code: string; name: string; canAssign: boolean }
 interface Details { role: string; phone: string; employer: string; notes: string }
 /** Where on the page a save's answer is shown: beside the thing that was pressed, never off the top of the screen. */
-type Where = 'top' | 'jobs' | 'tickets' | 'details';
+type Where = 'top' | 'jobs' | 'tickets' | 'details' | 'rename';
 interface Msg { where: Where; kind: 'ok' | 'bad' | 'warn'; text: string }
 const BLANK_TICKET = { key: 'white_card', no: '', issued: '', expires: '', photo: null as File | null };
 
@@ -41,6 +41,8 @@ export function StaffScreen({ orgId, orgName, projectId, userId, today, people, 
   const [inductDate, setInductDate] = useState(today);
   const [inductNotes, setInductNotes] = useState('');
   const [leaving, setLeaving] = useState(false);
+  const [renaming, setRenaming] = useState(false);
+  const [newName, setNewName] = useState('');
   const [cards, setCards] = useState<Record<string, string>>({});
   // A job tick shows the moment it is tapped; the page's own answer replaces it when the save has been re-read.
   const [ticked, setTicked] = useState<Record<string, boolean>>({});
@@ -94,7 +96,7 @@ export function StaffScreen({ orgId, orgName, projectId, userId, today, people, 
 
   function toggle(p: Person) {
     if (ticketDirty && openId) { pointAtTicket('This ticket is not saved yet. Press Save ticket, or Clear to drop it.'); return; }
-    setMsg(null); setLeaving(false); setInducting(null); setTicket(BLANK_TICKET);
+    setMsg(null); setLeaving(false); setRenaming(false); setNewName(''); setInducting(null); setTicket(BLANK_TICKET);
     if (openId === p.id) { setOpenId(null); setDetails(null); return; }
     setOpenId(p.id);
     setDetails({ role: p.role ?? '', phone: p.phone ?? '', employer: p.employer ?? '', notes: p.notes ?? '' });
@@ -207,6 +209,18 @@ export function StaffScreen({ orgId, orgName, projectId, userId, today, people, 
     if (e) throw new Error(e.message);
     if (!data?.length) throw new Error('Those details could not be saved.');
     return `${p.name}’s details saved.${(details.role.trim() || null) !== p.role ? ' The role has gone to their crew lists too.' : ''}${ticketDirty ? ' The ticket above is NOT saved yet — press Save ticket.' : ''}`;
+  });
+
+  // A rename goes through the database's rename_staff (README R140): the staff row, the crew lists, the tickets and the
+  // inductions take the new name; signed days keep the old one and an alias folds it in on the timesheet.
+  const rename = (p: Person) => run('rename', async () => {
+    const name = newName.replace(/\s+/g, ' ').trim();
+    if (!name) throw new Error('Give the person their name.');
+    const { data, error: e } = await createClient().rpc('rename_staff', { p_staff_id: p.id, p_name: name });
+    if (e) throw new Error(e.message);
+    const r = (data ?? {}) as { old_name?: string; new_name?: string; crew_rows?: number; tickets?: number; inductions?: number };
+    setRenaming(false); setNewName('');
+    return `${r.old_name ?? p.name} is now ${r.new_name ?? name}: ${r.crew_rows ?? 0} crew ${r.crew_rows === 1 ? 'row' : 'rows'}, ${r.tickets ?? 0} ${r.tickets === 1 ? 'ticket' : 'tickets'} and ${r.inductions ?? 0} ${r.inductions === 1 ? 'induction' : 'inductions'} carry the new name. Days already signed keep “${r.old_name ?? p.name}” and are added up under the new name.`;
   });
 
   const setActive = (p: Person, active: boolean) => run(active ? 'details' : 'top', async () => {
@@ -396,10 +410,25 @@ export function StaffScreen({ orgId, orgName, projectId, userId, today, people, 
                   </div>
                   <div className="regs__actions">
                     <button type="button" className="button button--quiet" disabled={busy} onClick={() => void saveDetails(p)}>{busy ? 'Saving…' : 'Save details'}</button>
+                    {p.active && !renaming && <button type="button" className="quotebtn" disabled={busy} onClick={() => { setRenaming(true); setNewName(p.name); setMsg(null); }}>Rename</button>}
                     {p.active && !leaving && <button type="button" className="quotebtn quotebtn--remove" disabled={busy} onClick={() => setLeaving(true)}>No longer with the company</button>}
                     {!p.active && <button type="button" className="quotebtn" disabled={busy} onClick={() => void setActive(p, true)}>Back with the company</button>}
                   </div>
                   {say('details')}
+                  {renaming && p.active && (
+                    <div className="staff__rename">
+                      <p className="caption">The new name goes to {p.name}’s crew lists, tickets and inductions. Days already signed keep the name they were signed under and are added up with the new one on the timesheet.</p>
+                      <div className="regs__fields">
+                        <label className="fieldcell regs__field regs__field--wide"><span className="label">Their name, as it goes on the sheets</span>
+                          <input className="field field--sm" value={newName} autoFocus onChange={(e) => setNewName(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') void rename(p); }} /></label>
+                      </div>
+                      {say('rename')}
+                      <div className="regs__actions">
+                        <button type="button" className="button button--quiet" disabled={busy || !newName.trim() || newName.trim() === p.name} onClick={() => void rename(p)}>{busy ? 'Renaming…' : 'Rename'}</button>
+                        <button type="button" className="quotebtn" disabled={busy} onClick={() => { setRenaming(false); setNewName(''); setMsg(null); }}>Keep</button>
+                      </div>
+                    </div>
+                  )}
                   {leaving && p.active && (
                     <div className="staff__leave">
                       <p className="caption">{p.name} comes off every job’s crew list and stays on the record: the tickets, inductions and every day already signed keep the name.</p>
@@ -409,7 +438,7 @@ export function StaffScreen({ orgId, orgName, projectId, userId, today, people, 
                       </div>
                     </div>
                   )}
-                  <p className="caption">The name is what the tickets, inductions and diaries are filed under, so it is not changed here.</p>
+                  {!renaming && <p className="caption">The name is what the tickets, inductions and diaries are filed under — Rename carries a new one through them.</p>}
                 </div>
               )}
             </li>

@@ -77,10 +77,37 @@ begin
 end; $$;
 
 -- A name is not changed (its case may be put right); a row is not deleted.
-select tests.expect_error($$ update public.staff set name = 'Evan Burk' where id = 'cccccccc-5252-0000-0000-000000000001' $$, 'not changed');
+select tests.expect_error($$ update public.staff set name = 'Evan Burk' where id = 'cccccccc-5252-0000-0000-000000000001' $$, 'Rename');
 update public.staff set name = 'Evan BURKE' where id = 'cccccccc-5252-0000-0000-000000000001';
 update public.staff set name = 'Evan Burke' where id = 'cccccccc-5252-0000-0000-000000000001';
 select tests.expect_error($$ delete from public.staff where id = 'cccccccc-5252-0000-0000-000000000001' $$, 'permission denied');
+
+-- Rename carries the name through the live record and folds the old name into the new on the signed one (R140).
+insert into public.crew_tickets (org_id, person_name, ticket_type) values ('aaaaaaaa-5252-0000-0000-000000000001', 'Evan Burke', 'first_aid');
+select tests.expect_error($$ select public.rename_staff('cccccccc-5252-0000-0000-000000000001', 'Hamish Hayden') $$, 'already on the staff list');
+select tests.expect_error($$ select public.rename_staff('cccccccc-5252-0000-0000-000000000001', ' ') $$, 'their name');
+do $$
+declare r jsonb;
+begin
+  r := public.rename_staff('cccccccc-5252-0000-0000-000000000001', 'Evan  Burke-Smith', null);
+  if (r->>'new_name') <> 'Evan Burke-Smith' then raise exception 'TESTFAIL: rename returned %', r; end if;
+  if (select name from public.staff where id = 'cccccccc-5252-0000-0000-000000000001') <> 'Evan Burke-Smith' then raise exception 'TESTFAIL: staff row not renamed'; end if;
+  if (select count(*) from public.crew where name = 'Evan Burke-Smith') <> 2 then raise exception 'TESTFAIL: crew rows not renamed: %', r; end if;
+  if (select count(*) from public.crew where name = 'Evan Burke') <> 0 then raise exception 'TESTFAIL: an old crew row kept the old name'; end if;
+  if not exists (select 1 from public.crew where name = 'Evan Burke-Smith' and 'Evan Burke' = any(aliases)) then raise exception 'TESTFAIL: the old name is not kept as a crew alias'; end if;
+  if (select count(*) from public.crew_tickets where person_name = 'Evan Burke-Smith') <> 1 then raise exception 'TESTFAIL: ticket not renamed'; end if;
+  if (select count(*) from public.crew_tickets where person_name = 'Evan Burke') <> 0 then raise exception 'TESTFAIL: a ticket kept the old name'; end if;
+  if not exists (select 1 from public.person_aliases where org_id = 'aaaaaaaa-5252-0000-0000-000000000001' and alias = 'Evan Burke' and name = 'Evan Burke-Smith') then raise exception 'TESTFAIL: no alias folds the old name in'; end if;
+  raise notice 'PASS  a rename carries the name to the crew lists and tickets, and the old name folds in (R140)';
+end; $$;
+select tests.expect_error($$ update public.staff set name = 'Evan Burke' where id = 'cccccccc-5252-0000-0000-000000000001' $$, 'Rename');
+-- Renamed back: the alias that would point at itself goes, and the old-new pair is recorded the other way round.
+select public.rename_staff('cccccccc-5252-0000-0000-000000000001', 'Evan Burke');
+do $$ begin
+  if exists (select 1 from public.person_aliases where org_id = 'aaaaaaaa-5252-0000-0000-000000000001' and lower(alias) = 'evan burke') then raise exception 'TESTFAIL: an alias points at itself after renaming back'; end if;
+  if not exists (select 1 from public.person_aliases where org_id = 'aaaaaaaa-5252-0000-0000-000000000001' and alias = 'Evan Burke-Smith' and name = 'Evan Burke') then raise exception 'TESTFAIL: the name they briefly had does not fold in'; end if;
+end $$;
+delete from public.person_aliases where org_id = 'aaaaaaaa-5252-0000-0000-000000000001';
 
 -- No longer with the company: off every crew list, still on the record.
 update public.staff set active = false where id = 'cccccccc-5252-0000-0000-000000000001';
