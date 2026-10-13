@@ -5,7 +5,7 @@ import { perthToday } from '@/lib/push/decide';
 import { readRange } from '@/lib/dayworks/schedule';
 import { loadDayworksSchedule } from '@/lib/dayworks/load';
 import { scheduleLines } from '@/lib/dayworks/schedule';
-import { loadDayworkPhotos } from '@/lib/dayworks/photos';
+import { loadDayworkPhotos, SIGNOFF_IMAGE_MAX } from '@/lib/dayworks/photos';
 import { dayworksScheduleHtml, dayworksSignoffHtml, type SheetApproval } from '@/lib/dayworks/pdf';
 import { approvalOf, type DayworkSignoff } from '@/lib/dayworks/signoff';
 import { fmtDate } from '@/lib/pdf/dates';
@@ -91,9 +91,8 @@ export async function GET(request: Request) {
       // The photographs are no longer in the html, so they join the seed by name and size.
       idSeed: createHash('sha256').update(html).update(Object.entries(images ?? {}).map(([k, v]) => `${k}:${v.length}`).join('|')).digest('hex'),
       images,
-      // 900px is legible evidence of what was done and keeps the sheet small
-      // enough to email from site (owner, 2026-09-18).
-      imageMax: 900,
+      // Already shrunk to this size by loadDayworkPhotos; the renderer leaves them as they are.
+      imageMax: SIGNOFF_IMAGE_MAX,
       footerLeft: `${org.code}_${project.code} · DAYWORKS ${signoff ? 'SIGN-OFF' : 'SCHEDULE'} · ${range.label.toUpperCase()}`,
     });
     return new Response(Buffer.from(pdf), { status: 200, headers: { 'content-type': 'application/pdf', 'content-disposition': `inline; filename="${org.code}_${project.code}_dayworks${signoff ? '_signoff' : ''}_${slug}.pdf"`, 'cache-control': 'private, no-store' } });

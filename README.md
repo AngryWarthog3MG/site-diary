@@ -3142,6 +3142,15 @@ when and by whom, who on the job is not — with three figures across the top an
 same `crew_inductions` rows the prestart and the gate read, written by the same form, so recording one here is recording
 it everywhere; the block's `canRecord` follows `canRunTalks` on that job, as before. Nothing new in the database.
 
+**R139. The sign-off sheet's photographs are shrunk before they reach the browser.** "Could not render the sign-off
+sheet: Printing failed." The whole-job sheet carried a hundred photographs at their stored 1600 px, fetched one after
+another, each decoded and redrawn in Chromium one at a time (R84): three minutes on Vercel, fifteen megabytes in the
+page, and on a bad instance the print step gave up. `loadDayworkPhotos` now fetches six at a time and shrinks each with
+`sharp` to the sheet's 900 px on the way in, so the renderer places them as they are. The sheet is the same document —
+same size on the page, same quality — and the client still signs photographs embedded in it, not links. If sharp
+cannot read a file, the original goes through and the renderer shrinks it as before. `sharp` is now a declared
+dependency rather than one borrowed from Next.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;
