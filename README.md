@@ -3123,6 +3123,18 @@ opened: `can_author_entries`, `can_run_talks`, `can_sign_in`, `can_report`, `can
 registers, templates — their write policies moved from `is_org_admin` to `is_org_office`). Fifteen SQL suites had pinned
 "the PM cannot write"; each now proves the write and rolls it back. Matty is a PM on Curtin again, with the money hidden.
 
+**R137. Three days' variations moved to dayworks, by hand, through the save path.** "Move all variations from 07, 08, 09
+October to dayworks — all these were done as dayworks, not variations." R82 says there is no move from variations to
+dayworks on the screen, on purpose, and that stands: a variation claim quietly becoming a daywork is the kind of thing
+that should be rare and deliberate. This was. Each of the three days on Curtin already had an open correction draft
+(Mitchell had started them on 12/10), each carrying one variation against register item 4. A one-off script, run once
+as Mitchell and then deleted, rebuilt each draft's payload exactly as the review page does, turned the variation row into
+a daywork row with nothing invented — description verbatim, the crew as the labour text and as `labour_rows` with hours
+null (the day's total stays on `hours`; never shared out, the review asks for each person's), the photographs carried —
+emptied the variations list, confirmed that section nil on Mitchell's word, and saved through `apply_entry_review` under
+his session. Nothing signed was touched: the originals keep their variation rows, and the register's day count moves
+only when he signs the corrections. The register item itself (V-4, raised) is his to void or keep.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;
