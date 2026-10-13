@@ -103,6 +103,7 @@ improvising; the register once shipped dead because a live smoke test was skippe
   `crew/inductions.ts` (`peopleOnJob` = members + roster by name, `inductionRows`, `notInducted`) backs the
   inductions block on `/settings/members`, where an induction is recorded by hand — any day up to today, with
   notes; `app.crew_inductions_before_write` tidies the name and refuses a future date. Suite 35, README R88.
+  `/inductions` (screen `inductions`, Company › Staff, pm/admin) draws that block once per job (README R138) — the same rows, the same form.
   Add member (`POST /api/projects/[id]/members`) makes the account when none exists and sends the welcome note
   (`src/lib/members/welcome.ts`, README R102 — email + title is the whole of adding someone; the bulk and cards routes
   stay for a terminal but no screen offers them)

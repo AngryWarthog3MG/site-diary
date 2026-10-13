@@ -4806,3 +4806,13 @@ a.diarycal__day:hover { box-shadow: var(--shadow-ui); transform: translateY(-1px
   .reqs__form, .reqs__form--two { grid-template-columns: minmax(0, 1fr); }
   .reqs__button { width: 100%; }
 }
+
+/* Inductions on every job, side by side (README R138). */
+.indjob { margin-top: 1rem; padding: 0.85rem 1rem 0.95rem; background: var(--paper); border: 1px solid var(--ink-12); border-radius: 12px; box-shadow: var(--shadow-ui); }
+.indjob__head { display: flex; align-items: baseline; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap; }
+.indjob__name { margin: 0; font-size: 1.1rem; line-height: 1.2; }
+.indjob__code { margin-left: 0.4rem; font-size: 0.75rem; color: var(--ink-40); }
+.indjob__meta { margin: 0; }
+.indjob__bad { color: #9A2B2B; font-weight: 600; }
+.indjob .inductions > .label { display: none; }
+.indjob .inductions > .label + .caption { display: none; }

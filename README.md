@@ -3135,6 +3135,13 @@ emptied the variations list, confirmed that section nil on Mitchell's word, and 
 his session. Nothing signed was touched: the originals keep their variation rows, and the register's day count moves
 only when he signs the corrections. The register item itself (V-4, raised) is his to void or keep.
 
+**R138. Inductions on every job, side by side.** "Create a section under Staff for inductions on jobs." R88 put the
+inductions block on each job's Settings › Members; the office wanted them all at once. `/inductions` (screen
+`inductions`, Company › Staff, admin and PM) draws that same block once per active job the viewer is on — who is inducted,
+when and by whom, who on the job is not — with three figures across the top and the not-inducted count in red. It is the
+same `crew_inductions` rows the prestart and the gate read, written by the same form, so recording one here is recording
+it everywhere; the block's `canRecord` follows `canRunTalks` on that job, as before. Nothing new in the database.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;
