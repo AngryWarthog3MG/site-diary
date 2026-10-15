@@ -156,6 +156,10 @@ improvising; the register once shipped dead because a live smoke test was skippe
   terms (`swms_problems` asks nothing of it), frozen once active. An active SWMS is readable by every member
   (r. 299/300) — `swms_reads_record` says so; drafts keep the lock. `/swms/sign` is the labourer's door
   (screen `swms_sign`). Outbox kind `swms_signon`. Suite 36
+- Signing on to the PRESTART as yourself (README R141): `/prestart/sign` (screen `prestart_sign`, every role, a labourer door) lists
+  today's open prestarts on the person's jobs; `app.can_sign_own_prestart` (open, member, own profile name, not yet signed) is the
+  insert policy's second half; an open prestart is readable by every member and a labourer reads their own sign-on; the
+  supervisor finishes LAST — a finished prestart takes no sign-on. Same table, same outbox kind `prestart_attendee`. Suite 57
 - `src/lib/incidents/` — hazards, near misses, incidents: `model.ts` (kinds, severities, `incidentRef` INC-001,
   `actionOverdue`, `summarise`, `urgent`), `pdf.tsx`. Tables `incidents` (numbered per job by the DB under an
   advisory lock; the first account is frozen; closes only when every action is done; closed = frozen),
