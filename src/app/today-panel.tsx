@@ -606,7 +606,7 @@ export function TodayPanel({
           entry?.segments || afterTheShift ? (
             <>
               <Link className="button button--record" href={`/record?project=${projectId}`}>
-                {entry?.segments ? 'Works today · keep going' : 'Works today'}
+                {entry ? 'Complete the Daily Diary' : 'Start the Daily Diary'}
               </Link>
               <button className="linklike home-typeit" type="button" disabled={writingOut} onClick={writeItOut}>
                 {writingOut ? 'Opening…' : 'Type it in instead'}
@@ -614,7 +614,7 @@ export function TodayPanel({
             </>
           ) : (
             <div className="prestart-row home-later">
-              <span><b className="row-kicker">Diary</b>Works today — after the shift · from {shiftEndLabel()}</span>
+              <span><b className="row-kicker">Diary</b>{entry ? 'Complete the Daily Diary' : 'Start the Daily Diary'} — after the shift · from {shiftEndLabel()}</span>
               <Link href={`/record?project=${projectId}`}>Start it now</Link>
             </div>
           )

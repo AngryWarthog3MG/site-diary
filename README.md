@@ -3178,6 +3178,11 @@ screen says "your supervisor finishes it once everyone has". The labourer's home
 state: no open briefing / open, sign on / signed on. Gate sign-in as yourself was already theirs (R70). Logins are made
 as ever — Settings › Members › Add member, email and title, role Labourer, per job (R102). Suite 57.
 
+**R142. The diary's button says what it does.** "Change this to say Complete or Start Daily Diary." The big button on
+the home said "Works today" (Mitchell's words of 24 September, R97) and read as a heading rather than an action to
+someone new. It now says **Start the Daily Diary** when the day has no entry yet and **Complete the Daily Diary** once a
+draft exists, and the quiet row before the shift ends says the same. "Type it in instead" stays beneath it.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;
