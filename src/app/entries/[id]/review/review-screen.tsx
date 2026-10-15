@@ -690,6 +690,13 @@ export function ReviewScreen(props: {
           </button>
           <span className="caption">Your changes to this day, until you sign it.</span>
         </div>
+        {/* Talking it in is a choice here, not the front door (README R143): what is said is written up into these fields. */}
+        <div className="review-talk">
+          <Link className="button button--quiet review-talk__btn" href={`/record?project=${props.projectId}&date=${props.entryDate}`}>
+            <span aria-hidden>🎙</span> Talk it in
+          </Link>
+          <span className="caption">Say what happened — labour, plant, works, delays — and it is written up into the fields below for you to check. Anything already here stays.</span>
+        </div>
         {props.neighbours && <DayNav neighbours={props.neighbours} target="day" />}
         {saveState === 'failed' && (
           <p className="alert savestate" role="status">

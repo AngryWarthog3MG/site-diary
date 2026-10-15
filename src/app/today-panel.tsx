@@ -605,17 +605,19 @@ export function TodayPanel({
         ) : canRecord ? (
           entry?.segments || afterTheShift ? (
             <>
-              <Link className="button button--record" href={`/record?project=${projectId}`}>
-                {entry ? 'Complete the Daily Diary' : 'Start the Daily Diary'}
-              </Link>
-              <button className="linklike home-typeit" type="button" disabled={writingOut} onClick={writeItOut}>
-                {writingOut ? 'Opening…' : 'Type it in instead'}
+              {/* The button opens the day to complete (README R143); talking it in is a choice on that screen.
+                  With no signal the screen cannot open, and the recorder — which queues offline — is offered instead. */}
+              <button className="button button--record" type="button" disabled={writingOut} onClick={writeItOut}>
+                {writingOut ? 'Opening…' : entry ? 'Complete the Daily Diary' : 'Start the Daily Diary'}
               </button>
+              {offline && (
+                <Link className="home-typeit" href={`/record?project=${projectId}`}>No signal — talk it in instead; it keeps on the phone</Link>
+              )}
             </>
           ) : (
             <div className="prestart-row home-later">
               <span><b className="row-kicker">Diary</b>{entry ? 'Complete the Daily Diary' : 'Start the Daily Diary'} — after the shift · from {shiftEndLabel()}</span>
-              <Link href={`/record?project=${projectId}`}>Start it now</Link>
+              <button type="button" className="linklike" disabled={writingOut} onClick={writeItOut}>{writingOut ? 'Opening…' : entry ? 'Open it now' : 'Start it now'}</button>
             </div>
           )
         ) : (

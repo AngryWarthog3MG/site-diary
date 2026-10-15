@@ -4819,3 +4819,8 @@ a.diarycal__day:hover { box-shadow: var(--shadow-ui); transform: translateY(-1px
 .indjob__bad { color: #9A2B2B; font-weight: 600; }
 .indjob .inductions > .label { display: none; }
 .indjob .inductions > .label + .caption { display: none; }
+
+/* Talk it in, on the day's review (README R143). */
+.review-talk { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; margin: 0.75rem 0 0; }
+.review-talk__btn { width: auto; margin: 0; white-space: nowrap; }
+.review-talk .caption { flex: 1 1 14rem; margin: 0; }

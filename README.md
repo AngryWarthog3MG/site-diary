@@ -3183,6 +3183,14 @@ the home said "Works today" (Mitchell's words of 24 September, R97) and read as 
 someone new. It now says **Start the Daily Diary** when the day has no entry yet and **Complete the Daily Diary** once a
 draft exists, and the quiet row before the shift ends says the same. "Type it in instead" stays beneath it.
 
+**R143. The diary opens to complete; talking it in is a choice on that screen.** "Remove the talk button or type
+instead — just take it to complete, with the option of talking it in." The home's big button had always been the
+recorder, with typing as the text link under it. It now opens the day's review screen — making today's draft first when
+there is none — and the review screen carries a **Talk it in** button that opens the recorder for that day; what is
+said is written up into the fields, with what is already there kept, as ever. With no signal the review screen cannot
+open (a draft is made on the server), so the home offers the recorder instead, which queues on the phone (R78). The
+recorder itself is unchanged.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;
