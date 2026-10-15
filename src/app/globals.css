@@ -4263,6 +4263,8 @@ a.dash-row:hover { background: var(--teal-tint); }
   font-size: 1.375rem; font-weight: 600; letter-spacing: 0.01em;
 }
 .labhome__btn--warn { background: #9A2B2B; }
+.labhome__btn--done { background: #2f6b45; }
+.labhome__btn--quiet { background: var(--ink-60); }
 .labhome__btn:hover { filter: brightness(1.06); }
 .labhome__icon { font-size: 1.75rem; line-height: 1; }
 .labhome__hint { font-size: 0.8125rem; font-weight: 400; opacity: 0.85; }

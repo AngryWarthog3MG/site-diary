@@ -3162,6 +3162,22 @@ weekly, the matrix. Renamed back onto a folded-in name, the alias that would poi
 already on the list (that is a combine, on the Timesheets page), a blank, a role below the office. The Rename control
 sits with the person's details on `/staff`. Suite 52. Florian and AJ were renamed under Mitchell's account that day.
 
+**R141. Every op gets a login, and signs on to the prestart from their own phone.** "The supervisor will do the
+prestart, complete it, and then all ops log into their phone and sign on, rather than passing the phone to each
+person." The same shape as signing on to a SWMS as yourself (R89). `/prestart/sign` (screen `prestart_sign`, a
+labourer's door; everyone else has it too) lists today's OPEN prestart on each job the person is on — the briefing as
+the supervisor wrote it, the checks ticked — and takes a read-and-understood tick, fit for work or not, and a signature.
+The database decides whose name is whose: `app.can_sign_own_prestart` accepts an attendee name only when the prestart is
+open, the caller is on its job, the name is the caller's own profile name, and they have not signed on already; the
+insert policy is "whoever runs the prestart, or yourself". It writes the same `prestart_attendees` row the supervisor's
+phone writes, through the same offline queue (`prestart_attendee`), into the prestart's own folder. Reads: an open
+prestart is every member's to read (it is their briefing), their own sign-on is theirs; a finished prestart keeps the
+record lock. One thing is not as the sentence had it: the supervisor finishes LAST. A finished prestart is a record and
+its PDF is stored at that moment (R109); nothing joins it after, so the screen says "finish it last" and the labourer's
+screen says "your supervisor finishes it once everyone has". The labourer's home grew a third button that reads the
+state: no open briefing / open, sign on / signed on. Gate sign-in as yourself was already theirs (R70). Logins are made
+as ever — Settings › Members › Add member, email and title, role Labourer, per job (R102). Suite 57.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;

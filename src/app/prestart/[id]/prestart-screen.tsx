@@ -291,7 +291,7 @@ export function PrestartScreen(props: {
             ? `Finished on this phone at ${new Date(pendingFinish).toTimeString().slice(0, 5)} — it sends when you are back in range, and locks then.`
             : props.local
               ? 'Kept on this phone until there is signal. Sign the crew on as normal; it all sends together.'
-              : 'Not finished. Read it out, get everyone to sign on, then finish it.'}
+              : 'Not finished. Read it out, get everyone to sign on — from their own phones or this one — then finish it last.'}
       </p>
       <OutboxStatus />
       <nav className="review-tabs" aria-label="Prestart sections">
@@ -455,8 +455,8 @@ export function PrestartScreen(props: {
           </h2>
           {!isDone && signedCount === 0 && canRun && (
             <p className="way-hint">
-              Read it out, then hand the phone around. Each person taps or types their name,
-              says whether they are fit for work, and signs with a finger.
+              Read it out. Each person signs on from their own phone (Home → Sign on to the prestart), or
+              the phone goes around: a name, fit for work or not, a signature. Finish it last.
             </p>
           )}
         </>

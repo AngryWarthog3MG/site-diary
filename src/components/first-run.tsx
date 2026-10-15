@@ -17,6 +17,7 @@ export function FirstRun({ role }: { role: string }) {
       <p className="label">Welcome — this is all you need</p>
       <ul>
         <li><strong>Sign in / out</strong> — tap it when you arrive and when you leave. That is your time for the day.</li>
+        <li><strong>Sign on to the prestart</strong> — after the morning briefing, read it and sign on from your own phone.</li>
         <li><strong>New hazard</strong> — see something unsafe or someone gets hurt, tap it and say what happened. A photo helps.</li>
         <li>The <strong>Home</strong> button at the bottom of every screen brings you back here.</li>
       </ul>

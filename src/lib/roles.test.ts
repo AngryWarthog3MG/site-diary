@@ -31,7 +31,8 @@ test('a labourer never gets past their own doors, whatever is ticked', () => {
   // The gate, hazard reporting, the emergency plan, signing on to a SWMS, and the chemicals
   // register. The last three are the law reaching the worker: reg. 43(1)(c), r. 299/300 and
   // reg. 346(3) (README R60, R63, R89).
-  assert.deepEqual(grantableScreens('labourer'), ['signin', 'emergency', 'incidents', 'swms_sign', 'chemicals', 'inbox', 'procedures']);
+  // And the day's prestart, signed on to from their own phone (R141).
+  assert.deepEqual(grantableScreens('labourer'), ['signin', 'prestart_sign', 'emergency', 'incidents', 'swms_sign', 'chemicals', 'inbox', 'procedures']);
 });
 
 test('an admin keeps Settings — the screen the ticks are set from', () => {

@@ -25,6 +25,15 @@ export async function LabourerHome({ current, name, userId }: { current: Members
   const today = perthToday();
   const planPromise = loadCurrentPlan(supabase, current.project_id);
   const sitePlanPromise = loadHeadContractorEmergencyPlan(supabase, current.project_id);
+  const { data: prestartRows } = await supabase
+    .from('prestarts')
+    .select('id, prestart_attendees(attendee_name)')
+    .eq('project_id', current.project_id)
+    .eq('prestart_date', today)
+    .is('completed_at', null)
+    .limit(1);
+  const prestart = (prestartRows ?? [])[0] as { id: string; prestart_attendees: Array<{ attendee_name: string }> | null } | undefined;
+  const signedPrestart = Boolean(prestart?.prestart_attendees?.some((a) => normaliseName(a.attendee_name) === normaliseName(name)));
   const { data } = await supabase
     .from('site_signins')
     .select('id, person_name, company, person_kind, inducted, signed_in_at, signed_in_on_device_at, signed_out_at, signed_out_on_device_at')
@@ -72,6 +81,11 @@ export async function LabourerHome({ current, name, userId }: { current: Members
           <span className="labhome__icon" aria-hidden>{open ? '⇤' : '⇥'}</span>
           <span>{open ? 'Sign out' : 'Sign in'}</span>
           <span className="labhome__hint">{open ? 'When you leave the site' : 'When you arrive at the site'}</span>
+        </Link>
+        <Link className={`labhome__btn${signedPrestart ? ' labhome__btn--done' : prestart ? '' : ' labhome__btn--quiet'}`} href={`/prestart/sign${q}`}>
+          <span className="labhome__icon" aria-hidden>{signedPrestart ? '✓' : '☀'}</span>
+          <span>{signedPrestart ? 'Prestart signed on' : 'Sign on to the prestart'}</span>
+          <span className="labhome__hint">{signedPrestart ? 'You have signed today’s briefing' : prestart ? 'Today’s briefing is open — read it and sign on' : 'No open briefing on this job right now'}</span>
         </Link>
         <Link className="labhome__btn labhome__btn--warn" href={`/incidents/new${q}`}>
           <span className="labhome__icon" aria-hidden>⚠</span>
