@@ -295,7 +295,8 @@ export function PrestartScreen(props: {
       </p>
       <OutboxStatus />
       <nav className="review-tabs" aria-label="Prestart sections">
-        {([['briefing', 'Briefing', null], ['spec', 'Spec', prestart.specNotes.length], ['signon', 'Sign-on', signedCount]] as const).map(([key, label, count]) => (
+        {/* The Spec tab is off the prestart (README R145); it draws only for a prestart that already carries notes. */}
+        {([['briefing', 'Briefing', null], ['spec', 'Spec', prestart.specNotes.length], ['signon', 'Sign-on', signedCount]] as const).filter(([key]) => key !== 'spec' || prestart.specNotes.length > 0).map(([key, label, count]) => (
           <button key={key} type="button" className={`review-tab${tab === key ? ' is-active' : ''}`} onClick={() => setTab(key)}>
             {label}
             {count != null && <span className="review-tab__count mono">{count}</span>}

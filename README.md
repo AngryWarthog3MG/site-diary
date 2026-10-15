@@ -3201,6 +3201,11 @@ out of sight. With none, the day's section is saved as a confirmed nil rather th
 record: a day that mentions no instruction asserts none. Notices (R90) still draft from any event that is recorded.
 The prestart's own Spec tab is untouched.
 
+**R145. Spec off the prestart too.** "Also remove Spec from the prestart." The spec picker is gone from the new-prestart
+form and the Spec tab from the prestart screen; a prestart that already carries spec notes still shows the tab, and the
+prestart PDF still prints them, so what was recorded stays as it was. `prestarts.spec_notes` and
+`src/lib/documents/prestart-spec.ts` stand, unused by any screen, for the day it is wanted back.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;

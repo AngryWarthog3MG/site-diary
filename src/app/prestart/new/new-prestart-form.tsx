@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import { fmtDate } from '@/lib/pdf/dates';
-import { PrestartSpecPicker } from '../spec-picker';
 import type { SpecNote } from '@/lib/prestart/spec-notes';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -231,8 +230,6 @@ export function NewPrestartForm({
           placeholder="Busport: topsoil and planting. Old Brand Drive: vac truck potholing near the comms pit."
           onChange={(e) => setWork(e.target.value)} />
       </label>
-
-      <PrestartSpecPicker projectId={projectId} work={work} notes={specNotes} readOnly={false} onKeep={setSpecNotes} />
 
       <label className="fieldcell">
         <span className="label">Hazards and controls</span>
