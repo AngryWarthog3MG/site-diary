@@ -3191,6 +3191,16 @@ said is written up into the fields, with what is already there kept, as ever. Wi
 open (a draft is made on the server), so the home offers the recorder instead, which queues on the phone (R78). The
 recorder itself is unchanged.
 
+**R144. Two tabs off the day's screen: Spec, and Instructions & events.** "On daily diary, remove Spec, Instructions
+and events." The Spec tab (the review's read-only look-up against the job's documents) and the Instructions & events
+tab (the diary's seventh section, R90) are no longer drawn on the review screen. Events are not gone from the record:
+the section, its hash key and its trigger stand, the extraction still proposes one when a supervisor says the head
+contractor instructed something, and the tab draws itself whenever a day carries a row — so nothing recorded is ever
+out of sight. With none, the day's section is saved as a confirmed nil rather than an open gap, so the docket prints
+"none" in black instead of amber for a question nobody is asked any more. That is Mitchell's call as the keeper of the
+record: a day that mentions no instruction asserts none. Notices (R90) still draft from any event that is recorded.
+The prestart's own Spec tab is untouched.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;

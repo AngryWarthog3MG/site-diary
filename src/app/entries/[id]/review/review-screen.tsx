@@ -76,6 +76,13 @@ const REQUIRED_GROUP: Partial<Record<SectionKey, ItemGroup>> = {
 
 const PHOTO_BUCKET = 'entry-photos';
 type ReviewTab = ItemGroup | 'photos' | 'weather' | 'notes' | 'signoff' | 'spec';
+/**
+ * Tabs taken off the day's screen at Mitchell's request (README R144): the Spec look-up, and Instructions & events.
+ * Events still exist as the diary's seventh section — the tab comes back the moment a day carries one (a proposal
+ * heard an instruction, or an older day recorded one), so nothing on the record is ever hidden; with none, the day
+ * asserts none, as a confirmed nil, rather than asking.
+ */
+const HIDDEN_TABS = new Set<ReviewTab>(['site_events', 'spec']);
 const REVIEW_TABS: Array<{ key: ReviewTab; label: string }> = [
   ...SECTIONS.map((section) => ({ key: section.group, label: section.group === 'work_items' ? 'Works' : section.title })),
   { key: 'spec', label: 'Spec' },
@@ -505,7 +512,8 @@ export function ReviewScreen(props: {
           ? 1
           : 0;
 
-      const state = count > 0 ? 'captured' : nilConfirmed.has(key) ? 'nil_confirmed' : 'gap';
+      // A hidden section with nothing in it is a confirmed nil by policy (README R144), never an open gap.
+      const state = count > 0 ? 'captured' : nilConfirmed.has(key) || HIDDEN_TABS.has(key as ReviewTab) ? 'nil_confirmed' : 'gap';
       return { section: key, state, note: null } as const;
     });
   }
@@ -568,7 +576,7 @@ export function ReviewScreen(props: {
       : payload.weather_impact?.trim()
         ? 1
         : 0;
-    return count === 0 && !nilConfirmed.has(key);
+    return count === 0 && !nilConfirmed.has(key) && !HIDDEN_TABS.has(key as ReviewTab);
   });
   const unansweredSet = new Set(unanswered);
   const activeSection = SECTIONS.find((section) => section.group === activeTab);
@@ -797,7 +805,7 @@ export function ReviewScreen(props: {
       )}
 
       <nav className="review-tabs" aria-label="Review sections">
-        {REVIEW_TABS.map((tab) => {
+        {REVIEW_TABS.filter((tab) => !HIDDEN_TABS.has(tab.key) || tabMeta(tab.key).count > 0).map((tab) => {
           const meta = tabMeta(tab.key);
           const attention = meta.hasGap || meta.needsAnswer || meta.low;
           return (
