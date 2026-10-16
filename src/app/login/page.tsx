@@ -20,7 +20,7 @@ export default async function LoginPage({
         </div>
         <h1 className="page-title">Sign in</h1>
         <p className="page-subtitle">
-          Type your email. A link comes back — tap it and you are in. No password.
+          Your email and the password the office gave you. No password yet? Ask for a link by email instead.
         </p>
         <hr className="rule" />
         <LoginForm next={next} initialError={params.error} />

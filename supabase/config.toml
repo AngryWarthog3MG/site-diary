@@ -72,9 +72,10 @@ enable_signup = true
 double_confirm_changes = true
 # OFF, and this matters: with confirmations on, a brand-new address gets a
 # "Confirm your signup" mail instead of a magic link — which is what happened
-# on the first attempt. There are no passwords here, so opening the link IS the
-# confirmation; a separate confirm step confirms nothing and costs an email
-# nobody can spare on the built-in mail limit.
+# on the first attempt. Opening the link IS the confirmation; a separate confirm
+# step confirms nothing and costs an email nobody can spare on the built-in mail
+# limit. Passwords exist since 16/10/2026 (README R146), set by the office from
+# Members and never mailed; the link stays the way in for everyone else.
 enable_confirmations = false
 secure_password_change = false
 otp_length = 6

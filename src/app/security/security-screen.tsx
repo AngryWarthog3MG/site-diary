@@ -27,6 +27,18 @@ export function SecurityScreen({ aal, next }: { aal: Aal; next: string | null })
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState<string | null>(null);
   const [removing, setRemoving] = useState(false);
+  // Your own password (README R146): set by the office to begin with, yours to change here.
+  const [pw, setPw] = useState('');
+  const [pwBusy, setPwBusy] = useState(false);
+  const [pwNote, setPwNote] = useState<string | null>(null);
+  async function changePassword() {
+    if (pw.length < 8) { setPwNote('A password is at least 8 characters.'); return; }
+    setPwBusy(true); setPwNote(null);
+    const { error: err } = await createClient().auth.updateUser({ password: pw });
+    setPwBusy(false);
+    if (err) { setPwNote(err.message); return; }
+    setPw(''); setPwNote('Password changed. Use it next time you sign in.');
+  }
 
   const load = useCallback(async () => {
     const { data, error: err } = await createClient().auth.mfa.listFactors();
@@ -143,6 +155,16 @@ export function SecurityScreen({ aal, next }: { aal: Aal; next: string | null })
           </div>
         </section>
       )}
+      <section className="security__password item">
+        <p className="label">Your password</p>
+        <p className="caption">Sign in with your email and this instead of waiting for a link. The office set it to begin with; make it your own here.</p>
+        <label className="fieldcell" htmlFor="security-password">
+          <span className="label">New password · at least 8 characters</span>
+          <input id="security-password" className="field field--sm" type="password" autoComplete="new-password" value={pw} onChange={(e) => setPw(e.target.value)} />
+        </label>
+        {pwNote && <p className={/changed/i.test(pwNote) ? 'notice' : 'alert'}>{pwNote}</p>}
+        <button type="button" className="button button--quiet" disabled={pwBusy || pw.length < 8} onClick={() => void changePassword()}>{pwBusy ? 'Changing…' : 'Change my password'}</button>
+      </section>
     </div>
   );
 }

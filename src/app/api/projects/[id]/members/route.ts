@@ -158,6 +158,19 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
     return ok({ message: `Name set: ${result.name}. New sheets will print it.` });
   }
 
+  // A password, set by the office (README R146): the crew sign in with it at the gate instead of waiting for a mail.
+  // The person can change it under Security. Never sent anywhere by the app — the office hands it over in person.
+  if (body && typeof body === 'object' && 'password' in body) {
+    const password = String((body as { password: unknown }).password ?? '');
+    if (password.length < 8) return fail('bad_request', 'A password is at least 8 characters.', 400);
+    const { data: member, error: mErr } = await auth.supabase.from('project_members').select('user_id').eq('project_id', projectId).eq('user_id', userId).maybeSingle();
+    if (mErr) return fail('server_error', mErr.message, 500);
+    if (!member) return fail('not_found', 'That person is not on this job.', 404);
+    const { error } = await createAdminClient().auth.admin.updateUserById(userId, { password });
+    if (error) return fail('server_error', error.message, 500);
+    return ok({ message: 'Password set. Tell them in person — the app never sends it.' });
+  }
+
   // Money access (README R105): on, off, or null for the role's default. Only a supervisor's or a PM's can be set:
   // an admin always sees the money and a leading hand or labourer never does — the database holds the same rule.
   if (body && typeof body === 'object' && 'finance' in body) {

@@ -32,7 +32,7 @@ export async function sendWelcome(input: { email: string; name: string | null; r
         `<ol style="padding-left:1.2em"><li>Open <a href="${esc(site)}/login">${esc(site.replace(/^https?:\/\//, ''))}</a></li>` +
         `<li>Type this email address: <b>${esc(input.email)}</b></li>` +
         `<li>Tap the link that comes back.</li></ol>` +
-        `<p>No password, nothing to set up. Add it to your home screen once you are in, so it opens like an app.</p>` +
+        `<p>Or sign in with your email and the password the office gives you. Add it to your home screen once you are in, so it opens like an app.</p>` +
         `</div>`,
     }),
   }).catch(() => null);

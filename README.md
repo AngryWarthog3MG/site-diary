@@ -3206,6 +3206,17 @@ form and the Spec tab from the prestart screen; a prestart that already carries 
 prestart PDF still prints them, so what was recorded stays as it was. `prestarts.spec_notes` and
 `src/lib/documents/prestart-spec.ts` stand, unused by any screen, for the day it is wanted back.
 
+**R146. Email and password for the crew.** "I want all ops to be able to log in using email and password rather than
+having a code." The app had one way in — a link by email (R70) — which suits an office and not a gate: a labourer with
+a phone full of mail and no signal cannot wait for a link. The login page now takes an email and a password; "Send me
+a link" stays beneath it for anyone without one, and is the only way in for an account with none. A password is SET BY
+THE OFFICE — Members › Set a password, eight characters or more — and handed over in person; the app never sends it
+anywhere, the welcome note included. The person changes it under Security. Nothing about the record changes: the name
+on the sheets is still the account's, two-factor still gates the money. Mitchell chose one password for every op
+(16/10/2026); he was told what that costs — anyone who knows it and an op's email can sign on as that op, so a sign-on
+or a gate entry under a shared password proves less than one under a password its owner chose — and it stands as his
+call. Marcus Hayden's account was made that day, a labourer on Curtin, with it; Samuel Andrioff's got the same.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;

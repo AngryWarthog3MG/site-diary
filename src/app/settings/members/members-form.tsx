@@ -74,6 +74,34 @@ function AccessGrid({ member, canEdit, busy, onSave }: { member: MemberRow; canE
 }
 
 /** The member's name as the sheets print it; an admin can set it. */
+/** The office sets a person's password here (README R146); the app never sends it. */
+function PasswordLine({ member, canEdit, busy, onSave }: { member: MemberRow; canEdit: boolean; busy: boolean; onSave: (password: string) => Promise<boolean> }) {
+  const [editing, setEditing] = useState(false);
+  const [value, setValue] = useState('');
+  if (!canEdit) return null;
+  return (
+    <>
+      {!editing && (
+        <button type="button" className="linklike" disabled={busy} onClick={() => { setValue(''); setEditing(true); }}>Set a password</button>
+      )}
+      {editing && (
+        <form
+          className="signin__grid"
+          style={{ alignItems: 'end', margin: '0.25rem 0' }}
+          onSubmit={(e) => { e.preventDefault(); void onSave(value).then((saved) => { if (saved) { setEditing(false); setValue(''); } }); }}
+        >
+          <label className="fieldcell">
+            <span className="label">Their password · at least 8 characters</span>
+            <input className="field field--sm" type="text" autoComplete="off" autoCapitalize="none" spellCheck={false} autoFocus value={value} onChange={(e) => setValue(e.target.value)} />
+          </label>
+          <button type="submit" className="button button--quiet" disabled={busy || value.length < 8}>Set it</button>
+          <button type="button" className="linklike" onClick={() => setEditing(false)}>Cancel</button>
+        </form>
+      )}
+    </>
+  );
+}
+
 function NameLine({ member, canEdit, busy, onSave }: { member: MemberRow; canEdit: boolean; busy: boolean; onSave: (name: string) => Promise<boolean> }) {
   const [editing, setEditing] = useState(false);
   const [value, setValue] = useState(member.name ?? '');
@@ -213,6 +241,12 @@ export function MembersForm({
                   <p style={{ margin: '0.25rem 0 0', color: 'var(--ink-60)', fontSize: '0.8125rem' }}>
                     {ROLE_TEXT[member.role]}
                   </p>
+                  <PasswordLine
+                    member={member}
+                    canEdit={canEdit}
+                    busy={busy !== null}
+                    onSave={(password) => request('PATCH', { userId: member.userId, password }, `password:${member.userId}`)}
+                  />
                 </div>
 
                 <div className="member__actions">

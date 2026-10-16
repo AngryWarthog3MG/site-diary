@@ -2,13 +2,13 @@
 
 import { useActionState } from 'react';
 import { useFormStatus } from 'react-dom';
-import { sendMagicLink, verifyCode, type LoginState } from './actions';
+import { sendMagicLink, signInWithPassword, verifyCode, type LoginState } from './actions';
 
-function Submit({ children }: { children: string }) {
+function Submit({ children, quiet, formAction, busyText }: { children: string; quiet?: boolean; formAction?: (formData: FormData) => void; busyText?: string }) {
   const { pending } = useFormStatus();
   return (
-    <button className="button" type="submit" disabled={pending}>
-      {pending ? 'Sending…' : children}
+    <button className={`button${quiet ? ' button--quiet' : ''}`} type="submit" disabled={pending} formAction={formAction}>
+      {pending ? (busyText ?? 'Sending…') : children}
     </button>
   );
 }
@@ -43,6 +43,8 @@ export function LoginForm({ next, initialError }: { next: string; initialError?:
     ...initial,
     stage: 'code',
   });
+  // Email and password (README R146): the crew's way in. The same form sends a link instead.
+  const [pwState, passwordAction] = useActionState<LoginState, FormData>(signInWithPassword, initial);
 
   // Once the link is away, keep the resend form; show the code fallback only
   // where a code is actually sent.
@@ -50,7 +52,7 @@ export function LoginForm({ next, initialError }: { next: string; initialError?:
 
   return (
     <>
-      <form action={sendAction}>
+      <form action={passwordAction}>
         <input type="hidden" name="next" value={next} />
         <label className="label" htmlFor="email">
           Email
@@ -60,17 +62,31 @@ export function LoginForm({ next, initialError }: { next: string; initialError?:
           name="email"
           type="email"
           className="field"
-          autoComplete="email"
+          autoComplete="username"
           inputMode="email"
           autoCapitalize="none"
           spellCheck={false}
           required
-          defaultValue={emailState.email}
+          defaultValue={pwState.email || emailState.email}
           placeholder="you@example.com"
         />
-        <Submit>{sent ? 'Send again' : 'Send link'}</Submit>
+        <label className="label" htmlFor="password" style={{ marginTop: '0.75rem' }}>
+          Password
+        </label>
+        <input
+          id="password"
+          name="password"
+          type="password"
+          className="field"
+          autoComplete="current-password"
+          placeholder="The password the office gave you"
+        />
+        <Submit busyText="Signing in…">Sign in</Submit>
+        <p className="caption" style={{ margin: '0.9rem 0 0.35rem' }}>No password? A link by email works too.</p>
+        <Submit quiet formAction={sendAction}>{sent ? 'Send the link again' : 'Send me a link'}</Submit>
       </form>
 
+      {pwState.error && <p className="alert">{pwState.error}</p>}
       {emailState.error && <p className="alert">{emailState.error}</p>}
       {emailState.notice && <p className="notice">{emailState.notice}</p>}
 

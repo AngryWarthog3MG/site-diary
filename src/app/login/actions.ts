@@ -58,6 +58,33 @@ export async function sendMagicLink(
   };
 }
 
+/**
+ * Email and password (README R146): the way the site crew sign in — no mail
+ * to wait for at the gate. The office sets the password; the link still works
+ * for anyone who prefers it, and is the only way in for an account with none.
+ */
+export async function signInWithPassword(
+  _prev: LoginState,
+  formData: FormData,
+): Promise<LoginState> {
+  const email = String(formData.get('email') ?? '').trim().toLowerCase();
+  const password = String(formData.get('password') ?? '');
+  const next = String(formData.get('next') ?? '/');
+  if (!EMAIL_RE.test(email)) {
+    return { stage: 'email', email, error: 'Enter a valid email address.', notice: null };
+  }
+  if (!password) {
+    return { stage: 'email', email, error: 'Type your password, or ask for a link instead.', notice: null };
+  }
+  const supabase = await createClient();
+  const { error } = await supabase.auth.signInWithPassword({ email, password });
+  if (error) {
+    const wrong = /invalid login credentials|invalid_credentials/i.test(error.message);
+    return { stage: 'email', email, error: wrong ? 'Wrong email or password. If the office has not given you a password, ask for a link instead.' : error.message, notice: null };
+  }
+  redirect(next.startsWith('/') ? next : '/');
+}
+
 // Not exported: a 'use server' module may export only async functions.
 /** Supabase's wording when an unknown address asks for a code with sign-ups off. */
 function notOnTheSystem(message: string): boolean {

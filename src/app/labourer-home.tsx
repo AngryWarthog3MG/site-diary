@@ -108,7 +108,7 @@ export async function LabourerHome({ current, name, userId }: { current: Members
         )}
         <Link href={`/emergency${q}`}>The whole emergency plan</Link>
       </section>
-      <p className="labhome__more"><Link href={`/swms/sign${q}`}>Sign on to a SWMS</Link> · <Link href={`/chemicals${q}`}>Chemicals on this site</Link> · <Link href={`/incidents${q}`}>Your hazard reports</Link></p>
+      <p className="labhome__more"><Link href={`/swms/sign${q}`}>Sign on to a SWMS</Link> · <Link href={`/chemicals${q}`}>Chemicals on this site</Link> · <Link href={`/incidents${q}`}>Your hazard reports</Link> · <Link href="/security">Change your password</Link></p>
     </main>
   );
 }
