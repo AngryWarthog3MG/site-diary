@@ -115,7 +115,9 @@ improvising; the register once shipped dead because a live smoke test was skippe
   `filterStaff`, `assignStep`; pure, node-tested) joins them. Triggers keep it the one list: a crew insert or a ticket insert
   adds the person (`app.crew_joins_staff`, `app.ticket_holder_joins_staff`); a role change flows to crew rows that carried the
   old role, and `active=false` hides every crew row (`app.staff_flows_to_crews`). Screen `staff` (admin, Company › Staff),
-  `/staff`: assigning to a job IS writing that job's `crew` row — never a second assignment table. Suite 52
+  `/staff` is PEOPLE (README R148): one row per person with their login too; `src/app/api/people/route.ts` adds a person with
+  account, memberships and crew rows in one call, a job tick writes crew row AND membership, leaving closes the login (R115).
+  Assigning to a job IS writing that job's `crew` row — never a second assignment table. Suite 52
 - `src/lib/members/account.ts` — removed from their last job, the account is CLOSED, never deleted (README R115): a ban in
   the auth service, the profile and the record kept, `account_closed` / `account_reopened` in `member_access_events`. The
   members DELETE calls `closeAccountIfOrphaned`; add and bulk add call `reopenAccount`. Never `auth.admin.deleteUser` —

@@ -22,7 +22,11 @@ export default async function MembersPage({
   guardScreen(current, 'settings');
   if (!current) redirect('/');
 
-  const canEdit = current.role === 'admin';
+  // The office manages people on the People page now (README R148), with this job preselected. A supervisor or
+  // leading hand still needs who-is-on-this-job and the inductions here.
+  if (current.role === 'admin' || current.role === 'pm') redirect(`/staff?project=${current.project_id}&job=${current.project_id}`);
+  // What is left here is the site roles' view: read, and record an induction.
+  const canEdit = false;
   const supabase = await createClient();
   const { data: members, error } = await supabase
     .from('project_members')

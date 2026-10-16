@@ -5,12 +5,18 @@ import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { compressPhoto } from '@/lib/photos/compress';
 import { fmtDate } from '@/lib/pdf/dates';
-import { assignStep, filterStaff, type JobFilter, type Person, type PersonJob } from '@/lib/staff/model';
+import { filterStaff, type JobFilter, type Person, type PersonJob } from '@/lib/staff/model';
+import { ROLES, ROLE_LABEL } from '@/lib/roles';
+import type { MemberRole } from '@/types/database';
+import { AccessGrid, MoneyAccess, type MemberRow } from '@/app/settings/members/members-form';
+import { Fold } from '@/components/fold';
 
-interface Job { id: string; code: string; name: string; canAssign: boolean }
-interface Details { role: string; phone: string; employer: string; notes: string }
+interface Job { id: string; code: string; name: string; canAssign: boolean; /** The viewer administers this job: memberships, titles, money (R136). */ isAdmin: boolean }
+interface Details { role: string; phone: string; employer: string; notes: string; emergency: string }
 /** Where on the page a save's answer is shown: beside the thing that was pressed, never off the top of the screen. */
-type Where = 'top' | 'jobs' | 'tickets' | 'details' | 'rename';
+type Where = 'top' | 'jobs' | 'tickets' | 'details' | 'rename' | 'login';
+/** The crew's password, typed once and kept on this device (README R147) — never on the server. */
+const PW_KEY = 'kbl-members-password';
 interface Msg { where: Where; kind: 'ok' | 'bad' | 'warn'; text: string }
 const BLANK_TICKET = { key: 'white_card', no: '', issued: '', expires: '', photo: null as File | null };
 
@@ -19,14 +25,19 @@ const BLANK_TICKET = { key: 'white_card', no: '', issued: '', expires: '', photo
  * row, the ticket, the induction — then re-reads the page, so what is shown is what is stored. A ticket and an
  * induction are added here exactly as they are from the job's own screens; nothing is kept twice.
  */
-export function StaffScreen({ orgId, orgName, projectId, userId, today, people, jobs, crewCounts, roles, competencies }: {
+export function StaffScreen({ orgId, orgName, projectId, userId, today, people, jobs, crewCounts, roles, competencies, codeEntered, initialJob }: {
   orgId: string; orgName: string; projectId: string; userId: string; today: string;
   people: Person[]; jobs: Job[]; crewCounts: Record<string, number>; roles: string[];
   competencies: Array<{ key: string; label: string }>;
+  /** The viewer's two-factor code is entered this session (R106): what grants money or resets a code is open. */
+  codeEntered: boolean;
+  /** The job the page opened filtered to, when it came from a job's Settings (README R148). */
+  initialJob?: JobFilter;
 }) {
+  void crewCounts;
   const router = useRouter();
   const [q, setQ] = useState('');
-  const [jobFilter, setJobFilter] = useState<JobFilter>('all');
+  const [jobFilter, setJobFilter] = useState<JobFilter>(initialJob ?? 'all');
   const [showLeft, setShowLeft] = useState(false);
   const [openId, setOpenId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -34,7 +45,12 @@ export function StaffScreen({ orgId, orgName, projectId, userId, today, people, 
   const ticketsRef = useRef<HTMLDivElement | null>(null);
 
   const [adding, setAdding] = useState(false);
-  const [fresh, setFresh] = useState({ name: '', role: '', phone: '', employer: '', jobs: [] as string[] });
+  const [fresh, setFresh] = useState({ name: '', role: '', phone: '', employer: '', emergency: '', email: '', password: '', title: 'labourer' as MemberRole, jobs: [] as string[] });
+  const [rememberPw, setRememberPw] = useState(true);
+  useEffect(() => { try { const kept = window.localStorage.getItem(PW_KEY); if (kept) setFresh((f) => ({ ...f, password: kept })); } catch { /* no storage */ } }, []);
+  // Giving someone on the list a login, from their row.
+  const [loginForm, setLoginForm] = useState<{ email: string; password: string; title: MemberRole } | null>(null);
+  const [pwFor, setPwFor] = useState<{ userId: string; value: string } | null>(null);
   const [details, setDetails] = useState<Details | null>(null);
   const [ticket, setTicket] = useState(BLANK_TICKET);
   const [inducting, setInducting] = useState<string | null>(null);
@@ -96,10 +112,10 @@ export function StaffScreen({ orgId, orgName, projectId, userId, today, people, 
 
   function toggle(p: Person) {
     if (ticketDirty && openId) { pointAtTicket('This ticket is not saved yet. Press Save ticket, or Clear to drop it.'); return; }
-    setMsg(null); setLeaving(false); setRenaming(false); setNewName(''); setInducting(null); setTicket(BLANK_TICKET);
+    setMsg(null); setLeaving(false); setRenaming(false); setNewName(''); setInducting(null); setTicket(BLANK_TICKET); setLoginForm(null); setPwFor(null);
     if (openId === p.id) { setOpenId(null); setDetails(null); return; }
     setOpenId(p.id);
-    setDetails({ role: p.role ?? '', phone: p.phone ?? '', employer: p.employer ?? '', notes: p.notes ?? '' });
+    setDetails({ role: p.role ?? '', phone: p.phone ?? '', employer: p.employer ?? '', notes: p.notes ?? '', emergency: p.emergency_contact ?? '' });
   }
 
   async function run(where: Where, fn: () => Promise<string>) {
@@ -109,55 +125,77 @@ export function StaffScreen({ orgId, orgName, projectId, userId, today, people, 
     // Re-read whatever happened: a save that half-landed (a person added, a job refused) must show as it stands.
     finally { setBusy(false); router.refresh(); }
   }
-  const refused = (what: string) => new Error(`${what} did not save — your role on that job does not keep its crew list.`);
-
-  async function putOnJob(name: string, role: string | null, job: PersonJob | { projectId: string; crewId: null; onCrew: false }) {
-    const supabase = createClient();
-    const step = 'code' in job ? assignStep(job) : 'insert';
-    if (step === 'none') return;
-    if (step === 'show' && job.crewId) {
-      const { data, error: e } = await supabase.from('crew').update({ active: true }).eq('id', job.crewId).select('id');
-      if (e) throw new Error(e.message);
-      if (!data?.length) throw refused('That');
-      return;
-    }
-    const { error: e } = await supabase.from('crew').insert({ project_id: job.projectId, name, role, sort_order: (crewCounts[job.projectId] ?? 0) + 1 });
-    if (e) throw new Error(/row-level security/i.test(e.message) ? refused('That').message : e.message);
+  /** The People API (README R148) and the members API: one call, one plain answer. */
+  async function api(method: string, url: string, body: object): Promise<string> {
+    const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    const json = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(json?.error?.message ?? 'That did not save.');
+    return String(json?.message ?? 'Saved.');
   }
+  const keepPassword = (pw: string) => { try { if (rememberPw && pw) window.localStorage.setItem(PW_KEY, pw); else if (!rememberPw) window.localStorage.removeItem(PW_KEY); } catch { /* no storage */ } };
 
   const addPerson = () => run('top', async () => {
     const name = fresh.name.replace(/\s+/g, ' ').trim();
     if (!name) throw new Error('Give the person’s name as it goes on the sheets.');
-    const role = fresh.role.trim() || null;
-    const { error: e } = await createClient().from('staff').insert({ org_id: orgId, name, role, phone: fresh.phone.trim() || null, employer: fresh.employer.trim() || null });
-    if (e) throw new Error(/duplicate key/i.test(e.message) ? `${name} is already on the staff list.` : e.message);
-    const failed: string[] = [];
-    for (const id of fresh.jobs) {
-      try { await putOnJob(name, role, { projectId: id, crewId: null, onCrew: false }); } catch { failed.push(jobOf(id)?.code ?? 'a job'); }
-    }
-    setFresh({ name: '', role: '', phone: '', employer: '', jobs: [] }); setAdding(false);
-    if (failed.length) throw new Error(`${name} is on the staff list, but could not be put on ${failed.join(', ')}. Open their row and tick the job again.`);
-    const on = fresh.jobs.map((id) => jobOf(id)?.code).filter(Boolean);
-    return `${name} added${on.length ? ` and put on ${on.join(', ')}` : ''}.`;
+    if (fresh.password && !fresh.email.trim()) throw new Error('A password goes with an email.');
+    if (fresh.password && fresh.password.length < 8) throw new Error('A password is at least 8 characters.');
+    const text = await api('POST', '/api/people', {
+      orgId, name, role: fresh.role, phone: fresh.phone, employer: fresh.employer, emergencyContact: fresh.emergency,
+      email: fresh.email.trim(), password: fresh.password, title: fresh.title, jobs: fresh.jobs,
+    });
+    keepPassword(fresh.password);
+    setFresh((f) => ({ name: '', role: '', phone: '', employer: '', emergency: '', email: '', password: f.password, title: 'labourer', jobs: [] })); setAdding(false);
+    return text;
   });
 
+  // One tick: the crew list, and the login's membership where there is one (README R148).
   const setJob = (p: Person, j: PersonJob, on: boolean) => {
     const key = `${p.id}|${j.projectId}`;
     setTicked((t) => ({ ...t, [key]: on }));
     return run('jobs', async () => {
       try {
-        if (on) { await putOnJob(p.name, p.role, j); return `${p.name} is on ${j.code}’s crew list.`; }
-        if (!j.crewId) return '';
-        const { data, error: e } = await createClient().from('crew').update({ active: false }).eq('id', j.crewId).select('id');
-        if (e) throw new Error(e.message);
-        if (!data?.length) throw refused('That');
-        return `${p.name} is off ${j.code}’s crew list. Days already recorded are unchanged.`;
+        const title = (p.login?.memberships[0]?.role as MemberRole | undefined) ?? 'labourer';
+        return await api('PUT', '/api/people', { staffId: p.id, projectId: j.projectId, on, title });
       } catch (e) {
         setTicked((t) => { const { [key]: _gone, ...rest } = t; void _gone; return rest; });
         throw e;
       }
     });
   };
+
+  // Their login: made from the row, for the jobs they are on.
+  const giveLogin = (p: Person) => run('login', async () => {
+    if (!loginForm) return '';
+    const email = loginForm.email.trim().toLowerCase();
+    if (!email) throw new Error('Their email is what they sign in with.');
+    if (loginForm.password && loginForm.password.length < 8) throw new Error('A password is at least 8 characters.');
+    const text = await api('POST', '/api/people', { orgId, name: p.name, role: p.role ?? '', email, password: loginForm.password, title: loginForm.title, jobs: p.jobs.filter((j) => j.onCrew).map((j) => j.projectId) });
+    keepPassword(loginForm.password);
+    setLoginForm(null);
+    return text;
+  });
+  const setPassword = (p: Person) => run('login', async () => {
+    if (!p.login || !pwFor) return '';
+    if (pwFor.value.length < 8) throw new Error('A password is at least 8 characters.');
+    const job = p.login.memberships.find((m) => jobOf(m.projectId)?.isAdmin);
+    if (!job) throw new Error('Only an admin of one of their jobs sets their password.');
+    const text = await api('PATCH', `/api/projects/${job.projectId}/members`, { userId: p.login.userId, password: pwFor.value });
+    setPwFor(null);
+    return text;
+  });
+  const setTitle = (p: Person, projectId: string, role: MemberRole) => run('login', async () => {
+    if (!p.login) return '';
+    return await api('PATCH', `/api/projects/${projectId}/members`, { userId: p.login.userId, role });
+  });
+  const resetTwoFactor = (p: Person) => run('login', async () => {
+    if (!p.login) return '';
+    const job = p.login.memberships.find((m) => jobOf(m.projectId)?.isAdmin);
+    if (!job) throw new Error('Only an admin of one of their jobs resets their two-factor.');
+    return await api('POST', `/api/projects/${job.projectId}/members/two-factor`, { userId: p.login.userId });
+  });
+  const memberRow = (p: Person, m: NonNullable<Person['login']>['memberships'][number]): MemberRow => ({
+    userId: p.login!.userId, role: m.role as MemberRole, screens: m.screens, finance: m.finance, twoFactor: null, name: p.name, email: p.login!.email, isCurrentUser: p.login!.userId === userId,
+  });
 
   const induct = (p: Person, j: PersonJob) => run('jobs', async () => {
     if (!inductDate) throw new Error('Pick the day they were inducted.');
@@ -205,7 +243,7 @@ export function StaffScreen({ orgId, orgName, projectId, userId, today, people, 
 
   const saveDetails = (p: Person) => run('details', async () => {
     if (!details) return '';
-    const { data, error: e } = await createClient().from('staff').update({ role: details.role.trim() || null, phone: details.phone.trim() || null, employer: details.employer.trim() || null, notes: details.notes.trim() || null }).eq('id', p.id).select('id');
+    const { data, error: e } = await createClient().from('staff').update({ role: details.role.trim() || null, phone: details.phone.trim() || null, employer: details.employer.trim() || null, notes: details.notes.trim() || null, emergency_contact: details.emergency.trim() || null }).eq('id', p.id).select('id');
     if (e) throw new Error(e.message);
     if (!data?.length) throw new Error('Those details could not be saved.');
     return `${p.name}’s details saved.${(details.role.trim() || null) !== p.role ? ' The role has gone to their crew lists too.' : ''}${ticketDirty ? ' The ticket above is NOT saved yet — press Save ticket.' : ''}`;
@@ -224,11 +262,16 @@ export function StaffScreen({ orgId, orgName, projectId, userId, today, people, 
   });
 
   const setActive = (p: Person, active: boolean) => run(active ? 'details' : 'top', async () => {
+    if (!active) {
+      // Leaving (README R148): off every crew list, off every job as a member, the login closed — the People API.
+      const text = await api('DELETE', '/api/people', { staffId: p.id });
+      setLeaving(false);
+      return text;
+    }
     const { data, error: e } = await createClient().from('staff').update({ active }).eq('id', p.id).select('id');
     if (e) throw new Error(e.message);
     if (!data?.length) throw new Error('That could not be saved.');
-    setLeaving(false);
-    return active ? `${p.name} is back on the staff list. Tick the jobs they are on.` : `${p.name} is marked as no longer with ${orgName} and is off every crew list.`;
+    return `${p.name} is back on the staff list. Tick the jobs they are on.`;
   });
 
   const tone = (p: Person) => (!p.active ? 'none' : p.worst === 'expired' || p.gaps.length ? 'expired' : p.worst === 'expiring' || p.notInducted.length ? 'soon' : p.worst === 'none' ? 'none' : 'ok');
@@ -271,7 +314,22 @@ export function StaffScreen({ orgId, orgName, projectId, userId, today, people, 
               <input className="field field--sm" inputMode="tel" value={fresh.phone} onChange={(e) => setFresh({ ...fresh, phone: e.target.value })} /></label>
             <label className="fieldcell regs__field"><span className="label">Employer, if not {orgName}</span>
               <input className="field field--sm" placeholder="Labour hire or subcontractor" value={fresh.employer} onChange={(e) => setFresh({ ...fresh, employer: e.target.value })} /></label>
+            <label className="fieldcell regs__field regs__field--wide"><span className="label">Emergency contact · optional</span>
+              <input className="field field--sm" placeholder="Name and number" value={fresh.emergency} onChange={(e) => setFresh({ ...fresh, emergency: e.target.value })} /></label>
           </div>
+          <p className="label regs__sub">Their login · optional</p>
+          <div className="regs__fields">
+            <label className="fieldcell regs__field"><span className="label">Email · what they sign in with</span>
+              <input className="field field--sm" type="email" autoCapitalize="none" autoComplete="off" inputMode="email" value={fresh.email} onChange={(e) => setFresh({ ...fresh, email: e.target.value })} /></label>
+            <label className="fieldcell regs__field"><span className="label">Title in the app</span>
+              <select className="field field--sm" value={fresh.title} onChange={(e) => setFresh({ ...fresh, title: e.target.value as MemberRole })}>
+                {ROLES.map((r) => <option key={r} value={r}>{ROLE_LABEL[r]}</option>)}
+              </select></label>
+            <label className="fieldcell regs__field"><span className="label">Password · at least 8 characters</span>
+              <input className="field field--sm" type="text" autoComplete="off" autoCapitalize="none" spellCheck={false} placeholder="Blank: they sign in by a link" value={fresh.password} onChange={(e) => setFresh({ ...fresh, password: e.target.value })} /></label>
+            <label className="regs__tick regs__field"><input type="checkbox" checked={rememberPw} onChange={(e) => setRememberPw(e.target.checked)} /><span>Keep this password on this device for the next person</span></label>
+          </div>
+          <p className="caption">With an email they get a login on every job ticked below, with that title; the password is told to them in person — the app never sends it. Without one they are on the lists only.</p>
           {jobs.length > 0 && (
             <>
               <p className="label regs__sub">Put them on</p>
@@ -284,7 +342,7 @@ export function StaffScreen({ orgId, orgName, projectId, userId, today, people, 
             </>
           )}
           <div className="regs__actions">
-            <button type="button" className="button" disabled={busy || !fresh.name.trim()} onClick={() => void addPerson()}>{busy ? 'Saving…' : 'Add to the staff list'}</button>
+            <button type="button" className="button" disabled={busy || !fresh.name.trim()} onClick={() => void addPerson()}>{busy ? 'Saving…' : fresh.email.trim() ? 'Add them, with their login' : 'Add them'}</button>
             <button type="button" className="quotebtn" disabled={busy} onClick={() => setAdding(false)}>Close</button>
           </div>
         </div>
@@ -309,7 +367,84 @@ export function StaffScreen({ orgId, orgName, projectId, userId, today, people, 
               </button>
               {isOpen && details && (
                 <div className="ticketrow__body staff__body">
-                  {p.logins.length > 0 && <p className="caption">App login: {p.logins.join(' · ')}</p>}
+                  <p className="label staff__head">Login</p>
+                  {p.login ? (
+                    <div className="staff__login">
+                      <p className="caption">
+                        Signs in as <span className="mono">{p.login.email ?? '—'}</span>
+                        {p.login.closed ? <b className="staff__flag staff__flag--bad"> · account closed</b> : p.login.lastSignIn ? ` · last signed in ${fmtDate(p.login.lastSignIn.slice(0, 10))}` : ' · has not signed in yet'}
+                      </p>
+                      {p.login.memberships.length === 0 && <p className="caption">On no job as a member — tick a job above to put them on it.</p>}
+                      {p.login.memberships.map((m) => {
+                        const job = jobOf(m.projectId);
+                        return (
+                          <div key={m.projectId} className="staff__member">
+                            <span><b>{m.code}</b></span>
+                            {job?.isAdmin && p.login!.userId !== userId ? (
+                              <select className="field field--sm staff__title" value={m.role} disabled={busy} onChange={(e) => void setTitle(p, m.projectId, e.target.value as MemberRole)} aria-label={`Title on ${m.code}`}>
+                                {ROLES.map((r) => <option key={r} value={r}>{ROLE_LABEL[r]}</option>)}
+                              </select>
+                            ) : <span className="caption">{m.roleLabel}</span>}
+                          </div>
+                        );
+                      })}
+                      {p.login.memberships.some((m) => jobOf(m.projectId)?.isAdmin) && p.login.userId !== userId && (
+                        <div className="regs__actions">
+                          {pwFor?.userId !== p.login.userId
+                            ? <button type="button" className="quotebtn" disabled={busy} onClick={() => setPwFor({ userId: p.login!.userId, value: '' })}>Set a password</button>
+                            : (
+                              <form className="signin__grid" style={{ alignItems: 'end' }} onSubmit={(e) => { e.preventDefault(); void setPassword(p); }}>
+                                <label className="fieldcell"><span className="label">Their password · at least 8 characters</span>
+                                  <input className="field field--sm" type="text" autoComplete="off" autoCapitalize="none" spellCheck={false} autoFocus value={pwFor.value} onChange={(e) => setPwFor({ userId: p.login!.userId, value: e.target.value })} /></label>
+                                <button type="submit" className="button button--quiet" disabled={busy || pwFor.value.length < 8}>Set it</button>
+                                <button type="button" className="linklike" onClick={() => setPwFor(null)}>Cancel</button>
+                              </form>
+                            )}
+                          {codeEntered && <button type="button" className="quotebtn" disabled={busy} onClick={() => void resetTwoFactor(p)}>Reset two-factor</button>}
+                        </div>
+                      )}
+                      {p.login.memberships.some((m) => jobOf(m.projectId)?.isAdmin) && (
+                        <Fold label="Advanced · money and screens" count={p.login.memberships.length}>
+                          {p.login.memberships.filter((m) => jobOf(m.projectId)?.isAdmin).map((m) => (
+                            <div key={m.projectId} className="item">
+                              <p className="label">{m.code}</p>
+                              <MoneyAccess member={memberRow(p, m)} canEdit={codeEntered && p.login!.userId !== userId} busy={busy}
+                                onSave={async (finance) => { try { await run('login', () => api('PATCH', `/api/projects/${m.projectId}/members`, { userId: p.login!.userId, finance })); return true; } catch { return false; } }}
+                                onReset={async () => { try { await run('login', () => api('PATCH', `/api/projects/${m.projectId}/members`, { userId: p.login!.userId, finance: null })); return true; } catch { return false; } }} />
+                              <AccessGrid member={memberRow(p, m)} canEdit={p.login!.userId !== userId} busy={busy}
+                                onSave={async (screens) => { try { await run('login', () => api('PATCH', `/api/projects/${m.projectId}/members`, { userId: p.login!.userId, screens })); return true; } catch { return false; } }} />
+                            </div>
+                          ))}
+                        </Fold>
+                      )}
+                      {say('login')}
+                    </div>
+                  ) : p.active ? (
+                    <div className="staff__login">
+                      {!loginForm ? (
+                        <p className="caption">No login. <button type="button" className="linklike" disabled={busy || !p.jobs.some((j) => j.onCrew && jobOf(j.projectId)?.isAdmin)} onClick={() => { setLoginForm({ email: '', password: '', title: 'labourer' }); try { const kept = window.localStorage.getItem(PW_KEY); if (kept) setLoginForm({ email: '', password: kept, title: 'labourer' }); } catch { /* no storage */ } }}>Give them a login</button>{!p.jobs.some((j) => j.onCrew) ? ' — tick a job first.' : ''}</p>
+                      ) : (
+                        <div className="item">
+                          <div className="regs__fields">
+                            <label className="fieldcell regs__field"><span className="label">Email · what they sign in with</span>
+                              <input className="field field--sm" type="email" autoCapitalize="none" autoComplete="off" inputMode="email" autoFocus value={loginForm.email} onChange={(e) => setLoginForm({ ...loginForm, email: e.target.value })} /></label>
+                            <label className="fieldcell regs__field"><span className="label">Title in the app</span>
+                              <select className="field field--sm" value={loginForm.title} onChange={(e) => setLoginForm({ ...loginForm, title: e.target.value as MemberRole })}>
+                                {ROLES.map((r) => <option key={r} value={r}>{ROLE_LABEL[r]}</option>)}
+                              </select></label>
+                            <label className="fieldcell regs__field"><span className="label">Password · at least 8 characters</span>
+                              <input className="field field--sm" type="text" autoComplete="off" autoCapitalize="none" spellCheck={false} placeholder="Blank: they sign in by a link" value={loginForm.password} onChange={(e) => setLoginForm({ ...loginForm, password: e.target.value })} /></label>
+                          </div>
+                          <p className="caption">They go on {p.jobs.filter((j) => j.onCrew).map((j) => j.code).join(', ')} as {ROLE_LABEL[loginForm.title]}. The password is told to them in person.</p>
+                          {say('login')}
+                          <div className="regs__actions">
+                            <button type="button" className="button button--quiet" disabled={busy || !loginForm.email.trim()} onClick={() => void giveLogin(p)}>{busy ? 'Saving…' : 'Make their login'}</button>
+                            <button type="button" className="quotebtn" disabled={busy} onClick={() => setLoginForm(null)}>Cancel</button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ) : null}
 
                   <p className="label">Jobs · the crew list each job’s diary offers</p>
                   {jobs.length === 0 && <p className="caption">No active job on your account.</p>}
@@ -405,6 +540,8 @@ export function StaffScreen({ orgId, orgName, projectId, userId, today, people, 
                       <input className="field field--sm" inputMode="tel" value={details.phone} onChange={(e) => setDetails({ ...details, phone: e.target.value })} /></label>
                     <label className="fieldcell regs__field"><span className="label">Employer, if not {orgName}</span>
                       <input className="field field--sm" value={details.employer} onChange={(e) => setDetails({ ...details, employer: e.target.value })} /></label>
+                    <label className="fieldcell regs__field"><span className="label">Emergency contact</span>
+                      <input className="field field--sm" placeholder="Name and number" value={details.emergency} onChange={(e) => setDetails({ ...details, emergency: e.target.value })} /></label>
                     <label className="fieldcell regs__field regs__field--wide"><span className="label">Notes</span>
                       <input className="field field--sm" value={details.notes} onChange={(e) => setDetails({ ...details, notes: e.target.value })} /></label>
                   </div>
@@ -431,7 +568,7 @@ export function StaffScreen({ orgId, orgName, projectId, userId, today, people, 
                   )}
                   {leaving && p.active && (
                     <div className="staff__leave">
-                      <p className="caption">{p.name} comes off every job’s crew list and stays on the record: the tickets, inductions and every day already signed keep the name.</p>
+                      <p className="caption">{p.name} comes off every job’s crew list and every job as a member, and their login is closed. They stay on the record: the tickets, inductions and every day already signed keep the name.</p>
                       <div className="regs__actions">
                         <button type="button" className="button button--quiet" disabled={busy} onClick={() => void setActive(p, false)}>Yes, they have left</button>
                         <button type="button" className="quotebtn" disabled={busy} onClick={() => setLeaving(false)}>Keep</button>

@@ -117,7 +117,7 @@ export function SettingsForm({ initial }: { initial: SettingsData }) {
       {form.canEdit && (
         <div className="settings-actions">
           <Link className="button button--quiet" href={`/settings/members?project=${form.projectId}`}>
-            Manage members
+            People
           </Link>
           <Link className="button button--quiet" href={`/settings/vocabulary?project=${form.projectId}`}>
             Manage vocabulary

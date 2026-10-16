@@ -27,7 +27,7 @@ import { NAV_GROUPS } from '@/lib/nav';
  * refused, not hidden — the middleware, the page and the APIs all read the
  * same list. Each tick saves at once; "Back to the role's list" clears them.
  */
-function AccessGrid({ member, canEdit, busy, onSave }: { member: MemberRow; canEdit: boolean; busy: boolean; onSave: (screens: string[] | null) => Promise<boolean> }) {
+export function AccessGrid({ member, canEdit, busy, onSave }: { member: MemberRow; canEdit: boolean; busy: boolean; onSave: (screens: string[] | null) => Promise<boolean> }) {
   const [open, setOpen] = useState(false);
   const grantable = grantableScreens(member.role);
   const ticked = new Set(member.screens ?? defaultScreens(member.role));
@@ -393,7 +393,7 @@ export function MembersForm({
  * cost build-ups and the company's figures. An admin always sees it; a PM does unless switched off; a supervisor
  * does not unless switched on; a leading hand or labourer never does. The database enforces the same rule.
  */
-function MoneyAccess({ member, canEdit, busy, onSave, onReset }: { member: MemberRow; canEdit: boolean; busy: boolean; onSave: (finance: boolean | null) => Promise<boolean>; onReset: () => Promise<boolean> }) {
+export function MoneyAccess({ member, canEdit, busy, onSave, onReset }: { member: MemberRow; canEdit: boolean; busy: boolean; onSave: (finance: boolean | null) => Promise<boolean>; onReset: () => Promise<boolean> }) {
   const [confirmReset, setConfirmReset] = useState(false);
   const on = seesMoney(member);
   const settable = member.role === 'pm' || member.role === 'supervisor';

@@ -3224,6 +3224,24 @@ tells the person. The field is kept ON THE PHONE that typed it (localStorage, a 
 the same one without retyping; it is never stored on the server, where an admin's shared secret would be one query
 from everyone's. Left blank, the person signs in by the link, as before.
 
+**R148. People: one page for a person.** "Make Manage members better — this is the central location for when people
+are added. I want to assign them to jobs on the page and manage all info from there, and it must update across the
+app." A person lived in two places: Members (login, title, access, per job) and Staff (the name on the sheets, jobs,
+tickets, inductions). Mitch and Marcus were added as members and never reached the staff list, so the diary and the gate
+half-knew them. `/staff` is now **People**: one row per person, company-wide, and every fact about them on it — login
+and title per job, last sign-in, the jobs as tick boxes, inductions, tickets, phone, employer, who to call
+(`staff.emergency_contact`, new), rename, leaving. Add a person once: name, email, password, title, jobs; `POST
+/api/people` makes the staff row, the crew rows, the account and a membership per job, and sends one welcome. A job tick
+(`PUT /api/people`) writes the crew row AND the membership, so the diary's labour list, the prestart, the gate and the
+login agree from the next load; unticking the last job closes the login as R115 says. Leaving (`DELETE /api/people`)
+takes them off every list and closes the login. Nothing is a copy: each write is the table's own, under that table's
+rule — crew and staff under the caller's RLS, a membership only where the caller is an admin of that job, money and
+two-factor resets only with the caller's code (R105/R106) — so nothing needs syncing. Money and screens sit behind an
+Advanced fold per job, the members page's own blocks reused. Settings › Members sends the office to People with the
+job preselected and stays as it was for a supervisor, who still needs who-is-on-this-job and the inductions there.
+Not built, for Mitchell to say yes or no to: a printed staff register, bulk add from a pasted list, an access history
+per person, a who-is-on-site-now column, a message from the row.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;

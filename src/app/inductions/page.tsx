@@ -80,7 +80,7 @@ export default async function InductionsPage({ searchParams }: { searchParams: P
             <p className="caption indjob__meta">
               {inductions.length} inducted
               {waiting.length ? <> · <b className="indjob__bad">{waiting.length} not inducted</b></> : people.length ? ' · everyone on the job' : ''}
-              {' · '}<Link href={`/settings/members?project=${job.id}`}>Members</Link>
+              {' · '}<Link href={`/staff?project=${current.project_id}&job=${job.id}`}>People</Link>
             </p>
           </header>
           <Fold label="Inductions" count={inductions.length + waiting.length} phoneOnly>

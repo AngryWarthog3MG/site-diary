@@ -101,7 +101,7 @@ export const NAV_GROUPS: NavGroup[] = [
     label: 'People', scope: 'site',
     items: [
       { href: '/training', name: 'Training matrix', what: 'Who holds what, what each role needs, what is expiring — this job, or the whole company', screen: 'training' },
-      { href: '/settings/members', name: 'Who is on this job', what: 'Crew, roles, access and inductions', when: 'canRecord' },
+      { href: '/settings/members', name: 'Who is on this job', what: 'Crew, roles, access and inductions — the office manages people on the People page', when: 'canRecord' },
     ],
   },
   {
@@ -138,7 +138,7 @@ export const NAV_GROUPS: NavGroup[] = [
   {
     label: 'Staff', scope: 'company',
     items: [
-      { href: '/staff', name: 'All staff', short: 'Staff list', what: 'Everyone who works for the company — roles, tickets, inductions, and which jobs they are on', screen: 'staff' },
+      { href: '/staff', name: 'People', what: 'Everyone who works for the company — logins, titles, jobs, tickets, inductions, who to call', screen: 'staff' },
       { href: '/inductions', name: 'Inductions', what: 'Who is inducted on each job and who is not — record one here', screen: 'inductions' },
       { href: '/timesheets', name: 'Timesheets', what: 'Everyone’s hours for the week, across every job, on one sheet', screen: 'timesheets' },
       { href: '/health', name: 'Health monitoring', short: 'Health', what: 'Confidential — blood lead, asbestos and Schedule 14 monitoring, for named record keepers only', screen: 'health' },

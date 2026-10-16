@@ -8,12 +8,25 @@ import { cellFor, effectiveExpiry, requiredFor, type Competency } from '../train
  * line is read from the staff list, the crew lists, the tickets and the inductions, joined by the name on the sheets.
  */
 
-export interface StaffRow { id: string; name: string; role: string | null; phone: string | null; employer: string | null; notes: string | null; active: boolean }
+export interface StaffRow { id: string; name: string; role: string | null; phone: string | null; employer: string | null; notes: string | null; active: boolean; emergency_contact?: string | null }
 export interface JobRef { id: string; code: string; name: string }
 export interface CrewRef { id: string; project_id: string; name: string; role: string | null; active: boolean }
 export interface TicketRef { id: string; person_name: string; ticket_type: string; ticket_no: string | null; issued_on: string | null; expires_on: string | null; photo_path: string | null; active: boolean }
 export interface InductionRef { project_id: string; person_name: string; inducted_on: string; notes: string | null }
-export interface LoginRef { name: string; projectCode: string; role: string }
+export interface LoginRef {
+  name: string; projectCode: string; role: string;
+  /** The account behind it (README R148); absent in older callers and tests. */
+  userId?: string; projectId?: string; email?: string | null; roleKey?: string; finance?: boolean | null; screens?: string[] | null;
+  lastSignIn?: string | null; closed?: boolean;
+}
+/** One person's app login as the People page shows it (README R148): the account, and their title on each job. */
+export interface PersonLogin {
+  userId: string;
+  email: string | null;
+  lastSignIn: string | null;
+  closed: boolean;
+  memberships: Array<{ projectId: string; code: string; role: string; roleLabel: string; finance: boolean | null; screens: string[] | null }>;
+}
 
 export type TicketState = 'current' | 'expiring' | 'expired';
 export interface PersonTicket { id: string; key: string; label: string; ticketNo: string | null; issuedOn: string | null; expiresOn: string | null; photoPath: string | null; state: TicketState }
@@ -39,6 +52,8 @@ export interface Person extends StaffRow {
   notInducted: string[];
   /** Their app login, where an account carries the same name: "Supervisor on C001". */
   logins: string[];
+  /** The account itself, when one carries the same name (README R148). */
+  login: PersonLogin | null;
 }
 
 export interface StaffInput {
@@ -98,10 +113,22 @@ export function buildStaff(input: StaffInput, today: string): Person[] {
     }).map((k) => comp.get(k)?.label ?? k).sort((a, b) => a.localeCompare(b));
 
     const worst: Person['worst'] = tickets.some((t) => t.state === 'expired') ? 'expired' : tickets.some((t) => t.state === 'expiring') ? 'expiring' : tickets.length ? 'current' : 'none';
+    const myLogins = input.logins.filter((l) => normaliseName(l.name) === key);
+    const withAccount = myLogins.filter((l) => l.userId);
+    const login: PersonLogin | null = withAccount.length
+      ? {
+          userId: withAccount[0].userId as string,
+          email: withAccount[0].email ?? null,
+          lastSignIn: withAccount[0].lastSignIn ?? null,
+          closed: Boolean(withAccount[0].closed),
+          memberships: withAccount.filter((l) => l.projectId).map((l) => ({ projectId: l.projectId as string, code: l.projectCode, role: l.roleKey ?? l.role, roleLabel: l.role, finance: l.finance ?? null, screens: l.screens ?? null })),
+        }
+      : null;
     return {
       ...s, jobs, tickets, worst, gaps,
       notInducted: jobs.filter((j) => j.onCrew && !j.inductedOn).map((j) => j.code),
-      logins: input.logins.filter((l) => normaliseName(l.name) === key).map((l) => `${l.role} on ${l.projectCode}`),
+      logins: myLogins.map((l) => `${l.role} on ${l.projectCode}`),
+      login,
     };
   }).sort((a, b) => Number(b.active) - Number(a.active) || a.name.localeCompare(b.name));
 }
