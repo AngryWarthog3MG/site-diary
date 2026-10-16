@@ -64,10 +64,13 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
   const email = String(body?.email ?? '').trim().toLowerCase();
   const name = String(body?.name ?? '').replace(/\s+/g, ' ').trim() || null;
   const role = body?.role;
+  // A password given with the add (README R147) goes on the account — new or already there — and is never sent.
+  const password = typeof body?.password === 'string' ? String(body.password) : '';
   if (!EMAIL_RE.test(email)) return fail('bad_request', 'Enter a valid email address.', 400);
   if (typeof role !== 'string' || !ROLES.has(role as MemberRole)) {
     return fail('bad_request', 'Pick a role.', 400);
   }
+  if (password && password.length < 8) return fail('bad_request', 'A password is at least 8 characters.', 400);
 
   // An email is enough (README R88, R102). No account yet: one is made, confirmed;
   // they sign in with the address, by the link the login screen sends them. A name given here goes on the sheets
@@ -78,13 +81,14 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
     userId = await findUserIdByEmail(email);
     const admin = createAdminClient();
     if (!userId) {
-      const { data: created, error: cErr } = await admin.auth.admin.createUser({ email, email_confirm: true, user_metadata: name ? { full_name: name } : {} });
+      const { data: created, error: cErr } = await admin.auth.admin.createUser({ email, email_confirm: true, ...(password ? { password } : {}), user_metadata: name ? { full_name: name } : {} });
       if (cErr || !created.user) throw new Error(cErr?.message ?? 'Could not create the account.');
       userId = created.user.id;
       await admin.from('profiles').upsert({ id: userId, email, full_name: name });
       made = true;
     } else {
       if (name) await admin.from('profiles').update({ full_name: name }).eq('id', userId).is('full_name', null);
+      if (password) { const { error: pErr } = await admin.auth.admin.updateUserById(userId, { password }); if (pErr) throw new Error(pErr.message); }
       // Removed from their last job earlier, the account was closed (README R115); adding them again reopens it.
       await reopenAccount(admin, userId, { projectId, changedBy: auth.user.id, newRole: role });
     }
@@ -123,10 +127,11 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
   ]);
   const sent = await sendWelcome({ email, name, role: role as MemberRole, projectName: project?.name ?? 'the job', addedBy: me?.full_name ?? null });
   const who = name ?? email;
+  const pw = password ? ' Their password is set — tell them in person; the note does not carry it.' : '';
   return ok({
     message: sent
-      ? `${who} is on the job as ${ROLE_LABEL[role as MemberRole]}. A note went to ${email} saying where to sign in.`
-      : `${who} is on the job as ${ROLE_LABEL[role as MemberRole]}. The note did not send — tell them: open ${siteUrl().replace(/^https?:\/\//, '')} and type ${email}.`,
+      ? `${who} is on the job as ${ROLE_LABEL[role as MemberRole]}. A note went to ${email} saying where to sign in.${pw}`
+      : `${who} is on the job as ${ROLE_LABEL[role as MemberRole]}. The note did not send — tell them: open ${siteUrl().replace(/^https?:\/\//, '')} and type ${email}.${pw}`,
   });
 }
 

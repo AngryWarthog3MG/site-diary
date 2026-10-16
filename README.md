@@ -3217,6 +3217,13 @@ on the sheets is still the account's, two-factor still gates the money. Mitchell
 or a gate entry under a shared password proves less than one under a password its owner chose — and it stands as his
 call. Marcus Hayden's account was made that day, a labourer on Curtin, with it; Samuel Andrioff's got the same.
 
+**R147. The password goes on with the add.** "Any person that gets added under Manage members needs the same password
+— put that in the Manage members section." Add member takes a password beside the email, title and name: a new
+account is made with it, an existing one has it set, and the note that goes out still says nothing of it — the office
+tells the person. The field is kept ON THE PHONE that typed it (localStorage, a tick to keep it) so the next add carries
+the same one without retyping; it is never stored on the server, where an admin's shared secret would be one query
+from everyone's. Left blank, the person signs in by the link, as before.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;

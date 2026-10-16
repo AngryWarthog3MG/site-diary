@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import type { MemberRole } from '@/types/database';
 
@@ -152,6 +152,11 @@ export function MembersForm({
   const [email, setEmail] = useState('');
   const [name, setName] = useState('');
   const [role, setRole] = useState<MemberRole>('supervisor');
+  // The crew's password (README R147): typed once, kept on this device so every add carries it. Never on the server.
+  const PW_KEY = 'kbl-members-password';
+  const [password, setPassword] = useState('');
+  const [rememberPw, setRememberPw] = useState(true);
+  useEffect(() => { try { const kept = window.localStorage.getItem(PW_KEY); if (kept) setPassword(kept); } catch { /* no storage */ } }, []);
   const [busy, setBusy] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -198,8 +203,13 @@ export function MembersForm({
   }
 
   async function addMember() {
-    const added = await request('POST', { email, name, role }, 'add');
-    if (added) { setEmail(''); setName(''); }
+    const pw = password.trim();
+    if (pw && pw.length < 8) { setError('A password is at least 8 characters.'); return; }
+    const added = await request('POST', { email, name, role, ...(pw ? { password: pw } : {}) }, 'add');
+    if (added) {
+      setEmail(''); setName('');
+      try { if (rememberPw && pw) window.localStorage.setItem(PW_KEY, pw); else window.localStorage.removeItem(PW_KEY); } catch { /* no storage */ }
+    }
   }
 
   return (
@@ -346,6 +356,23 @@ export function MembersForm({
               onChange={(event) => setName(event.target.value)}
               placeholder="If you leave it, they are asked once"
             />
+          </label>
+          <label className="fieldcell" style={{ marginTop: '0.75rem' }}>
+            <span className="label">Password (optional — the crew sign in with it)</span>
+            <input
+              className="field field--sm"
+              type="text"
+              autoComplete="off"
+              autoCapitalize="none"
+              spellCheck={false}
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              placeholder="At least 8 characters; leave blank for a link by email"
+            />
+          </label>
+          <label className="checkrow" style={{ marginTop: '0.5rem' }}>
+            <input type="checkbox" checked={rememberPw} onChange={(e) => setRememberPw(e.target.checked)} />
+            <span>Keep this password on this device for the next person I add. It is told to them in person; the app never sends it.</span>
           </label>
           <button
             className="button"
