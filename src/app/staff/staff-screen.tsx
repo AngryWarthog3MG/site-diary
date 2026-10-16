@@ -25,7 +25,7 @@ const BLANK_TICKET = { key: 'white_card', no: '', issued: '', expires: '', photo
  * row, the ticket, the induction — then re-reads the page, so what is shown is what is stored. A ticket and an
  * induction are added here exactly as they are from the job's own screens; nothing is kept twice.
  */
-export function StaffScreen({ orgId, orgName, projectId, userId, today, people, jobs, crewCounts, roles, competencies, codeEntered, initialJob }: {
+export function StaffScreen({ orgId, orgName, projectId, userId, today, people, jobs, crewCounts, roles, competencies, codeEntered, initialJob, offList = [] }: {
   orgId: string; orgName: string; projectId: string; userId: string; today: string;
   people: Person[]; jobs: Job[]; crewCounts: Record<string, number>; roles: string[];
   competencies: Array<{ key: string; label: string }>;
@@ -33,6 +33,8 @@ export function StaffScreen({ orgId, orgName, projectId, userId, today, people, 
   codeEntered: boolean;
   /** The job the page opened filtered to, when it came from a job's Settings (README R148). */
   initialJob?: JobFilter;
+  /** Logins on the company's jobs with no staff row yet — offered here, so the page is everyone (README R148). */
+  offList?: Array<{ name: string; where: string[] }>;
 }) {
   void crewCounts;
   const router = useRouter();
@@ -162,6 +164,9 @@ export function StaffScreen({ orgId, orgName, projectId, userId, today, people, 
       }
     });
   };
+
+  // A login with no staff row: one tap makes the row; the login joins it by name, and the jobs follow on the row.
+  const addFromLogin = (name: string) => run('top', async () => api('POST', '/api/people', { orgId, name, jobs: [] }));
 
   // Their login: made from the row, for the jobs they are on.
   const giveLogin = (p: Person) => run('login', async () => {
@@ -348,6 +353,21 @@ export function StaffScreen({ orgId, orgName, projectId, userId, today, people, 
         </div>
       )}
       <datalist id="staff-roles">{roles.map((r) => <option key={r} value={r} />)}</datalist>
+
+      {offList.length > 0 && (
+        <div className="item staff__offlist">
+          <p className="label">Logins not on the list yet · {offList.length}</p>
+          <p className="caption">These people can sign in but are on no staff row, so the diary, the prestart and the gate half-know them. Add each one and their login joins the row; then tick their jobs and set a role on it.</p>
+          <ul className="plainlist">
+            {offList.map((o) => (
+              <li key={o.name} className="staff__offrow">
+                <span><b>{o.name}</b> <span className="caption">· {o.where.join(' · ')}</span></span>
+                <button type="button" className="quotebtn" disabled={busy} onClick={() => void addFromLogin(o.name)}>Add to the list</button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       <p className="label" style={{ marginTop: '1.25rem' }}>{shown.length === people.filter((p) => p.active || showLeft).length ? `Staff · ${shown.length}` : `Showing ${shown.length} of ${people.filter((p) => p.active || showLeft).length}`}</p>
       {people.length === 0 && <p className="claims-nil">Nobody on the staff list yet. Add the first person above.</p>}

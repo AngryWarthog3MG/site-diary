@@ -1,4 +1,4 @@
-import { test } from 'node:test';
+import { loginsOffTheList, test } from 'node:test';
 import assert from 'node:assert/strict';
 import { assignStep, buildStaff, filterStaff, summarise, ticketState, type StaffInput } from './model.ts';
 import { competencies } from '../training/model.ts';
@@ -86,4 +86,18 @@ test('assigning adds a crew row, shows a hidden one, or does nothing', () => {
   assert.equal(assignStep(job('Evan Burke', 'C001')), 'none');
   assert.equal(assignStep(job('Hamish Hayden', 'C001')), 'show');
   assert.equal(assignStep(job('Hamish Hayden', 'C002')), 'insert');
+});
+
+test('logins with no staff row are listed once each, with where they are (R148)', () => {
+  const out = loginsOffTheList({
+    staff: [{ id: 's1', name: 'Evan Burke', role: null, phone: null, employer: null, notes: null, active: true }],
+    logins: [
+      { name: 'Evan Burke', projectCode: 'C001', role: 'Labourer' },
+      { name: 'Mitch', projectCode: 'C001', role: 'Labourer' },
+      { name: ' mitch ', projectCode: 'C002', role: 'Supervisor' },
+      { name: 'Samuel Andrioff', projectCode: 'C001', role: 'Leading hand' },
+    ],
+  });
+  assert.deepEqual(out.map((o) => o.name), ['Mitch', 'Samuel Andrioff']);
+  assert.deepEqual(out[0].where, ['Labourer on C001', 'Supervisor on C002']);
 });

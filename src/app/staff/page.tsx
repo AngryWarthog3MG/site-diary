@@ -6,7 +6,7 @@ import { BrandMark } from '@/components/brand-mark';
 import { perthToday } from '@/lib/push/decide';
 import { loadStaff, type LoginFacts } from '@/lib/staff/load';
 import { createAdminClient } from '@/lib/supabase/admin';
-import { buildStaff, summarise } from '@/lib/staff/model';
+import { buildStaff, summarise, loginsOffTheList } from '@/lib/staff/model';
 import { StaffScreen } from './staff-screen';
 
 export const dynamic = 'force-dynamic';
@@ -70,6 +70,7 @@ export default async function StaffPage({ searchParams }: { searchParams: Promis
         competencies={input.competencies.filter((c) => !c.retired).map((c) => ({ key: c.key, label: c.label }))}
         codeEntered={aal.current === 'aal2'}
         initialJob={job && jobs.some((j) => j.id === job) ? job : 'all'}
+        offList={loginsOffTheList(input)}
       />
       <p className="caption" style={{ marginTop: '1.25rem' }}>
         The same tickets, set out person against competency: <Link href={`/training${q}&scope=company`}>Training matrix</Link>.

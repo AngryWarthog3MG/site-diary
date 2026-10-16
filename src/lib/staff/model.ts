@@ -133,6 +133,20 @@ export function buildStaff(input: StaffInput, today: string): Person[] {
   }).sort((a, b) => Number(b.active) - Number(a.active) || a.name.localeCompare(b.name));
 }
 
+/** Logins on the company's jobs whose name is on no staff row (README R148): the page offers to add each one. */
+export function loginsOffTheList(input: Pick<StaffInput, 'staff' | 'logins'>): Array<{ name: string; where: string[] }> {
+  const named = new Set(input.staff.map((s) => normaliseName(s.name)));
+  const out = new Map<string, { name: string; where: string[] }>();
+  for (const l of input.logins) {
+    const key = normaliseName(l.name);
+    if (!key || named.has(key)) continue;
+    const cur = out.get(key) ?? { name: l.name.trim(), where: [] };
+    cur.where.push(`${l.role} on ${l.projectCode}`);
+    out.set(key, cur);
+  }
+  return [...out.values()].sort((a, b) => a.name.localeCompare(b.name));
+}
+
 export interface StaffSummary { people: number; onAJob: number; noJob: number; expired: number; expiring: number; notInducted: number; gaps: number; left: number }
 
 /** The page's figures, over the people still with the company. */

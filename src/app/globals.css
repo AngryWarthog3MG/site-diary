@@ -4832,3 +4832,5 @@ a.diarycal__day:hover { box-shadow: var(--shadow-ui); transform: translateY(-1px
 .staff__title { width: auto; min-width: 11rem; margin: 0; }
 .staff__login .regs__actions { margin-top: 0.4rem; }
 .staff__login .fold { margin-top: 0.5rem; }
+.staff__offlist { margin-top: 0.75rem; }
+.staff__offrow { display: flex; align-items: baseline; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap; padding: 0.35rem 0; border-bottom: 1px dashed var(--ink-08); }
