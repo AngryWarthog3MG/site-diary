@@ -1,6 +1,6 @@
-import { loginsOffTheList, test } from 'node:test';
+import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { assignStep, buildStaff, filterStaff, summarise, ticketState, type StaffInput } from './model.ts';
+import { assignStep, buildStaff, filterStaff, loginsOffTheList, summarise, ticketState, type StaffInput } from './model.ts';
 import { competencies } from '../training/model.ts';
 
 const TODAY = '2026-10-05';
@@ -98,6 +98,6 @@ test('logins with no staff row are listed once each, with where they are (R148)'
       { name: 'Samuel Andrioff', projectCode: 'C001', role: 'Leading hand' },
     ],
   });
-  assert.deepEqual(out.map((o) => o.name), ['Mitch', 'Samuel Andrioff']);
+  assert.deepEqual(out.map((o: { name: string }) => o.name), ['Mitch', 'Samuel Andrioff']);
   assert.deepEqual(out[0].where, ['Labourer on C001', 'Supervisor on C002']);
 });
