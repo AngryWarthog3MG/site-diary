@@ -47,7 +47,8 @@ export const NAV_GROUPS: NavGroup[] = [
     items: [
       { href: '/entries', name: 'Daily Diary', what: 'Every day’s diary — signed days and their PDFs', screen: 'entries' },
       { href: '/signin', name: 'Site sign-in', what: 'Who is on site now — in and out at the gate', screen: 'signin' },
-      { href: '/prestart', name: 'Prestarts', what: 'Morning briefing and sign-on', screen: 'prestart' },
+      { href: '/prestart', name: 'Prestarts', what: 'Morning briefing and sign-on — with each machine’s check', screen: 'prestart' },
+      { href: '/plant', name: 'Plant prestarts', short: 'Plant', what: 'Each machine checked before use, daily — defects and the register', screen: 'plant' },
       { href: '/prestart/sign', name: 'Sign on to the prestart', short: 'Sign on', what: 'Today’s briefing on your job — read it and sign on from your own phone', screen: 'prestart_sign' },
       { href: '/reports/weekly', name: 'Weekly report', what: 'The week, rolled up', screen: 'weekly' },
       { href: '/inbox', name: 'Messages for you', short: 'Messages', what: 'What the office has sent you', screen: 'inbox' },
@@ -59,7 +60,6 @@ export const NAV_GROUPS: NavGroup[] = [
       { href: '/programme', name: 'Programme', what: 'The construction programme as issued, and the two-week look-aheads', screen: 'programme' },
       { href: '/toolbox', name: 'Toolbox talks', what: 'Weekly talk and sign-on', screen: 'toolbox' },
       { href: '/construction', name: 'Construction records', short: 'Construction', what: 'WHS management plan, services and trenches for each dig, white cards', screen: 'construction' },
-      { href: '/plant', name: 'Plant', what: 'Machine prestarts, defects and the register', screen: 'plant' },
       { href: '/orders', name: 'Orders & plant issues', short: 'Orders', what: 'Diesel, consumables, anything to order — and a light out on a machine', screen: 'orders' },
       { href: '/deliveries', name: 'Calendar', what: 'Deliveries booked to arrive, day by day — on this job, or every job on one calendar', screen: 'deliveries' },
     ],

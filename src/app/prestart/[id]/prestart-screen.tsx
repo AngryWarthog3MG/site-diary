@@ -78,6 +78,8 @@ export function PrestartScreen(props: {
   local?: boolean;
   /** Names inducted onto this job. A sign-on from anyone else is marked. */
   inducted?: string[];
+  /** The job's machines and each one's check for this day (README R151). */
+  machines?: Array<{ id: string; name: string; kind: string; plantNo: string | null; check: { fit: boolean; operator: string } | null }>;
 }) {
   const { prestart, attendees, crew, canRun, projectName } = props;
   const router = useRouter();
@@ -127,7 +129,9 @@ export function PrestartScreen(props: {
   const [error, setError] = useState<string | null>(null);
   const [urls, setUrls] = useState<Record<string, string>>({});
   const [editing, setEditing] = useState(false);
-  const [tab, setTab] = useState<'briefing' | 'spec' | 'signon'>('briefing');
+  const [tab, setTab] = useState<'briefing' | 'spec' | 'plant' | 'signon'>('briefing');
+  const machines = props.machines ?? [];
+  const unchecked = machines.filter((m) => !m.check);
   const [draft, setDraft] = useState({
     date: prestart.date,
     supervisor: prestart.supervisor,
@@ -296,7 +300,7 @@ export function PrestartScreen(props: {
       <OutboxStatus />
       <nav className="review-tabs" aria-label="Prestart sections">
         {/* The Spec tab is off the prestart (README R145); it draws only for a prestart that already carries notes. */}
-        {([['briefing', 'Briefing', null], ['spec', 'Spec', prestart.specNotes.length], ['signon', 'Sign-on', signedCount]] as const).filter(([key]) => key !== 'spec' || prestart.specNotes.length > 0).map(([key, label, count]) => (
+        {([['briefing', 'Briefing', null], ['spec', 'Spec', prestart.specNotes.length], ['plant', 'Plant', machines.length ? machines.filter((m) => m.check).length : null], ['signon', 'Sign-on', signedCount]] as const).filter(([key]) => (key !== 'spec' || prestart.specNotes.length > 0) && (key !== 'plant' || machines.length > 0)).map(([key, label, count]) => (
           <button key={key} type="button" className={`review-tab${tab === key ? ' is-active' : ''}`} onClick={() => setTab(key)}>
             {label}
             {count != null && <span className="review-tab__count mono">{count}</span>}
@@ -429,6 +433,31 @@ export function PrestartScreen(props: {
         </>
       ))}
 
+      {tab === 'plant' && (
+        <>
+          <hr className="rule" />
+          <p className="label">Plant prestarts · {machines.filter((m) => m.check).length} of {machines.length} checked {fmtDate(prestart.date)}</p>
+          <p className="caption">Every machine on the job is walked around before it is used, each day. The operator answers the checks and signs; a defect tags it out. Done here, it is the same record the Plant page keeps.</p>
+          <ul className="machines">
+            {machines.map((m) => (
+              <li key={m.id} className={`machine${m.check ? (m.check.fit ? ' machine--fit' : ' machine--tagged') : ''}`}>
+                <div>
+                  <p className="machine__name">{m.name}{m.plantNo ? <span className="mono caption"> · {m.plantNo}</span> : null}</p>
+                  <p className="machine__meta">
+                    {m.check ? `Checked by ${m.check.operator}` : 'Not checked today'}
+                  </p>
+                </div>
+                {m.check
+                  ? <span className={`status-pill ${m.check.fit ? 'status-pill--ready' : 'status-pill--danger'}`}>{m.check.fit ? 'Fit for use' : 'Not to be used'}</span>
+                  : canRun && !prestart.completed
+                    ? <Link className="button button--quiet" style={{ marginTop: 0, width: 'auto' }} href={`/plant/new?project=${prestart.projectId}&plant=${m.id}&back=${encodeURIComponent(`/prestart/${prestart.id}`)}`}>Do the check</Link>
+                    : <span className="status-pill">Not checked</span>}
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+
       {tab === 'spec' && (
         <PrestartSpecPicker
           projectId={prestart.projectId}
@@ -547,6 +576,7 @@ export function PrestartScreen(props: {
             {signedCount === 0
               ? 'You need at least one signature before you can finish.'
               : `Locks it with ${signedCount === 1 ? 'the one signature' : `all ${signedCount} signatures`}. After this nothing can be changed — that is what makes it a record.`}
+            {unchecked.length > 0 && <> <strong>{unchecked.length === 1 ? `${unchecked[0].name} is` : `${unchecked.length} machines are`} not checked today</strong> — see the Plant tab. A machine can still be checked after the prestart is finished.</>}
           </p>
         </>
       )}

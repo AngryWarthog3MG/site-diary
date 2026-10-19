@@ -3266,6 +3266,16 @@ same one, and the money switch, two-factor resets and the flag stay the admin's.
 Suite 58. Two lessons in the migrations: triggers fire by name, so the limits are `a_…` to speak before the money-grant
 check; and `current_user` inside a SECURITY DEFINER function is the owner, not the caller.
 
+**R151. The plant prestarts are part of the morning.** "Move plant prestarts into daily prestarts — this needs to be
+done daily." The machine walk-around (R46, R64) lived on the Plant page, a screen away from the briefing, and days went
+by with machines unchecked. The day's prestart now carries a **Plant** tab: every machine on the job, checked or not
+for THAT day, who checked it, fit or tagged out, and "Do the check" opening the plant check form for that machine and
+returning to the prestart when it is saved. The finish hint names what is still unchecked; it does not block —
+a machine not used today is not a reason to hold the briefing, and a machine can be checked after the prestart is
+finished (the plant record is its own, R46). The record did not move: `plant_prestarts` is the one table, the Plant
+page keeps defects and the register, and the nav item "Plant prestarts" sits under Diary beside Prestarts rather than
+under Site works.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;

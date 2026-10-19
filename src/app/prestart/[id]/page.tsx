@@ -5,6 +5,7 @@ import { requireUser, guardScreen } from '@/lib/auth';
 import { readChecklist } from '@/lib/prestart/checklist';
 import { readSpecNotes } from '@/lib/prestart/spec-notes';
 import { PrestartScreen } from './prestart-screen';
+import { loadPlantOnJob } from '@/lib/plant/on-job';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Prestart · Kooboolong IMS' };
@@ -45,6 +46,14 @@ export default async function PrestartPage({ params }: { params: Promise<{ id: s
     .order('entry_date', { referencedTable: 'entry', ascending: false })
     .limit(300);
   const { data: inductionRows } = await supabase.from('crew_inductions').select('person_name').eq('project_id', row.project_id);
+  // The job's machines and their check for THIS day (README R151): the plant prestart is part of the morning, daily.
+  const [onJob, { data: checks }] = await Promise.all([
+    loadPlantOnJob(supabase, row.project_id),
+    supabase.from('plant_prestarts').select('plant_id, operator_name, fit_for_use, completed_at').eq('project_id', row.project_id).eq('prestart_date', row.prestart_date).not('completed_at', 'is', null).order('completed_at', { ascending: false }),
+  ]);
+  const checkOf = new Map<string, { fit: boolean; operator: string }>();
+  for (const c of (checks ?? []) as Array<{ plant_id: string; operator_name: string; fit_for_use: boolean }>) if (!checkOf.has(c.plant_id)) checkOf.set(c.plant_id, { fit: Boolean(c.fit_for_use), operator: c.operator_name });
+  const machines = onJob.map((m) => ({ id: m.id, name: m.name, kind: m.kind, plantNo: m.plant_no, check: checkOf.get(m.id) ?? null }));
   const inducted = (inductionRows ?? []).map((r) => String(r.person_name));
   const crew: string[] = [];
   for (const r of roster ?? []) {
@@ -80,6 +89,7 @@ export default async function PrestartPage({ params }: { params: Promise<{ id: s
       attendees={attendees}
       crew={crew.slice(0, 24)}
       inducted={inducted}
+      machines={machines}
       canRun={canRun}
       projectName={membership?.project.name ?? 'Project'}
     />

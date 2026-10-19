@@ -7,9 +7,9 @@ import type { RegisterRow } from '../plant-register';
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Plant prestart · Kooboolong IMS' };
 
-export default async function NewPlantPrestartPage({ searchParams }: { searchParams: Promise<{ project?: string; plant?: string }> }) {
+export default async function NewPlantPrestartPage({ searchParams }: { searchParams: Promise<{ project?: string; plant?: string; back?: string }> }) {
   const { memberships, profile, email } = await requireUser();
-  const { project, plant } = await searchParams;
+  const { project, plant, back } = await searchParams;
   const current = resolveProject(memberships, project);
   if (!current) redirect('/');
   if (!canRunTalks(current.role)) redirect(`/plant?project=${current.project_id}`);
@@ -32,6 +32,7 @@ export default async function NewPlantPrestartPage({ searchParams }: { searchPar
       onJob={(onJob ?? []).map((r) => r.plant_id as string)}
       preselect={plant ?? null}
       defaultOperator={profile?.full_name ?? email ?? ''}
+      backTo={back && back.startsWith('/') && !back.startsWith('//') ? back : null}
     />
   );
 }

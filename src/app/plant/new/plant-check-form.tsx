@@ -23,8 +23,10 @@ import { ticketVerdict, normaliseName, TICKET_LABEL, type TicketVerdict, type Ti
  */
 import { registrationStatus, mayNotBeUsed, REGISTRATION_LABEL } from '@/lib/plant/inspections';
 
-export function PlantCheckForm({ projectId, projectName, orgId, register, onJob, preselect, defaultOperator }: {
+export function PlantCheckForm({ projectId, projectName, orgId, register, onJob, preselect, defaultOperator, backTo = null }: {
   projectId: string; projectName: string; orgId: string; register: RegisterRow[]; onJob: string[]; preselect: string | null; defaultOperator: string;
+  /** Where the check was opened from — the day's prestart (README R151) — to return to once saved. */
+  backTo?: string | null;
 }) {
   const onJobSet = new Set(onJob);
   const router = useRouter();
@@ -166,7 +168,7 @@ export function PlantCheckForm({ projectId, projectName, orgId, register, onJob,
         });
       };
       const outcome = await runOrQueue(live, queue);
-      router.push(outcome === 'sent' ? `/plant/${id}` : `/plant?project=${projectId}&kept=1`);
+      router.push(outcome === 'sent' ? (backTo ?? `/plant/${id}`) : (backTo ?? `/plant?project=${projectId}&kept=1`));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'The prestart did not save.');
       setSaving(false);
