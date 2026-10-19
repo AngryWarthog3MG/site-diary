@@ -3276,6 +3276,11 @@ finished (the plant record is its own, R46). The record did not move: `plant_pre
 page keeps defects and the register, and the nav item "Plant prestarts" sits under Diary beside Prestarts rather than
 under Site works.
 
+**R152. The plant checks on the home's prestart row.** "Add the plant checks to the home page prestart row." The
+row reads "Prestart open · 4 signed on so far · 2 of 5 machines checked · 1 tagged out", amber while machines are
+unchecked; the same count the prestart's Plant tab shows (R151), read from `plant_prestarts` for the day and the
+job's live `project_plant`, never typed.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;

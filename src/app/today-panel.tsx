@@ -97,6 +97,8 @@ export function TodayPanel({
   // Deliveries booked for today on this job, and how many for tomorrow (README R127).
   const [deliveries, setDeliveries] = useState<{ today: Array<{ id: string; text: string }>; tomorrow: number }>({ today: [], tomorrow: 0 });
   const [prestart, setPrestart] = useState<{ id: string; done: boolean; signed: number } | null>(null);
+  // The day's plant checks beside the prestart (README R152): machines on the job, how many walked around today, how many tagged out.
+  const [plantChecks, setPlantChecks] = useState<{ machines: number; checked: number; tagged: number } | null>(null);
   const [tomorrowPrestart, setTomorrowPrestart] = useState<{ id: string; date: string } | null>(null);
   // The diary opens after the shift (README R97). False on the server so the first paint matches; the clock ticks once a minute.
   const [afterTheShift, setAfterTheShift] = useState(false);
@@ -177,6 +179,14 @@ export function TodayPanel({
                 signed: ((ps.prestart_attendees ?? []) as unknown[]).length }
             : null,
         );
+        const [{ data: onJob }, { data: checks }] = await Promise.all([
+          supabase.from('project_plant').select('plant_id').eq('project_id', projectId).eq('active', true),
+          supabase.from('plant_prestarts').select('plant_id, fit_for_use').eq('project_id', projectId).eq('prestart_date', today).not('completed_at', 'is', null),
+        ]);
+        const machineIds = new Set(((onJob ?? []) as Array<{ plant_id: string }>).map((r) => r.plant_id));
+        const seen = new Map<string, boolean>();
+        for (const c of (checks ?? []) as Array<{ plant_id: string; fit_for_use: boolean }>) if (machineIds.has(c.plant_id) && !seen.has(c.plant_id)) seen.set(c.plant_id, Boolean(c.fit_for_use));
+        setPlantChecks({ machines: machineIds.size, checked: seen.size, tagged: [...seen.values()].filter((fit) => !fit).length });
         // One saved the night before shows here so the evening's work is visible.
         const next = new Date(`${today}T12:00:00`);
         next.setDate(next.getDate() + 1);
@@ -568,6 +578,12 @@ export function TodayPanel({
                   ? 'Prestart ready · read it out and sign the crew on'
                   : `Prestart open · ${prestart.signed} signed on so far`
                 : 'No prestart yet today'}
+            {plantChecks && plantChecks.machines > 0 && (
+              <span className={plantChecks.checked < plantChecks.machines ? 'staff__flag' : undefined}>
+                {' · '}{plantChecks.checked} of {plantChecks.machines} machine{plantChecks.machines === 1 ? '' : 's'} checked
+                {plantChecks.tagged > 0 ? ` · ${plantChecks.tagged} tagged out` : ''}
+              </span>
+            )}
           </span>
           {prestart ? (
             <Link className="prestart-row__go" href={`/prestart/${prestart.id}`}>{prestart.done ? 'View' : prestart.signed === 0 ? 'Open it' : 'Finish it'}</Link>
