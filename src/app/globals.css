@@ -4834,3 +4834,15 @@ a.diarycal__day:hover { box-shadow: var(--shadow-ui); transform: translateY(-1px
 .staff__login .fold { margin-top: 0.5rem; }
 .staff__offlist { margin-top: 0.75rem; }
 .staff__offrow { display: flex; align-items: baseline; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap; padding: 0.35rem 0; border-bottom: 1px dashed var(--ink-08); }
+
+/* The labourer's day on one card (README R153). */
+.labhome__list { list-style: none; margin: 0.5rem 0 0; padding: 0; display: grid; gap: 0.4rem; }
+.labhome__row { display: grid; grid-template-columns: 1.6rem minmax(0, 1fr) auto; align-items: center; gap: 0.6rem; padding: 0.6rem 0.7rem; border: 1px solid var(--ink-12); border-radius: 10px; background: #fff; }
+.labhome__row--done { border-color: rgba(31, 92, 51, 0.45); background: var(--teal-tint); }
+.labhome__row--todo { border-color: rgba(154, 106, 9, 0.5); background: #fff8e8; }
+.labhome__tick { font-size: 1.1rem; text-align: center; color: var(--teal); }
+.labhome__row--todo .labhome__tick { color: #9A6A09; }
+.labhome__what { display: grid; gap: 0.1rem; font-size: 0.95rem; line-height: 1.3; min-width: 0; }
+.labhome__what b { font-size: 0.7rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-60); }
+.labhome__go { padding: 0.5rem 0.85rem; border: 1px solid var(--teal); border-radius: 8px; color: var(--teal); font-weight: 600; text-decoration: none; white-space: nowrap; }
+.labhome__go--quiet { border-color: var(--ink-12); color: var(--ink-60); }

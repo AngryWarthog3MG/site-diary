@@ -34,6 +34,13 @@ export async function LabourerHome({ current, name, userId }: { current: Members
     .limit(1);
   const prestart = (prestartRows ?? [])[0] as { id: string; prestart_attendees: Array<{ attendee_name: string }> | null } | undefined;
   const signedPrestart = Boolean(prestart?.prestart_attendees?.some((a) => normaliseName(a.attendee_name) === normaliseName(name)));
+  // The method statements in use on the job that this person has not signed on to (README R153): their own
+  // sign-ons are theirs to read, an active SWMS is every member's.
+  const { data: swmsRows } = await supabase.from('swms').select('id, title, version').eq('project_id', current.project_id).eq('status', 'active').order('title');
+  const swmsIds = (swmsRows ?? []).map((r) => r.id as string);
+  const { data: mySignons } = swmsIds.length ? await supabase.from('swms_signons').select('swms_id, attendee_name').in('swms_id', swmsIds) : { data: [] };
+  const signedSwms = new Set(((mySignons ?? []) as Array<{ swms_id: string; attendee_name: string }>).filter((r) => normaliseName(r.attendee_name) === normaliseName(name)).map((r) => r.swms_id));
+  const swmsToSign = ((swmsRows ?? []) as Array<{ id: string; title: string; version: number }>).filter((r) => !signedSwms.has(r.id));
   const { data } = await supabase
     .from('site_signins')
     .select('id, person_name, company, person_kind, inducted, signed_in_at, signed_in_on_device_at, signed_out_at, signed_out_on_device_at')
@@ -65,15 +72,44 @@ export async function LabourerHome({ current, name, userId }: { current: Members
       <InboxNudge userId={userId} />
       <WaitingPanel userId={userId} projectId={current.project_id} />
 
-      <section className={`labhome__status${open ? ' labhome__status--in' : ''}`}>
-        <p className="label">{fmtDate(today)}</p>
-        {open ? (
-          <p className="labhome__line">You are <strong>signed in</strong> since {eventClock(open.signed_in_on_device_at, open.signed_in_at)}.</p>
-        ) : done.length > 0 ? (
-          <p className="labhome__line">You signed out at {eventClock(done[done.length - 1].signed_out_on_device_at, done[done.length - 1].signed_out_at)}{hoursOnSite(done[done.length - 1]) != null ? ` · ${hoursOnSite(done[done.length - 1])} h today` : ''}.</p>
-        ) : (
-          <p className="labhome__line">You are <strong>not signed in</strong> yet today.</p>
-        )}
+      {/* Your day on one card (README R153): the gate, the briefing, the method statements — each row says where you
+          stand and takes you there. Nothing to go looking for. */}
+      <section className="labhome__status labhome__day">
+        <p className="label">{fmtDate(today)} · your day on {current.project.name}</p>
+        <ul className="labhome__list">
+          <li className={`labhome__row${open ? ' labhome__row--done' : done.length > 0 ? ' labhome__row--done' : ' labhome__row--todo'}`}>
+            <span className="labhome__tick" aria-hidden>{open || done.length > 0 ? '✓' : '○'}</span>
+            <span className="labhome__what">
+              <b>Gate</b>
+              {open
+                ? <>Signed in since {eventClock(open.signed_in_on_device_at, open.signed_in_at)}</>
+                : done.length > 0
+                  ? <>Signed out at {eventClock(done[done.length - 1].signed_out_on_device_at, done[done.length - 1].signed_out_at)}{hoursOnSite(done[done.length - 1]) != null ? ` · ${hoursOnSite(done[done.length - 1])} h today` : ''}</>
+                  : <>Not signed in yet today</>}
+            </span>
+            <Link className="labhome__go" href={`/signin${q}`}>{open ? 'Sign out' : done.length > 0 ? 'Sign in again' : 'Sign in'}</Link>
+          </li>
+          <li className={`labhome__row${signedPrestart ? ' labhome__row--done' : prestart ? ' labhome__row--todo' : ''}`}>
+            <span className="labhome__tick" aria-hidden>{signedPrestart ? '✓' : prestart ? '○' : '–'}</span>
+            <span className="labhome__what">
+              <b>Prestart</b>
+              {signedPrestart ? 'You have signed on to today’s briefing' : prestart ? 'Today’s briefing is open — read it and sign on' : 'No open briefing on this job right now'}
+            </span>
+            {prestart && !signedPrestart ? <Link className="labhome__go" href={`/prestart/sign${q}`}>Sign on</Link> : <Link className="labhome__go labhome__go--quiet" href={`/prestart/sign${q}`}>Look</Link>}
+          </li>
+          <li className={`labhome__row${swmsToSign.length === 0 ? (swmsIds.length ? ' labhome__row--done' : '') : ' labhome__row--todo'}`}>
+            <span className="labhome__tick" aria-hidden>{swmsIds.length === 0 ? '–' : swmsToSign.length === 0 ? '✓' : '○'}</span>
+            <span className="labhome__what">
+              <b>SWMS</b>
+              {swmsIds.length === 0
+                ? 'No method statement in use on this job yet'
+                : swmsToSign.length === 0
+                  ? `Signed on to all ${swmsIds.length} in use`
+                  : <>{swmsToSign.length} to sign on to: {swmsToSign.map((r) => r.title).join(', ')}</>}
+            </span>
+            {swmsToSign.length > 0 ? <Link className="labhome__go" href={`/swms/sign${q}`}>Sign on</Link> : swmsIds.length > 0 ? <Link className="labhome__go labhome__go--quiet" href={`/swms/sign${q}`}>Look</Link> : null}
+          </li>
+        </ul>
       </section>
 
       <div className="labhome__btns">
@@ -81,11 +117,6 @@ export async function LabourerHome({ current, name, userId }: { current: Members
           <span className="labhome__icon" aria-hidden>{open ? '⇤' : '⇥'}</span>
           <span>{open ? 'Sign out' : 'Sign in'}</span>
           <span className="labhome__hint">{open ? 'When you leave the site' : 'When you arrive at the site'}</span>
-        </Link>
-        <Link className={`labhome__btn${signedPrestart ? ' labhome__btn--done' : prestart ? '' : ' labhome__btn--quiet'}`} href={`/prestart/sign${q}`}>
-          <span className="labhome__icon" aria-hidden>{signedPrestart ? '✓' : '☀'}</span>
-          <span>{signedPrestart ? 'Prestart signed on' : 'Sign on to the prestart'}</span>
-          <span className="labhome__hint">{signedPrestart ? 'You have signed today’s briefing' : prestart ? 'Today’s briefing is open — read it and sign on' : 'No open briefing on this job right now'}</span>
         </Link>
         <Link className="labhome__btn labhome__btn--warn" href={`/incidents/new${q}`}>
           <span className="labhome__icon" aria-hidden>⚠</span>

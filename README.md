@@ -3281,6 +3281,14 @@ row reads "Prestart open · 4 signed on so far · 2 of 5 machines checked · 1 t
 unchecked; the same count the prestart's Plant tab shows (R151), read from `plant_prestarts` for the day and the
 job's live `project_plant`, never typed.
 
+**R153. The labourer's day on one card.** "On the prestart labour screen, add the sign-in, the prestart sign-on and
+any outstanding SWMS that need signing — a front page with all this info, so they don't need to go look for stuff."
+The labourer's home now opens with one card for the day on their job: Gate (signed in since, signed out at, not yet),
+Prestart (signed on, open — sign on, none yet) and SWMS (how many of the method statements in use they have not
+signed on to, by title), each row ticked or amber and each with its own button. The big Sign in and Report a hazard
+buttons stay under it. Everything on the card is read from the same rows the gate, the prestart and the SWMS screens
+keep — their own sign-ins and sign-ons under their own name.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;
