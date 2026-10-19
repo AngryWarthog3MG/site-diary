@@ -279,7 +279,7 @@ export function PrestartScreen(props: {
   }
 
   return (
-    <main className="sheet">
+    <main className="sheet prestart-sheet">
       <Suspense fallback={null}>
         <HomeFoot at="top" />
       </Suspense>
@@ -435,7 +435,6 @@ export function PrestartScreen(props: {
 
       {tab === 'plant' && (
         <>
-          <hr className="rule" />
           <p className="label">Plant prestarts · {machines.filter((m) => m.check).length} of {machines.length} checked {fmtDate(prestart.date)}</p>
           <p className="caption">Every machine on the job is walked around before it is used, each day. The operator answers the checks and signs; a defect tags it out. Done here, it is the same record the Plant page keeps.</p>
           <ul className="machines">
@@ -474,7 +473,6 @@ export function PrestartScreen(props: {
       )}
 
       {tab === 'signon' && (<>
-      <hr className="rule" />
 
       {!editing && (
         <>

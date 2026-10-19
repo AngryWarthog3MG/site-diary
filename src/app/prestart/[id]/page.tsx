@@ -30,8 +30,9 @@ export default async function PrestartPage({ params }: { params: Promise<{ id: s
   guardScreen(membership, 'prestart');
   const canRun = membership ? canRunTalks(membership.role) : false;
 
-  // The people this job already knows, most recent first, so sign-on is a
-  // tap on a name rather than typing it with a glove on.
+  // The job's crew, in roster order, so sign-on is a tap on a name rather than typing it
+  // with a glove on. Only the roster: names harvested from old labour rows brought every
+  // nickname and misspelling back as a chip (README R156, R128).
   const { data: roster } = await supabase
     .from('crew')
     .select('name')
@@ -39,12 +40,6 @@ export default async function PrestartPage({ params }: { params: Promise<{ id: s
     .eq('active', true)
     .order('sort_order')
     .order('name');
-  const { data: recent } = await supabase
-    .from('labour')
-    .select('person_name, entry:entries!inner(project_id, entry_date)')
-    .eq('entry.project_id', row.project_id)
-    .order('entry_date', { referencedTable: 'entry', ascending: false })
-    .limit(300);
   const { data: inductionRows } = await supabase.from('crew_inductions').select('person_name').eq('project_id', row.project_id);
   // The job's machines and their check for THIS day (README R151): the plant prestart is part of the morning, daily.
   const [onJob, { data: checks }] = await Promise.all([
@@ -58,10 +53,6 @@ export default async function PrestartPage({ params }: { params: Promise<{ id: s
   const crew: string[] = [];
   for (const r of roster ?? []) {
     const name = String(r.name ?? '').trim();
-    if (name && !crew.includes(name)) crew.push(name);
-  }
-  for (const r of recent ?? []) {
-    const name = String(r.person_name ?? '').trim();
     if (name && !crew.includes(name)) crew.push(name);
   }
 

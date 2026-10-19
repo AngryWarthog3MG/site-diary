@@ -25,7 +25,16 @@ export function ReadMore() {
     const apply = () => {
       let waiting = false;
       for (const p of Array.from(document.querySelectorAll<HTMLParagraphElement>('.page-subtitle'))) {
-        if (p.dataset.readmore) continue;
+        if (p.dataset.readmore) {
+          // Measured before the fonts or the layout had settled, a one-line subtitle got a "more"
+          // for good (the prestart's "Run by …", README R156). Once it plainly fits, the tap goes.
+          if (!p.classList.contains('page-subtitle--open') && p.scrollHeight <= p.clientHeight + 2) {
+            const b = p.nextElementSibling;
+            if (b && b.classList.contains('readmore')) b.remove();
+            delete p.dataset.readmore;
+          }
+          continue;
+        }
         if (!owned(p)) { waiting = true; continue; }
         if (p.scrollHeight <= p.clientHeight + 2) continue;
         p.dataset.readmore = 'clamped';

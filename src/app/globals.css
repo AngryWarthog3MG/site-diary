@@ -3338,7 +3338,6 @@ body {
 @media (max-width: 699px) {
   .page-subtitle:not(.page-subtitle--open) { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
   .readmore { display: inline-block; margin: -0.35rem 0 0.75rem; padding: 0; font-size: 0.875rem; font-weight: 600; }
-  /* One Home at the top: where a screen carries the big one, the bar's small one goes. */
   /* The drawer lists the sections by name; what each one is for waits until it is opened. */
   .menu-drawer .navitem__what { display: none; }
   .menu-drawer .navitem { padding: 0.55rem 0.7rem; }
@@ -4871,4 +4870,25 @@ a.diarycal__day:hover { box-shadow: var(--shadow-ui); transform: translateY(-1px
   .prestart-row a.prestart-row__go { padding: 0.45rem 0.8rem; }
   .home-today .prestart-row { margin-top: 0.5rem; }
   .home-wx { font-size: 0.75rem; }
+}
+
+/* The prestart on a phone, tidied (README R156). One Home at the top: where the bar carries one, the screen's big
+   one at the head steps aside (the foot keeps its own, under the thumb at the end of a long screen). The tab strip is
+   the only line between the tabs and what they open; the sign-on rows line their names up whether the signature has
+   loaded or not; the notice and the hints are smaller. */
+body:has(> .topbar) .homefoot--top { display: none; }
+.prestart-sheet .review-tabs { margin-bottom: 1.1rem; }
+.prestart-sheet .talk-attendee { display: grid; grid-template-columns: 4.25rem minmax(0, 1fr); gap: 0.75rem; padding: 0.45rem 0; }
+.prestart-sheet .talk-attendee img { width: 4.25rem; height: 2.25rem; object-fit: contain; }
+.prestart-sheet .talk-attendee__pending { width: 4.25rem; height: 2.25rem; }
+.prestart-sheet .talk-attendee > span:last-child { min-width: 0; overflow-wrap: anywhere; line-height: 1.35; }
+.prestart-sheet .machine { flex-wrap: wrap; }
+@media (max-width: 699px) {
+  .prestart-sheet .talkstate { font-size: 0.8125rem; padding: 0.5rem 0.65rem; }
+  .prestart-sheet .way-hint, .prestart-sheet .caption { font-size: 0.78rem; }
+  .prestart-sheet .talkread-head .home-card__title, .prestart-sheet .home-card__title { font-size: 1.15rem; }
+  .prestart-sheet .sigslot.item { padding: 0.75rem 0.7rem; }
+  .prestart-sheet .crewchip { min-height: 2.25rem; font-size: 0.8125rem; }
+  .prestart-sheet .machine { padding: 0.6rem 0.7rem; }
+  .prestart-sheet .machine .button { padding: 0.45rem 0.8rem; min-height: 0; font-size: 0.875rem; }
 }

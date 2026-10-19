@@ -3304,6 +3304,20 @@ machines checked" on its own line under the text; the action box drops its frame
 fold is one amber frame; on a phone the title is smaller, the company name leaves the caption, the money notice and the
 tool buttons shrink. Nothing moved and nothing was removed.
 
+**R156. The prestart on a phone, tidied.** "Tidy up the prestart screen for phone too." Four things, each small. The
+screen opened with two Homes a thumb apart — the bar's and the big one at the head of the sheet, a leftover from before
+the bar (R116) — so where the bar carries a Home, a screen's big one at the head steps aside, on every screen that drew
+one (the foot keeps its own: the one under the thumb at the end of a long screen is the reason it exists). The Sign-on
+and Plant tabs opened with a ruled line and a gap under the tab strip, which already draws a line; the strip is the only
+line now. The sign-on rows put a name wherever the signature's width left it, and before the pictures loaded the names
+sat flush left; each row is a two-column grid, the signature in a fixed box, so the names line up from the first paint.
+And "Hand them the phone" offered every name ever typed on a labour row — Matty, AJ, Markus, Sammy, Jay galloway twice —
+because the list harvested the job's last three hundred labour rows after the roster; it offers the roster alone, which
+is what R128 says of the diary's own picker. The subtitle's "more" that appeared under a one-line "Run by …" was the
+read-more measuring before the fonts had settled and never looking again; it now removes itself once the line plainly
+fits. On a phone the notice, the hints and the headings inside the tabs are a size smaller. Nothing moved and nothing
+was removed.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;
