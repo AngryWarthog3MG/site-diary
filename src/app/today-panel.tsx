@@ -579,8 +579,8 @@ export function TodayPanel({
                   : `Prestart open · ${prestart.signed} signed on so far`
                 : 'No prestart yet today'}
             {plantChecks && plantChecks.machines > 0 && (
-              <span className={plantChecks.checked < plantChecks.machines ? 'staff__flag' : undefined}>
-                {' · '}{plantChecks.checked} of {plantChecks.machines} machine{plantChecks.machines === 1 ? '' : 's'} checked
+              <span className={`row-sub${plantChecks.checked < plantChecks.machines ? ' staff__flag' : ''}`}>
+                {plantChecks.checked} of {plantChecks.machines} machine{plantChecks.machines === 1 ? '' : 's'} checked
                 {plantChecks.tagged > 0 ? ` · ${plantChecks.tagged} tagged out` : ''}
               </span>
             )}
@@ -599,7 +599,8 @@ export function TodayPanel({
         </div>
       )}
 
-      <div className="home-actions">
+      {/* The box is for the big button; a quiet row inside it was a box in a box (README R155). */}
+      <div className={`home-actions${doors.entries !== false && entry?.status !== 'signed' && ((othersToday && !entry) || (canRecord && !(entry?.segments || afterTheShift))) ? ' home-actions--flat' : ''}`}>
         {doors.entries === false ? (
           <p className="notice">The diary is not one of your screens on this job.</p>
         ) : entry?.status === 'signed' ? (

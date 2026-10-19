@@ -4850,3 +4850,25 @@ a.diarycal__day:hover { box-shadow: var(--shadow-ui); transform: translateY(-1px
 /* A labourer on several jobs picks the one they are at (README R154). */
 .labhome__jobs { margin-top: 0.75rem; padding: 0.7rem 0.9rem; background: var(--paper); border: 1px solid var(--ink-12); border-radius: 12px; }
 .labhome__jobs .caption { margin: 0 0 0.4rem; }
+
+/* The home on a phone, tidied (README R155): a row is a grid with its button beside it, a detail on its own line;
+   the diary's quiet row is not boxed twice; the unsigned fold is one frame, not two; the header fits. */
+.prestart-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; }
+.prestart-row > span:first-child { display: block; min-width: 0; }
+.row-sub { display: block; margin-top: 0.15rem; font-size: 0.85rem; font-weight: 600; }
+.home-actions--flat { margin-top: 0; padding: 0; background: none; border: 0; }
+.home-unfinished { padding: 0; border: 0; background: transparent; }
+.home-unfinished > .fold > .fold__head { border-color: rgba(240, 164, 31, 0.5); background: rgba(240, 164, 31, 0.08); }
+.home-unfinished > .fold--open > .fold__body { padding: 0.5rem 0.85rem 0.25rem; border: 1px solid rgba(240, 164, 31, 0.5); border-top: 0; border-radius: 0 0 10px 10px; background: rgba(240, 164, 31, 0.04); }
+@media (max-width: 560px) {
+  .dash-title { font-size: 1.2rem; gap: 0.4rem; }
+  .dash-title > * { flex: 0 0 auto; }
+  .dash-head__sub { font-size: 0.75rem; }
+  .dash-head__org { display: none; }
+  .dash-head__tools .button { min-height: 30px; padding: 0 0.6rem; font-size: 0.75rem; }
+  .money-lock { padding: 0.5rem 0.7rem; font-size: 0.85rem; margin: 0.5rem 0; }
+  .prestart-row { padding: 0.6rem 0.7rem; gap: 0.6rem; }
+  .prestart-row a.prestart-row__go { padding: 0.45rem 0.8rem; }
+  .home-today .prestart-row { margin-top: 0.5rem; }
+  .home-wx { font-size: 0.75rem; }
+}

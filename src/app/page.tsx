@@ -82,7 +82,7 @@ export default async function TodayPage({
           <p className="label">{new Intl.DateTimeFormat('en-AU', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Australia/Perth' }).format(new Date())}</p>
           <h1 className="dash-title"><BrandMark size={26} /> {current.project.name}</h1>
           <p className="caption dash-head__sub">
-            <span className="mono">{current.project.org.code}_{current.project.code}</span> · {current.project.org.name} · signed in as {profile?.full_name ?? email}, {ROLE_LABEL[current.role].toLowerCase()}
+            <span className="mono">{current.project.org.code}_{current.project.code}</span><span className="dash-head__org"> · {current.project.org.name}</span> · {profile?.full_name ?? email}, {ROLE_LABEL[current.role].toLowerCase()}
           </p>
         </div>
         <div className="dash-head__tools">

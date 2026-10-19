@@ -3296,6 +3296,14 @@ the top — the same one the rail and the drawer use (R87): it writes the job co
 the prestart sign-on follow it. One job, no switcher. The sign-in itself is unchanged: it is the gate of the job on
 the screen, under their own name.
 
+**R155. The home on a phone, tidied.** "Tidy this up, especially for phone, which most people use." What the rows had
+grown into since R132: a prestart row whose text wrapped around its button with the machine count inline; the diary's
+quiet row boxed inside the action box; the unsigned fold framed twice in amber; a three-line title beside the mark and a
+three-line caption. Now a row is a two-column grid — text, then its button beside it — with a detail such as "0 of 2
+machines checked" on its own line under the text; the action box drops its frame when it holds a quiet row; the unsigned
+fold is one amber frame; on a phone the title is smaller, the company name leaves the caption, the money notice and the
+tool buttons shrink. Nothing moved and nothing was removed.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;
