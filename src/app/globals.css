@@ -4856,7 +4856,7 @@ a.diarycal__day:hover { box-shadow: var(--shadow-ui); transform: translateY(-1px
 .prestart-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; }
 .prestart-row > span:first-child { display: block; min-width: 0; }
 .row-sub { display: block; margin-top: 0.15rem; font-size: 0.85rem; font-weight: 600; }
-.home-actions--flat { margin-top: 0; padding: 0; background: none; border: 0; }
+.home-actions--flat, .home-today .home-actions--flat { margin-top: 0; padding: 0; background: none; border: 0; box-shadow: none; }
 .home-unfinished { padding: 0; border: 0; background: transparent; }
 .home-unfinished > .fold > .fold__head { border-color: rgba(240, 164, 31, 0.5); background: rgba(240, 164, 31, 0.08); }
 .home-unfinished > .fold--open > .fold__body { padding: 0.5rem 0.85rem 0.25rem; border: 1px solid rgba(240, 164, 31, 0.5); border-top: 0; border-radius: 0 0 10px 10px; background: rgba(240, 164, 31, 0.04); }
