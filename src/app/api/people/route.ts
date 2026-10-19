@@ -18,10 +18,11 @@ const ROLES = new Set<MemberRole>(['supervisor', 'leading_hand', 'labourer', 'pm
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const first = (e: unknown) => (e instanceof Error ? e.message : String(e)).split('\n')[0];
 
+/** The jobs where the caller manages people (README R150): an admin, or a PM marked as managing people. */
 async function adminOn(supabase: SupabaseClient, userId: string, projectIds: string[]): Promise<Set<string>> {
   if (projectIds.length === 0) return new Set();
-  const { data } = await supabase.from('project_members').select('project_id, role').in('project_id', projectIds).eq('user_id', userId);
-  return new Set(((data ?? []) as Array<{ project_id: string; role: string }>).filter((m) => m.role === 'admin').map((m) => m.project_id));
+  const { data } = await supabase.from('project_members').select('project_id, role, manages_people').in('project_id', projectIds).eq('user_id', userId);
+  return new Set(((data ?? []) as Array<{ project_id: string; role: string; manages_people: boolean }>).filter((m) => m.role === 'admin' || (m.role === 'pm' && m.manages_people)).map((m) => m.project_id));
 }
 
 async function findUserIdByEmail(admin: SupabaseClient, email: string): Promise<string | null> {
@@ -100,7 +101,7 @@ export async function POST(request: Request) {
   if (okJobs.length !== jobs.length) return fail('bad_request', 'One of those jobs is not this company’s.', 400);
   const admin = createAdminClient();
   const admins = email ? await adminOn(supabase, user.id, jobs) : new Set<string>();
-  if (email && jobs.some((j) => !admins.has(j))) return fail('forbidden', 'Only an admin of a job puts someone on it with a login. Tick only the jobs you administer, or add them without an email.', 403);
+  if (email && jobs.some((j) => !admins.has(j))) return fail('forbidden', 'Only an admin of a job, or a project manager who manages people on it, puts someone on it with a login. Tick only the jobs you manage, or add them without an email.', 403);
 
   // 1. The staff row — the person. Already there by name: reused, blanks filled.
   let staffId: string;
@@ -189,7 +190,7 @@ export async function PUT(request: Request) {
   let loginNote = '';
   if (userId) {
     const admins = await adminOn(supabase, user.id, [projectId]);
-    if (!admins.has(projectId)) loginNote = ` Their login was not changed on ${job.code} — only an admin of that job does that.`;
+    if (!admins.has(projectId)) loginNote = ` Their login was not changed on ${job.code} — only an admin of that job, or a project manager who manages people on it, does that.`;
     else if (on) {
       try {
         const { data: level } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();

@@ -27,7 +27,7 @@ export default async function StaffPage({ searchParams }: { searchParams: Promis
   const org = current.project.org;
   const jobs = memberships
     .filter((m) => m.project.org.id === org.id && m.project.active)
-    .map((m) => ({ id: m.project_id, code: m.project.code, name: m.project.name, canAssign: canRunTalks(m.role), isAdmin: m.role === 'admin' }))
+    .map((m) => ({ id: m.project_id, code: m.project.code, name: m.project.name, canAssign: canRunTalks(m.role), isAdmin: m.role === 'admin', managesPeople: m.role === 'admin' || (m.role === 'pm' && Boolean(m.manages_people)) }))
     .sort((a, b) => a.code.localeCompare(b.code));
   const supabase = await createClient();
   const today = perthToday();

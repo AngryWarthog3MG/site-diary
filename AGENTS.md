@@ -589,7 +589,8 @@ Change four of them and the app silently stops capturing what supervisors say. I
   (SQL) and `canEditEntry` (`src/lib/entries/access.ts`) are the two halves; the signature names the
   signer (`signed_by := auth.uid()`), `author_id` names who started the day. Deleting a draft stays author-only.
 - **Roles live in one table.** The PM is the office's working role (README R136): everything an admin does but the rate card, the money
-  by default, membership and the money switch. `src/lib/roles.ts` (`canAuthorEntries`, `canRunTalks`, `canSignIn`, `canReport`,
+  by default, membership and the money switch — unless an admin marks them `manages_people` on a job (README R150): then they add,
+  remove and retitle there, never an admin, never the money, never their own row (`app.can_manage_people`, `app.people_manager_limits`). `src/lib/roles.ts` (`canAuthorEntries`, `canRunTalks`, `canSignIn`, `canReport`,
   `canSee`, `canManageRegisters`, `canExportReports`) is what the menu, the page guards and the APIs read.
   **Which screens open is asked through `sees(member, screen)`, never `canSee(role, …)` directly**: a project
   admin ticks screens per person (`project_members.screens`, null = the role's list, README R57), and only

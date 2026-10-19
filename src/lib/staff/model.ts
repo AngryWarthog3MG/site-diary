@@ -17,7 +17,7 @@ export interface LoginRef {
   name: string; projectCode: string; role: string;
   /** The account behind it (README R148); absent in older callers and tests. */
   userId?: string; projectId?: string; email?: string | null; roleKey?: string; finance?: boolean | null; screens?: string[] | null;
-  lastSignIn?: string | null; closed?: boolean;
+  lastSignIn?: string | null; closed?: boolean; managesPeople?: boolean;
 }
 /** One person's app login as the People page shows it (README R148): the account, and their title on each job. */
 export interface PersonLogin {
@@ -25,7 +25,7 @@ export interface PersonLogin {
   email: string | null;
   lastSignIn: string | null;
   closed: boolean;
-  memberships: Array<{ projectId: string; code: string; role: string; roleLabel: string; finance: boolean | null; screens: string[] | null }>;
+  memberships: Array<{ projectId: string; code: string; role: string; roleLabel: string; finance: boolean | null; screens: string[] | null; managesPeople: boolean }>;
 }
 
 export type TicketState = 'current' | 'expiring' | 'expired';
@@ -121,7 +121,7 @@ export function buildStaff(input: StaffInput, today: string): Person[] {
           email: withAccount[0].email ?? null,
           lastSignIn: withAccount[0].lastSignIn ?? null,
           closed: Boolean(withAccount[0].closed),
-          memberships: withAccount.filter((l) => l.projectId).map((l) => ({ projectId: l.projectId as string, code: l.projectCode, role: l.roleKey ?? l.role, roleLabel: l.role, finance: l.finance ?? null, screens: l.screens ?? null })),
+          memberships: withAccount.filter((l) => l.projectId).map((l) => ({ projectId: l.projectId as string, code: l.projectCode, role: l.roleKey ?? l.role, roleLabel: l.role, finance: l.finance ?? null, screens: l.screens ?? null, managesPeople: Boolean(l.managesPeople) })),
         }
       : null;
     return {

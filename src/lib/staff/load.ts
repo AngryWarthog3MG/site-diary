@@ -22,11 +22,11 @@ export async function loadStaff(supabase: SupabaseClient, orgId: string, jobs: r
     ids.length ? supabase.from('crew_inductions').select('project_id, person_name, inducted_on, notes').in('project_id', ids) : none,
     supabase.from('competency_requirements').select('role, competency').eq('org_id', orgId),
     supabase.from('org_competencies').select('key, label, valid_months, active').eq('org_id', orgId).order('label'),
-    ids.length ? supabase.from('project_members').select('user_id, role, project_id, finance, screens').in('project_id', ids) : none,
+    ids.length ? supabase.from('project_members').select('user_id, role, project_id, finance, screens, manages_people').in('project_id', ids) : none,
   ]);
   for (const r of [staff, crew, tickets, inductions, reqs, custom, members]) if (r.error) throw new Error(`Could not read the staff list: ${r.error.message}`);
 
-  const memberRows = (members.data ?? []) as Array<{ user_id: string; role: string; project_id: string; finance: boolean | null; screens: string[] | null }>;
+  const memberRows = (members.data ?? []) as Array<{ user_id: string; role: string; project_id: string; finance: boolean | null; screens: string[] | null; manages_people: boolean | null }>;
   const userIds = [...new Set(memberRows.map((m) => m.user_id))];
   const { data: profiles } = userIds.length ? await supabase.from('profiles').select('id, full_name, email').in('id', userIds) : { data: [] };
   const profileOf = new Map((profiles ?? []).map((p) => [p.id as string, { name: (p.full_name as string | null) ?? '', email: (p.email as string | null) ?? null }]));
@@ -38,7 +38,7 @@ export async function loadStaff(supabase: SupabaseClient, orgId: string, jobs: r
       return {
         name: pr?.name ?? '', projectCode: codeOf.get(m.project_id) ?? '', role: ROLE_LABEL[m.role as MemberRole] ?? m.role,
         userId: m.user_id, projectId: m.project_id, email: pr?.email ?? null, roleKey: m.role, finance: m.finance ?? null, screens: m.screens ?? null,
-        lastSignIn: f?.lastSignIn ?? null, closed: f?.closed ?? false,
+        lastSignIn: f?.lastSignIn ?? null, closed: f?.closed ?? false, managesPeople: Boolean(m.manages_people),
       };
     })
     .filter((l) => l.name.trim() !== '' && l.projectCode !== '');

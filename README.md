@@ -3255,6 +3255,17 @@ name through `person_aliases` (R107) wherever names are added up. (3) Fatimah Cr
 — R136's office role, everything but the rate card and the money — with "Office admin" as her role on the staff list.
 Membership and titles stay the admin's (R136's reasoning holds: a role that sets roles could give itself the money).
 
+**R150. A project manager who manages people.** "Fatimah needs to manage people too — build it." R136 kept membership
+with the admin because a role that sets roles could give itself the money. The office admin's job IS membership, so the
+rule is now finer: an admin may mark a PM as **managing people** on a job (`project_members.manages_people`), and that
+PM adds, removes and retitles people there — within limits the database holds, not the screen
+(`app.people_manager_limits`, invoker rights so it sees the real caller): never an admin made, changed or removed;
+never the money switch; never their own row; never the manages-people flag itself. So the money stays where R105 put
+it. `app.can_manage_people` is the policies' question; the members API, the People API and the People page ask the
+same one, and the money switch, two-factor resets and the flag stay the admin's. Fatimah manages people on every job.
+Suite 58. Two lessons in the migrations: triggers fire by name, so the limits are `a_…` to speak before the money-grant
+check; and `current_user` inside a SECURITY DEFINER function is the owner, not the caller.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;

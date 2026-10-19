@@ -16,17 +16,19 @@ async function requireProjectAdmin(projectId: string) {
 
   const { data, error } = await supabase
     .from('project_members')
-    .select('role')
+    .select('role, manages_people')
     .eq('project_id', projectId)
     .eq('user_id', user.id)
     .maybeSingle();
 
   if (error) return { response: fail('server_error', error.message, 500) };
-  if (data?.role !== 'admin') {
-    return { response: fail('forbidden', 'Only a project admin can manage members.', 403) };
+  // An admin, or a PM who manages people on this job (README R150) — the database holds that PM's limits.
+  const isAdmin = data?.role === 'admin';
+  if (!isAdmin && !(data?.role === 'pm' && data?.manages_people)) {
+    return { response: fail('forbidden', 'Only a project admin, or a project manager who manages people, can manage members.', 403) };
   }
 
-  return { supabase, user, response: null as null };
+  return { supabase, user, isAdmin, response: null as null };
 }
 
 async function findUserIdByEmail(email: string): Promise<string | null> {
@@ -176,9 +178,23 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
     return ok({ message: 'Password set. Tell them in person — the app never sends it.' });
   }
 
+  // Who manages people on this job (README R150): an admin marks a PM. The database refuses it from anyone else.
+  if (body && typeof body === 'object' && 'managesPeople' in body) {
+    if (!auth.isAdmin) return fail('forbidden', 'Only an admin says who manages people.', 403);
+    const on = Boolean((body as { managesPeople: unknown }).managesPeople);
+    const { data: member, error: mErr } = await auth.supabase.from('project_members').select('role').eq('project_id', projectId).eq('user_id', userId).maybeSingle();
+    if (mErr) return fail('server_error', mErr.message, 500);
+    if (!member) return fail('not_found', 'That person is not on this job.', 404);
+    if (member.role !== 'pm') return fail('bad_request', 'Only a project manager can be marked as managing people — an admin already does, and the site roles do not.', 400);
+    const { error } = await auth.supabase.from('project_members').update({ manages_people: on }).eq('project_id', projectId).eq('user_id', userId);
+    if (error) return fail('server_error', error.message, 500);
+    return ok({ message: on ? 'They manage people on this job: adding, removing and titles — never the money.' : 'They no longer manage people on this job.' });
+  }
+
   // Money access (README R105): on, off, or null for the role's default. Only a supervisor's or a PM's can be set:
   // an admin always sees the money and a leading hand or labourer never does — the database holds the same rule.
   if (body && typeof body === 'object' && 'finance' in body) {
+    if (!auth.isAdmin) return fail('forbidden', 'The money switch is an admin’s to set.', 403);
     const raw = (body as { finance: unknown }).finance;
     if (raw !== null && typeof raw !== 'boolean') return fail('bad_request', 'Money access is on, off, or null for the role default.', 400);
     const { data: member, error: mErr } = await auth.supabase.from('project_members').select('role').eq('project_id', projectId).eq('user_id', userId).maybeSingle();

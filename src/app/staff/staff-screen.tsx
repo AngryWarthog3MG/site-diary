@@ -11,7 +11,7 @@ import type { MemberRole } from '@/types/database';
 import { AccessGrid, MoneyAccess, type MemberRow } from '@/app/settings/members/members-form';
 import { Fold } from '@/components/fold';
 
-interface Job { id: string; code: string; name: string; canAssign: boolean; /** The viewer administers this job: memberships, titles, money (R136). */ isAdmin: boolean }
+interface Job { id: string; code: string; name: string; canAssign: boolean; /** The viewer is an admin of this job: the money, the people-manager flag (R136). */ isAdmin: boolean; /** The viewer manages people on this job — an admin, or a PM marked for it (R150). */ managesPeople: boolean }
 interface Details { role: string; phone: string; employer: string; notes: string; emergency: string }
 /** Where on the page a save's answer is shown: beside the thing that was pressed, never off the top of the screen. */
 type Where = 'top' | 'jobs' | 'tickets' | 'details' | 'rename' | 'login';
@@ -182,8 +182,8 @@ export function StaffScreen({ orgId, orgName, projectId, userId, today, people, 
   const setPassword = (p: Person) => run('login', async () => {
     if (!p.login || !pwFor) return '';
     if (pwFor.value.length < 8) throw new Error('A password is at least 8 characters.');
-    const job = p.login.memberships.find((m) => jobOf(m.projectId)?.isAdmin);
-    if (!job) throw new Error('Only an admin of one of their jobs sets their password.');
+    const job = p.login.memberships.find((m) => jobOf(m.projectId)?.managesPeople);
+    if (!job) throw new Error('Only someone who manages people on one of their jobs sets their password.');
     const text = await api('PATCH', `/api/projects/${job.projectId}/members`, { userId: p.login.userId, password: pwFor.value });
     setPwFor(null);
     return text;
@@ -400,15 +400,19 @@ export function StaffScreen({ orgId, orgName, projectId, userId, today, people, 
                         return (
                           <div key={m.projectId} className="staff__member">
                             <span><b>{m.code}</b></span>
-                            {job?.isAdmin && p.login!.userId !== userId ? (
+                            {job?.managesPeople && p.login!.userId !== userId && (job.isAdmin || m.role !== 'admin') ? (
                               <select className="field field--sm staff__title" value={m.role} disabled={busy} onChange={(e) => void setTitle(p, m.projectId, e.target.value as MemberRole)} aria-label={`Title on ${m.code}`}>
-                                {ROLES.map((r) => <option key={r} value={r}>{ROLE_LABEL[r]}</option>)}
+                                {ROLES.filter((r) => job.isAdmin || r !== 'admin').map((r) => <option key={r} value={r}>{ROLE_LABEL[r]}</option>)}
                               </select>
                             ) : <span className="caption">{m.roleLabel}</span>}
+                            {m.role === 'pm' && job?.isAdmin && p.login!.userId !== userId && (
+                              <label className="regs__tick"><input type="checkbox" checked={m.managesPeople} disabled={busy} onChange={(e) => void run('login', () => api('PATCH', `/api/projects/${m.projectId}/members`, { userId: p.login!.userId, managesPeople: e.target.checked }))} /><span>Manages people on {m.code}</span></label>
+                            )}
+                            {m.role === 'pm' && m.managesPeople && !job?.isAdmin && <span className="caption">· manages people</span>}
                           </div>
                         );
                       })}
-                      {p.login.memberships.some((m) => jobOf(m.projectId)?.isAdmin) && p.login.userId !== userId && (
+                      {p.login.memberships.some((m) => jobOf(m.projectId)?.managesPeople) && p.login.userId !== userId && (
                         <div className="regs__actions">
                           {pwFor?.userId !== p.login.userId
                             ? <button type="button" className="quotebtn" disabled={busy} onClick={() => setPwFor({ userId: p.login!.userId, value: '' })}>Set a password</button>
@@ -420,7 +424,7 @@ export function StaffScreen({ orgId, orgName, projectId, userId, today, people, 
                                 <button type="button" className="linklike" onClick={() => setPwFor(null)}>Cancel</button>
                               </form>
                             )}
-                          {codeEntered && <button type="button" className="quotebtn" disabled={busy} onClick={() => void resetTwoFactor(p)}>Reset two-factor</button>}
+                          {codeEntered && p.login.memberships.some((m) => jobOf(m.projectId)?.isAdmin) && <button type="button" className="quotebtn" disabled={busy} onClick={() => void resetTwoFactor(p)}>Reset two-factor</button>}
                         </div>
                       )}
                       {p.login.memberships.some((m) => jobOf(m.projectId)?.isAdmin) && (
@@ -442,7 +446,7 @@ export function StaffScreen({ orgId, orgName, projectId, userId, today, people, 
                   ) : p.active ? (
                     <div className="staff__login">
                       {!loginForm ? (
-                        <p className="caption">No login. <button type="button" className="linklike" disabled={busy || !p.jobs.some((j) => j.onCrew && jobOf(j.projectId)?.isAdmin)} onClick={() => { setLoginForm({ email: '', password: '', title: 'labourer' }); try { const kept = window.localStorage.getItem(PW_KEY); if (kept) setLoginForm({ email: '', password: kept, title: 'labourer' }); } catch { /* no storage */ } }}>Give them a login</button>{!p.jobs.some((j) => j.onCrew) ? ' — tick a job first.' : ''}</p>
+                        <p className="caption">No login. <button type="button" className="linklike" disabled={busy || !p.jobs.some((j) => j.onCrew && jobOf(j.projectId)?.managesPeople)} onClick={() => { setLoginForm({ email: '', password: '', title: 'labourer' }); try { const kept = window.localStorage.getItem(PW_KEY); if (kept) setLoginForm({ email: '', password: kept, title: 'labourer' }); } catch { /* no storage */ } }}>Give them a login</button>{!p.jobs.some((j) => j.onCrew) ? ' — tick a job first.' : ''}</p>
                       ) : (
                         <div className="item">
                           <div className="regs__fields">

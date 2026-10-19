@@ -15,6 +15,8 @@ export interface Membership {
   screens: string[] | null;
   /** Money access on this job; null = the role's default (README R105). Read it through seesMoney. */
   finance: boolean | null;
+  /** A PM who manages membership on this job (README R150). */
+  manages_people?: boolean;
   project: {
     id: string;
     name: string;
@@ -81,7 +83,7 @@ export async function requireUser(): Promise<SessionContext> {
     supabase
       .from('project_members')
       .select(
-        'project_id, role, screens, finance, project:projects!inner(id, name, code, active, next_entry_seq, org:organisations!inner(id, name, code))',
+        'project_id, role, screens, finance, manages_people, project:projects!inner(id, name, code, active, next_entry_seq, org:organisations!inner(id, name, code))',
       )
       .eq('user_id', user.id)
       .order('project_id'),
