@@ -4846,3 +4846,7 @@ a.diarycal__day:hover { box-shadow: var(--shadow-ui); transform: translateY(-1px
 .labhome__what b { font-size: 0.7rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-60); }
 .labhome__go { padding: 0.5rem 0.85rem; border: 1px solid var(--teal); border-radius: 8px; color: var(--teal); font-weight: 600; text-decoration: none; white-space: nowrap; }
 .labhome__go--quiet { border-color: var(--ink-12); color: var(--ink-60); }
+
+/* A labourer on several jobs picks the one they are at (README R154). */
+.labhome__jobs { margin-top: 0.75rem; padding: 0.7rem 0.9rem; background: var(--paper); border: 1px solid var(--ink-12); border-radius: 12px; }
+.labhome__jobs .caption { margin: 0 0 0.4rem; }

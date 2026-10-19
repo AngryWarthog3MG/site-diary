@@ -12,6 +12,7 @@ import { loadCurrentPlan } from '@/lib/emergency/load';
 import { loadHeadContractorEmergencyPlan } from '@/lib/subcontract/load';
 import { InboxNudge } from '@/components/inbox-nudge';
 import { WaitingPanel } from '@/components/waiting-panel';
+import { JobSwitcher, type SwitchableJob } from '@/components/job-switcher';
 
 /**
  * The labourer's opening page: are they signed in right now, and the two
@@ -20,7 +21,7 @@ import { WaitingPanel } from '@/components/waiting-panel';
  * today's register by name, so a supervisor signing them in at the gate shows
  * here too.
  */
-export async function LabourerHome({ current, name, userId }: { current: Membership; name: string; userId: string }) {
+export async function LabourerHome({ current, name, userId, jobs = [] }: { current: Membership; name: string; userId: string; /** Every job they are on (README R154): with more than one, the home carries the switcher. */ jobs?: SwitchableJob[] }) {
   const supabase = await createClient();
   const today = perthToday();
   const planPromise = loadCurrentPlan(supabase, current.project_id);
@@ -68,6 +69,12 @@ export async function LabourerHome({ current, name, userId }: { current: Members
           <div className="dash-head__tools"><SignOutButton /></div>
         </div>
       </header>
+      {jobs.length > 1 && (
+        <section className="labhome__jobs">
+          <p className="caption">You are on {jobs.length} jobs. Pick the one you are at today — the gate, the prestart and the SWMS below are that job’s.</p>
+          <JobSwitcher jobs={jobs} currentId={current.project_id} compact />
+        </section>
+      )}
       <FirstRun role={current.role} />
       <InboxNudge userId={userId} />
       <WaitingPanel userId={userId} projectId={current.project_id} />

@@ -60,7 +60,11 @@ export default async function TodayPage({
     );
   }
 
-  if (current.role === 'labourer') return <LabourerHome current={current} name={profile?.full_name ?? email ?? 'You'} userId={userId} />;
+  if (current.role === 'labourer') {
+    // On more than one job, they choose which (README R154): the switcher writes the job cookie and the page re-reads.
+    const jobs = memberships.filter((m) => m.project.active).map((m) => ({ id: m.project_id, name: m.project.name, code: m.project.code, org: { name: m.project.org.name, code: m.project.org.code } }));
+    return <LabourerHome current={current} name={profile?.full_name ?? email ?? 'You'} userId={userId} jobs={jobs} />;
+  }
 
   const activeJobs = memberships.filter((m) => m.project.active).length;
   const q = `?project=${current.project_id}`;

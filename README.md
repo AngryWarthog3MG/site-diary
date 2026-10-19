@@ -3289,6 +3289,13 @@ signed on to, by title), each row ticked or amber and each with its own button. 
 buttons stay under it. Everything on the card is read from the same rows the gate, the prestart and the SWMS screens
 keep — their own sign-ins and sign-ons under their own name.
 
+**R154. A labourer on several jobs picks the one they are at.** "If ops are registered to numerous jobs, let them
+choose which job they sign into." The labourer's home opened on the first job their account held; a person on two
+jobs could not reach the other's gate or briefing. With more than one job the home now carries the job switcher at
+the top — the same one the rail and the drawer use (R87): it writes the job cookie, and the day's card, the gate and
+the prestart sign-on follow it. One job, no switcher. The sign-in itself is unchanged: it is the gate of the job on
+the screen, under their own name.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;
