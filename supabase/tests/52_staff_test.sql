@@ -98,6 +98,7 @@ begin
   if (select count(*) from public.crew_tickets where person_name = 'Evan Burke-Smith') <> 1 then raise exception 'TESTFAIL: ticket not renamed'; end if;
   if (select count(*) from public.crew_tickets where person_name = 'Evan Burke') <> 0 then raise exception 'TESTFAIL: a ticket kept the old name'; end if;
   if not exists (select 1 from public.person_aliases where org_id = 'aaaaaaaa-5252-0000-0000-000000000001' and alias = 'Evan Burke' and name = 'Evan Burke-Smith') then raise exception 'TESTFAIL: no alias folds the old name in'; end if;
+  if (select full_name from public.profiles where id = '11111111-5252-0000-0000-000000000002') <> 'Evan Burke-Smith' then raise exception 'TESTFAIL: the login did not take the new name (R149)'; end if;
   raise notice 'PASS  a rename carries the name to the crew lists and tickets, and the old name folds in (R140)';
 end; $$;
 select tests.expect_error($$ update public.staff set name = 'Evan Burke' where id = 'cccccccc-5252-0000-0000-000000000001' $$, 'Rename');

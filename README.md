@@ -3242,6 +3242,19 @@ job preselected and stays as it was for a supervisor, who still needs who-is-on-
 Not built, for Mitchell to say yes or no to: a printed staff register, bulk add from a pasted list, an access history
 per person, a who-is-on-site-now column, a message from the row.
 
+**R149. Proper names only, and a rename reaches the login.** "Remove all the nicknames and just keep the main names
+— Matty is just Matthew Rodgers. I need to be able to edit people's names as we go. Fatimah is the office admin: access
+to everything apart from the money, on all jobs." Three things. (1) `rename_staff` now carries the new name to the
+person's LOGIN as well — the profile that carried the old name on one of the company's jobs — because the name on the
+account is what the gate, the prestart sign-on and People join by; renaming the staff row alone had split the two.
+(2) The nicknames: the staff and crew lists were already proper names (R140, R148); what was left were four induction
+rows under nicknames on Curtin — Constant, Constatine, Evan, Matty Rogers — each for a person already inducted on that
+job under their name, removed by id; and the signed diaries' nicknames (AJ, Florian, Evan, Hamish, Marcus, Markus,
+Matty, Matt Rodgers, Matty Rogers, PaulJoshua, Sammy), which stay on the signed days as said and fold into the proper
+name through `person_aliases` (R107) wherever names are added up. (3) Fatimah Cronin is a project manager on every job
+— R136's office role, everything but the rate card and the money — with "Office admin" as her role on the staff list.
+Membership and titles stay the admin's (R136's reasoning holds: a role that sets roles could give itself the money).
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;
