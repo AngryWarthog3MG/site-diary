@@ -3318,6 +3318,18 @@ read-more measuring before the fonts had settled and never looking again; it now
 fits. On a phone the notice, the hints and the headings inside the tabs are a size smaller. Nothing moved and nothing
 was removed.
 
+**R157. People, easy to work.** "Improve this, I want easy to edit, add, remove. Needs visually pleasing too." The list
+was a stack of grey boxes each carrying one run-on line — role, jobs, tickets, flags — and an open person was every
+section at once, a screen and a half long, with Rename and "No longer with the company" at the very bottom. Now a row is
+a person at a glance: initials, the name with the role under it, the jobs they are on as tags, and on the right only what
+needs a look — "Needs White card", "Not inducted C010", "2 tickets expired", "Account closed" — with the quiet facts
+("1 ticket", "No login") muted; the row's left edge is green, amber or red for the same reason. Open, the person is four
+tabs — Jobs, Tickets, Login, Details — with Rename and Remove beside the tabs; a person with a gap or an expired ticket
+opens on Tickets. A job is a row with its tick and its induction beside it; a ticket is a row with its dates and its
+card. Add a person is one card: the name and role, the jobs as chips to tap, and the login behind a tick so a labourer
+with no phone is three fields. Nothing underneath changed: the same People API, the same rows, the same rules (R123,
+R148, R150); an unsaved ticket still holds the row open, and now holds the tab too.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;
