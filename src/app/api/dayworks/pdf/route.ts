@@ -9,6 +9,10 @@ import { loadDayworkPhotos, SIGNOFF_IMAGE_MAX } from '@/lib/dayworks/photos';
 import { dayworksScheduleHtml, dayworksSignoffHtml, type SheetApproval } from '@/lib/dayworks/pdf';
 import { approvalOf, type DayworkSignoff } from '@/lib/dayworks/signoff';
 import { fmtDate } from '@/lib/pdf/dates';
+import { readAal } from '@/lib/auth';
+import { seesMoney } from '@/lib/roles';
+import type { MemberRole } from '@/types/database';
+import { loadDayworksCosting, type DayworksCosting } from '@/lib/dayworks/costing-load';
 
 export const maxDuration = 300;
 export const runtime = 'nodejs';
@@ -26,7 +30,7 @@ export async function GET(request: Request) {
   const url = new URL(request.url);
   const projectId = url.searchParams.get('project');
   if (!isUuid(projectId)) return fail('bad_request', 'Bad project id.', 400);
-  const { data: project } = await supabase.from('projects').select('id, name, code, principal_contractor, org:organisations!inner(name, code)').eq('id', projectId).maybeSingle();
+  const { data: project } = await supabase.from('projects').select('id, name, code, org_id, principal_contractor, org:organisations!inner(name, code)').eq('id', projectId).maybeSingle();
   if (!project) return fail('not_found', 'That project is not on your account.', 404);
   const forbidden = await forbidUnlessSees(supabase, user.id, projectId, 'claims');
   if (forbidden) return forbidden;
@@ -80,9 +84,27 @@ export async function GET(request: Request) {
     html = built.html;
     images = built.images;
   } else {
-    html = dayworksScheduleHtml(data, common);
+    // Costed (README R158): only for a caller who sees the money with their code entered — the same two checks the
+    // screen makes, made again here because a session can call this route without the page.
+    let costing: DayworksCosting | null = null;
+    if (url.searchParams.get('costed') === '1') {
+      const [{ data: member }, aal] = await Promise.all([
+        supabase.from('project_members').select('role, finance').eq('project_id', projectId).eq('user_id', user.id).maybeSingle(),
+        readAal(supabase),
+      ]);
+      const sees = member ? seesMoney({ role: member.role as MemberRole, finance: (member.finance as boolean | null) ?? null }) : false;
+      if (!sees) return fail('forbidden', 'The costed schedule is for someone who sees the money.', 403);
+      if (aal.current !== 'aal2') return fail('forbidden', 'Enter your two-factor code to print the costed schedule.', 403);
+      try {
+        costing = await loadDayworksCosting(supabase, String(project.org_id), projectId, data, scheduleLines(data));
+      } catch (err) {
+        return fail('server_error', err instanceof Error ? err.message : 'Could not read the rates.', 500);
+      }
+    }
+    html = dayworksScheduleHtml(data, common, costing);
   }
-  const kind = signoff ? 'sign-off sheet' : 'schedule';
+  const costed = url.searchParams.get('costed') === '1' && !signoff;
+  const kind = signoff ? 'sign-off sheet' : costed ? 'costed schedule' : 'schedule';
   const slug = range.from || range.to ? `${range.from ?? 'start'}_${range.to ?? today}` : 'whole-job';
   try {
     const pdf = await renderPdfDocument(html, {
@@ -93,9 +115,9 @@ export async function GET(request: Request) {
       images,
       // Already shrunk to this size by loadDayworkPhotos; the renderer leaves them as they are.
       imageMax: SIGNOFF_IMAGE_MAX,
-      footerLeft: `${org.code}_${project.code} · DAYWORKS ${signoff ? 'SIGN-OFF' : 'SCHEDULE'} · ${range.label.toUpperCase()}`,
+      footerLeft: `${org.code}_${project.code} · DAYWORKS ${signoff ? 'SIGN-OFF' : costed ? 'SCHEDULE · COSTED' : 'SCHEDULE'} · ${range.label.toUpperCase()}`,
     });
-    return new Response(Buffer.from(pdf), { status: 200, headers: { 'content-type': 'application/pdf', 'content-disposition': `inline; filename="${org.code}_${project.code}_dayworks${signoff ? '_signoff' : ''}_${slug}.pdf"`, 'cache-control': 'private, no-store' } });
+    return new Response(Buffer.from(pdf), { status: 200, headers: { 'content-type': 'application/pdf', 'content-disposition': `inline; filename="${org.code}_${project.code}_dayworks${signoff ? '_signoff' : costed ? '_costed' : ''}_${slug}.pdf"`, 'cache-control': 'private, no-store' } });
   } catch (err) {
     if (err instanceof BrowserUnavailableError) return fail('server_error', err.message, 501);
     return fail('server_error', `Could not render the ${kind}: ${err instanceof Error ? err.message : 'PDF rendering failed.'}`, 500);

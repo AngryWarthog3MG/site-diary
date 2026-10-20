@@ -439,8 +439,13 @@ improvising; the register once shipped dead because a live smoke test was skippe
   `scheduleLines` — the order the sign-off sheet numbers items in; hours null is "not recorded", never 0), `load.ts`
   (diary.dayworks + `loadDocketsAdded`, unsigned days counted apart, `pendingCorrectionDays`), `photos.ts` (each item's
   photographs as data URIs under the caller's RLS, capped, shrunk to `SIGNOFF_IMAGE_MAX` with sharp six at a time — README R139), `pdf.ts` (the schedule, and `dayworksSignoffHtml` — the sheet the
-  head contractor signs, README R83). `/dayworks` and `/api/dayworks/pdf` (`?signoff=1` for the sheet) are the `claims`
-  screen. `signoff.ts` + table `dayworks_signoffs`: the head contractor's signature on a sheet, with the countersigned
+  head contractor signs, README R83). `/dayworks` and `/api/dayworks/pdf` (`?signoff=1` for the sheet; `?costed=1` for the schedule
+  with amounts, money-checked again in the route) are the `claims` screen. COSTED BY PERSON (README R158): `costing.ts` (pure:
+  `costLine` — each person's hours × the company's rate for their NAME, an item costed only when every person has both,
+  never a share; `totalCosts`, `peopleInPeriod`), `costing-load.ts` (table `person_rates`, org-wide, one live rate per
+  name, read `app.sees_org_money`, written by an admin at aal2, retired never deleted, changes in `person_rate_changes`,
+  carried by `rename_staff`; names resolved with the timesheet's `makeResolver`). `person-rates-block.tsx` sets them on
+  the Dayworks screen. The sign-off sheet never carries money. Suite 59. `signoff.ts` + table `dayworks_signoffs`: the head contractor's signature on a sheet, with the countersigned
   file and what the sheet said AT THE TIME — frozen, so a later correction cannot change what they signed; `driftFrom`
   says when the schedule has moved since. `app.can_manage_registers` writes it; the labourer reads none of it. Suite 34,
   README R86. CLIENT APPROVAL (README R125): a sign-off is also the signature itself, drawn on the screen (`signature_path`

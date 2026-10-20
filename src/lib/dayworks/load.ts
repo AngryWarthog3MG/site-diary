@@ -71,13 +71,15 @@ export async function loadDayworksSchedule(supabase: SupabaseClient, projectId: 
     const id = (row.daywork_id as string | null) ?? null;
     const late = !ref && id ? added.get(id) ?? null : null;
     const hours = row.hours == null ? null : Number(row.hours);
+    const labourRows = readLabourRows(row.labour_rows);
     return {
       date: String(row.entry_date),
       entryNo: String(row.entry_no),
       entryId: entryIds.get(String(row.entry_no)) ?? null,
       dayworkId: id,
       works: String(row.description ?? ''),
-      labour: labourRowsText(readLabourRows(row.labour_rows)) ?? (((row.labour as string | null) ?? '').trim() || null),
+      labour: labourRowsText(labourRows) ?? (((row.labour as string | null) ?? '').trim() || null),
+      labourRows,
       plant: ((row.plant as string | null) ?? '').trim() || null,
       materials: ((row.materials as string | null) ?? '').trim() || null,
       hours: hours != null && Number.isFinite(hours) ? hours : null,

@@ -1,7 +1,9 @@
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
-import { requireUser, resolveProject, guardScreen } from '@/lib/auth';
+import { requireUser, resolveProject, guardScreen, moneyState } from '@/lib/auth';
+import { MoneyLock } from '@/components/money-lock';
+import { fmtMoney } from '@/lib/money';
 import { sees, canManageRegisters } from '@/lib/roles';
 import { BrandMark } from '@/components/brand-mark';
 import { fmtDate } from '@/lib/pdf/dates';
@@ -9,6 +11,9 @@ import { perthToday } from '@/lib/push/decide';
 import { readRange, scheduleLines, type RangeKey } from '@/lib/dayworks/schedule';
 import { loadDayworksSchedule, type DayworksScheduleData } from '@/lib/dayworks/load';
 import { approvalOf, snapshotLines, type DayworkSignoff } from '@/lib/dayworks/signoff';
+import { loadDayworksCosting, type DayworksCosting } from '@/lib/dayworks/costing-load';
+import type { LineCost } from '@/lib/dayworks/costing';
+import { PersonRatesBlock } from './person-rates-block';
 import { SignoffBlock } from './signoff-block';
 
 export const dynamic = 'force-dynamic';
@@ -24,7 +29,7 @@ const hrs = (n: number) => (Number.isInteger(n) ? String(n) : n.toFixed(2).repla
  * screen, or on a paper sheet recorded here (README R125).
  */
 export default async function DayworksPage({ searchParams }: { searchParams: Promise<{ project?: string; range?: string; from?: string; to?: string }> }) {
-  const { memberships } = await requireUser();
+  const { memberships, aal } = await requireUser();
   const params = await searchParams;
   const current = resolveProject(memberships, params.project);
   if (!current) return <main className="sheet"><p className="notice gap">You are not on an active project.</p></main>;
@@ -58,6 +63,17 @@ export default async function DayworksPage({ searchParams }: { searchParams: Pro
   const lines = data ? scheduleLines(data) : [];
   const approval = approvalOf(lines, signoffs);
   const approvedBy = new Map(lines.map((l, i) => [l, approval.by[i]] as const));
+  // The money (README R158): each person's hours at the company's rate for their name, for someone who sees it with
+  // their code entered. Anyone else sees the schedule as before, with no amounts and no rates.
+  const money = moneyState(current, aal);
+  let costing: DayworksCosting | null = null;
+  let costingError: string | null = null;
+  if (money === 'open' && data) {
+    try { costing = await loadDayworksCosting(supabase, current.project.org.id, current.project_id, data, lines); }
+    catch (err) { costingError = err instanceof Error ? err.message : 'Could not read the rates.'; }
+  }
+  const costOf = new Map<(typeof lines)[number], LineCost>(costing ? lines.map((l, i) => [l, costing!.costs[i]] as const) : []);
+  const weekCost = (i: number) => costing?.weeks[i] ?? null;
   const p = current.project_id;
   const href = (key: RangeKey) => `/dayworks?project=${p}${key === 'all' ? '' : `&range=${key}`}`;
   const pdfHref = `/api/dayworks/pdf?project=${p}${range.key === 'all' ? '' : `&range=${range.key}`}${range.key === 'custom' ? `${range.from ? `&from=${range.from}` : ''}${range.to ? `&to=${range.to}` : ''}` : ''}`;
@@ -121,6 +137,7 @@ export default async function DayworksPage({ searchParams }: { searchParams: Pro
           <div className="claims-actions">
             <a className="button" href={`${pdfHref}&signoff=1`} target="_blank" rel="noopener">Sign-off sheet for the client (PDF)</a>
             <a className="button button--quiet" href={pdfHref} target="_blank" rel="noopener">Schedule only (PDF)</a>
+            {costing && <a className="button button--quiet" href={`${pdfHref}&costed=1`} target="_blank" rel="noopener">Costed schedule (PDF)</a>}
             <Link className="button button--quiet" href={`/claims?project=${p}`}>Claims register</Link>
           </div>
           <SignoffBlock
@@ -139,6 +156,18 @@ export default async function DayworksPage({ searchParams }: { searchParams: Pro
 
           <p className="caption">A daywork is approved once {clientName} has signed for it, here on the screen or on the sign-off sheet. The sheet itemises every daywork with its labour, plant, materials, docket and photographs. A signature acknowledges what was expended, not rates or value.</p>
 
+          <MoneyLock state={money} next={`/dayworks?project=${p}${range.key === 'all' ? '' : `&range=${range.key}`}`} compact />
+          {costingError && <p className="alert">{costingError}</p>}
+          {costing && (
+            <>
+              <div className="dw-money">
+                <span className="dw-money__fact"><span className="label">Amount, ex GST</span><strong className="mono">{costing.totals.costed ? fmtMoney(costing.totals.amount) : '—'}</strong><span className="caption">{costing.totals.costed} of {data.totals.items} item{data.totals.items === 1 ? '' : 's'} costed{costing.totals.notCosted ? ` · ${costing.totals.notCosted} without an amount` : ''}</span></span>
+                <span className="caption dw-money__how">Each person's hours on the item at the company's rate for their name, added up. An item is costed only when every person on it has hours and a rate; the rest are flagged, never guessed.</span>
+              </div>
+              <PersonRatesBlock orgId={current.project.org.id} people={costing.people} rates={costing.rates} canWrite={current.role === 'admin'} />
+            </>
+          )}
+
           {data.truncated && (
             <p className="alert">More than 1,000 dayworks in this period — only the first 1,000 are shown and totalled. Choose a shorter period.</p>
           )}
@@ -152,13 +181,14 @@ export default async function DayworksPage({ searchParams }: { searchParams: Pro
             <div className="claims-tablewrap">
               <table className="claims-table">
                 <thead>
-                  <tr><th>Date</th><th>Works completed</th><th className="n">Hours</th><th>Approved</th><th>Docket</th><th>Labour</th><th>Plant</th><th>Materials</th></tr>
+                  <tr><th>Date</th><th>Works completed</th><th className="n">Hours</th>{costing && <th className="n">Amount</th>}<th>Approved</th><th>Docket</th><th>Labour</th><th>Plant</th><th>Materials</th></tr>
                 </thead>
                 <tbody>
-                  {data.weeks.map((w) => [
+                  {data.weeks.map((w, wi) => [
                     <tr key={`wk-${w.start}`} className="dw-week">
                       <td colSpan={2}><strong>Week {fmtDate(w.start)} to {fmtDate(w.end)}</strong></td>
                       <td className="n mono"><strong>{hrs(w.hours)}</strong>{w.hoursNotRecorded ? <span className="claims-flag"> +{w.hoursNotRecorded} not recorded</span> : null}</td>
+                      {costing && <td className="n mono"><strong>{weekCost(wi)?.costed ? fmtMoney(weekCost(wi)!.amount) : '—'}</strong>{weekCost(wi)?.notCosted ? <span className="claims-flag"> +{weekCost(wi)!.notCosted} not costed</span> : null}</td>}
                       <td colSpan={5} />
                     </tr>,
                     ...w.lines.map((l, i) => (
@@ -166,9 +196,10 @@ export default async function DayworksPage({ searchParams }: { searchParams: Pro
                         <td className="mono">{l.entryId ? <Link className="claims-cite" href={`/entries/${l.entryId}/signed`}>{fmtDate(l.date)}</Link> : fmtDate(l.date)}</td>
                         <td>{l.works}</td>
                         <td className={`n mono${l.hours == null ? ' claims-flag' : ''}`}>{l.hours == null ? 'Not recorded' : hrs(l.hours)}</td>
+                        {costing && <AmountCell cost={costOf.get(l) ?? null} />}
                         <td className={approvedBy.get(l) ? undefined : 'claims-flag'}>{approvedBy.get(l) ? <>Signed {fmtDate(approvedBy.get(l)!.signed_on)}<span className="vr-note">{approvedBy.get(l)!.signed_by_name}</span></> : 'Not yet'}</td>
                         <td className={l.docket ? 'mono' : 'claims-flag'}>{l.docket ?? 'To chase'}{l.docketAddedOn ? <span className="vr-note">added {fmtDate(l.docketAddedOn)}</span> : null}</td>
-                        <td>{l.labour ?? '—'}</td>
+                        <td>{costing && costOf.get(l) && !costOf.get(l)!.noRows ? <LabourCosted cost={costOf.get(l)!} /> : (l.labour ?? '—')}</td>
                         <td>{l.plant ?? '—'}</td>
                         <td>{l.materials ?? '—'}</td>
                       </tr>
@@ -177,6 +208,7 @@ export default async function DayworksPage({ searchParams }: { searchParams: Pro
                   <tr className="dw-total">
                     <td colSpan={2}><strong>Total: {data.totals.items} item{data.totals.items === 1 ? '' : 's'} of work over {data.totals.days} day{data.totals.days === 1 ? '' : 's'}</strong></td>
                     <td className="n mono"><strong>{hrs(data.totals.hours)}</strong></td>
+                    {costing && <td className="n mono"><strong>{costing.totals.costed ? fmtMoney(costing.totals.amount) : '—'}</strong>{costing.totals.notCosted ? <span className="claims-flag"> +{costing.totals.notCosted} not costed</span> : null}</td>}
                     <td colSpan={5} />
                   </tr>
                 </tbody>
@@ -186,5 +218,27 @@ export default async function DayworksPage({ searchParams }: { searchParams: Pro
         </>
       )}
     </main>
+  );
+}
+
+/** The item's amount, or the one reason it has none (README R158). */
+function AmountCell({ cost }: { cost: LineCost | null }) {
+  if (!cost || cost.noRows) return <td className="n claims-flag">No names on the row</td>;
+  if (cost.amount != null) return <td className="n mono">{fmtMoney(cost.amount)}</td>;
+  const why = cost.missingRate.length ? `No rate: ${cost.missingRate.join(', ')}` : `Hours not recorded: ${cost.missingHours.join(', ')}`;
+  return <td className="n claims-flag">{why}</td>;
+}
+
+/** The people on the item, each at their hours and rate (README R158). */
+function LabourCosted({ cost }: { cost: LineCost }) {
+  return (
+    <ul className="dw-people">
+      {cost.people.map((pp, i) => (
+        <li key={i} className={pp.amount == null ? 'dw-people__row dw-people__row--gap' : 'dw-people__row'}>
+          <span className="dw-people__name">{pp.name}{pp.person !== pp.name ? <span className="vr-note">as {pp.person}</span> : null}</span>
+          <span className="mono dw-people__sum">{pp.hours == null ? 'no hours' : `${hrs(pp.hours)} h`} × {pp.rate == null ? 'no rate' : fmtMoney(pp.rate)}{pp.amount != null ? ` = ${fmtMoney(pp.amount)}` : ''}</span>
+        </li>
+      ))}
+    </ul>
   );
 }

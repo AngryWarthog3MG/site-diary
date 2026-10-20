@@ -3330,6 +3330,32 @@ card. Add a person is one card: the name and role, the jobs as chips to tap, and
 with no phone is three fields. Nothing underneath changed: the same People API, the same rows, the same rules (R123,
 R148, R150); an unsaved ticket still holds the row open, and now holds the tab too.
 
+**R158. Dayworks costed by person.** "Take the information from the daywork sheet — the labour, the name — and each
+name will have an hourly rate associated to that name: Evan Burke at $105 an hour, Matty Rogers at $140, Marcus Hayden
+at $105. When we pull up the daywork sheet it automatically populates the hours and the total cost for each individual
+for that day, within the Dayworks claims tab." The rate card (R104) prices labour by the ROLE worked, which is what a
+variation build-up wants. A daywork's labour rows (R129) name PEOPLE with their own hours, and what the company charges
+for a daywork is by the person. So there is a second, small list, `person_rates`: one live rate per name, company-wide,
+in dollars an hour ex GST, set on the Dayworks screen itself ("Rates by person", listing exactly who is named on the
+period's items with their hours), retired never deleted, every change kept, and carried by a rename on the staff list
+(R140) like their crew rows and tickets. A row signed as "Matty Rogers" costs at Matthew Rodgers' rate because the
+names are resolved the way the timesheet resolves them (R107) — the rate is kept under the name on the staff list.
+
+On the schedule, for someone who sees the money with their code entered (R105, R106), each item's Labour cell becomes
+the people on it, each at "6.5 h × $105 = $682.50", an Amount column carries the item's total, the weeks and the period
+add up, and "Costed schedule (PDF)" prints the same. Everyone else sees the schedule exactly as before — no rate, no
+dollar — and the route makes the same two checks again, because a session can call it without the page. The rules are
+the schedule's own (R72): an item is costed only when every person on it has hours AND a rate; a person without either
+leaves the item's amount blank and is named as the reason ("No rate: Kel Brady", "Hours not recorded: Evan Burke"),
+and an item whose labour is words alone, nobody picked, says "No names on the row" — never a share, never a nought. The
+amount is worked out on the way to the screen, never stored: the hours stay on the signed day and the rate on its list,
+so a rate changed later changes what the schedule shows for every day, which is what a current rate card means; the
+sign-off sheet the head contractor signs (R83) is untouched and still carries no money, since what they sign is what
+was expended, not its price. The three rates Mitchell gave are on the list under the staff names (Matty Rogers is
+Matthew Rodgers); the rest of the crew show "No rate" until he sets them. The PM reads none by default (R136). Not built:
+plant and materials costed on a daywork — nothing was asked, and a machine's rate is by the machine, which the daywork's
+Plant line does not name. Migration 20261020100000, suite 59, `src/lib/dayworks/costing.ts`.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;

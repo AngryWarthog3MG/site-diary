@@ -8,6 +8,8 @@
  * a total that quietly counted a blank as nothing would be inventing a number.
  */
 
+import type { LabourRow } from '../pdf/labour-rows.ts';
+
 export interface DayworkLine {
   date: string;
   entryNo: string;
@@ -16,6 +18,8 @@ export interface DayworkLine {
   dayworkId: string | null;
   works: string;
   labour: string | null;
+  /** The people on the item and each one's hours (README R129); empty where the labour is words alone. */
+  labourRows: LabourRow[];
   plant: string | null;
   materials: string | null;
   hours: number | null;

@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { buildSchedule, readRange, scheduleLines, weekStart, type DayworkLine } from './schedule.ts';
 
 const line = (date: string, works: string, hours: number | null, docket: string | null = null): DayworkLine =>
-  ({ date, entryNo: `KBL-${date}`, entryId: null, dayworkId: `dw-${date}-${works}`, works, labour: null, plant: null, materials: null, hours, docket, docketAddedOn: null });
+  ({ date, entryNo: `KBL-${date}`, entryId: null, dayworkId: `dw-${date}-${works}`, works, labour: null, labourRows: [], plant: null, materials: null, hours, docket, docketAddedOn: null });
 
 test('weeks start on Monday', () => {
   assert.equal(weekStart('2026-09-17'), '2026-09-14'); // Thursday
