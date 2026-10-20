@@ -3400,6 +3400,14 @@ once more for the whole job, never a second sum; shown only with the money open 
 alone otherwise. The costed PDF's week row no longer overflows into the amount (the "+1 not recorded" note wraps under
 the hours) and, with the Docket column gone, Plant and Labour have the room back.
 
+"Add the costed total to the monthly report too." The monthly report is the month bundle (R71): the frozen diary
+record, stored in `exports` and emailed to the job's report list, which the head contractor may be on — money does not
+go into a stored, shared bundle (R105), and a stored part is reused as it was, so a figure printed on it would also go
+stale the day a rate changed. The month's costed total lives beside the bundle instead: the Reports page shows, for
+someone who sees the money with their code entered, "Dayworks costed for October 2026: $X on N of M items", with the
+costed dayworks schedule for that month as a PDF — the costed schedule (R158) with the month's dates, built on demand and
+never stored. The bundle itself is unchanged.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;

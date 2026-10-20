@@ -5057,3 +5057,7 @@ body:has(> .topbar) .homefoot--top { display: none; }
 .dw-alloc__out--on { border-color: rgba(154, 106, 9, 0.5); background: #fffaf0; }
 .dw-alloc__out .caption { margin: 0; }
 .dw-alloc__out .field { margin: 0; max-width: 28rem; }
+
+/* The month's dayworks costed, beside the month bundle on the Reports page (README R161). */
+.weekly-actions__money { flex: 1 1 100%; margin: 0.25rem 0 0; padding: 0.55rem 0.75rem; border: 1px solid rgba(31, 92, 51, 0.3); border-radius: 8px; background: #f6fbf7; font-size: 0.875rem; }
+.weekly-actions__money strong { font-size: 1rem; }

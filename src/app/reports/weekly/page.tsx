@@ -1,7 +1,11 @@
 import Link from 'next/link';
 import { BrandMark } from '@/components/brand-mark';
 import { createClient } from '@/lib/supabase/server';
-import { requireUser, resolveProject, guardScreen, sees } from '@/lib/auth';
+import { requireUser, resolveProject, guardScreen, sees, moneyState } from '@/lib/auth';
+import { fmtMoney } from '@/lib/money';
+import { loadDayworksSchedule } from '@/lib/dayworks/load';
+import { scheduleLines } from '@/lib/dayworks/schedule';
+import { loadDayworksCosting, type DayworksCosting } from '@/lib/dayworks/costing-load';
 import { canExportReports } from '@/lib/roles';
 import { loadWeeklyData, type WeeklyData } from '@/lib/weekly/load';
 import { WeeklyReport, WEEKLY_CSS } from '@/lib/weekly/report';
@@ -42,7 +46,7 @@ export default async function WeeklyReportPage({
 }: {
   searchParams: Promise<{ project?: string; start?: string; end?: string; tab?: string }>;
 }) {
-  const { memberships } = await requireUser();
+  const { memberships, aal } = await requireUser();
   const params = await searchParams;
   const current = resolveProject(memberships, params.project);
   guardScreen(current, 'weekly');
@@ -94,6 +98,21 @@ export default async function WeeklyReportPage({
     }
   }
   const end = params.end && DATE_RE.test(params.end) ? params.end : addDays(start, 6);
+
+  // The month's dayworks costed (README R161), beside the month bundle, for someone who sees the money with their code
+  // entered. The bundle itself carries no money: it is the frozen diary record, stored and emailed to the report list.
+  const monthFrom = `${start.slice(0, 7)}-01`;
+  const monthNext = Number(start.slice(5, 7)) === 12 ? `${Number(start.slice(0, 4)) + 1}-01-01` : `${start.slice(0, 4)}-${String(Number(start.slice(5, 7)) + 1).padStart(2, '0')}-01`;
+  const monthTo = addDays(monthNext, -1);
+  const monthLabel = new Intl.DateTimeFormat('en-AU', { month: 'long', year: 'numeric', timeZone: 'UTC' }).format(new Date(`${monthFrom}T00:00:00Z`));
+  let monthCost: DayworksCosting | null = null;
+  if (moneyState(current, aal) === 'open') {
+    try {
+      const schedule = await loadDayworksSchedule(supabase, current.project_id, { from: monthFrom, to: monthTo });
+      const lines = scheduleLines(schedule);
+      if (lines.length) monthCost = await loadDayworksCosting(supabase, current.project.org.id, current.project_id, schedule, lines, { money: true });
+    } catch { monthCost = null; }
+  }
   let data: WeeklyData | null = null;
   let loadError: string | null = null;
   try {
@@ -254,6 +273,13 @@ export default async function WeeklyReportPage({
             </a>
             <GenerateWeeklyPdf projectId={current.project_id} start={start} end={end} />
             <MonthlyBundleButton projectId={current.project_id} start={start} />
+            {monthCost && (
+              <p className="weekly-actions__money">
+                Dayworks costed for {monthLabel}: <strong className="mono">{monthCost.totals.costed ? fmtMoney(monthCost.totals.amount) : '—'}</strong> ex GST on {monthCost.totals.costed} of {monthCost.costs.length} item{monthCost.costs.length === 1 ? '' : 's'}
+                {monthCost.totals.notCosted ? `, ${monthCost.totals.notCosted} without an amount` : ''}{monthCost.totals.excluded ? `, ${monthCost.totals.excluded} left out of the claim` : ''}
+                {' · '}<a className="claims-cite" href={`/api/dayworks/pdf?project=${current.project_id}&range=custom&from=${monthFrom}&to=${monthTo}&costed=1`} target="_blank" rel="noopener">Costed dayworks for {monthLabel} (PDF)</a>
+              </p>
+            )}
             <p className="weekly-actions__hint">
               Download PDF is this page as a document, for wages and progress. The spreadsheet is
               the labour matrix; the timesheet for payroll is one line per person per day with
