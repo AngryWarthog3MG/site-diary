@@ -5031,3 +5031,21 @@ body:has(> .topbar) .homefoot--top { display: none; }
 .dw-rates__form .button { width: auto; margin: 0; padding: 0.4rem 0.9rem; }
 .dw-rates__add { display: grid; gap: 0.5rem; margin-top: 0.5rem; padding: 0.6rem 0.7rem; border: 1px dashed var(--ink-12); border-radius: 8px; }
 .dw-rates__add .fieldcell { margin: 0; }
+
+/* Picking people and plant for a daywork (README R159): the editor opens as a row under the item. */
+.dw-pick { display: block; margin-top: 0.3rem; }
+.dw-row--open > td { background: #f6fbf7; }
+.dw-row--editor > td { padding: 0 0 0.75rem; background: #f6fbf7; }
+.dw-alloc { margin: 0.25rem 0 0; padding: 0.85rem 0.9rem; border: 1px solid rgba(31, 92, 51, 0.35); border-radius: 10px; background: #fff; display: grid; gap: 0.7rem; }
+.dw-alloc__head .label { margin: 0 0 0.2rem; }
+.dw-alloc__head .caption { margin: 0; }
+.dw-alloc__cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr)); gap: 0.9rem 1.5rem; }
+.dw-alloc__col { display: grid; gap: 0.4rem; align-content: start; }
+.dw-alloc__col > .label { margin: 0; }
+.dw-alloc__col > .caption { margin: 0; }
+.dw-alloc__line { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; }
+.dw-alloc__line .field { margin: 0; flex: 1 1 10rem; }
+.dw-alloc__line .dw-alloc__hrs { flex: 0 0 4.5rem; }
+.dw-alloc .fieldcell { margin: 0; }
+.dw-alloc .regs__actions { margin-top: 0; }
+.dw-rates__sub { margin-top: 0.9rem; }

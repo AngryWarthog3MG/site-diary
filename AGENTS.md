@@ -444,8 +444,15 @@ improvising; the register once shipped dead because a live smoke test was skippe
   `costLine` — each person's hours × the company's rate for their NAME, an item costed only when every person has both,
   never a share; `totalCosts`, `peopleInPeriod`), `costing-load.ts` (table `person_rates`, org-wide, one live rate per
   name, read `app.sees_org_money`, written by an admin at aal2, retired never deleted, changes in `person_rate_changes`,
-  carried by `rename_staff`; names resolved with the timesheet's `makeResolver`). `person-rates-block.tsx` sets them on
-  the Dayworks screen. The sign-off sheet never carries money. Suite 59. `signoff.ts` + table `dayworks_signoffs`: the head contractor's signature on a sheet, with the countersigned
+  carried by `rename_staff`; names resolved with the timesheet's `makeResolver`). `person-rates-block.tsx` (`RatesBlock`) sets them
+  on the Dayworks screen, and the rate card's machine rates with them. PICKED PEOPLE AND PLANT (README R159): table
+  `daywork_costings`, one row per SIGNED daywork beside the record — the people only where the row has no `labour_rows`
+  (the trigger refuses otherwise; the record wins), the machines always, hours 0–24 or null; keepers write
+  (`app.can_manage_registers`), changes in `daywork_costing_changes`, never deleted, never in the hash or on the
+  docket or the sign-off sheet. `dayworks-row.tsx` draws the item and the editor under it; `costLine` takes
+  `{ rows, allocatedLabour, plant, plantText }` and `whyNoAmount` is the one reason an item has none. Machines price
+  from `rate_items` kind plant via `plantRateIndex` (by `plant_id`, else by name). The sign-off sheet never carries
+  money. Suites 59, 60. `signoff.ts` + table `dayworks_signoffs`: the head contractor's signature on a sheet, with the countersigned
   file and what the sheet said AT THE TIME — frozen, so a later correction cannot change what they signed; `driftFrom`
   says when the schedule has moved since. `app.can_manage_registers` writes it; the labourer reads none of it. Suite 34,
   README R86. CLIENT APPROVAL (README R125): a sign-off is also the signature itself, drawn on the screen (`signature_path`

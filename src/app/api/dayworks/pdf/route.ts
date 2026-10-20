@@ -96,7 +96,7 @@ export async function GET(request: Request) {
       if (!sees) return fail('forbidden', 'The costed schedule is for someone who sees the money.', 403);
       if (aal.current !== 'aal2') return fail('forbidden', 'Enter your two-factor code to print the costed schedule.', 403);
       try {
-        costing = await loadDayworksCosting(supabase, String(project.org_id), projectId, data, scheduleLines(data));
+        costing = await loadDayworksCosting(supabase, String(project.org_id), projectId, data, scheduleLines(data), { money: true });
       } catch (err) {
         return fail('server_error', err instanceof Error ? err.message : 'Could not read the rates.', 500);
       }

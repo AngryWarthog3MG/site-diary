@@ -7,7 +7,7 @@ import type { DayworksScheduleData } from './load';
 import type { DayworkPhotos } from './photos';
 import { itemRanges } from './signoff';
 import type { DayworksCosting } from './costing-load';
-import { fmtAmount } from './costing';
+import { fmtAmount, whyNoAmount } from './costing';
 
 /** A signature already given for items on the sheet (README R125): which items, by whom, when, and the drawn signature. */
 export interface SheetApproval {
@@ -34,9 +34,9 @@ export function dayworksScheduleHtml(s: DayworksScheduleData, meta: { orgName: s
   const costOf = new Map(costing ? lines.map((l, i) => [l, costing.costs[i]] as const) : []);
   const amountCell = (l: (typeof lines)[number]) => {
     const c = costOf.get(l);
-    if (!c || c.noRows) return '<td class="n amt amber">No names on the row</td>';
-    if (c.amount != null) return `<td class="n amt mono">${esc(fmtAmount(c.amount))}</td>`;
-    return `<td class="n amt amber">${c.missingRate.length ? `No rate: ${esc(c.missingRate.join(', '))}` : `No hours: ${esc(c.missingHours.join(', '))}`}</td>`;
+    if (!c) return '<td class="n amt amber">—</td>';
+    if (c.amount != null) return `<td class="n amt mono">${esc(fmtAmount(c.amount))}${c.plantNotCosted ? '<span class="pp amber">plant not costed</span>' : ''}</td>`;
+    return `<td class="n amt amber">${esc(whyNoAmount(c))}</td>`;
   };
   const labourCell = (l: (typeof lines)[number]) => {
     const c = costOf.get(l);
@@ -44,12 +44,17 @@ export function dayworksScheduleHtml(s: DayworksScheduleData, meta: { orgName: s
     return c.people.map((pp) => `<span class="pp${pp.amount == null ? ' amber' : ''}"><b>${esc(pp.name)}</b> ${pp.hours == null ? 'no hours' : `${hrs(pp.hours)} h`} × ${pp.rate == null ? 'no rate' : esc(fmtAmount(pp.rate))}${pp.amount != null ? ` = ${esc(fmtAmount(pp.amount))}` : ''}</span>`).join('');
   };
   // Six cells before Hours in either layout; the Amount cell comes after Hours.
+  const plantCell = (l: (typeof lines)[number]) => {
+    const c = costOf.get(l);
+    if (!c || c.machines.length === 0) return esc(l.plant ?? '—');
+    return c.machines.map((m) => `<span class="pp${m.amount == null ? ' amber' : ''}"><b>${esc(m.name)}</b> ${m.hours == null ? 'no hours' : `${hrs(m.hours)} h`} × ${m.rate == null ? 'no rate' : esc(fmtAmount(m.rate))}${m.amount != null ? ` = ${esc(fmtAmount(m.amount))}` : ''}</span>`).join('');
+  };
   const cols = 6;
   const body = s.weeks.length === 0
     ? '<p class="src">No dayworks on signed days in this period.</p>'
     : s.weeks.map((w, wi) => [
       `<tr class="wk"><td colspan="${cols}">Week ${esc(fmtDate(w.start))} to ${esc(fmtDate(w.end))}</td><td class="n">${hrs(w.hours)}${w.hoursNotRecorded ? ` <span class="amber">+${w.hoursNotRecorded} not recorded</span>` : ''}</td>${costing ? `<td class="n amt">${costing.weeks[wi]?.costed ? esc(fmtAmount(costing.weeks[wi].amount)) : '—'}${costing.weeks[wi]?.notCosted ? ` <span class="amber">+${costing.weeks[wi].notCosted} not costed</span>` : ''}</td>` : ''}</tr>`,
-      ...w.lines.map((l) => `<tr><td class="mono d">${esc(fmtDate(l.date))}</td><td>${esc(l.works)}</td><td>${labourCell(l)}</td><td>${esc(l.plant ?? '—')}</td><td>${esc(l.materials ?? '—')}</td><td class="mono${l.docket ? '' : ' amber'}">${esc(l.docket ?? 'To chase')}</td><td class="n mono${l.hours == null ? ' amber' : ''}">${l.hours == null ? 'Not recorded' : hrs(l.hours)}</td>${costing ? amountCell(l) : ''}</tr>`),
+      ...w.lines.map((l) => `<tr><td class="mono d">${esc(fmtDate(l.date))}</td><td>${esc(l.works)}</td><td>${labourCell(l)}</td><td>${costing ? plantCell(l) : esc(l.plant ?? '—')}</td><td>${esc(l.materials ?? '—')}</td><td class="mono${l.docket ? '' : ' amber'}">${esc(l.docket ?? 'To chase')}</td><td class="n mono${l.hours == null ? ' amber' : ''}">${l.hours == null ? 'Not recorded' : hrs(l.hours)}</td>${costing ? amountCell(l) : ''}</tr>`),
     ].join('')).join('');
   return [
     '<!doctype html>', '<html lang="en-AU"><head><meta charset="utf-8">',
@@ -64,7 +69,7 @@ export function dayworksScheduleHtml(s: DayworksScheduleData, meta: { orgName: s
     s.weeks.length ? `<tr class="tot"><td colspan="${cols}">Total — ${t.items} item${t.items === 1 ? '' : 's'} of work over ${t.days} day${t.days === 1 ? '' : 's'}</td><td class="n">${hrs(t.hours)}</td>${costing ? `<td class="n amt">${costing.totals.costed ? esc(fmtAmount(costing.totals.amount)) : '—'}${costing.totals.notCosted ? ` <span class="amber">+${costing.totals.notCosted} not costed</span>` : ''}</td>` : ''}</tr>` : '',
     '</tbody></table>',
     s.truncated ? '<p class="src amber">More than 1,000 dayworks in this period — only the first 1,000 are shown and totalled. Choose a shorter period.</p>' : '',
-    `<p class="src">From signed diary entries only; a corrected day is counted once. Hours are totalled only where recorded${t.hoursNotRecorded ? ` — ${t.hoursNotRecorded} item${t.hoursNotRecorded === 1 ? ' has' : 's have'} no hours and ${t.hoursNotRecorded === 1 ? 'is' : 'are'} not counted` : ''}.${s.unsignedItems ? ` ${s.unsignedItems} more daywork${s.unsignedItems === 1 ? ' is' : 's are'} on ${s.unsignedDays} day${s.unsignedDays === 1 ? '' : 's'} not yet signed and not included.` : ''} Each line can be checked against its signed daily docket.${costing ? ` Amounts are each person's recorded hours at the company's rate for their name, ex GST, added up; an item is costed only when every person on it has hours and a rate${costing.totals.notCosted ? ` — ${costing.totals.notCosted} item${costing.totals.notCosted === 1 ? ' is' : 's are'} without an amount and not in the total` : ''}. Rates as at the day of printing.` : ''} Printed ${esc(fmtDate(meta.today))}.</p>`,
+    `<p class="src">From signed diary entries only; a corrected day is counted once. Hours are totalled only where recorded${t.hoursNotRecorded ? ` — ${t.hoursNotRecorded} item${t.hoursNotRecorded === 1 ? ' has' : 's have'} no hours and ${t.hoursNotRecorded === 1 ? 'is' : 'are'} not counted` : ''}.${s.unsignedItems ? ` ${s.unsignedItems} more daywork${s.unsignedItems === 1 ? ' is' : 's are'} on ${s.unsignedDays} day${s.unsignedDays === 1 ? '' : 's'} not yet signed and not included.` : ''} Each line can be checked against its signed daily docket.${costing ? ` Amounts are each person's hours at the company's rate for their name and each machine's hours at the rate card's rate, ex GST, added up; an item is costed only when every person and machine on it has hours and a rate${costing.totals.notCosted ? ` — ${costing.totals.notCosted} item${costing.totals.notCosted === 1 ? ' is' : 's are'} without an amount and not in the total` : ''}${costing.totals.plantNotCosted ? `; ${costing.totals.plantNotCosted} item${costing.totals.plantNotCosted === 1 ? ' has' : 's have'} plant recorded with no machine picked, so ${costing.totals.plantNotCosted === 1 ? 'its' : 'their'} amount is labour alone` : ''}. Where a day named nobody on an item, the people and the machines are the office's costing allocation, kept beside the signed day. Rates as at the day of printing.` : ''} Printed ${esc(fmtDate(meta.today))}.</p>`,
     '</section></div></body></html>',
   ].join('');
 }

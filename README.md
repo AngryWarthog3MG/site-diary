@@ -3356,6 +3356,32 @@ Matthew Rodgers); the rest of the crew show "No rate" until he sets them. The PM
 plant and materials costed on a daywork — nothing was asked, and a machine's rate is by the machine, which the daywork's
 Plant line does not name. Migration 20261020100000, suite 59, `src/lib/dayworks/costing.ts`.
 
+**R159. Picking the people and the plant a daywork is costed from.** "If people are not selected, allow me to select
+them from a dropdown so we capture all hours correctly. Do the same for plant — I need to add costs for plant used too."
+Twenty-one of Curtin's dayworks were signed with their labour as words ("2x Marcus Hayden, Evan Burke"), and every
+daywork names its plant as words ("Vac Trailer, 1.8t Excavator"); R158 could price neither. A signed day never changes
+(non-negotiable 2), and a correction of twenty-one days to add what the office already knows is not how a claim gets
+built. So the office keeps, BESIDE the day, what the claim is costed from: `daywork_costings`, one row per signed
+daywork, with the people (only where the signed row names nobody — where it does, the record wins and the database
+refuses a second list) and the machines, each with hours. It is a costing allocation, not the record: never in the hash,
+never on the docket, never on the sheet the head contractor signs, and the schedule says beside the item that the people
+were "picked by the office" and shows what the day said. Register keepers write it (the supervisor can do it without
+the money); every change is kept; never deleted; the day must be signed; hours are 0–24 or blank; a machine is on the
+company's register or named. On the screen, "Pick people" and "Pick plant" on the item open the editor under it: a
+dropdown of the job's crew then the staff list ("Someone else…" for a one-off), a dropdown of the job's machines
+("Another machine…"), hours beside each. The recorded hours are shown with a note when the people's hours do not add
+up to them — a note, not a refusal, because the day's figure may have been the total between them and only the office
+can say the split; nothing is divided for anyone (invariant 4).
+
+Machines are priced from the rate card's plant rates (R104): the rate that names the machine, else one whose name is
+the machine's; "Rates by person and machine" on the Dayworks screen lists every machine picked in the period and an
+admin sets a company rate there, which is the same `rate_items` row the Rates page shows. An item's amount is labour
+plus plant, only when every person and machine on it has hours and a rate; an item whose day recorded plant with no
+machine picked yet is costed on labour alone and says "plant not costed", on the screen, the PDF and the totals. A
+correction of a day starts the allocation again for the new row, since its people come with it (R129). Not built:
+plant rows on the diary itself — the daywork's Plant line stays words on the day, and the office picks the machines
+once, at costing. Migration 20261020110000, suite 60, `src/app/dayworks/dayworks-row.tsx`.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;
