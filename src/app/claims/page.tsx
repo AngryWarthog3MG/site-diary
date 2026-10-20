@@ -10,6 +10,11 @@ import { BrandMark } from '@/components/brand-mark';
 import { fmtDate } from '@/lib/pdf/dates';
 import { RegisterSection } from './register-section';
 import { AddDocketButton } from './daywork-docket';
+import { fmtMoney } from '@/lib/money';
+import { loadDayworksSchedule } from '@/lib/dayworks/load';
+import { scheduleLines } from '@/lib/dayworks/schedule';
+import { loadDayworksCosting, type DayworksCosting } from '@/lib/dayworks/costing-load';
+import { whyNoAmount, type LineCost } from '@/lib/dayworks/costing';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Claims · Kooboolong IMS' };
@@ -48,6 +53,19 @@ export default async function ClaimsPage({
     }, { money: moneyAccess === 'open' });
   } catch (error) {
     loadError = error instanceof Error ? error.message : 'Could not load the register.';
+  }
+  // The dayworks costed (README R158–R161), for someone who sees the money with their code entered: the same costing
+  // the Dayworks screen shows, for the whole job, so the register carries the claim's figure with no second arithmetic.
+  let dwCosting: DayworksCosting | null = null;
+  const dwCostOf = new Map<string, LineCost>();
+  if (moneyAccess === 'open' && data && data.dayworks.rows.length > 0) {
+    try {
+      const supabase = await createClient();
+      const schedule = await loadDayworksSchedule(supabase, current.project_id, { from: null, to: null });
+      const lines = scheduleLines(schedule);
+      dwCosting = await loadDayworksCosting(supabase, current.project.org.id, current.project_id, schedule, lines, { money: true });
+      lines.forEach((l, i) => { if (l.dayworkId) dwCostOf.set(l.dayworkId, dwCosting!.costs[i]); });
+    } catch { dwCosting = null; }
   }
 
   const entryLink = (entryNo: string) => {
@@ -90,8 +108,8 @@ export default async function ClaimsPage({
           </div>
           <div className={`claims-tile${data.dayworks.missingDockets > 0 ? ' claims-tile--amber' : ''}`}>
             <span className="label">Dayworks</span>
-            <strong>{data.dayworks.totalHours}h</strong>
-            <span>{data.dayworks.rows.length} item{data.dayworks.rows.length === 1 ? '' : 's'}{data.dayworks.missingDockets > 0 ? ` · ${data.dayworks.missingDockets} without a docket` : ' · all docketed'}</span>
+            <strong>{dwCosting ? (dwCosting.totals.costed ? fmtMoney(dwCosting.totals.amount) : '—') : `${data.dayworks.totalHours}h`}</strong>
+            <span>{dwCosting ? `${data.dayworks.totalHours}h · ${dwCosting.totals.costed} of ${data.dayworks.rows.length} costed${dwCosting.totals.excluded ? ` · ${dwCosting.totals.excluded} left out` : ''}` : `${data.dayworks.rows.length} item${data.dayworks.rows.length === 1 ? '' : 's'}`}{data.dayworks.missingDockets > 0 ? ` · ${data.dayworks.missingDockets} without a docket` : ' · all docketed'}</span>
           </div>
         </div>
       )}
@@ -185,7 +203,7 @@ export default async function ClaimsPage({
               </p>
             ) : (
               <>
-                <p className="claims-total">{data.dayworks.totalHours} T&amp;M hours recorded · <Link className="claims-cite" href={`/dayworks?project=${current.project_id}`}>Dayworks schedule by period</Link></p>
+                <p className="claims-total">{data.dayworks.totalHours} T&amp;M hours recorded{dwCosting ? <> · <strong>{dwCosting.totals.costed ? fmtMoney(dwCosting.totals.amount) : '—'}</strong> ex GST costed on {dwCosting.totals.costed} of {data.dayworks.rows.length} item{data.dayworks.rows.length === 1 ? '' : 's'}{dwCosting.totals.notCosted ? `, ${dwCosting.totals.notCosted} without an amount` : ''}{dwCosting.totals.excluded ? `, ${dwCosting.totals.excluded} left out of the claim` : ''}</> : null} · <Link className="claims-cite" href={`/dayworks?project=${current.project_id}`}>Dayworks schedule by period</Link></p>
                 <div className="claims-tablewrap">
                   <table className="claims-table">
                     <thead>
@@ -195,6 +213,7 @@ export default async function ClaimsPage({
                         <th>Description</th>
                         <th>Docket</th>
                         <th className="n">Hours</th>
+                        {dwCosting && <th className="n">Amount</th>}
                         <th>Labour</th>
                       </tr>
                     </thead>
@@ -217,6 +236,12 @@ export default async function ClaimsPage({
                             )}
                           </td>
                           <td className="n mono">{row.hours ?? '—'}</td>
+                          {dwCosting && (() => {
+                            const c = row.daywork_id ? dwCostOf.get(row.daywork_id) : undefined;
+                            if (!c) return <td className="n claims-flag">—</td>;
+                            if (c.amount != null && !c.excluded) return <td className="n mono">{fmtMoney(c.amount)}{c.plantNotCosted ? <span className="vr-note claims-flag">plant not costed</span> : null}</td>;
+                            return <td className="n claims-flag">{whyNoAmount(c)}</td>;
+                          })()}
                           <td>{row.labour ?? '—'}</td>
                         </tr>
                       ))}

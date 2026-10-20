@@ -3392,6 +3392,14 @@ the reason, kept on `daywork_costings.excluded`, logged, reversible. The costed 
 its footnote with the reason; no total, no rate list and no person's hours carry it; on the screen it is dimmed with
 "Left out of the claim" where its amount would be. The 21/09 vac truck item is marked so at Mitchell's word.
 
+**R161. The costed total on the claims register.** "Add the costed total to the claims register." The register's
+Dayworks tile and section now carry the same figure the Dayworks screen shows — the whole job's items costed by person
+and machine (R158, R159), how many of them are costed, how many left out — and the register's dayworks table an Amount
+column, item by item with the one reason where there is none. It is the same loader and the same arithmetic, called
+once more for the whole job, never a second sum; shown only with the money open (R105, R106), the tile reads hours
+alone otherwise. The costed PDF's week row no longer overflows into the amount (the "+1 not recorded" note wraps under
+the hours) and, with the Docket column gone, Plant and Labour have the room back.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;
