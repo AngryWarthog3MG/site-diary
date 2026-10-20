@@ -54,6 +54,9 @@ export interface LineCost {
   noRows: boolean;
   /** The day recorded plant in words and no machine has been picked for it: the amount is labour alone. */
   plantNotCosted: boolean;
+  /** Left out of the claim by the office (R160): costed for the record, carried by no total. */
+  excluded: boolean;
+  excludedReason: string | null;
 }
 
 export interface CostTotals {
@@ -63,6 +66,8 @@ export interface CostTotals {
   notCosted: number;
   /** Items whose amount leaves out plant the day recorded. */
   plantNotCosted: number;
+  /** Items left out of the claim: in none of the other counts. */
+  excluded: number;
 }
 
 export const normName = (s: string) => s.trim().toLowerCase().replace(/\s+/g, ' ');
@@ -96,6 +101,9 @@ export interface CostLineInput {
   plant?: readonly PlantRow[];
   /** The day's plant as words, so an item with plant and no machines picked can say so. */
   plantText?: string | null;
+  /** Left out of the claim by the office (R160). */
+  excluded?: boolean;
+  excludedReason?: string | null;
 }
 
 export function costLine(
@@ -135,21 +143,25 @@ export function costLine(
     missingPlantHours: machines.filter((m) => m.hours == null).map((m) => m.name),
     noRows,
     plantNotCosted: machines.length === 0 && Boolean((input.plantText ?? '').trim()),
+    excluded: Boolean(input.excluded),
+    excludedReason: input.excluded ? (input.excludedReason?.trim() || null) : null,
   };
 }
 
 export function totalCosts(costs: readonly LineCost[]): CostTotals {
-  let amount = 0; let costed = 0; let notCosted = 0; let plantNotCosted = 0;
+  let amount = 0; let costed = 0; let notCosted = 0; let plantNotCosted = 0; let excluded = 0;
   for (const c of costs) {
+    if (c.excluded) { excluded += 1; continue; }
     if (c.plantNotCosted) plantNotCosted += 1;
     if (c.amount == null) { notCosted += 1; continue; }
     costed += 1; amount = round2(amount + c.amount);
   }
-  return { amount, costed, notCosted, plantNotCosted };
+  return { amount, costed, notCosted, plantNotCosted, excluded };
 }
 
 /** One line's reason for having no amount, in the schedule's words; empty when it has one. */
 export function whyNoAmount(c: LineCost): string {
+  if (c.excluded) return 'Left out of the claim';
   if (c.amount != null) return '';
   if (c.noRows) return 'People not on the row';
   const parts: string[] = [];
@@ -173,6 +185,7 @@ export interface PersonInPeriod {
 export function peopleInPeriod(costs: readonly LineCost[]): PersonInPeriod[] {
   const by = new Map<string, PersonInPeriod>();
   for (const c of costs) {
+    if (c.excluded) continue;
     const seen = new Set<string>();
     for (const p of c.people) {
       const key = normName(p.person);
@@ -198,6 +211,7 @@ export interface MachineInPeriod {
 export function machinesInPeriod(costs: readonly LineCost[]): MachineInPeriod[] {
   const by = new Map<string, MachineInPeriod>();
   for (const c of costs) {
+    if (c.excluded) continue;
     const seen = new Set<string>();
     for (const m of c.machines) {
       const key = m.plant_id ?? `name:${normName(m.name)}`;

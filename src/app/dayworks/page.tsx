@@ -205,7 +205,7 @@ export default async function DayworksPage({ searchParams }: { searchParams: Pro
             <div className="claims-tablewrap">
               <table className="claims-table">
                 <thead>
-                  <tr><th>Date</th><th>Works completed</th><th className="n">Hours</th>{showMoney && <th className="n">Amount</th>}<th>Approved</th><th>Docket</th><th>Labour</th><th>Plant</th><th>Materials</th></tr>
+                  <tr><th>Date</th><th>Works completed</th><th className="n">Hours</th>{showMoney && <th className="n">Amount</th>}{!showMoney && <><th>Approved</th><th>Docket</th></>}<th>Labour</th><th>Plant</th><th>Materials</th></tr>
                 </thead>
                 <tbody>
                   {data.weeks.map((w, wi) => [
@@ -213,7 +213,7 @@ export default async function DayworksPage({ searchParams }: { searchParams: Pro
                       <td colSpan={2}><strong>Week {fmtDate(w.start)} to {fmtDate(w.end)}</strong></td>
                       <td className="n mono"><strong>{hrs(w.hours)}</strong>{w.hoursNotRecorded ? <span className="claims-flag"> +{w.hoursNotRecorded} not recorded</span> : null}</td>
                       {showMoney && <td className="n mono"><strong>{weekCost(wi)?.costed ? fmtMoney(weekCost(wi)!.amount) : '—'}</strong>{weekCost(wi)?.notCosted ? <span className="claims-flag"> +{weekCost(wi)!.notCosted} not costed</span> : null}</td>}
-                      <td colSpan={5} />
+                      <td colSpan={showMoney ? 3 : 5} />
                     </tr>,
                     ...w.lines.map((l, i) => (
                       <DayworksRow
@@ -232,7 +232,7 @@ export default async function DayworksPage({ searchParams }: { searchParams: Pro
                         approved={approvedBy.get(l) ? { signedOn: approvedBy.get(l)!.signed_on, name: approvedBy.get(l)!.signed_by_name } : null}
                         cost={costOf.get(l) ?? null}
                         money={showMoney}
-                        allocation={l.dayworkId && costing?.allocations[l.dayworkId] ? { labour: costing.allocations[l.dayworkId].labour, plant: costing.allocations[l.dayworkId].plant, note: costing.allocations[l.dayworkId].note } : null}
+                        allocation={l.dayworkId && costing?.allocations[l.dayworkId] ? { labour: costing.allocations[l.dayworkId].labour, plant: costing.allocations[l.dayworkId].plant, note: costing.allocations[l.dayworkId].note, excluded: costing.allocations[l.dayworkId].excluded, excludedReason: costing.allocations[l.dayworkId].excludedReason } : null}
                         canAllocate={keeper && !data.truncated}
                         people={people}
                         machines={machines}
@@ -242,8 +242,8 @@ export default async function DayworksPage({ searchParams }: { searchParams: Pro
                   <tr className="dw-total">
                     <td colSpan={2}><strong>Total: {data.totals.items} item{data.totals.items === 1 ? '' : 's'} of work over {data.totals.days} day{data.totals.days === 1 ? '' : 's'}</strong></td>
                     <td className="n mono"><strong>{hrs(data.totals.hours)}</strong></td>
-                    {showMoney && costing && <td className="n mono"><strong>{costing.totals.costed ? fmtMoney(costing.totals.amount) : '—'}</strong>{costing.totals.notCosted ? <span className="claims-flag"> +{costing.totals.notCosted} not costed</span> : null}</td>}
-                    <td colSpan={5} />
+                    {showMoney && costing && <td className="n mono"><strong>{costing.totals.costed ? fmtMoney(costing.totals.amount) : '—'}</strong>{costing.totals.notCosted ? <span className="claims-flag"> +{costing.totals.notCosted} not costed</span> : null}{costing.totals.excluded ? <span className="vr-note">{costing.totals.excluded} left out of the claim</span> : null}</td>}
+                    <td colSpan={showMoney ? 3 : 5} />
                   </tr>
                 </tbody>
               </table>

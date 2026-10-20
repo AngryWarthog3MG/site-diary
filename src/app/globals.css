@@ -5049,3 +5049,11 @@ body:has(> .topbar) .homefoot--top { display: none; }
 .dw-alloc .fieldcell { margin: 0; }
 .dw-alloc .regs__actions { margin-top: 0; }
 .dw-rates__sub { margin-top: 0.9rem; }
+
+/* An item left out of the claim (README R160): dimmed on the costed view, the reason under the words. */
+.dw-row--excluded > td { opacity: 0.55; }
+.dw-row--excluded > td:nth-child(2) { text-decoration: line-through; text-decoration-color: var(--ink-40); }
+.dw-alloc__out { display: grid; gap: 0.4rem; padding: 0.6rem 0.7rem; border: 1px dashed var(--ink-12); border-radius: 8px; }
+.dw-alloc__out--on { border-color: rgba(154, 106, 9, 0.5); background: #fffaf0; }
+.dw-alloc__out .caption { margin: 0; }
+.dw-alloc__out .field { margin: 0; max-width: 28rem; }

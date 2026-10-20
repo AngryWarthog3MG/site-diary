@@ -28,7 +28,7 @@ export interface DayworksRowProps {
   /** The item costed — present for a register keeper; its amounts only when `money`. */
   cost: LineCost | null;
   money: boolean;
-  allocation: { labour: LabourRow[]; plant: PlantRow[]; note: string | null } | null;
+  allocation: { labour: LabourRow[]; plant: PlantRow[]; note: string | null; excluded: boolean; excludedReason: string | null } | null;
   canAllocate: boolean;
   /** The job's people, to pick from (R128): the crew list and the staff list. */
   people: string[];
@@ -49,17 +49,18 @@ export function DayworksRow(p: DayworksRowProps) {
   const cost = p.cost;
   const labourFromRecord = cost?.labourFrom === 'record';
   const canPick = p.canAllocate && Boolean(p.dayworkId);
-  const colSpan = 8 + (p.money ? 1 : 0);
+  const colSpan = p.money ? 7 : 8;
+  const excluded = Boolean(cost?.excluded);
 
   return (
     <>
-      <tr className={open ? 'dw-row dw-row--open' : 'dw-row'}>
+      <tr className={`dw-row${open ? ' dw-row--open' : ''}${excluded && p.money ? ' dw-row--excluded' : ''}`}>
         <td className="mono">{p.entryId ? <Link className="claims-cite" href={`/entries/${p.entryId}/signed`}>{fmtDate(p.date)}</Link> : fmtDate(p.date)}</td>
         <td>{p.works}</td>
         <td className={`n mono${p.hours == null ? ' claims-flag' : ''}`}>{p.hours == null ? 'Not recorded' : hrs(p.hours)}</td>
         {p.money && <AmountCell cost={cost} />}
-        <td className={p.approved ? undefined : 'claims-flag'}>{p.approved ? <>Signed {fmtDate(p.approved.signedOn)}<span className="vr-note">{p.approved.name}</span></> : 'Not yet'}</td>
-        <td className={p.docket ? 'mono' : 'claims-flag'}>{p.docket ?? 'To chase'}{p.docketAddedOn ? <span className="vr-note">added {fmtDate(p.docketAddedOn)}</span> : null}</td>
+        {!p.money && <td className={p.approved ? undefined : 'claims-flag'}>{p.approved ? <>Signed {fmtDate(p.approved.signedOn)}<span className="vr-note">{p.approved.name}</span></> : 'Not yet'}</td>}
+        {!p.money && <td className={p.docket ? 'mono' : 'claims-flag'}>{p.docket ?? 'To chase'}{p.docketAddedOn ? <span className="vr-note">added {fmtDate(p.docketAddedOn)}</span> : null}</td>}
         <td>
           {cost && !cost.noRows ? <LabourCosted cost={cost} money={p.money} /> : (p.labour ?? '—')}
           {cost?.labourFrom === 'allocation' && <span className="vr-note">picked by the office — the day says: {p.labour ?? '—'}</span>}
@@ -71,7 +72,7 @@ export function DayworksRow(p: DayworksRowProps) {
           {cost && cost.machines.length > 0 ? <PlantCosted cost={cost} money={p.money} /> : (p.plant ?? '—')}
           {cost && cost.machines.length > 0 && <span className="vr-note">the day says: {p.plant ?? '—'}</span>}
           {canPick && cost && !open && (
-            <button type="button" className="quotebtn dw-pick" onClick={() => setOpen(true)}>{cost.machines.length ? 'Change plant' : 'Pick plant'}</button>
+            <button type="button" className="quotebtn dw-pick" onClick={() => setOpen(true)}>{cost.machines.length ? 'Change plant' : 'Pick plant'}{excluded ? ' · put back' : ''}</button>
           )}
         </td>
         <td>{p.materials ?? '—'}</td>
@@ -102,6 +103,7 @@ export function DayworksRow(p: DayworksRowProps) {
 /** The item's amount, or the one reason it has none (README R158). */
 function AmountCell({ cost }: { cost: LineCost | null }) {
   if (!cost) return <td className="n claims-flag">—</td>;
+  if (cost.excluded) return <td className="n claims-flag">Left out of the claim{cost.excludedReason ? <span className="vr-note">{cost.excludedReason}</span> : null}</td>;
   if (cost.amount != null) {
     return <td className="n mono">{fmtMoney(cost.amount)}{cost.plantNotCosted ? <span className="vr-note claims-flag">plant not costed</span> : null}</td>;
   }
@@ -152,7 +154,7 @@ type PlantDraft = { pick: string; name: string; hours: string };
  */
 function AllocationEditor({ projectId, dayworkId, recordedHours, labourText, plantText, labourLocked, initial, people, machines, onClose, onSaved }: {
   projectId: string; dayworkId: string; recordedHours: number | null; labourText: string | null; plantText: string | null; labourLocked: boolean;
-  initial: { labour: LabourRow[]; plant: PlantRow[]; note: string | null } | null;
+  initial: { labour: LabourRow[]; plant: PlantRow[]; note: string | null; excluded: boolean; excludedReason: string | null } | null;
   people: string[]; machines: Array<{ id: string; name: string; plantNo: string | null }>;
   onClose: () => void; onSaved: () => void;
 }) {
@@ -162,6 +164,8 @@ function AllocationEditor({ projectId, dayworkId, recordedHours, labourText, pla
   const [labour, setLabour] = useState<LabourDraft[]>(initial?.labour.map(toLabour) ?? []);
   const [plant, setPlant] = useState<PlantDraft[]>(initial?.plant.map(toPlant) ?? []);
   const [note, setNote] = useState(initial?.note ?? '');
+  const [excluded, setExcluded] = useState(initial?.excluded ?? false);
+  const [reason, setReason] = useState(initial?.excludedReason ?? '');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -179,7 +183,7 @@ function AllocationEditor({ projectId, dayworkId, recordedHours, labourText, pla
     setBusy(true);
     try {
       const { error: e } = await createClient().from('daywork_costings').upsert(
-        { project_id: projectId, daywork_id: dayworkId, labour: labourLocked ? [] : labourRows, plant: plantRows, note: note.trim() || null },
+        { project_id: projectId, daywork_id: dayworkId, labour: labourLocked ? [] : labourRows, plant: plantRows, note: note.trim() || null, excluded, excluded_reason: excluded ? reason.trim() || null : null },
         { onConflict: 'daywork_id' },
       );
       if (e) throw new Error(/row-level security/i.test(e.message) ? 'Only someone who keeps the registers picks people and plant.' : e.message);
@@ -240,6 +244,11 @@ function AllocationEditor({ projectId, dayworkId, recordedHours, labourText, pla
       </div>
       <label className="fieldcell"><span className="label">Note · optional</span>
         <input className="field field--sm" value={note} placeholder="Why it is split this way" onChange={(e) => setNote(e.target.value)} /></label>
+      <div className={`dw-alloc__out${excluded ? ' dw-alloc__out--on' : ''}`}>
+        <label className="regs__tick"><input type="checkbox" checked={excluded} onChange={(e) => setExcluded(e.target.checked)} /><span>Leave this item out of the claim</span></label>
+        {excluded && <input className="field field--sm" value={reason} placeholder="Why · optional" aria-label="Why it is left out" onChange={(e) => setReason(e.target.value)} />}
+        <p className="caption">It stays on the record, the schedule and the sign-off sheet, which say what was expended; the costed schedule drops it and says so, and no total carries it. Untick to put it back.</p>
+      </div>
       {error && <p className="alert">{error}</p>}
       <div className="regs__actions">
         <button type="button" className="button" disabled={busy} onClick={() => void save()}>{busy ? 'Saving…' : 'Save'}</button>

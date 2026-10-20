@@ -3382,6 +3382,16 @@ correction of a day starts the allocation again for the new row, since its peopl
 plant rows on the diary itself — the daywork's Plant line stays words on the day, and the office picks the machines
 once, at costing. Migration 20261020110000, suite 60, `src/app/dayworks/dayworks-row.tsx`.
 
+**R160. The costed schedule, and an item left out of the claim.** "In the costed schedule, remove Approved and Docket.
+Also remove 21/09/2026 Ivac truck plus driver excavation of valves." The first is a column change: the costed view on
+the screen and the costed PDF drop Approved and Docket, which belong to chasing and sign-off, not to pricing; the plain
+schedule and the sign-off sheet keep them. The second cannot be a removal: the day is signed, and a signed day never
+changes (non-negotiable 2) — the item stays on the record, the schedule and the sheet the head contractor signs, which
+say what was expended. What the office may do is leave it OUT OF THE CLAIM: a tick in the item's costing editor, with
+the reason, kept on `daywork_costings.excluded`, logged, reversible. The costed schedule drops the item and names it in
+its footnote with the reason; no total, no rate list and no person's hours carry it; on the screen it is dimmed with
+"Left out of the claim" where its amount would be. The 21/09 vac truck item is marked so at Mitchell's word.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;

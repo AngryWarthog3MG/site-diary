@@ -451,8 +451,9 @@ improvising; the register once shipped dead because a live smoke test was skippe
   (`app.can_manage_registers`), changes in `daywork_costing_changes`, never deleted, never in the hash or on the
   docket or the sign-off sheet. `dayworks-row.tsx` draws the item and the editor under it; `costLine` takes
   `{ rows, allocatedLabour, plant, plantText }` and `whyNoAmount` is the one reason an item has none. Machines price
-  from `rate_items` kind plant via `plantRateIndex` (by `plant_id`, else by name). The sign-off sheet never carries
-  money. Suites 59, 60. `signoff.ts` + table `dayworks_signoffs`: the head contractor's signature on a sheet, with the countersigned
+  from `rate_items` kind plant via `plantRateIndex` (by `plant_id`, else by name). `excluded` + `excluded_reason` on the costing row leave an item OUT OF THE CLAIM (README R160):
+  the costed view and PDF drop it and name it, no total carries it; the record is untouched. The costed view has no Approved
+  or Docket column. The sign-off sheet never carries money. Suites 59, 60. `signoff.ts` + table `dayworks_signoffs`: the head contractor's signature on a sheet, with the countersigned
   file and what the sheet said AT THE TIME — frozen, so a later correction cannot change what they signed; `driftFrom`
   says when the schedule has moved since. `app.can_manage_registers` writes it; the labourer reads none of it. Suite 34,
   README R86. CLIENT APPROVAL (README R125): a sign-off is also the signature itself, drawn on the screen (`signature_path`

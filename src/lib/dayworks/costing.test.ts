@@ -93,7 +93,18 @@ test('totals add only the items with an amount and count the rest', () => {
   const a = costLine({ rows: [{ person_name: 'Evan Burke', hours: 2 }] }, resolve, rates);
   const b = costLine({ rows: [{ person_name: 'Nobody Known', hours: 2 }] }, resolve, rates);
   const t = totalCosts([a, b, costLine({ rows: [] }, resolve, rates)]);
-  assert.deepEqual(t, { amount: 210, costed: 1, notCosted: 2, plantNotCosted: 0 });
+  assert.deepEqual(t, { amount: 210, costed: 1, notCosted: 2, plantNotCosted: 0, excluded: 0 });
+});
+
+test('an item left out of the claim is costed for the record and carried by no total or list', () => {
+  const out = costLine({ rows: [{ person_name: 'Evan Burke', hours: 2 }], excluded: true, excludedReason: ' Not ours to claim ' }, resolve, rates);
+  assert.equal(out.amount, 210);
+  assert.equal(out.excluded, true);
+  assert.equal(out.excludedReason, 'Not ours to claim');
+  assert.equal(whyNoAmount(out), 'Left out of the claim');
+  const t = totalCosts([out, costLine({ rows: [{ person_name: 'Evan Burke', hours: 1 }] }, resolve, rates)]);
+  assert.deepEqual(t, { amount: 105, costed: 1, notCosted: 0, plantNotCosted: 0, excluded: 1 });
+  assert.deepEqual(peopleInPeriod([out]), []);
 });
 
 test('people in the period are listed once each with their hours, rate and item count', () => {

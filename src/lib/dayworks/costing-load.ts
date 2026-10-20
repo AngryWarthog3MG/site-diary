@@ -9,7 +9,7 @@ import {
 import type { DayworkLine, DayworksSchedule } from './schedule';
 
 /** The office's allocation for one daywork (README R159), as kept. */
-export interface DayworkAllocation { id: string; dayworkId: string; labour: LabourRow[]; plant: PlantRow[]; note: string | null }
+export interface DayworkAllocation { id: string; dayworkId: string; labour: LabourRow[]; plant: PlantRow[]; note: string | null; excluded: boolean; excludedReason: string | null }
 
 export interface DayworksCosting {
   /** Beside each line given, in the same order. */
@@ -48,7 +48,7 @@ export async function loadDayworksCosting(
     supabase.from('crew').select('project_id, name, aliases').eq('project_id', projectId),
     supabase.from('person_aliases').select('alias, name').eq('org_id', orgId),
     supabase.from('staff').select('name').eq('org_id', orgId),
-    dayworkIds.length ? supabase.from('daywork_costings').select('id, daywork_id, labour, plant, note').in('daywork_id', dayworkIds) : Promise.resolve({ data: [], error: null }),
+    dayworkIds.length ? supabase.from('daywork_costings').select('id, daywork_id, labour, plant, note, excluded, excluded_reason').in('daywork_id', dayworkIds) : Promise.resolve({ data: [], error: null }),
   ]);
   for (const r of [rates, plantRates, crew, aliases, staff, allocationRows]) if (r.error) throw new Error(r.error.message);
   const resolveOn = makeResolver(
@@ -72,12 +72,12 @@ export async function loadDayworksCosting(
   const plantRateOf = plantRateIndex(plantCard);
 
   const allocations: Record<string, DayworkAllocation> = {};
-  for (const a of (allocationRows.data ?? []) as Array<{ id: string; daywork_id: string; labour: unknown; plant: unknown; note: string | null }>) {
-    allocations[a.daywork_id] = { id: a.id, dayworkId: a.daywork_id, labour: readLabourRows(a.labour), plant: readPlantRows(a.plant), note: a.note };
+  for (const a of (allocationRows.data ?? []) as Array<{ id: string; daywork_id: string; labour: unknown; plant: unknown; note: string | null; excluded: boolean | null; excluded_reason: string | null }>) {
+    allocations[a.daywork_id] = { id: a.id, dayworkId: a.daywork_id, labour: readLabourRows(a.labour), plant: readPlantRows(a.plant), note: a.note, excluded: Boolean(a.excluded), excludedReason: a.excluded_reason };
   }
   const costs = lines.map((l) => {
     const a = l.dayworkId ? allocations[l.dayworkId] : undefined;
-    return costLine({ rows: l.labourRows, allocatedLabour: a?.labour, plant: a?.plant, plantText: l.plant }, resolve, rateOf, plantRateOf);
+    return costLine({ rows: l.labourRows, allocatedLabour: a?.labour, plant: a?.plant, plantText: l.plant, excluded: a?.excluded, excludedReason: a?.excludedReason }, resolve, rateOf, plantRateOf);
   });
   const byLine = new Map(lines.map((l, i) => [l, costs[i]] as const));
   const weeks = schedule.weeks.map((w) => totalCosts(w.lines.map((l) => byLine.get(l)!)));

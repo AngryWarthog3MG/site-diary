@@ -91,6 +91,14 @@ select tests.expect_error(
   $q$update public.daywork_costings set daywork_id = '88888888-ee60-0000-0000-000000000002' where id = 'dddddddd-ee60-0000-0000-000000000001'$q$,
   'stays with its daywork');
 
+-- Left out of the claim (R160): a mark with its reason, logged, reversible.
+update public.daywork_costings set excluded = true, excluded_reason = 'Not ours to claim' where id = 'dddddddd-ee60-0000-0000-000000000002';
+do $$
+begin
+  if not exists (select 1 from public.daywork_costing_changes where costing_id = 'dddddddd-ee60-0000-0000-000000000002' and new_excluded and new_excluded_reason = 'Not ours to claim') then raise exception 'TESTFAIL: the mark was not logged'; end if;
+end; $$;
+update public.daywork_costings set excluded = false where id = 'dddddddd-ee60-0000-0000-000000000002';
+
 -- A change is kept; nothing is deleted.
 update public.daywork_costings set plant = '[{"plant_id":"eeeeeeee-ee60-0000-0000-000000000001","name":"Vac Trailer","hours":8}]' where id = 'dddddddd-ee60-0000-0000-000000000001';
 do $$
