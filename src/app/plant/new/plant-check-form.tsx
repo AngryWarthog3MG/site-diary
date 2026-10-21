@@ -211,8 +211,8 @@ export function PlantCheckForm({ projectId, projectName, orgId, register, onJob,
           </ul>
           {adding ? (
             <AddPlantForm orgId={orgId} compact onAdded={(row) => { setRows([...rows, row]); setPlantId(row.id); setAdding(false); }} />
-          ) : (
-            {!operatorLocked && <button type="button" className="linklike" onClick={() => setAdding(true)}>Not on the list — add a machine</button>}
+          ) : operatorLocked ? null : (
+            <button type="button" className="linklike" onClick={() => setAdding(true)}>Not on the list — add a machine</button>
           )}
         </>
       ) : (
