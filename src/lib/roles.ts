@@ -65,11 +65,11 @@ export function canExportReports(role: MemberRole): boolean {
 }
 
 export type Screen =
-  | 'today' | 'entries' | 'weekly' | 'prestart' | 'prestart_sign' | 'plant' | 'toolbox' | 'signin' | 'swms' | 'swms_sign' | 'incidents' | 'inspections' | 'permits' | 'subcontractors' | 'procedures' | 'training' | 'staff' | 'inductions' | 'deliveries' | 'timesheets' | 'company_weekly' | 'rates' | 'messages' | 'inbox' | 'registers' | 'safety' | 'orders' | 'chemicals' | 'obligations' | 'emergency' | 'construction' | 'quality' | 'audits' | 'asbestos' | 'health' | 'environment'
+  | 'today' | 'entries' | 'weekly' | 'prestart' | 'prestart_sign' | 'plant' | 'plant_check' | 'toolbox' | 'signin' | 'swms' | 'swms_sign' | 'incidents' | 'inspections' | 'permits' | 'subcontractors' | 'procedures' | 'training' | 'staff' | 'inductions' | 'deliveries' | 'timesheets' | 'company_weekly' | 'rates' | 'messages' | 'inbox' | 'registers' | 'safety' | 'orders' | 'chemicals' | 'obligations' | 'emergency' | 'construction' | 'quality' | 'audits' | 'asbestos' | 'health' | 'environment'
   | 'claims' | 'variations' | 'notices' | 'templates' | 'start_gate' | 'programme' | 'progress' | 'ask' | 'documents' | 'settings';
 
 /** Every screen there is, in the order the Members screen lists them. */
-export const SCREENS: Screen[] = ['today', 'entries', 'weekly', 'signin', 'prestart_sign', 'claims', 'variations', 'notices', 'templates', 'start_gate', 'programme', 'progress', 'quality', 'audits', 'safety', 'obligations', 'emergency', 'incidents', 'inspections', 'permits', 'swms', 'swms_sign', 'chemicals', 'asbestos', 'environment', 'construction', 'prestart', 'toolbox', 'plant', 'orders', 'training', 'staff', 'inductions', 'deliveries', 'timesheets', 'company_weekly', 'rates', 'messages', 'inbox', 'registers', 'health', 'subcontractors', 'procedures', 'documents', 'ask', 'settings'];
+export const SCREENS: Screen[] = ['today', 'entries', 'weekly', 'signin', 'prestart_sign', 'plant_check', 'claims', 'variations', 'notices', 'templates', 'start_gate', 'programme', 'progress', 'quality', 'audits', 'safety', 'obligations', 'emergency', 'incidents', 'inspections', 'permits', 'swms', 'swms_sign', 'chemicals', 'asbestos', 'environment', 'construction', 'prestart', 'toolbox', 'plant', 'orders', 'training', 'staff', 'inductions', 'deliveries', 'timesheets', 'company_weekly', 'rates', 'messages', 'inbox', 'registers', 'health', 'subcontractors', 'procedures', 'documents', 'ask', 'settings'];
 
 /** A membership as the gates read it: the role, and the screens ticked for this person (null = the role's list). */
 export interface Access { role: MemberRole; screens?: readonly string[] | null; finance?: boolean | null }
@@ -128,7 +128,8 @@ export function canSee(role: MemberRole, screen: Screen): boolean {
   // The labourer's doors, plus what the law and the system put in every worker's reach: chemicals, the emergency plan,
   // the SWMS to sign, and the policies and procedures that bind them (README R120).
   // And the day's prestart, signed on to from their own phone (README R141).
-  if (role === 'labourer') return screen === 'today' || screen === 'inbox' || screen === 'signin' || screen === 'incidents' || screen === 'chemicals' || screen === 'emergency' || screen === 'swms_sign' || screen === 'prestart_sign' || screen === 'procedures';
+  // And the plant they operate, checked in their own name on the jobs they are on (README R162).
+  if (role === 'labourer') return screen === 'today' || screen === 'inbox' || screen === 'signin' || screen === 'incidents' || screen === 'chemicals' || screen === 'emergency' || screen === 'swms_sign' || screen === 'prestart_sign' || screen === 'plant_check' || screen === 'procedures';
   if (role === 'leading_hand') {
     return screen === 'today' || screen === 'inbox' || screen === 'entries' || screen === 'weekly' || screen === 'prestart' || screen === 'plant' || screen === 'toolbox' || screen === 'programme' || screen === 'signin' || screen === 'swms' || screen === 'swms_sign' || screen === 'incidents' || screen === 'inspections' || screen === 'permits' || screen === 'procedures' || screen === 'safety' || screen === 'orders' || screen === 'deliveries' || screen === 'chemicals' || screen === 'obligations' || screen === 'emergency' || screen === 'construction' || screen === 'quality' || screen === 'audits' || screen === 'asbestos' || screen === 'environment';
   }

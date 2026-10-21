@@ -132,7 +132,11 @@ improvising; the register once shipped dead because a live smoke test was skippe
   frozen), `plant_defects`. `app.entry_warnings`
   raises `plant_without_prestart`; the TS half is `reviewQualityWarnings(payload, { plantPrestarted })`. The day's prestart
   screen carries a Plant tab — the job's machines and that day's checks, "Do the check" opening `/plant/new?…&back=` and
-  returning (README R151); the nav item sits under Diary. Inspections and
+  returning (README R151); the nav item sits under Diary. A LABOURER checks the plant they operate in their own name
+  (README R162): `/plant/check` (screen `plant_check`, a labourer door) is the same form with the operator fixed and the
+  job's machines alone; `app.can_check_own_plant` is the policies' second half on `plant_prestarts` and `plant_defects`,
+  and the labourer reads their own checks, defects and tickets (own-row clauses on the restrictive policies). Suite 61.
+  Inspections and
   registration (README R64): `inspections.ts` (`nextInspection` — reg. 213's cascade, a date the inspector set wins, maintenance
   alone does not reset it; `registrationStatus`, `mayNotBeUsed`). `plant_register` carries `inspection_basis`,
   `inspection_interval_months` and registration fields — registration OFF by default, because most civil plant is not

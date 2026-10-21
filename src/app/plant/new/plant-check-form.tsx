@@ -23,8 +23,10 @@ import { ticketVerdict, normaliseName, TICKET_LABEL, type TicketVerdict, type Ti
  */
 import { registrationStatus, mayNotBeUsed, REGISTRATION_LABEL } from '@/lib/plant/inspections';
 
-export function PlantCheckForm({ projectId, projectName, orgId, register, onJob, preselect, defaultOperator, backTo = null }: {
+export function PlantCheckForm({ projectId, projectName, orgId, register, onJob, preselect, defaultOperator, backTo = null, operatorLocked = false }: {
   projectId: string; projectName: string; orgId: string; register: RegisterRow[]; onJob: string[]; preselect: string | null; defaultOperator: string;
+  /** The check is in the signed-in person's own name and no other (README R162): the labourer's door. */
+  operatorLocked?: boolean;
   /** Where the check was opened from — the day's prestart (README R151) — to return to once saved. */
   backTo?: string | null;
 }) {
@@ -210,7 +212,7 @@ export function PlantCheckForm({ projectId, projectName, orgId, register, onJob,
           {adding ? (
             <AddPlantForm orgId={orgId} compact onAdded={(row) => { setRows([...rows, row]); setPlantId(row.id); setAdding(false); }} />
           ) : (
-            <button type="button" className="linklike" onClick={() => setAdding(true)}>Not on the list — add a machine</button>
+            {!operatorLocked && <button type="button" className="linklike" onClick={() => setAdding(true)}>Not on the list — add a machine</button>}
           )}
         </>
       ) : (
@@ -226,7 +228,9 @@ export function PlantCheckForm({ projectId, projectName, orgId, register, onJob,
           <div className="photo-add-pair">
             <label className="fieldcell" style={{ flex: 2 }}>
               <span className="label">Operator</span>
-              <input className="field field--sm" value={operator} onChange={(e) => setOperator(e.target.value)} />
+              {operatorLocked
+                ? <span className="field field--sm plant-op-locked">{operator}</span>
+                : <input className="field field--sm" value={operator} onChange={(e) => setOperator(e.target.value)} />}
             </label>
             <label className="fieldcell" style={{ flex: 1 }}>
               <span className="label">Hour meter</span>
@@ -295,7 +299,9 @@ export function PlantCheckForm({ projectId, projectName, orgId, register, onJob,
         </>
       )}
 
-      <Link className="button button--quiet" href={`/plant?project=${projectId}`}>All plant</Link>
+      {operatorLocked
+        ? <Link className="button button--quiet" href={backTo ?? `/?project=${projectId}`}>Back to Home</Link>
+        : <Link className="button button--quiet" href={`/plant?project=${projectId}`}>All plant</Link>}
     </main>
   );
 }

@@ -5061,3 +5061,6 @@ body:has(> .topbar) .homefoot--top { display: none; }
 /* The month's dayworks costed, beside the month bundle on the Reports page (README R161). */
 .weekly-actions__money { flex: 1 1 100%; margin: 0.25rem 0 0; padding: 0.55rem 0.75rem; border: 1px solid rgba(31, 92, 51, 0.3); border-radius: 8px; background: #f6fbf7; font-size: 0.875rem; }
 .weekly-actions__money strong { font-size: 1rem; }
+
+/* The operator fixed to the signed-in person on the labourer's plant check (README R162). */
+.plant-op-locked { display: flex; align-items: center; background: var(--paper-dim); color: var(--ink); }

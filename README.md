@@ -3408,6 +3408,22 @@ someone who sees the money with their code entered, "Dayworks costed for October
 costed dayworks schedule for that month as a PDF — the costed schedule (R158) with the month's dates, built on demand and
 never stored. The bundle itself is unchanged.
 
+**R162. A labourer checks the plant they operate.** "Allow labour to sign off plant for the jobs they are assigned to
+also — Marcus on Curtin needs to complete prestarts on machines." The plant prestart was a talk-runner's write, and the
+labourer's doors were the gate, hazards, their own prestart and SWMS sign-on. The operator is the person who walks
+around the machine, and on Curtin that is often a labourer. So, as with signing on to the prestart or a SWMS as yourself
+(R89, R141), a member of the job may make a plant check in their OWN name: `app.can_check_own_plant` — the operator is
+the caller's profile name, the row is theirs (`conducted_by`), they complete it with their own signature and raise its
+defects; another name, another job, a labourer not on the job are refused by the policies, and the ticket rule is
+untouched: the database still refuses a signature from an operator whose recorded tickets do not cover the machine. For
+that to work a labourer now reads their OWN tickets, their own checks and their own defects, and nothing else of the
+record (the three restrictive policies grew an own-row clause). The screen is `/plant/check` (screen `plant_check`, a
+labourer door; the talk-runners keep `/plant/new`): the same form with the operator fixed to the person signed in and
+the list the job's machines alone, since a labourer cannot put a machine on a job; done, it goes back to Home. The
+labourer home's day card gains a Plant row — the machines on the job, how many they have checked today, "Do the check"
+— beside the gate, the prestart and the SWMS. The supervisor's prestart Plant tab counts a labourer's check like any
+other. Migration 20261021100000, suite 61.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;

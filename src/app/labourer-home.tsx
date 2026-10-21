@@ -13,6 +13,7 @@ import { loadHeadContractorEmergencyPlan } from '@/lib/subcontract/load';
 import { InboxNudge } from '@/components/inbox-nudge';
 import { WaitingPanel } from '@/components/waiting-panel';
 import { JobSwitcher, type SwitchableJob } from '@/components/job-switcher';
+import { loadPlantOnJob } from '@/lib/plant/on-job';
 
 /**
  * The labourer's opening page: are they signed in right now, and the two
@@ -52,6 +53,14 @@ export async function LabourerHome({ current, name, userId, jobs = [] }: { curre
   const open = mine.find((r) => r.signed_out_at == null) ?? null;
   const done = mine.filter((r) => r.signed_out_at != null);
   const q = `?project=${current.project_id}`;
+  // The machines on this job and the ones they have checked today (README R162): their own checks are all a
+  // labourer reads, which is exactly what this row needs.
+  const [machines, { data: myChecks }] = await Promise.all([
+    loadPlantOnJob(supabase, current.project_id),
+    supabase.from('plant_prestarts').select('plant_id, fit_for_use').eq('project_id', current.project_id).eq('prestart_date', today).not('completed_at', 'is', null),
+  ]);
+  const checkedToday = new Set(((myChecks ?? []) as Array<{ plant_id: string }>).map((r) => r.plant_id));
+  const unchecked = machines.filter((m) => !checkedToday.has(m.id));
   const [plan, sitePlan] = await Promise.all([planPromise, sitePlanPromise]);
 
   return (
@@ -116,6 +125,18 @@ export async function LabourerHome({ current, name, userId, jobs = [] }: { curre
             </span>
             {swmsToSign.length > 0 ? <Link className="labhome__go" href={`/swms/sign${q}`}>Sign on</Link> : swmsIds.length > 0 ? <Link className="labhome__go labhome__go--quiet" href={`/swms/sign${q}`}>Look</Link> : null}
           </li>
+          {machines.length > 0 && (
+            <li className={`labhome__row${checkedToday.size > 0 ? ' labhome__row--done' : ' labhome__row--todo'}`}>
+              <span className="labhome__tick" aria-hidden>{checkedToday.size > 0 ? '✓' : '○'}</span>
+              <span className="labhome__what">
+                <b>Plant</b>
+                {checkedToday.size > 0
+                  ? <>You checked {checkedToday.size} machine{checkedToday.size === 1 ? '' : 's'} today{unchecked.length ? ` · ${unchecked.length} more on this job` : ''}</>
+                  : <>{machines.length} machine{machines.length === 1 ? '' : 's'} on this job — check the one you operate before you use it</>}
+              </span>
+              <Link className={checkedToday.size > 0 ? 'labhome__go labhome__go--quiet' : 'labhome__go'} href={`/plant/check${q}`}>{checkedToday.size > 0 ? 'Check another' : 'Do the check'}</Link>
+            </li>
+          )}
         </ul>
       </section>
 
