@@ -28,7 +28,7 @@ export interface DayworksRowProps {
   /** The item costed — present for a register keeper; its amounts only when `money`. */
   cost: LineCost | null;
   money: boolean;
-  allocation: { labour: LabourRow[]; plant: PlantRow[]; note: string | null; excluded: boolean; excludedReason: string | null } | null;
+  allocation: { labour: LabourRow[]; plant: PlantRow[]; note: string | null; excluded: boolean; excludedReason: string | null; carriedFrom: string | null } | null;
   canAllocate: boolean;
   /** The job's people, to pick from (R128): the crew list and the staff list. */
   people: string[];
@@ -64,6 +64,7 @@ export function DayworksRow(p: DayworksRowProps) {
         <td>
           {cost && !cost.noRows ? <LabourCosted cost={cost} money={p.money} /> : (p.labour ?? '—')}
           {cost?.labourFrom === 'allocation' && <span className="vr-note">picked by the office — the day says: {p.labour ?? '—'}</span>}
+          {p.allocation?.carriedFrom && <span className="vr-note claims-flag">carried from the earlier version of this day — open and save to keep it on this one</span>}
           {canPick && cost && !labourFromRecord && !open && (
             <button type="button" className="quotebtn dw-pick" onClick={() => setOpen(true)}>{cost.labourFrom === 'allocation' ? 'Change people' : 'Pick people'}</button>
           )}
@@ -154,7 +155,7 @@ type PlantDraft = { pick: string; name: string; hours: string };
  */
 function AllocationEditor({ projectId, dayworkId, recordedHours, labourText, plantText, labourLocked, initial, people, machines, onClose, onSaved }: {
   projectId: string; dayworkId: string; recordedHours: number | null; labourText: string | null; plantText: string | null; labourLocked: boolean;
-  initial: { labour: LabourRow[]; plant: PlantRow[]; note: string | null; excluded: boolean; excludedReason: string | null } | null;
+  initial: { labour: LabourRow[]; plant: PlantRow[]; note: string | null; excluded: boolean; excludedReason: string | null; carriedFrom: string | null } | null;
   people: string[]; machines: Array<{ id: string; name: string; plantNo: string | null }>;
   onClose: () => void; onSaved: () => void;
 }) {
@@ -180,6 +181,7 @@ function AllocationEditor({ projectId, dayworkId, recordedHours, labourText, pla
     if (labourRows.some((r) => !r.person_name)) { setError('Every person needs a name.'); return; }
     if (plantRows.some((r) => !r.name)) { setError('Every machine needs a name.'); return; }
     if ([...labourRows, ...plantRows].some((r) => r.hours != null && (Number.isNaN(r.hours) || r.hours < 0 || r.hours > 24))) { setError('Hours are a number between 0 and 24, or blank.'); return; }
+    if (excluded && !reason.trim()) { setError('Say why the item is left out of the claim.'); return; }
     setBusy(true);
     try {
       const { error: e } = await createClient().from('daywork_costings').upsert(
@@ -246,7 +248,7 @@ function AllocationEditor({ projectId, dayworkId, recordedHours, labourText, pla
         <input className="field field--sm" value={note} placeholder="Why it is split this way" onChange={(e) => setNote(e.target.value)} /></label>
       <div className={`dw-alloc__out${excluded ? ' dw-alloc__out--on' : ''}`}>
         <label className="regs__tick"><input type="checkbox" checked={excluded} onChange={(e) => setExcluded(e.target.checked)} /><span>Leave this item out of the claim</span></label>
-        {excluded && <input className="field field--sm" value={reason} placeholder="Why · optional" aria-label="Why it is left out" onChange={(e) => setReason(e.target.value)} />}
+        {excluded && <input className="field field--sm" value={reason} placeholder="Why — kept with the decision" aria-label="Why it is left out" onChange={(e) => setReason(e.target.value)} />}
         <p className="caption">It stays on the record, the schedule and the sign-off sheet, which say what was expended; the costed schedule drops it and says so, and no total carries it. Untick to put it back.</p>
       </div>
       {error && <p className="alert">{error}</p>}

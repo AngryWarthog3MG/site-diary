@@ -3424,6 +3424,23 @@ labourer home's day card gains a Plant row — the machines on the job, how many
 — beside the gate, the prestart and the SWMS. The supervisor's prestart Plant tab counts a labourer's check like any
 other. Migration 20261021100000, suite 61.
 
+**R163. The review of R158–R162, and what it found.** A second agent reviewed the eight commits against `docs/review.md`
+and cleared the money gating, immutability, the hash, name resolution, the PDF and the R162 policies, and found six
+things. Fixed: (1) a correction of a day mints new daywork rows, so a costing allocation — and the decision to leave an
+item out of the claim — keyed to the old row vanished silently and the item came back on the register; now the one left
+on a superseded version of the same day and works carries to the new row (`carryAllocations`, exactly one match or
+nothing — ambiguity is a blank), the screen says so, and saving keeps it on the new row. (2) The claims register and the
+reports page printed the costed total without saying how many items had plant recorded but no machine picked, which the
+Dayworks screen and PDF did say — the reports layer is where money leaks (AGENTS §6); they say it now. (3) The rates
+block could change a different rate row than the one it showed when a machine had both its own row and a same-name
+company row; it resolves as the costing does. (4) An item left out of the claim needs its reason (a check constraint),
+and a change to the reason is logged. (5) An open plant check stays with its job and its machine — the update policy let
+an operator move their own open check to another job they hold; the trigger pins both. Left: `rename_staff` retiring a
+live rate under the old name when the new name already has one — a money-table write under the office's permission,
+reachable only for a rate under a name not on the staff list, logged; noted, not changed. Tests: suite 61 gained the
+labourer whose ticket does not cover the machine and the move to another job; suite 60 the reason; unit tests the carry
+and zero hours. Migration 20261022100000.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;

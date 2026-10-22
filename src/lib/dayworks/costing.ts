@@ -244,3 +244,31 @@ export function readPlantRows(value: unknown): PlantRow[] {
     })
     .filter((r) => r.name !== '');
 }
+
+/** An allocation whose daywork row is no longer the day's current version (README R163). */
+export interface OrphanAllocation<T> { date: string; works: string; allocation: T }
+
+/**
+ * A correction of a day mints new daywork rows, so an allocation keyed to the old row would vanish with it — and
+ * with it the office's decision to leave an item out of the claim. Carry it: a current line with no allocation of
+ * its own takes the one left on a superseded version of the same day with the same works, when there is exactly one.
+ * Two candidates is ambiguity, and ambiguity is a blank, never a guess.
+ */
+export function carryAllocations<T>(
+  lines: ReadonlyArray<{ date: string; works: string; dayworkId: string | null }>,
+  own: ReadonlySet<string>,
+  orphans: ReadonlyArray<OrphanAllocation<T>>,
+): Map<string, T> {
+  const byKey = new Map<string, T[]>();
+  for (const o of orphans) {
+    const k = `${o.date}|${normName(o.works)}`;
+    byKey.set(k, [...(byKey.get(k) ?? []), o.allocation]);
+  }
+  const out = new Map<string, T>();
+  for (const l of lines) {
+    if (!l.dayworkId || own.has(l.dayworkId)) continue;
+    const found = byKey.get(`${l.date}|${normName(l.works)}`);
+    if (found && found.length === 1) out.set(l.dayworkId, found[0]);
+  }
+  return out;
+}

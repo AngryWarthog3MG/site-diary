@@ -92,6 +92,9 @@ select tests.expect_error(
   'stays with its daywork');
 
 -- Left out of the claim (R160): a mark with its reason, logged, reversible.
+select tests.expect_error(
+  $q$update public.daywork_costings set excluded = true where id = 'dddddddd-ee60-0000-0000-000000000002'$q$,
+  'excluded_has_reason');
 update public.daywork_costings set excluded = true, excluded_reason = 'Not ours to claim' where id = 'dddddddd-ee60-0000-0000-000000000002';
 do $$
 begin

@@ -33,7 +33,8 @@ export function RatesBlock({ orgId, people, rates, machines, plantRates, canWrit
   const [adding, setAdding] = useState(false);
   const [newName, setNewName] = useState('');
   const rowFor = (person: string) => rates.find((r) => norm(r.person_name) === norm(person)) ?? null;
-  const plantRowFor = (m: MachineInPeriod) => plantRates.find((r) => (m.plant_id && r.plant_id === m.plant_id) || norm(r.label) === norm(m.name)) ?? null;
+  // The same resolution as the costing (plantRateIndex): the row that names the machine, else the first by name.
+  const plantRowFor = (m: MachineInPeriod) => (m.plant_id ? plantRates.find((r) => r.plant_id === m.plant_id) : undefined) ?? plantRates.find((r) => norm(r.label) === norm(m.name)) ?? null;
   const missingPeople = people.filter((p) => p.rate == null).length;
   const missingMachines = machines.filter((m) => m.rate == null).length;
   const missing = missingPeople + missingMachines;

@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { costLine, fmtAmount, machinesInPeriod, peopleInPeriod, plantRateIndex, rateIndex, readPlantRows, totalCosts, whyNoAmount } from './costing.ts';
+import { carryAllocations, costLine, fmtAmount, machinesInPeriod, peopleInPeriod, plantRateIndex, rateIndex, readPlantRows, totalCosts, whyNoAmount } from './costing.ts';
 
 const rates = rateIndex([
   { person_name: 'Evan Burke', rate: 105 },
@@ -143,4 +143,27 @@ test('amounts print to the cent only when there are cents, and a blank as a dash
   assert.equal(fmtAmount(682.5), '$682.50');
   assert.equal(fmtAmount(1592.5), '$1,592.50');
   assert.equal(fmtAmount(null), '—');
+});
+
+test('an allocation left on a superseded version of the day carries to the same works, once, never when ambiguous', () => {
+  const lines = [
+    { date: '2026-09-21', works: 'Ivac truck plus driver', dayworkId: 'new-1' },
+    { date: '2026-09-21', works: 'Backfill', dayworkId: 'new-2' },
+    { date: '2026-09-22', works: 'Kerb', dayworkId: 'new-3' },
+  ];
+  const own = new Set(['new-3']);
+  const orphans = [
+    { date: '2026-09-21', works: '  ivac truck plus driver ', allocation: 'old-ivac' },
+    { date: '2026-09-21', works: 'Backfill', allocation: 'old-a' },
+    { date: '2026-09-21', works: 'Backfill', allocation: 'old-b' },
+    { date: '2026-09-22', works: 'Kerb', allocation: 'old-kerb' },
+  ];
+  const carried = carryAllocations(lines, own, orphans);
+  assert.deepEqual([...carried.entries()], [['new-1', 'old-ivac']]);
+});
+
+test('zero hours is a positive assertion and costs nothing, counted as costed; amounts print as expected', () => {
+  const c = costLine({ rows: [{ person_name: 'Evan Burke', hours: 0 }] }, resolve, rates);
+  assert.equal(c.amount, 0);
+  assert.deepEqual(totalCosts([c]), { amount: 0, costed: 1, notCosted: 0, plantNotCosted: 0, excluded: 0 });
 });

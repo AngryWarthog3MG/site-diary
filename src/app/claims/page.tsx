@@ -109,7 +109,7 @@ export default async function ClaimsPage({
           <div className={`claims-tile${data.dayworks.missingDockets > 0 ? ' claims-tile--amber' : ''}`}>
             <span className="label">Dayworks</span>
             <strong>{dwCosting ? (dwCosting.totals.costed ? fmtMoney(dwCosting.totals.amount) : '—') : `${data.dayworks.totalHours}h`}</strong>
-            <span>{dwCosting ? `${data.dayworks.totalHours}h · ${dwCosting.totals.costed} of ${data.dayworks.rows.length} costed${dwCosting.totals.excluded ? ` · ${dwCosting.totals.excluded} left out` : ''}` : `${data.dayworks.rows.length} item${data.dayworks.rows.length === 1 ? '' : 's'}`}{data.dayworks.missingDockets > 0 ? ` · ${data.dayworks.missingDockets} without a docket` : ' · all docketed'}</span>
+            <span>{dwCosting ? `${data.dayworks.totalHours}h · ${dwCosting.totals.costed} of ${data.dayworks.rows.length} costed${dwCosting.totals.excluded ? ` · ${dwCosting.totals.excluded} left out` : ''}${dwCosting.totals.plantNotCosted ? ` · ${dwCosting.totals.plantNotCosted} with plant not costed` : ''}` : `${data.dayworks.rows.length} item${data.dayworks.rows.length === 1 ? '' : 's'}`}{data.dayworks.missingDockets > 0 ? ` · ${data.dayworks.missingDockets} without a docket` : ' · all docketed'}</span>
           </div>
         </div>
       )}
@@ -203,7 +203,7 @@ export default async function ClaimsPage({
               </p>
             ) : (
               <>
-                <p className="claims-total">{data.dayworks.totalHours} T&amp;M hours recorded{dwCosting ? <> · <strong>{dwCosting.totals.costed ? fmtMoney(dwCosting.totals.amount) : '—'}</strong> ex GST costed on {dwCosting.totals.costed} of {data.dayworks.rows.length} item{data.dayworks.rows.length === 1 ? '' : 's'}{dwCosting.totals.notCosted ? `, ${dwCosting.totals.notCosted} without an amount` : ''}{dwCosting.totals.excluded ? `, ${dwCosting.totals.excluded} left out of the claim` : ''}</> : null} · <Link className="claims-cite" href={`/dayworks?project=${current.project_id}`}>Dayworks schedule by period</Link></p>
+                <p className="claims-total">{data.dayworks.totalHours} T&amp;M hours recorded{dwCosting ? <> · <strong>{dwCosting.totals.costed ? fmtMoney(dwCosting.totals.amount) : '—'}</strong> ex GST costed on {dwCosting.totals.costed} of {data.dayworks.rows.length} item{data.dayworks.rows.length === 1 ? '' : 's'}{dwCosting.totals.notCosted ? `, ${dwCosting.totals.notCosted} without an amount` : ''}{dwCosting.totals.excluded ? `, ${dwCosting.totals.excluded} left out of the claim` : ''}{dwCosting.totals.plantNotCosted ? `, ${dwCosting.totals.plantNotCosted} with plant recorded but not costed` : ''}</> : null} · <Link className="claims-cite" href={`/dayworks?project=${current.project_id}`}>Dayworks schedule by period</Link></p>
                 <div className="claims-tablewrap">
                   <table className="claims-table">
                     <thead>

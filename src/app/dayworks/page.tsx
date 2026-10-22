@@ -232,7 +232,7 @@ export default async function DayworksPage({ searchParams }: { searchParams: Pro
                         approved={approvedBy.get(l) ? { signedOn: approvedBy.get(l)!.signed_on, name: approvedBy.get(l)!.signed_by_name } : null}
                         cost={costOf.get(l) ?? null}
                         money={showMoney}
-                        allocation={l.dayworkId && costing?.allocations[l.dayworkId] ? { labour: costing.allocations[l.dayworkId].labour, plant: costing.allocations[l.dayworkId].plant, note: costing.allocations[l.dayworkId].note, excluded: costing.allocations[l.dayworkId].excluded, excludedReason: costing.allocations[l.dayworkId].excludedReason } : null}
+                        allocation={l.dayworkId && costing?.allocations[l.dayworkId] ? { labour: costing.allocations[l.dayworkId].labour, plant: costing.allocations[l.dayworkId].plant, note: costing.allocations[l.dayworkId].note, excluded: costing.allocations[l.dayworkId].excluded, excludedReason: costing.allocations[l.dayworkId].excludedReason, carriedFrom: costing.allocations[l.dayworkId].carriedFrom } : null}
                         canAllocate={keeper && !data.truncated}
                         people={people}
                         machines={machines}
