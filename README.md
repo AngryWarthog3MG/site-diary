@@ -3536,6 +3536,23 @@ clause is what the check is held to. The PDF also prints a form's `certification
 Loaded for Kooboolong as issued; KBS_C001_ITP_002 (Soft Landscaping) brought onto Curtin as a draft ITP instance, so the
 form sits under it on `/qa` and the office issues and approves it from there as it did at Kalgoorlie.
 
+**R170. A materials figure on a daywork.** Mitchell: "in the dayworks allow me to manually input a figure for the
+materials used." The signed day records materials as words — "20 t crushed rock, 4 bags cement" — and nothing in the
+app can price them: there is no rate card for materials, and a price nobody said would be an invented number (non-
+negotiable 4). So the figure is typed. "Materials $" on the item opens the same costing editor as people and plant
+(R159) with a third block: the amount, ex GST, and what it was for — supplier, docket, quantity. It is kept on the
+item's `daywork_costings` row (`materials_amount`, `materials_note`), beside the signed day and never in it; every
+change is logged with the old and new figure; the sheet the head contractor signs (R83, R125) never carries it.
+Blank is no figure, never nought.
+
+How it counts: an item's amount is its labour, its plant and its materials added up — but only when the item is
+otherwise costed. A figure typed on an item whose people cannot be priced (nobody on the row, no rate for a name) is
+shown under Materials and named in the reason ("materials $100 typed, not counted until the item is costed"), and no
+total carries it until the people are. Letting a materials figure stand in for an item's whole amount would have let
+the labour drop silently out of the claim. Every total that carries materials says how much — the Dayworks screen's
+amount, the costed schedule's tile, the claims register and the Reports page — `CostTotals.materials`, so a reader
+can tell a typed figure from a computed one. Suite 60; `costing.test.ts`.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;

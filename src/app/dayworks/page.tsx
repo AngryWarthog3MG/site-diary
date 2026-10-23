@@ -182,8 +182,8 @@ export default async function DayworksPage({ searchParams }: { searchParams: Pro
           {costing && showMoney && (
             <>
               <div className="dw-money">
-                <span className="dw-money__fact"><span className="label">Amount, ex GST</span><strong className="mono">{costing.totals.costed ? fmtMoney(costing.totals.amount) : '—'}</strong><span className="caption">{costing.totals.costed} of {data.totals.items} item{data.totals.items === 1 ? '' : 's'} costed{costing.totals.notCosted ? ` · ${costing.totals.notCosted} without an amount` : ''}{costing.totals.plantNotCosted ? ` · ${costing.totals.plantNotCosted} with plant not costed` : ''}</span></span>
-                <span className="caption dw-money__how">Each person's hours on the item at the company's rate for their name, and each machine's hours at the rate card's rate, added up. An item is costed only when every person and machine on it has hours and a rate; the rest are flagged, never guessed. Where the day named nobody, "Pick people" on the item names them; "Pick plant" names the machines.</span>
+                <span className="dw-money__fact"><span className="label">Amount, ex GST</span><strong className="mono">{costing.totals.costed ? fmtMoney(costing.totals.amount) : '—'}</strong><span className="caption">{costing.totals.costed} of {data.totals.items} item{data.totals.items === 1 ? '' : 's'} costed{costing.totals.materials ? ` · incl. ${fmtMoney(costing.totals.materials)} materials` : ''}{costing.totals.notCosted ? ` · ${costing.totals.notCosted} without an amount` : ''}{costing.totals.plantNotCosted ? ` · ${costing.totals.plantNotCosted} with plant not costed` : ''}</span></span>
+                <span className="caption dw-money__how">Each person's hours on the item at the company's rate for their name, and each machine's hours at the rate card's rate, added up. An item is costed only when every person and machine on it has hours and a rate; the rest are flagged, never guessed. Where the day named nobody, "Pick people" on the item names them; "Pick plant" names the machines. Materials have no rate card: "Materials $" on the item takes the figure you type, ex GST, and adds it to the item's amount.</span>
               </div>
               <RatesBlock orgId={current.project.org.id} people={costing.people} rates={costing.rates} machines={costing.machines} plantRates={costing.plantRates} canWrite={current.role === 'admin'} />
             </>
@@ -232,7 +232,7 @@ export default async function DayworksPage({ searchParams }: { searchParams: Pro
                         approved={approvedBy.get(l) ? { signedOn: approvedBy.get(l)!.signed_on, name: approvedBy.get(l)!.signed_by_name } : null}
                         cost={costOf.get(l) ?? null}
                         money={showMoney}
-                        allocation={l.dayworkId && costing?.allocations[l.dayworkId] ? { labour: costing.allocations[l.dayworkId].labour, plant: costing.allocations[l.dayworkId].plant, note: costing.allocations[l.dayworkId].note, excluded: costing.allocations[l.dayworkId].excluded, excludedReason: costing.allocations[l.dayworkId].excludedReason, carriedFrom: costing.allocations[l.dayworkId].carriedFrom } : null}
+                        allocation={l.dayworkId && costing?.allocations[l.dayworkId] ? costing.allocations[l.dayworkId] : null}
                         canAllocate={keeper && !data.truncated}
                         people={people}
                         machines={machines}

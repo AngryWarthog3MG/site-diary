@@ -93,7 +93,7 @@ test('totals add only the items with an amount and count the rest', () => {
   const a = costLine({ rows: [{ person_name: 'Evan Burke', hours: 2 }] }, resolve, rates);
   const b = costLine({ rows: [{ person_name: 'Nobody Known', hours: 2 }] }, resolve, rates);
   const t = totalCosts([a, b, costLine({ rows: [] }, resolve, rates)]);
-  assert.deepEqual(t, { amount: 210, costed: 1, notCosted: 2, plantNotCosted: 0, excluded: 0 });
+  assert.deepEqual(t, { amount: 210, costed: 1, notCosted: 2, plantNotCosted: 0, excluded: 0, materials: 0 });
 });
 
 test('an item left out of the claim is costed for the record and carried by no total or list', () => {
@@ -103,7 +103,7 @@ test('an item left out of the claim is costed for the record and carried by no t
   assert.equal(out.excludedReason, 'Not ours to claim');
   assert.equal(whyNoAmount(out), 'Left out of the claim');
   const t = totalCosts([out, costLine({ rows: [{ person_name: 'Evan Burke', hours: 1 }] }, resolve, rates)]);
-  assert.deepEqual(t, { amount: 105, costed: 1, notCosted: 0, plantNotCosted: 0, excluded: 1 });
+  assert.deepEqual(t, { amount: 105, costed: 1, notCosted: 0, plantNotCosted: 0, excluded: 1, materials: 0 });
   assert.deepEqual(peopleInPeriod([out]), []);
 });
 
@@ -165,5 +165,28 @@ test('an allocation left on a superseded version of the day carries to the same 
 test('zero hours is a positive assertion and costs nothing, counted as costed; amounts print as expected', () => {
   const c = costLine({ rows: [{ person_name: 'Evan Burke', hours: 0 }] }, resolve, rates);
   assert.equal(c.amount, 0);
-  assert.deepEqual(totalCosts([c]), { amount: 0, costed: 1, notCosted: 0, plantNotCosted: 0, excluded: 0 });
+  assert.deepEqual(totalCosts([c]), { amount: 0, costed: 1, notCosted: 0, plantNotCosted: 0, excluded: 0, materials: 0 });
+});
+
+test('a materials figure typed by the office rides on a costed item, and the total says how much of it is materials', () => {
+  const c = costLine({ rows: [{ person_name: 'Evan Burke', hours: 8 }], plant: [{ plant_id: 'vac', name: 'Vac Trailer', hours: 8 }], materialsAmount: 250.505, materialsNote: ' 20 t crushed rock ' }, resolve, rates, plantRates);
+  assert.equal(c.labourAmount, 840);
+  assert.equal(c.plantAmount, 2560);
+  assert.equal(c.materialsAmount, 250.51);
+  assert.equal(c.materialsNote, '20 t crushed rock');
+  assert.equal(c.amount, 3650.51);
+  assert.deepEqual(totalCosts([c]), { amount: 3650.51, costed: 1, notCosted: 0, plantNotCosted: 0, excluded: 0, materials: 250.51 });
+});
+
+test('a materials figure on an item whose people cannot be priced is shown, never totalled, and the reason says so', () => {
+  const noRows = costLine({ rows: [], materialsAmount: 100 }, resolve, rates);
+  assert.equal(noRows.amount, null);
+  assert.equal(whyNoAmount(noRows), 'People not on the row · materials $100 typed, not counted until the item is costed');
+  const noRate = costLine({ rows: [{ person_name: 'Kel Brady', hours: 8 }], materialsAmount: 100 }, resolve, rates);
+  assert.equal(noRate.amount, null);
+  assert.equal(whyNoAmount(noRate), 'No rate: Kel Brady · materials $100 typed, not counted until the item is costed');
+  assert.deepEqual(totalCosts([noRows, noRate]).materials, 0);
+  // Blank is no figure; a note without a figure is nothing.
+  const blank = costLine({ rows: [{ person_name: 'Evan Burke', hours: 1 }], materialsAmount: null, materialsNote: 'x' }, resolve, rates);
+  assert.equal(blank.materialsAmount, null); assert.equal(blank.materialsNote, null); assert.equal(blank.amount, 105);
 });

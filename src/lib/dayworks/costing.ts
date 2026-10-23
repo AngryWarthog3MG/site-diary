@@ -57,6 +57,9 @@ export interface LineCost {
   /** Left out of the claim by the office (R160): costed for the record, carried by no total. */
   excluded: boolean;
   excludedReason: string | null;
+  /** The materials on the item as the office typed them, ex GST (R170); null is no figure. In `amount` when the item has one. */
+  materialsAmount: number | null;
+  materialsNote: string | null;
 }
 
 export interface CostTotals {
@@ -68,6 +71,8 @@ export interface CostTotals {
   plantNotCosted: number;
   /** Items left out of the claim: in none of the other counts. */
   excluded: number;
+  /** The materials figures inside `amount`, so a total can say how much of it was typed (R170). */
+  materials: number;
 }
 
 export const normName = (s: string) => s.trim().toLowerCase().replace(/\s+/g, ' ');
@@ -104,6 +109,9 @@ export interface CostLineInput {
   /** Left out of the claim by the office (R160). */
   excluded?: boolean;
   excludedReason?: string | null;
+  /** The materials figure the office typed, ex GST (R170). */
+  materialsAmount?: number | null;
+  materialsNote?: string | null;
 }
 
 export function costLine(
@@ -129,7 +137,9 @@ export function costLine(
   const plantComplete = machines.every((m) => m.amount != null);
   const labourAmount = labourComplete ? round2(people.reduce((t, p) => t + (p.amount ?? 0), 0)) : null;
   const plantAmount = machines.length && plantComplete ? round2(machines.reduce((t, m) => t + (m.amount ?? 0), 0)) : machines.length ? null : 0;
-  const amount = labourAmount != null && plantAmount != null ? round2(labourAmount + plantAmount) : null;
+  const materialsAmount = input.materialsAmount != null && Number.isFinite(input.materialsAmount) ? round2(input.materialsAmount) : null;
+  // Materials ride on an item that is otherwise costed: a figure typed on an item whose people cannot be priced is shown, not totalled.
+  const amount = labourAmount != null && plantAmount != null ? round2(labourAmount + plantAmount + (materialsAmount ?? 0)) : null;
   return {
     people,
     labourFrom,
@@ -145,30 +155,33 @@ export function costLine(
     plantNotCosted: machines.length === 0 && Boolean((input.plantText ?? '').trim()),
     excluded: Boolean(input.excluded),
     excludedReason: input.excluded ? (input.excludedReason?.trim() || null) : null,
+    materialsAmount,
+    materialsNote: materialsAmount != null ? (input.materialsNote?.trim() || null) : null,
   };
 }
 
 export function totalCosts(costs: readonly LineCost[]): CostTotals {
-  let amount = 0; let costed = 0; let notCosted = 0; let plantNotCosted = 0; let excluded = 0;
+  let amount = 0; let costed = 0; let notCosted = 0; let plantNotCosted = 0; let excluded = 0; let materials = 0;
   for (const c of costs) {
     if (c.excluded) { excluded += 1; continue; }
     if (c.plantNotCosted) plantNotCosted += 1;
     if (c.amount == null) { notCosted += 1; continue; }
-    costed += 1; amount = round2(amount + c.amount);
+    costed += 1; amount = round2(amount + c.amount); materials = round2(materials + (c.materialsAmount ?? 0));
   }
-  return { amount, costed, notCosted, plantNotCosted, excluded };
+  return { amount, costed, notCosted, plantNotCosted, excluded, materials };
 }
 
 /** One line's reason for having no amount, in the schedule's words; empty when it has one. */
 export function whyNoAmount(c: LineCost): string {
   if (c.excluded) return 'Left out of the claim';
   if (c.amount != null) return '';
-  if (c.noRows) return 'People not on the row';
+  if (c.noRows) return c.materialsAmount != null ? `People not on the row · materials ${fmtAmount(c.materialsAmount)} typed, not counted until the item is costed` : 'People not on the row';
   const parts: string[] = [];
   if (c.missingRate.length) parts.push(`No rate: ${c.missingRate.join(', ')}`);
   if (c.missingHours.length) parts.push(`Hours not recorded: ${c.missingHours.join(', ')}`);
   if (c.missingPlantRate.length) parts.push(`No plant rate: ${c.missingPlantRate.join(', ')}`);
   if (c.missingPlantHours.length) parts.push(`Plant hours missing: ${c.missingPlantHours.join(', ')}`);
+  if (c.materialsAmount != null) parts.push(`materials ${fmtAmount(c.materialsAmount)} typed, not counted until the item is costed`);
   return parts.join(' · ');
 }
 

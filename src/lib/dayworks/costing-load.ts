@@ -11,6 +11,8 @@ import type { DayworkLine, DayworksSchedule } from './schedule';
 /** The office's allocation for one daywork (README R159), as kept. */
 export interface DayworkAllocation {
   id: string; dayworkId: string; labour: LabourRow[]; plant: PlantRow[]; note: string | null; excluded: boolean; excludedReason: string | null;
+  /** The materials figure typed, ex GST (README R170). */
+  materialsAmount: number | null; materialsNote: string | null;
   /** Carried from a superseded version of the day (README R163): the row it was kept on; saving keeps it on the new one. */
   carriedFrom: string | null;
 }
@@ -52,9 +54,9 @@ export async function loadDayworksCosting(
     supabase.from('crew').select('project_id, name, aliases').eq('project_id', projectId),
     supabase.from('person_aliases').select('alias, name').eq('org_id', orgId),
     supabase.from('staff').select('name').eq('org_id', orgId),
-    dayworkIds.length ? supabase.from('daywork_costings').select('id, daywork_id, labour, plant, note, excluded, excluded_reason').in('daywork_id', dayworkIds) : Promise.resolve({ data: [], error: null }),
+    dayworkIds.length ? supabase.from('daywork_costings').select('id, daywork_id, labour, plant, note, excluded, excluded_reason, materials_amount, materials_note').in('daywork_id', dayworkIds) : Promise.resolve({ data: [], error: null }),
     // Every allocation on this job whose daywork is not on the schedule: a corrected day's old rows (README R163).
-    supabase.from('daywork_costings').select('id, daywork_id, labour, plant, note, excluded, excluded_reason, daywork:dayworks!inner(description, entry:entries!inner(entry_date))').eq('project_id', projectId),
+    supabase.from('daywork_costings').select('id, daywork_id, labour, plant, note, excluded, excluded_reason, materials_amount, materials_note, daywork:dayworks!inner(description, entry:entries!inner(entry_date))').eq('project_id', projectId),
   ]);
   for (const r of [rates, plantRates, crew, aliases, staff, allocationRows, everyAllocation]) if (r.error) throw new Error(r.error.message);
   const resolveOn = makeResolver(
@@ -78,8 +80,9 @@ export async function loadDayworksCosting(
   const plantRateOf = plantRateIndex(plantCard);
 
   const allocations: Record<string, DayworkAllocation> = {};
-  type Raw = { id: string; daywork_id: string; labour: unknown; plant: unknown; note: string | null; excluded: boolean | null; excluded_reason: string | null };
-  const read = (a: Raw, carriedFrom: string | null): DayworkAllocation => ({ id: a.id, dayworkId: a.daywork_id, labour: readLabourRows(a.labour), plant: readPlantRows(a.plant), note: a.note, excluded: Boolean(a.excluded), excludedReason: a.excluded_reason, carriedFrom });
+  type Raw = { id: string; daywork_id: string; labour: unknown; plant: unknown; note: string | null; excluded: boolean | null; excluded_reason: string | null; materials_amount: unknown; materials_note: string | null };
+  const money = (v: unknown) => { if (v == null || v === '') return null; const n = Number(v); return Number.isFinite(n) ? n : null; };
+  const read = (a: Raw, carriedFrom: string | null): DayworkAllocation => ({ id: a.id, dayworkId: a.daywork_id, labour: readLabourRows(a.labour), plant: readPlantRows(a.plant), note: a.note, excluded: Boolean(a.excluded), excludedReason: a.excluded_reason, materialsAmount: money(a.materials_amount), materialsNote: a.materials_note, carriedFrom });
   for (const a of (allocationRows.data ?? []) as Raw[]) allocations[a.daywork_id] = read(a, null);
   // A corrected day's rows are new, so an allocation kept on the old row would vanish — and the decision to leave an
   // item out of the claim with it. The one left on the same day and works carries to the new row (README R163).
@@ -95,7 +98,7 @@ export async function loadDayworksCosting(
   for (const [dayworkId, a] of carryAllocations(lines, new Set(Object.keys(allocations)), orphans)) allocations[dayworkId] = read(a, a.daywork_id);
   const costs = lines.map((l) => {
     const a = l.dayworkId ? allocations[l.dayworkId] : undefined;
-    return costLine({ rows: l.labourRows, allocatedLabour: a?.labour, plant: a?.plant, plantText: l.plant, excluded: a?.excluded, excludedReason: a?.excludedReason }, resolve, rateOf, plantRateOf);
+    return costLine({ rows: l.labourRows, allocatedLabour: a?.labour, plant: a?.plant, plantText: l.plant, excluded: a?.excluded, excludedReason: a?.excludedReason, materialsAmount: a?.materialsAmount, materialsNote: a?.materialsNote }, resolve, rateOf, plantRateOf);
   });
   const byLine = new Map(lines.map((l, i) => [l, costs[i]] as const));
   const weeks = schedule.weeks.map((w) => totalCosts(w.lines.map((l) => byLine.get(l)!)));

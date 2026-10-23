@@ -275,7 +275,7 @@ export default async function WeeklyReportPage({
             <MonthlyBundleButton projectId={current.project_id} start={start} />
             {monthCost && (
               <p className="weekly-actions__money">
-                Dayworks costed for {monthLabel}: <strong className="mono">{monthCost.totals.costed ? fmtMoney(monthCost.totals.amount) : '—'}</strong> ex GST on {monthCost.totals.costed} of {monthCost.costs.length} item{monthCost.costs.length === 1 ? '' : 's'}
+                Dayworks costed for {monthLabel}: <strong className="mono">{monthCost.totals.costed ? fmtMoney(monthCost.totals.amount) : '—'}</strong> ex GST on {monthCost.totals.costed} of {monthCost.costs.length} item{monthCost.costs.length === 1 ? '' : 's'}{monthCost.totals.materials ? `, incl. ${fmtMoney(monthCost.totals.materials)} materials` : ''}
                 {monthCost.totals.notCosted ? `, ${monthCost.totals.notCosted} without an amount` : ''}{monthCost.totals.excluded ? `, ${monthCost.totals.excluded} left out of the claim` : ''}{monthCost.totals.plantNotCosted ? `, ${monthCost.totals.plantNotCosted} with plant recorded but not costed` : ''}
                 {' · '}<a className="claims-cite" href={`/api/dayworks/pdf?project=${current.project_id}&range=custom&from=${monthFrom}&to=${monthTo}&costed=1`} target="_blank" rel="noopener">Costed dayworks for {monthLabel} (PDF)</a>
               </p>

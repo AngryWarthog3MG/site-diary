@@ -9,6 +9,8 @@ import { fmtDate } from '@/lib/pdf/dates';
 import { whyNoAmount, type LineCost, type PlantRow } from '@/lib/dayworks/costing';
 import type { LabourRow } from '@/lib/pdf/labour-rows';
 
+type Allocation = { labour: LabourRow[]; plant: PlantRow[]; note: string | null; excluded: boolean; excludedReason: string | null; materialsAmount: number | null; materialsNote: string | null; carriedFrom: string | null };
+
 const hrs = (n: number) => (Number.isInteger(n) ? String(n) : n.toFixed(2).replace(/0$/, ''));
 const OTHER = '__other__';
 
@@ -28,7 +30,7 @@ export interface DayworksRowProps {
   /** The item costed — present for a register keeper; its amounts only when `money`. */
   cost: LineCost | null;
   money: boolean;
-  allocation: { labour: LabourRow[]; plant: PlantRow[]; note: string | null; excluded: boolean; excludedReason: string | null; carriedFrom: string | null } | null;
+  allocation: Allocation | null;
   canAllocate: boolean;
   /** The job's people, to pick from (R128): the crew list and the staff list. */
   people: string[];
@@ -76,7 +78,14 @@ export function DayworksRow(p: DayworksRowProps) {
             <button type="button" className="quotebtn dw-pick" onClick={() => setOpen(true)}>{cost.machines.length ? 'Change plant' : 'Pick plant'}{excluded ? ' · put back' : ''}</button>
           )}
         </td>
-        <td>{p.materials ?? '—'}</td>
+        <td>
+          {p.materials ?? '—'}
+          {cost?.materialsAmount != null && p.money && <span className="vr-note mono">{fmtMoney(cost.materialsAmount)} ex GST{cost.materialsNote ? ` · ${cost.materialsNote}` : ''}</span>}
+          {cost?.materialsAmount != null && !p.money && <span className="vr-note">a figure is typed</span>}
+          {canPick && cost && !open && (
+            <button type="button" className="quotebtn dw-pick" onClick={() => setOpen(true)}>{cost.materialsAmount != null ? 'Change materials $' : 'Materials $'}</button>
+          )}
+        </td>
       </tr>
       {open && p.dayworkId && (
         <tr className="dw-row dw-row--editor">
@@ -87,6 +96,7 @@ export function DayworksRow(p: DayworksRowProps) {
               recordedHours={p.hours}
               labourText={p.labour}
               plantText={p.plant}
+              materialsText={p.materials}
               labourLocked={labourFromRecord}
               initial={p.allocation}
               people={p.people}
@@ -106,7 +116,7 @@ function AmountCell({ cost }: { cost: LineCost | null }) {
   if (!cost) return <td className="n claims-flag">—</td>;
   if (cost.excluded) return <td className="n claims-flag">Left out of the claim{cost.excludedReason ? <span className="vr-note">{cost.excludedReason}</span> : null}</td>;
   if (cost.amount != null) {
-    return <td className="n mono">{fmtMoney(cost.amount)}{cost.plantNotCosted ? <span className="vr-note claims-flag">plant not costed</span> : null}</td>;
+    return <td className="n mono">{fmtMoney(cost.amount)}{cost.materialsAmount ? <span className="vr-note">incl. {fmtMoney(cost.materialsAmount)} materials</span> : null}{cost.plantNotCosted ? <span className="vr-note claims-flag">plant not costed</span> : null}</td>;
   }
   return <td className="n claims-flag">{whyNoAmount(cost)}</td>;
 }
@@ -153,9 +163,9 @@ type PlantDraft = { pick: string; name: string; hours: string };
  * each picked from the job's list with their hours, saved as one row beside the day. The recorded hours are shown so
  * a split that does not add up is seen, not stopped — the office knows the day better than a rule does.
  */
-function AllocationEditor({ projectId, dayworkId, recordedHours, labourText, plantText, labourLocked, initial, people, machines, onClose, onSaved }: {
-  projectId: string; dayworkId: string; recordedHours: number | null; labourText: string | null; plantText: string | null; labourLocked: boolean;
-  initial: { labour: LabourRow[]; plant: PlantRow[]; note: string | null; excluded: boolean; excludedReason: string | null; carriedFrom: string | null } | null;
+function AllocationEditor({ projectId, dayworkId, recordedHours, labourText, plantText, materialsText, labourLocked, initial, people, machines, onClose, onSaved }: {
+  projectId: string; dayworkId: string; recordedHours: number | null; labourText: string | null; plantText: string | null; materialsText: string | null; labourLocked: boolean;
+  initial: Allocation | null;
   people: string[]; machines: Array<{ id: string; name: string; plantNo: string | null }>;
   onClose: () => void; onSaved: () => void;
 }) {
@@ -167,6 +177,8 @@ function AllocationEditor({ projectId, dayworkId, recordedHours, labourText, pla
   const [note, setNote] = useState(initial?.note ?? '');
   const [excluded, setExcluded] = useState(initial?.excluded ?? false);
   const [reason, setReason] = useState(initial?.excludedReason ?? '');
+  const [materials, setMaterials] = useState(initial?.materialsAmount == null ? '' : String(initial.materialsAmount));
+  const [materialsNote, setMaterialsNote] = useState(initial?.materialsNote ?? '');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -182,10 +194,12 @@ function AllocationEditor({ projectId, dayworkId, recordedHours, labourText, pla
     if (plantRows.some((r) => !r.name)) { setError('Every machine needs a name.'); return; }
     if ([...labourRows, ...plantRows].some((r) => r.hours != null && (Number.isNaN(r.hours) || r.hours < 0 || r.hours > 24))) { setError('Hours are a number between 0 and 24, or blank.'); return; }
     if (excluded && !reason.trim()) { setError('Say why the item is left out of the claim.'); return; }
+    const materialsAmount = num(materials.replace(/[$,\s]/g, ''));
+    if (materialsAmount != null && (Number.isNaN(materialsAmount) || materialsAmount < 0)) { setError('The materials figure is a dollar amount, or blank.'); return; }
     setBusy(true);
     try {
       const { error: e } = await createClient().from('daywork_costings').upsert(
-        { project_id: projectId, daywork_id: dayworkId, labour: labourLocked ? [] : labourRows, plant: plantRows, note: note.trim() || null, excluded, excluded_reason: excluded ? reason.trim() || null : null },
+        { project_id: projectId, daywork_id: dayworkId, labour: labourLocked ? [] : labourRows, plant: plantRows, note: note.trim() || null, excluded, excluded_reason: excluded ? reason.trim() || null : null, materials_amount: materialsAmount == null ? null : Math.round(materialsAmount * 100) / 100, materials_note: materialsAmount == null ? null : materialsNote.trim() || null },
         { onConflict: 'daywork_id' },
       );
       if (e) throw new Error(/row-level security/i.test(e.message) ? 'Only someone who keeps the registers picks people and plant.' : e.message);
@@ -242,6 +256,16 @@ function AllocationEditor({ projectId, dayworkId, recordedHours, labourText, pla
           ))}
           <button type="button" className="quotebtn" onClick={() => setPlant([...plant, { pick: '', name: '', hours: '' }])}>+ Add a machine</button>
           <p className="caption">A machine is priced at the rate card’s rate for it — set under “Rates by machine” above when one has none.</p>
+        </div>
+      </div>
+      <div className="dw-alloc__cols">
+        <div className="dw-alloc__col">
+          <p className="label">Materials, ex GST</p>
+          <div className="dw-alloc__line">
+            <input className="field field--sm dw-alloc__hrs" inputMode="decimal" placeholder="$" aria-label="Materials amount" value={materials} onChange={(e) => setMaterials(e.target.value)} />
+            <input className="field field--sm" placeholder="What it was — supplier, docket, quantity" aria-label="Materials note" value={materialsNote} onChange={(e) => setMaterialsNote(e.target.value)} />
+          </div>
+          <p className="caption">The day says: “{materialsText ?? '—'}”. There is no rate card for materials, so the figure is yours; it is added to the item’s amount and kept with this costing. Blank is no figure, never nought.</p>
         </div>
       </div>
       <label className="fieldcell"><span className="label">Note · optional</span>

@@ -102,6 +102,17 @@ begin
 end; $$;
 update public.daywork_costings set excluded = false where id = 'dddddddd-ee60-0000-0000-000000000002';
 
+-- A materials figure (R170): typed ex GST, never negative, logged with its note.
+select tests.expect_error(
+  $q$update public.daywork_costings set materials_amount = -5 where id = 'dddddddd-ee60-0000-0000-000000000002'$q$,
+  'materials_amount');
+update public.daywork_costings set materials_amount = 250.505, materials_note = '20 t crushed rock, docket 4471' where id = 'dddddddd-ee60-0000-0000-000000000002';
+do $$
+begin
+  if (select materials_amount from public.daywork_costings where id = 'dddddddd-ee60-0000-0000-000000000002') <> 250.51 then raise exception 'TESTFAIL: materials not kept to the cent'; end if;
+  if not exists (select 1 from public.daywork_costing_changes where costing_id = 'dddddddd-ee60-0000-0000-000000000002' and old_materials_amount is null and new_materials_amount = 250.51 and new_materials_note = '20 t crushed rock, docket 4471') then raise exception 'TESTFAIL: the materials figure was not logged'; end if;
+end; $$;
+
 -- A change is kept; nothing is deleted.
 update public.daywork_costings set plant = '[{"plant_id":"eeeeeeee-ee60-0000-0000-000000000001","name":"Vac Trailer","hours":8}]' where id = 'dddddddd-ee60-0000-0000-000000000001';
 do $$

@@ -203,7 +203,7 @@ export default async function ClaimsPage({
               </p>
             ) : (
               <>
-                <p className="claims-total">{data.dayworks.totalHours} T&amp;M hours recorded{dwCosting ? <> · <strong>{dwCosting.totals.costed ? fmtMoney(dwCosting.totals.amount) : '—'}</strong> ex GST costed on {dwCosting.totals.costed} of {data.dayworks.rows.length} item{data.dayworks.rows.length === 1 ? '' : 's'}{dwCosting.totals.notCosted ? `, ${dwCosting.totals.notCosted} without an amount` : ''}{dwCosting.totals.excluded ? `, ${dwCosting.totals.excluded} left out of the claim` : ''}{dwCosting.totals.plantNotCosted ? `, ${dwCosting.totals.plantNotCosted} with plant recorded but not costed` : ''}</> : null} · <Link className="claims-cite" href={`/dayworks?project=${current.project_id}`}>Dayworks schedule by period</Link></p>
+                <p className="claims-total">{data.dayworks.totalHours} T&amp;M hours recorded{dwCosting ? <> · <strong>{dwCosting.totals.costed ? fmtMoney(dwCosting.totals.amount) : '—'}</strong> ex GST costed on {dwCosting.totals.costed} of {data.dayworks.rows.length} item{data.dayworks.rows.length === 1 ? '' : 's'}{dwCosting.totals.materials ? `, incl. ${fmtMoney(dwCosting.totals.materials)} materials` : ''}{dwCosting.totals.notCosted ? `, ${dwCosting.totals.notCosted} without an amount` : ''}{dwCosting.totals.excluded ? `, ${dwCosting.totals.excluded} left out of the claim` : ''}{dwCosting.totals.plantNotCosted ? `, ${dwCosting.totals.plantNotCosted} with plant recorded but not costed` : ''}</> : null} · <Link className="claims-cite" href={`/dayworks?project=${current.project_id}`}>Dayworks schedule by period</Link></p>
                 <div className="claims-tablewrap">
                   <table className="claims-table">
                     <thead>
@@ -239,7 +239,7 @@ export default async function ClaimsPage({
                           {dwCosting && (() => {
                             const c = row.daywork_id ? dwCostOf.get(row.daywork_id) : undefined;
                             if (!c) return <td className="n claims-flag">—</td>;
-                            if (c.amount != null && !c.excluded) return <td className="n mono">{fmtMoney(c.amount)}{c.plantNotCosted ? <span className="vr-note claims-flag">plant not costed</span> : null}</td>;
+                            if (c.amount != null && !c.excluded) return <td className="n mono">{fmtMoney(c.amount)}{c.materialsAmount ? <span className="vr-note">incl. {fmtMoney(c.materialsAmount)} materials</span> : null}{c.plantNotCosted ? <span className="vr-note claims-flag">plant not costed</span> : null}</td>;
                             return <td className="n claims-flag">{whyNoAmount(c)}</td>;
                           })()}
                           <td>{row.labour ?? '—'}</td>
