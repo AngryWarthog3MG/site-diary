@@ -78,6 +78,7 @@ export const NAV_GROUPS: NavGroup[] = [
     label: 'Quality', scope: 'site',
     items: [
       { href: '/quality', name: 'Quality', what: 'Inspection and test plans, lots and hold points, non-conformances', screen: 'quality' },
+      { href: '/qa', name: 'ITPs & ITRs', what: 'The job’s inspection and test plans, and the records filled in for every lot and pour', screen: 'qa' },
       { href: '/audits', name: 'Audits and reviews', short: 'Audits', what: 'Internal audits, management reviews, and their actions until closed', screen: 'audits' },
     ],
   },
@@ -171,7 +172,7 @@ export const NAV_GROUPS: NavGroup[] = [
  * drawer and rail learn it a moment after they open), so nobody sees a door
  * that closes on them; the pages refuse anything a role should not reach anyway.
  */
-export const EVERY_ROLE: Screen[] = ['today', 'entries', 'weekly', 'prestart', 'prestart_sign', 'plant', 'toolbox', 'signin', 'swms', 'swms_sign', 'incidents', 'inspections', 'permits', 'procedures', 'safety', 'orders', 'chemicals', 'obligations', 'emergency', 'construction', 'quality', 'audits', 'asbestos', 'environment'];
+export const EVERY_ROLE: Screen[] = ['today', 'entries', 'weekly', 'prestart', 'prestart_sign', 'plant', 'toolbox', 'signin', 'swms', 'swms_sign', 'incidents', 'inspections', 'permits', 'procedures', 'safety', 'orders', 'chemicals', 'obligations', 'emergency', 'construction', 'quality', 'qa', 'audits', 'asbestos', 'environment'];
 
 export interface NavViewer { role: MemberRole | null; screens?: readonly string[] | null; finance?: boolean | null; canRecord: boolean; multiJob: boolean }
 

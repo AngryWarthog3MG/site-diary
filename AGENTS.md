@@ -428,7 +428,10 @@ improvising; the register once shipped dead because a live smoke test was skippe
   folder), bucket `programmes` `{project}/{id}.ext` (file first then row; a refused row clears its file; the orphan
   check walks it). Keeping = `app.can_keep_programme` (supervisor/pm/admin); reads = every member behind `reads_record`,
   leading hand included. `/programme` is screen `programme`, under Site. Suite 41
-- `src/lib/qa/` — the QA engine (README R96), PHASE 1 ONLY (no screens yet): `model.ts` (`templateProblems` — the TS half
+- `src/lib/qa/` — the QA engine (README R96; screens since R164 — `/qa` the job's QA home, `/qa/itp/[id]` the plan and the
+  office's issue → approve → sign moves, `/qa/record/[id]` the record editor, `load.ts` the loaders; screen `qa` under Quality;
+  a record's id is chosen on the way in and saved by upsert through outbox kind `qa_record`, signatures as blobs; the
+  Kalgoorlie concrete set 6425-KBS-ITP-002 / ITR-002 / ITR-002A is transcribed by script from the documents' cells): `model.ts` (`templateProblems` — the TS half
   of `app.qa_template_problems`, `blanksAsGaps`, `gapCount`, `signoffsComplete`, `released`, `recordState`, `nextRevision`,
   `templateCounts`). Tables `qa_templates` (company; `spec` jsonb is the form; issued = frozen, next wording = next revision),
   `qa_itp_instances` (one ITP revision per job; draft → issued → approved → signed, forward only; office only), `qa_records`

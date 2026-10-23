@@ -1,0 +1,113 @@
+{
+ "code": "6425-KBS-ITR-002A",
+ "kind": "itr_register",
+ "title": "Concrete Pour Register",
+ "revision": "B",
+ "governing_itp": "6425-KBS-ITP-002",
+ "modules": [
+  "frp"
+ ],
+ "source": "docs/qa-source/6425-KBS-ITR-002A_Concrete_Pour_Register_RevB.docx",
+ "header_fields": [
+  {
+   "key": "pour_lot_id",
+   "label": "Pour / lot ID",
+   "type": "text"
+  },
+  {
+   "key": "pour_date",
+   "label": "Pour date",
+   "type": "date"
+  },
+  {
+   "key": "location_grids",
+   "label": "Location / grids",
+   "type": "text"
+  },
+  {
+   "key": "drawing_rev",
+   "label": "Drawing no. & rev",
+   "type": "text"
+  }
+ ],
+ "lot_field": "pour_lot_id",
+ "register_heading": "1. Concrete loads",
+ "columns": [
+  {
+   "key": "docket_no",
+   "label": "Docket no.",
+   "type": "text"
+  },
+  {
+   "key": "time_batched",
+   "label": "Time batched",
+   "type": "text"
+  },
+  {
+   "key": "time_discharged",
+   "label": "Time discharged",
+   "type": "text"
+  },
+  {
+   "key": "water_added_l",
+   "label": "Water added (L)",
+   "type": "number",
+   "unit": "L"
+  },
+  {
+   "key": "slump_mm",
+   "label": "Slump (mm)",
+   "type": "number",
+   "unit": "mm"
+  },
+  {
+   "key": "conc_temp_c",
+   "label": "Conc. temp (C)",
+   "type": "number",
+   "unit": "C"
+  },
+  {
+   "key": "m3",
+   "label": "m3",
+   "type": "number",
+   "unit": "m3"
+  },
+  {
+   "key": "cylinder_ref",
+   "label": "Cylinder ref",
+   "type": "text"
+  },
+  {
+   "key": "accept_reject",
+   "label": "Accept / reject",
+   "type": "select",
+   "options": [
+    "Accept",
+    "Reject"
+   ]
+  },
+  {
+   "key": "mpa_7d",
+   "label": "7 d MPa",
+   "type": "number",
+   "unit": "MPa"
+  },
+  {
+   "key": "mpa_28d",
+   "label": "28 d MPa",
+   "type": "number",
+   "unit": "MPa"
+  }
+ ],
+ "rows_printed": 18,
+ "comments_heading": "2. Comments: rejected loads, slump or temperature issues, cylinder results and photo refs",
+ "signoffs": [
+  {
+   "party": "KBS Supervisor",
+   "required": true,
+   "kind": "internal"
+  }
+ ],
+ "signoff_note": "The paper register carries no signature block; the app closes a register under the supervisor's signature so it can be frozen like every other record.",
+ "hold_point": false
+}

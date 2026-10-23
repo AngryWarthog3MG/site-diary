@@ -69,6 +69,17 @@ async function replay(item: OutboxItem): Promise<void> {
       if (!data || data.length === 0) throw Object.assign(new Error('The prestart was finished before this change reached it; the change was not applied.'), { code: '42501' });
       return;
     }
+    case 'qa_record': {
+      // An ITR or site form (README R164): the signatures first, then the record itself, upserted on its client-chosen
+      // id — once, however many times the phone retries. The database checks every item, column and party.
+      for (const sg of (p.sigs as Array<{ key: string; path: string }> | undefined) ?? []) {
+        if (!blobs[sg.key]) throw Object.assign(new Error('A signature was lost from this phone. Ask them to sign again.'), { code: '42501' });
+        await uploadIfMissing(sg.path, blobs[sg.key], 'image/png');
+      }
+      const { error } = await supabase.from('qa_records').upsert(p.row as Record<string, unknown>, { onConflict: 'id' });
+      if (error && !isFrozen(error)) throw error;
+      return;
+    }
     case 'prestart_attendee': {
       await uploadIfMissing(p.path as string, blobs.signature, 'image/png');
       const { error } = await supabase.from('prestart_attendees').insert({

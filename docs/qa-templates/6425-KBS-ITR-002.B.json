@@ -1,0 +1,395 @@
+{
+ "code": "6425-KBS-ITR-002",
+ "kind": "itr_checklist",
+ "title": "Concrete Lot Record",
+ "revision": "B",
+ "governing_itp": "6425-KBS-ITP-002",
+ "modules": [
+  "frp"
+ ],
+ "source": "docs/qa-source/6425-KBS-ITR-002_Concrete_Lot_Record_RevB.docx",
+ "header_fields": [
+  {
+   "key": "project_name",
+   "label": "Project Name",
+   "type": "text",
+   "default": "Kalgoorlie Airport Hotel (CDI 6425)"
+  },
+  {
+   "key": "location",
+   "label": "Location",
+   "type": "text",
+   "default": "10 Gatacre Drive, Somerville, WA 6430"
+  },
+  {
+   "key": "pour_lot_id",
+   "label": "Pour / lot ID",
+   "type": "text"
+  },
+  {
+   "key": "pour_date",
+   "label": "Pour date",
+   "type": "date"
+  },
+  {
+   "key": "location_grids",
+   "label": "Location / grids",
+   "type": "text"
+  },
+  {
+   "key": "drawing_rev",
+   "label": "Drawing no. & rev",
+   "type": "text"
+  },
+  {
+   "key": "element",
+   "label": "Element",
+   "type": "select",
+   "options": [
+    "Pad",
+    "Strip",
+    "Slab",
+    "Pit",
+    "Kerb / path",
+    "Other"
+   ]
+  },
+  {
+   "key": "concrete_mix",
+   "label": "Concrete Mix",
+   "type": "text"
+  },
+  {
+   "key": "est_volume_m3",
+   "label": "Est. volume (m3)",
+   "type": "number",
+   "unit": "m3"
+  },
+  {
+   "key": "earthworks_lot",
+   "label": "Earthworks lot (ITR-001)",
+   "type": "text"
+  },
+  {
+   "key": "cover_required_mm",
+   "label": "Cover required (mm)",
+   "type": "number",
+   "unit": "mm"
+  }
+ ],
+ "lot_field": "pour_lot_id",
+ "item_columns": [
+  "No.",
+  "Question",
+  "Yes",
+  "No",
+  "N/A",
+  "Comment / result",
+  "Init."
+ ],
+ "answer_labels": {
+  "ok": "Yes",
+  "gap": "No",
+  "na": "N/A"
+ },
+ "sections": [
+  {
+   "title": "A.  BEFORE FORMING",
+   "items": [
+    {
+     "id": "1",
+     "text": "Has the earthworks lot been handed over (ITR-001 signed), and is the base undisturbed since?",
+     "value_type": "text",
+     "value_label": "Comment / result"
+    },
+    {
+     "id": "2",
+     "text": "Has the set-out been checked against the current drawing revision?",
+     "value_type": "text",
+     "value_label": "Comment / result"
+    }
+   ]
+  },
+  {
+   "title": "B.  FORMWORK",
+   "items": [
+    {
+     "id": "3",
+     "text": "Are the forms at the correct line, level and dimensions?",
+     "value_type": "text",
+     "value_label": "Comment / result"
+    },
+    {
+     "id": "4",
+     "text": "Are the forms braced, pinned and strong enough to hold the pour?",
+     "value_type": "text",
+     "value_label": "Comment / result"
+    },
+    {
+     "id": "5",
+     "text": "Are the forms clean, with joints sealed and release agent applied before the reo went in?",
+     "value_type": "text",
+     "value_label": "Comment / result"
+    },
+    {
+     "id": "6",
+     "text": "Are all rebates, set-downs, thickenings, blockouts and stop-ends in place?",
+     "value_type": "text",
+     "value_label": "Comment / result"
+    },
+    {
+     "id": "7",
+     "text": "Are 25 mm chamfers fitted where required?",
+     "value_type": "text",
+     "value_label": "Comment / result"
+    }
+   ]
+  },
+  {
+   "title": "C.  SAND BLINDING AND PLASTIC",
+   "items": [
+    {
+     "id": "8",
+     "text": "Has the base been sand blinded, and is it smooth and free of sharp objects?",
+     "value_type": "text",
+     "value_label": "Comment / result"
+    },
+    {
+     "id": "9",
+     "text": "Is the plastic laid with 200 mm taped laps, turned up at the edges, with no tears or holes?",
+     "value_type": "text",
+     "value_label": "Comment / result"
+    }
+   ]
+  },
+  {
+   "title": "D.  REINFORCEMENT",
+   "items": [
+    {
+     "id": "10",
+     "text": "Has the reo delivery been checked against the schedule and certificates?",
+     "value_type": "text",
+     "value_label": "Comment / result"
+    },
+    {
+     "id": "11",
+     "text": "Are the bar sizes, spacing and laps as shown on the drawings?",
+     "value_type": "text",
+     "value_label": "Comment / result"
+    },
+    {
+     "id": "12",
+     "text": "Is the cover correct?  Required: ______ mm   Measured: ______ mm",
+     "value_type": "text",
+     "value_label": "Comment / result"
+    },
+    {
+     "id": "13",
+     "text": "Are chairs at the correct spacing and sitting on plates?",
+     "value_type": "text",
+     "value_label": "Comment / result"
+    },
+    {
+     "id": "14",
+     "text": "Is the reo tied, secure, and clean of mud, oil and loose rust?",
+     "value_type": "text",
+     "value_label": "Comment / result"
+    },
+    {
+     "id": "15",
+     "text": "Are all starter bars capped?",
+     "value_type": "text",
+     "value_label": "Comment / result"
+    }
+   ]
+  },
+  {
+   "title": "E.  CAST-INS",
+   "items": [
+    {
+     "id": "16",
+     "text": "Have the other trades installed and signed off their cast-ins and penetrations?",
+     "value_type": "text",
+     "value_label": "Comment / result"
+    }
+   ]
+  },
+  {
+   "title": "F.  PRE POUR",
+   "items": [
+    {
+     "id": "17",
+     "text": "Is the correct mix ordered, and are the tester, finishers, vibrators (plus a spare) and curing materials booked or on site?",
+     "value_type": "text",
+     "value_label": "Comment / result"
+    },
+    {
+     "id": "18",
+     "text": "Has the weather been checked against the Hot Weather Concreting Plan?",
+     "value_type": "text",
+     "value_label": "Comment / result",
+     "hold_point": true,
+     "notice": "HP1 — HOLD POINT: Pre-pour release: no concrete is to be ordered until every party below has signed."
+    }
+   ]
+  },
+  {
+   "title": "G.  DURING THE POUR",
+   "items": [
+    {
+     "id": "19",
+     "text": "Was dockets checked for the correct mix, and were concrete temperature and time since batching within limits?",
+     "value_type": "text",
+     "value_label": "Comment / result"
+    },
+    {
+     "id": "20",
+     "text": "Were slump tests done and cylinders taken as required?",
+     "value_type": "text",
+     "value_label": "Comment / result"
+    },
+    {
+     "id": "21",
+     "text": "Were any non-conforming loads rejected and recorded?",
+     "value_type": "text",
+     "value_label": "Comment / result"
+    },
+    {
+     "id": "22",
+     "text": "Was the concrete placed in layers and vibrated, with the forms watched throughout?",
+     "value_type": "text",
+     "value_label": "Comment / result"
+    },
+    {
+     "id": "23",
+     "text": "Was evaporative retarder used where required, and curing started straight after finishing?  Method / time: ______",
+     "value_type": "text",
+     "value_label": "Comment / result"
+    }
+   ]
+  },
+  {
+   "title": "H.  POST POUR",
+   "items": [
+    {
+     "id": "24",
+     "text": "Were control joints saw cut on the same day, to the correct depth?",
+     "value_type": "text",
+     "value_label": "Comment / result"
+    },
+    {
+     "id": "25",
+     "text": "Was the formwork stripped without damage, and were tie holes filled?",
+     "value_type": "text",
+     "value_label": "Comment / result"
+    },
+    {
+     "id": "26",
+     "text": "Is the finished surface free of honeycombing, cracking and other defects?",
+     "value_type": "text",
+     "value_label": "Comment / result"
+    },
+    {
+     "id": "27",
+     "text": "Is the post-pour level survey within tolerance?",
+     "value_type": "text",
+     "value_label": "Comment / result"
+    },
+    {
+     "id": "28",
+     "text": "Do the 7 and 28 day cylinder results pass?",
+     "value_type": "text",
+     "value_label": "Comment / result"
+    },
+    {
+     "id": "29",
+     "text": "Have all defects been repaired and any NCRs closed out?",
+     "value_type": "text",
+     "value_label": "Comment / result",
+     "hold_point": true,
+     "notice": "HP2 — LOT CLOSED: Are all items complete, with records attached?"
+    }
+   ]
+  }
+ ],
+ "hold_points": [
+  {
+   "id": "HP1",
+   "after_item": "18",
+   "text": "HOLD POINT: Pre-pour release: no concrete is to be ordered until every party below has signed.",
+   "parties": [
+    "KBS Supervisor",
+    "Electrical",
+    "Hydraulic / Fire",
+    "Other trade",
+    "Structural Engineer",
+    "CDI Site Manager (release)"
+   ]
+  },
+  {
+   "id": "HP2",
+   "after_item": "29",
+   "text": "LOT CLOSED: Are all items complete, with records attached?",
+   "parties": [
+    "KBS Supervisor (lot closed)",
+    "CDI (lot closed)"
+   ]
+  }
+ ],
+ "signoffs": [
+  {
+   "party": "KBS Supervisor",
+   "required": true,
+   "kind": "internal",
+   "hold_point": "HP1"
+  },
+  {
+   "party": "Electrical",
+   "required": false,
+   "kind": "external",
+   "hold_point": "HP1"
+  },
+  {
+   "party": "Hydraulic / Fire",
+   "required": false,
+   "kind": "external",
+   "hold_point": "HP1"
+  },
+  {
+   "party": "Other trade",
+   "required": false,
+   "kind": "external",
+   "hold_point": "HP1"
+  },
+  {
+   "party": "Structural Engineer",
+   "required": true,
+   "kind": "external",
+   "hold_point": "HP1"
+  },
+  {
+   "party": "CDI Site Manager (release)",
+   "required": true,
+   "kind": "external",
+   "is_release": true,
+   "hold_point": "HP1"
+  },
+  {
+   "party": "KBS Supervisor (lot closed)",
+   "required": true,
+   "kind": "internal",
+   "hold_point": "HP2"
+  },
+  {
+   "party": "CDI (lot closed)",
+   "required": true,
+   "kind": "external",
+   "hold_point": "HP2"
+  }
+ ],
+ "signoff_fields": [
+  "Name / sign / date:"
+ ],
+ "comments_heading": "Comments:",
+ "hold_point": true
+}

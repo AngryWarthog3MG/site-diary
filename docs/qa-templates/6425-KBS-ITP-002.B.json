@@ -1,0 +1,724 @@
+{
+ "code": "6425-KBS-ITP-002",
+ "kind": "itp",
+ "title": "Concrete on Ground",
+ "revision": "B",
+ "modules": [
+  "frp"
+ ],
+ "source": "docs/qa-source/6425-KBS-ITP-002_Concrete_on_Ground_RevB.docx",
+ "document_title": "INSPECTION AND TEST PLAN (ITP)",
+ "project_info": [
+  {
+   "key": "project_name",
+   "label": "Project Name",
+   "value": "Kalgoorlie Airport Hotel (CDI 6425)"
+  },
+  {
+   "key": "location",
+   "label": "Location",
+   "value": "10 Gatacre Drive, Somerville WA 6430"
+  },
+  {
+   "key": "scope_overview",
+   "label": "Scope Overview",
+   "value": "Concrete on Ground - pad & strip footings, slabs on ground, thickenings, lift & sump pits, crossovers, footpaths and kerbs (Building 1, Buildings 2 & 3 footings, External Works)"
+  },
+  {
+   "key": "subcontractor",
+   "label": "Subcontractor",
+   "value": "Kooboolong Services Pty Ltd"
+  },
+  {
+   "key": "trade_package",
+   "label": "Trade Package",
+   "value": "Concrete"
+  },
+  {
+   "key": "itp_ref",
+   "label": "ITP Ref.",
+   "value": "6425-KBS-ITP-002"
+  },
+  {
+   "key": "revision",
+   "label": "Revision",
+   "value": "B"
+  },
+  {
+   "key": "date",
+   "label": "Date",
+   "value": "23/09/2026"
+  },
+  {
+   "key": "lot_location",
+   "label": "Lot/Location",
+   "value": "Building 1 / Buildings 2 & 3 / External Works (nominate per lot on the ITR)"
+  }
+ ],
+ "approval": {
+  "heading": "CDI GROUP APPROVAL",
+  "party": "CDI Approval",
+  "fields": [
+   {
+    "key": "name",
+    "label": "Name",
+    "type": "text"
+   },
+   {
+    "key": "position",
+    "label": "Position",
+    "type": "select",
+    "options": [
+     "PM",
+     "SM",
+     "Other (specify)"
+    ]
+   },
+   {
+    "key": "signature",
+    "label": "Signature",
+    "type": "signature"
+   },
+   {
+    "key": "date",
+    "label": "Date",
+    "type": "date"
+   },
+   {
+    "key": "initial",
+    "label": "Initial",
+    "type": "text"
+   }
+  ]
+ },
+ "reference_docs": {
+  "heading": "REFERENCE DOCUMENTATION",
+  "specifications": {
+   "heading": "Project Specifications and Drawings",
+   "columns": [
+    "Specification Number",
+    "Specification Title"
+   ],
+   "rows": [
+    [
+     "Specification Number",
+     "Specification Title"
+    ],
+    [
+     "DWG: S001_B1 / S002_B1",
+     "Structural General Notes 1 & 2 - Building 1"
+    ],
+    [
+     "DWG: S011_B1",
+     "Standard Details - Footings & Slab on Ground"
+    ],
+    [
+     "DWG: S100_B1 / S300_B1",
+     "Ground Floor & Footing Plan / Sections - Building 1"
+    ],
+    [
+     "DWG: S001 / S002",
+     "Index & General Notes 1 & 2 - Buildings 2 & 3"
+    ],
+    [
+     "DWG: S090 / S095 / S100 / S200",
+     "Excavation & Batter Plan, Footing Plans, Sections - Buildings 2 & 3"
+    ],
+    [
+     "DWG: STR-DRG-000002 / 101010",
+     "SIBS General Structural Notes / Foundation Assemblies Framing Plan"
+    ],
+    [
+     "DWG: C-001 / C-002 / C-003 / C-010 / C-011",
+     "Civil General Arrangement, Drainage & Grading, Bulk Earthworks, Details"
+    ],
+    [
+     "Specification CSP",
+     "Civil Services Specification"
+    ],
+    [
+     "Specification REP_GEO",
+     "Geotechnical Report"
+    ],
+    [
+     "NATSPEC 0311",
+     "Concrete Formwork (Gatacre Drive, Kalgoorlie)"
+    ],
+    [
+     "NATSPEC 0312",
+     "Concrete Reinforcement"
+    ]
+   ]
+  },
+  "standards": {
+   "heading": "Referenced Standards",
+   "columns": [
+    "Standard Reference",
+    "Standard Title"
+   ],
+   "rows": [
+    [
+     "Standard Reference",
+     "Standard Title"
+    ],
+    [
+     "AS 3600 (2018)",
+     "Concrete structures"
+    ],
+    [
+     "AS 3610.1 (2018) / 3610.2 (2023)",
+     "Formwork for concrete"
+    ],
+    [
+     "AS/NZS 4671 (2019)",
+     "Steel reinforcing materials"
+    ],
+    [
+     "AS 1379 (2007)",
+     "Specification and supply of concrete"
+    ],
+    [
+     "AS 3798",
+     "Methods of testing soils for engineering purposes"
+    ],
+    [
+     "AS 1289",
+     "Admixtures, cement, SCMs"
+    ],
+    [
+     "AS 1012.13 (2015)",
+     "Plywood - formwork"
+    ],
+    [
+     "AS 6669 (2016)",
+     "Bar chairs and spacers"
+    ]
+   ]
+  },
+  "associated_itrs": {
+   "heading": "Associated ITR Inspection Numbers",
+   "columns": [
+    "ITR Reference",
+    "ITR Title"
+   ],
+   "rows": [
+    [
+     "ITR Reference",
+     "ITR Title"
+    ],
+    [
+     "6425-KBS-ITR-002",
+     "Concrete Lot Record (pre-pour and post-pour inspection)"
+    ],
+    [
+     "6425-KBS-ITR-002A",
+     "Concrete Pour Register (dockets, tests, results)"
+    ],
+    [
+     "6425-KBS-ITR-001",
+     "Earthworks Lot Record (founding inspection)"
+    ],
+    [
+     "6425-KBS-ITP-001",
+     "Earthworks ITP (subgrade & fill)"
+    ]
+   ]
+  }
+ },
+ "activity_columns": [
+  "Description of required activity",
+  "Governing specification or standard",
+  "Acceptance Criteria",
+  "Record of compliance / completion"
+ ],
+ "inspection_legend": "Type of Inspection:  H = HOLD (work shall not proceed past this point without verified acceptance)   W = WITNESS (nominee notified and invited; work may proceed)   R = REVIEW (verification by documentary evidence)",
+ "parties": [
+  "Kooboolong",
+  "CDI",
+  "Engineer"
+ ],
+ "activities": [
+  {
+   "no": "1",
+   "group": "GENERAL",
+   "activity": "Review SOW, SWMS, drawings and specifications",
+   "governing": [
+    "LOI 6425-COM-SC-LOI-002 Att. 2",
+    "Structural general notes"
+   ],
+   "criteria": [
+    "Contract scope, exclusions and clarifications confirmed",
+    "Current IFC revision of all structural and civil drawings confirmed on Procore",
+    "Approved SWMS for formwork, steel fixing, concrete placement",
+    "Concrete grades, exposure classes, cover and finish classes taken from drawings / general notes",
+    "Inspection notice periods: 24 h notice"
+   ],
+   "record": [
+    "Prior to works commencing",
+    "Document review record"
+   ],
+   "inspection": {
+    "Kooboolong": "H, R",
+    "CDI": "H, R",
+    "Engineer": ""
+   }
+  },
+  {
+   "no": "2",
+   "group": "GENERAL",
+   "activity": "Submissions",
+   "governing": [
+    "0314",
+    "0311"
+   ],
+   "criteria": [
+    "Concrete: placing, compaction and finishing method incl. pumping; sequence and times of placement and construction joint locations; hot / cold weather temperature control; sawn joint method, timing and sequence; curing and protection methodology (0314 cl. 3.8: contractor to submit for review)",
+    "Reinforcement: type test reports (AS 3600 Table 3.2.1); any proposed change, site bend, splice or mechanical splice"
+   ],
+   "record": [
+    "CDI / Engineer review"
+   ],
+   "inspection": {
+    "Kooboolong": "H",
+    "CDI": "R",
+    "Engineer": "R"
+   }
+  },
+  {
+   "no": "3",
+   "group": "GENERAL",
+   "activity": "Approved concrete mix designs",
+   "governing": [
+    "AS 1379 (2007) cl. 1.5.3 / 1.5.4",
+    "AS 3600 (2018)"
+   ],
+   "criteria": [
+    "Normal-class or special-class mix submitted for each grade and exposure class on the drawings",
+    "Properties as documented: strength grade, slump, max aggregate, cement to AS 3972",
+    "Hot-weather retarder / measures nominated so delivered concrete stays within 5-35 C"
+   ],
+   "record": [
+    "Mix design certificates",
+    "Engineer approval"
+   ],
+   "inspection": {
+    "Kooboolong": "H",
+    "CDI": "R",
+    "Engineer": "H"
+   }
+  },
+  {
+   "no": "4",
+   "group": "GENERAL",
+   "activity": "Reinforcement compliance",
+   "governing": [
+    "AS/NZS 4671 (2019)",
+    "AS 3600 (2018) cl. 17.2",
+    "0312 cl. 2.1"
+   ],
+   "criteria": [
+    "Surfaces free of loose or flaking scale and rust, oil, grease and mud; stored above ground and protected",
+    "CDI free-issue reinforcement (Buildings 2 & 3): condition, tags and quantities checked against schedule within 24 h of delivery; discrepancies notified in writing with photos",
+    "Tie wire annealed steel min 1.25 mm"
+   ],
+   "record": [
+    "Delivery dockets",
+    "Delivery check record"
+   ],
+   "inspection": {
+    "Kooboolong": "H",
+    "CDI": "R",
+    "Engineer": ""
+   }
+  },
+  {
+   "no": "5",
+   "group": "EXCAVATION & FOUNDATION",
+   "activity": "Detailed excavation and foundation inspection",
+   "governing": [
+    "Geotechnical Report",
+    "Structural general notes",
+    "Earthworks ITP 6425-KBS-ITP-001"
+   ],
+   "criteria": [
+    "Excavation to RL and dimensions shown; sides stable, base clean, no loose, soft, wet or contaminated material",
+    "Founding material inspected and approved by geotechnical / structural engineer at every pad, strip and pit before blinding, membrane or reinforcement (inspection of base / subgrade before covering)",
+    "Unsuitable material: stop, notify CDI, Engineer direction obtained"
+   ],
+   "record": [
+    "Earthworks Lot Record 6425-KBS-ITR-001 (HP2)",
+    "Engineer sign-off",
+    "Photos"
+   ],
+   "inspection": {
+    "Kooboolong": "H",
+    "CDI": "W",
+    "Engineer": "H"
+   }
+  },
+  {
+   "no": "6",
+   "group": "EXCAVATION & FOUNDATION",
+   "activity": "Subgrade / fill under slabs on ground",
+   "governing": [
+    "Earthworks ITP 6425-KBS-ITP-001",
+    "AS 3798 / AS 1289",
+    "Geotechnical Report"
+   ],
+   "criteria": [
+    "Compaction test results for all fill layers passed and closed under the Earthworks ITP",
+    "Services trenches by others backfilled and as-constructed received before slab preparation"
+   ],
+   "record": [
+    "Test Register 6425-KBS-ITR-001A"
+   ],
+   "inspection": {
+    "Kooboolong": "H",
+    "CDI": "W",
+    "Engineer": "R"
+   }
+  },
+  {
+   "no": "7",
+   "group": "FORMWORK & REINFORCEMENT",
+   "activity": "Formwork",
+   "governing": [
+    "AS 3610.1 (2018) / AS 3610.2 (2023)",
+    "0311 cl. 1.6, 3.1",
+    "AS 3600 cl. 17.5"
+   ],
+   "criteria": [
+    "Position so finished concrete conforms to AS 3600",
+    "Plywood to AS 6669, grade to suit loading and finish; forms clean and free of dust and debris before concrete",
+    "Release agent applied before reinforcement is placed, thin uniform film, surplus removed",
+    "Formwork inspected (cleaned, debris removed)"
+   ],
+   "record": [
+    "Concrete Lot Record 6425-KBS-ITR-002 (section B)",
+    "Photos"
+   ],
+   "inspection": {
+    "Kooboolong": "H",
+    "CDI": "W",
+    "Engineer": ""
+   }
+  },
+  {
+   "no": "8",
+   "group": "FORMWORK & REINFORCEMENT",
+   "activity": "Reinforcement fixing",
+   "governing": [
+    "AS 3600 (2018) cl. 17.2.5, 17.5.3, 4.10",
+    "AS/NZS 4671 (2019)",
+    "0312 cl. 3.1"
+   ],
+   "criteria": [
+    "Bar size, grade, spacing, laps and splices to drawings; position tolerance to AS 3600; cover as documented to AS 3600",
+    "Ties at every intersection on beams/footing cages (each stirrup corner; other bars at 1 m max) and at alternate intersections on mats; tie ends bent away from the cover zone",
+    "Site bending only to AS 3600, no heat; every projecting starter capped",
+    "Reinforcement clean of loose rust, oil, mud and release agent"
+   ],
+   "record": [
+    "Concrete Lot Record 6425-KBS-ITR-002 (section D)",
+    "Photos"
+   ],
+   "inspection": {
+    "Kooboolong": "H",
+    "CDI": "W",
+    "Engineer": "H"
+   }
+  },
+  {
+   "no": "9",
+   "group": "PRE-POUR",
+   "activity": "Pre-pour inspection",
+   "governing": [
+    "KBS Pre-Pour Checklist",
+    "0314 cl. 1.6 / 0312 cl. 1.6 / 0311 cl. 1.8"
+   ],
+   "criteria": [
+    "Checklist completed and issued to CDI 24h before pour; all items closed or accepted",
+    "Engineer inspection of reinforcement; KBS supervisor present; all items closed",
+    "Concrete booked (grade, volume, truck spacing ), pump, tester and finishers confirmed; access, washout, lighting, evaporation barriers, curing materials on site",
+    "HOLD POINT - no concrete ordered for delivery until approved by CDI"
+   ],
+   "record": [
+    "Concrete Lot Record 6425-KBS-ITR-002 HP1 signed",
+    "DCI release"
+   ],
+   "inspection": {
+    "Kooboolong": "H",
+    "CDI": "H",
+    "Engineer": "H"
+   }
+  },
+  {
+   "no": "10",
+   "group": "CONCRETE PLACEMENT",
+   "activity": "Concrete delivery and acceptance",
+   "governing": [
+    "AS 1379 (2007) cl. 4.2.3",
+    "0314 cl. 1.5, 3.2"
+   ],
+   "criteria": [
+    "Every docket checked and retained: Information plus element placed, water added at plant and maximum permitted on site, delivery supervisor name, placement method",
+    "Concrete temperature at discharge between 5 and 35 C; no discharge at ambient below 10 C or above 30 C unless approved heating / cooling measures are in place",
+    "Maximum elapsed time from wetting to discharge: 5-24 C = 120 min; 24-27 C = 90 min; 27-30 C = 60 min; 30-35 C = 45 min"
+   ],
+   "record": [
+    "Pour Register 6425-KBS-ITR-002A",
+    "Delivery dockets",
+    "Temperature / slump record"
+   ],
+   "inspection": {
+    "Kooboolong": "W",
+    "CDI": "R",
+    "Engineer": "W"
+   }
+  },
+  {
+   "no": "11",
+   "group": "CONCRETE PLACEMENT",
+   "activity": "Concrete sampling and testing",
+   "governing": [
+    "AS 1012.1 (2014), 1012.3.1, 1012.8.1, 1012.9 (2014)",
+    "AS 1379 (2007) Sections 5 & 6",
+    "0314"
+   ],
+   "criteria": [
+    "NATA-accredited testing; project assessment; slump test on every batch at the point of discharge from the agitator",
+    "Compressive strength samples per grade per day spread evenly through the pour",
+    "Results kept on site; issued to CDI within 2 business days of receipt; 7 and 28 day results on the Pour Register; low results notified to Engineer immediately"
+   ],
+   "record": [
+    "NATA test reports",
+    "Pour Register 6425-KBS-ITR-002A"
+   ],
+   "inspection": {
+    "Kooboolong": "W",
+    "CDI": "R",
+    "Engineer": "W"
+   }
+  },
+  {
+   "no": "12",
+   "group": "CONCRETE PLACEMENT",
+   "activity": "Placing, compacting and finishing",
+   "governing": [
+    "AS 3600 (2018)",
+    "0314",
+    "0315 Concrete finishes [not received]",
+    "Approved SWMS"
+   ],
+   "criteria": [
+    "Compaction by vibrators; vibrators not to touch set concrete, reinforcement or embedded items and not used to move concrete",
+    "Placing logbook kept on site for every placement: date, grade and source, slump, portion of work, volume",
+    "Finish class to drawings; levels and falls to drawings; surface protection"
+   ],
+   "record": [
+    "Placing logbook / Pour Register",
+    "Photos",
+    "Level check"
+   ],
+   "inspection": {
+    "Kooboolong": "W",
+    "CDI": "W",
+    "Engineer": ""
+   }
+  },
+  {
+   "no": "13",
+   "group": "CONCRETE PLACEMENT",
+   "activity": "Joints and saw cuts",
+   "governing": [
+    "0314 cl. 3.7",
+    "IFC drawings"
+   ],
+   "criteria": [
+    "Construction joints only where documented;",
+    "Control joints in slabs on ground: tooled or sawn, 3-5 mm wide, depth 0.25-0.33 x slab depth, formed as early as the concrete will take the saw without dislodging aggregate (same day in heat)",
+    "Expansion / isolation joints: dowels located and aligned per drawings and held during placement; joint surfaces dry, clean and primed; non-adhering backing rod; filler and sealant as documented, finished flush; watertight where subject to water"
+   ],
+   "record": [
+    "Joint layout record",
+    "Photos"
+   ],
+   "inspection": {
+    "Kooboolong": "W",
+    "CDI": "R",
+    "Engineer": ""
+   }
+  },
+  {
+   "no": "14",
+   "group": "CONCRETE PLACEMENT",
+   "activity": "Curing and protection",
+   "governing": [
+    "AS 3600 (2018)",
+    "AS 3799 (1998)",
+    "0314"
+   ],
+   "criteria": [
+    "Curing continuous from completion of finishing once the surface will not be damaged; method per the submitted and reviewed curing methodology",
+    "Formwork stripped before the curing period ends: curing of exposed faces continued within one hour of exposure"
+   ],
+   "record": [
+    "Pour Register (curing method, start time)",
+    "Photos"
+   ],
+   "inspection": {
+    "Kooboolong": "W",
+    "CDI": "R",
+    "Engineer": ""
+   }
+  },
+  {
+   "no": "15",
+   "group": "POST-POUR",
+   "activity": "Post-pour inspection",
+   "governing": [
+    "AS 3600 (2018) cl. 17.5"
+   ],
+   "criteria": [
+    "Surface finish, edges, joints and rebates conform; defects (honeycombing, cracking, bleed, blowholes, spalls) identified and recorded",
+    "Any make-good required before internal walls / modules identified and scheduled"
+   ],
+   "record": [
+    "Concrete Lot Record 6425-KBS-ITR-002 (section H)",
+    "Level survey",
+    "Photos"
+   ],
+   "inspection": {
+    "Kooboolong": "H",
+    "CDI": "W",
+    "Engineer": "R"
+   }
+  },
+  {
+   "no": "16",
+   "group": "POST-POUR",
+   "activity": "Concrete repairs and defects",
+   "governing": [
+    "0314 cl. 1.5 (cutting / coring submissions)",
+    "Engineer direction",
+    "Approved SWMS"
+   ],
+   "criteria": [
+    "Repair method for any structural defect, and any cutting or coring of hardened concrete, submitted and approved by Engineer before work; proprietary repair materials to manufacturer's data",
+    "Defects notified by CDI rectified within 48 hours of notice or as agreed",
+    "Repairs recorded with photos before and after"
+   ],
+   "record": [
+    "Defect record",
+    "Photos",
+    "Engineer approval"
+   ],
+   "inspection": {
+    "Kooboolong": "H",
+    "CDI": "R",
+    "Engineer": "H"
+   }
+  },
+  {
+   "no": "17",
+   "group": "POST-POUR",
+   "activity": "Concrete strength results",
+   "governing": [
+    "AS 1012.9 (2014)",
+    "AS 1379 (2007) project assessment",
+    "0314 cl. 3.3"
+   ],
+   "criteria": [
+    "28-day results meet characteristic strength per AS 1379 project assessment; results logged against pour and element",
+    "Non-conformance: Engineer notified immediately; NCR raised; investigation (core testing) and disposition per Engineer direction"
+   ],
+   "record": [
+    "NATA reports",
+    "Pour Register",
+    "NCR register"
+   ],
+   "inspection": {
+    "Kooboolong": "R",
+    "CDI": "R",
+    "Engineer": "H"
+   }
+  },
+  {
+   "no": "18",
+   "group": "COMPLETION",
+   "activity": "Final inspection / handover",
+   "governing": [
+    "IFC drawings",
+    "This ITP"
+   ],
+   "criteria": [
+    "All pours complete, all defects rectified and NCRs closed",
+    "Pour Register and placing logbook complete: every pour cross-referenced to dockets, mix, slump, temperature, cylinders and 7/28 day results",
+    "As-constructed information provided (survey responsibility as agreed in the Subcontract)",
+    "Founding inspection records, pre- and post-pour ITRs, test reports and this ITP signed and issued to CDI"
+   ],
+   "record": [
+    "Signed ITP",
+    "ITRs 6425-KBS-ITR-001, 001A, 002, 002A",
+    "Pour Register",
+    "NCR register"
+   ],
+   "inspection": {
+    "Kooboolong": "H",
+    "CDI": "H",
+    "Engineer": "R"
+   }
+  }
+ ],
+ "comments_heading": "ITP Comments and Notes:",
+ "closing": "Works completed and testing completed in line with this ITP except as noted above.",
+ "acceptance": {
+  "heading": "Reviewed and accepted by:",
+  "parties": [
+   "Concrete on Ground - Kooboolong Services",
+   "CDI Group"
+  ],
+  "defaults": {
+   "Concrete on Ground - Kooboolong Services": {
+    "name": "Mitchell van Zyl",
+    "position": "Project Manager"
+   }
+  },
+  "fields": [
+   {
+    "key": "name",
+    "label": "Name:",
+    "type": "text"
+   },
+   {
+    "key": "position",
+    "label": "Position/Title:",
+    "type": "text"
+   },
+   {
+    "key": "date",
+    "label": "Date:",
+    "type": "date"
+   },
+   {
+    "key": "signature",
+    "label": "Signature:",
+    "type": "signature"
+   }
+  ]
+ },
+ "signoffs": [
+  {
+   "party": "Concrete on Ground - Kooboolong Services",
+   "required": true,
+   "kind": "internal"
+  },
+  {
+   "party": "CDI Group",
+   "required": true,
+   "kind": "external",
+   "is_release": true
+  }
+ ],
+ "hold_point": true
+}

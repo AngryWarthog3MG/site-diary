@@ -3441,6 +3441,31 @@ reachable only for a rate under a name not on the staff list, logged; noted, not
 labourer whose ticket does not cover the machine and the move to another job; suite 60 the reason; unit tests the carry
 and zero hours. Migration 20261022100000.
 
+**R164. The Kalgoorlie concrete ITP and its ITRs, on the screen.** "Implement the ITP into the app, then the ITRs need to
+be editable and saved for each location when inputted. This is for Kalgoorlie." The QA engine (R96) had the tables and
+the template shape and stopped short of a screen. The three documents — 6425-KBS-ITP-002 Concrete on Ground Rev B, the
+Concrete Lot Record 6425-KBS-ITR-002 and the Concrete Pour Register 6425-KBS-ITR-002A — are transcribed into
+`docs/qa-templates/` by a script reading the Word tables cell by cell, so every acceptance criterion keeps its own line
+and nothing is paraphrased; the templates README carries the counts (18 activities and 13 hold points; 29 questions in
+8 sections with HP1 after item 18 and HP2 after item 29; 11 register columns). Loaded for Kooboolong as issued revisions
+and the ITP brought onto Kalgoorlie as an instance.
+
+The screens are the engine's first: `/qa` (screen `qa`, under Quality) is the job's QA home — each ITP brought onto the
+job with where it stands, and under it the forms it governs and every record against them, one per lot; `/qa/itp/[id]`
+is the plan as the head contractor sees it, with the office's three moves (issue, record approval by name and date, mark
+signed) and nothing backwards; `/qa/record/[id]` is the record itself. "New" chooses the record's id on the way in, so
+the phone owns it before the database does and the save is an upsert on that id — once, however many times it is
+retried — through the outbox as kind `qa_record` with the signatures as blobs. The editor is one form from the template:
+the header fields (the lot id is the pour / lot ID field), each question with Yes / No / N/A (the engine's ok / gap / na
+— No is a gap and the office reads it), a comment where the form has a column for one, the hold point blocks drawn after
+the question they follow with their parties' sign-offs (name, drawn signature, stamped time), the register as an add-a-row
+table, the comments box. Save keeps what is there; Submit also records every blank as a gap; a sign-off once saved is
+never changed, and when every required party has signed the record freezes and reads only — HP1's CDI Site Manager
+releases the pour, HP2's two close the lot. A wrong record is voided with a reason and stays readable. The pour register
+carries one sign-off the paper does not, the supervisor's, so it can be closed like every other record; the template
+says so. Not built, on purpose, for review first: the PDF in the Kooboolong format, photos on an item, the office's
+gap and hold point queue across jobs, the evidence pack and the template editor (all in the September brief).
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;

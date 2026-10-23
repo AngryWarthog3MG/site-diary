@@ -42,6 +42,7 @@ const SCREEN_OF_PATH: Array<[prefix: string, screen: Screen]> = [
   ['/emergency', 'emergency'],
   ['/construction', 'construction'],
   ['/quality', 'quality'], ['/api/quality', 'quality'],
+  ['/qa', 'qa'],
   ['/audits', 'audits'],
   ['/asbestos', 'asbestos'],
   ['/health', 'health'],
