@@ -3480,6 +3480,19 @@ round clock (`watchDue`, pure, tested) — and also catches a first word that wa
 service role claims the stamp before sending so two callers cannot both send, and a send that reaches nobody hands the
 stamp back. Nothing is sent once the request is done or cancelled. Mitchell is on Kooboolong's list. Suite 62.
 
+**R166. The record as a PDF, and its photographs.** "I've completed an ITR, I want to download it and send it to CDI;
+I also want to add photos — not a photo on each question, just photos in general." `GET /api/qa/record/[id]/pdf` renders
+the record as the paper form it replaces: the boxed header with the mark, title, code, revision and lot; the record
+details; every question with its answer ticked in the Yes / No / N/A columns and its comment; the hold point blocks with
+the signatures as drawn, who and when, or "Not signed"; the register's loads; the comments; the photographs. Read under
+the caller's RLS, rendered on demand, returned, never stored; a "PDF" button sits on the record's bar, and the file is
+what goes to CDI. Photographs belong to the record as a whole (`qa_records.photo_paths`, each under the record's own
+folder, checked by trigger, frozen with the record, unchanged by a void): a Photographs section above the comments takes
+several at once, shrunk on the phone as every photograph in the app is (R113), uploaded with the save and carried in
+the outbox when there is no signal. The engine's per-item photographs stay in the shape (R96) but no screen offers them.
+Not built: emailing the PDF to CDI from the app — the file downloads and is sent from the office's own mail, as the
+sign-off sheet is.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;

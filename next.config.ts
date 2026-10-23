@@ -63,6 +63,7 @@ const nextConfig: NextConfig = {
     '/api/timesheets/pdf': CHROMIUM,
     '/api/reports/company': CHROMIUM,
     '/api/swms/*/pdf': CHROMIUM,
+    '/api/qa/record/*/pdf': CHROMIUM,
     '/api/incidents/*/pdf': CHROMIUM,
     '/api/inspections/*/pdf': CHROMIUM,
     '/api/permits/*/pdf': CHROMIUM,

@@ -434,7 +434,9 @@ improvising; the register once shipped dead because a live smoke test was skippe
 - `src/lib/qa/` — the QA engine (README R96; screens since R164 — `/qa` the job's QA home, `/qa/itp/[id]` the plan and the
   office's issue → approve → sign moves, `/qa/record/[id]` the record editor, `load.ts` the loaders; screen `qa` under Quality;
   a record's id is chosen on the way in and saved by upsert through outbox kind `qa_record`, signatures as blobs; the
-  Kalgoorlie concrete set 6425-KBS-ITP-002 / ITR-002 / ITR-002A is transcribed by script from the documents' cells): `model.ts` (`templateProblems` — the TS half
+  Kalgoorlie concrete set 6425-KBS-ITP-002 / ITR-002 / ITR-002A is transcribed by script from the documents' cells; `pdf.ts` +
+  `/api/qa/record/[id]/pdf` print a record in the Kooboolong format, never stored, in `outputFileTracingIncludes`;
+  `qa_records.photo_paths` are the record's own photographs, README R166): `model.ts` (`templateProblems` — the TS half
   of `app.qa_template_problems`, `blanksAsGaps`, `gapCount`, `signoffsComplete`, `released`, `recordState`, `nextRevision`,
   `templateCounts`). Tables `qa_templates` (company; `spec` jsonb is the form; issued = frozen, next wording = next revision),
   `qa_itp_instances` (one ITP revision per job; draft → issued → approved → signed, forward only; office only), `qa_records`

@@ -16,6 +16,8 @@ export interface QaRecordRow {
   comments: string | null; signoffs: RecordSignoff[]; gap_count: number; submitted_at: string | null; completed_at: string | null;
   released_at: string | null; client_created_at: string; created_by: string | null; created_at: string; updated_at: string;
   voided_at: string | null; void_reason: string | null; diary_entry_id: string | null;
+  /** Photographs of the record as a whole (README R166). */
+  photo_paths: string[];
 }
 
 export interface QaRecordSummary { row: QaRecordRow; state: RecordState }
@@ -48,10 +50,11 @@ function asRecord(r: Record<string, unknown>): QaRecordRow {
     rows: Array.isArray(r.rows) ? (r.rows as Array<Record<string, unknown>>) : [],
     signoffs: Array.isArray(r.signoffs) ? (r.signoffs as RecordSignoff[]) : [],
     gap_count: num(r.gap_count),
+    photo_paths: Array.isArray(r.photo_paths) ? (r.photo_paths as string[]) : [],
   };
 }
 
-const RECORD_COLS = 'id, project_id, template_id, itp_instance_id, activity_no, lot_or_element, header, items, rows, comments, signoffs, gap_count, submitted_at, completed_at, released_at, client_created_at, created_by, created_at, updated_at, voided_at, void_reason, diary_entry_id';
+const RECORD_COLS = 'id, project_id, template_id, itp_instance_id, activity_no, lot_or_element, header, items, rows, comments, signoffs, gap_count, submitted_at, completed_at, released_at, client_created_at, created_by, created_at, updated_at, voided_at, void_reason, diary_entry_id, photo_paths';
 const TEMPLATE_COLS = 'id, code, revision, kind, title, governing_itp, issued_at, spec';
 
 /** The job's QA at a glance, under the caller's RLS: its ITPs, their ITRs, and the records against each. */

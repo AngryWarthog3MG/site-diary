@@ -76,6 +76,9 @@ async function replay(item: OutboxItem): Promise<void> {
         if (!blobs[sg.key]) throw Object.assign(new Error('A signature was lost from this phone. Ask them to sign again.'), { code: '42501' });
         await uploadIfMissing(sg.path, blobs[sg.key], 'image/png');
       }
+      for (const f of (p.files as Array<{ key: string; path: string; type: string }> | undefined) ?? []) {
+        if (blobs[f.key]) await uploadIfMissing(f.path, blobs[f.key], f.type);
+      }
       const { error } = await supabase.from('qa_records').upsert(p.row as Record<string, unknown>, { onConflict: 'id' });
       if (error && !isFrozen(error)) throw error;
       return;

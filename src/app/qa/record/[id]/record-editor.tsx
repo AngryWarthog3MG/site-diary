@@ -8,6 +8,7 @@ import { SignaturePad } from '@/components/signature-pad';
 import { OutboxStatus } from '@/components/outbox-status';
 import { runOrQueue } from '@/lib/outbox/sync';
 import * as outbox from '@/lib/outbox/store';
+import { compressPhoto } from '@/lib/photos/compress';
 import { fmtPerthDate } from '@/lib/pdf/dates';
 import { blanksAsGaps, gapCount, recordState, STATE_LABEL, type ItemResult, type ItemState, type RecordSignoff, type Signoff, type TemplateSection } from '@/lib/qa/model';
 import type { QaRecordRow, QaTemplateRow } from '@/lib/qa/load';
@@ -22,6 +23,7 @@ type Spec = {
   answer_labels?: Record<ItemState, string>; hold_points?: HoldPoint[]; lot_field?: string; register_heading?: string; comments_heading?: string; signoff_note?: string; hold_point?: boolean;
 };
 type Pending = { party: string; signer_name: string; blob: Blob; key: string };
+type NewPhoto = { key: string; blob: Blob; type: string; extension: string; previewUrl: string };
 
 const slug = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 
@@ -61,6 +63,7 @@ export function RecordEditor({ projectId, recordId, template, record, instanceId
   const [lot, setLot] = useState(record?.lot_or_element ?? '');
   const [comments, setComments] = useState(record?.comments ?? '');
   const [pending, setPending] = useState<Pending[]>([]);
+  const [photos, setPhotos] = useState<NewPhoto[]>([]);
   const [dirty, setDirty] = useState(!record);
   const [saving, setSaving] = useState(false);
   const [kept, setKept] = useState(false);
@@ -91,7 +94,10 @@ export function RecordEditor({ projectId, recordId, template, record, instanceId
       const { data: session } = await supabase.auth.getSession();
       const userId = session.session?.user.id ?? null;
       const now = new Date().toISOString();
-      const itemsOut: ItemResult[] = (submit ? blanksAsGaps({ sections: (spec.sections ?? []) as unknown as TemplateSection[] }, resultsNow) : resultsNow).map((r) => ({ item_id: r.item_id, state: r.state, ...(r.value ? { value: r.value } : {}) }));
+      const files = photos.map((ph) => ({ key: ph.key, path: `${projectId}/qa/${recordId}/${ph.key}.${ph.extension}`, type: ph.type, ph }));
+      const photoPaths = [...(record?.photo_paths ?? []), ...files.map((f) => f.path)];
+      const base: ItemResult[] = submit ? blanksAsGaps({ sections: (spec.sections ?? []) as unknown as TemplateSection[] }, resultsNow) : resultsNow;
+      const itemsOut: ItemResult[] = base.map((r) => ({ item_id: r.item_id, state: r.state, ...(r.value ? { value: r.value } : {}) }));
       const headerOut: Record<string, string> = {};
       for (const [k, v] of Object.entries(header)) if (v.trim()) headerOut[k] = v.trim();
       const rowsOut = rows.map((r) => Object.fromEntries(Object.entries(r).filter(([, v]) => v.trim() !== '').map(([k, v]) => [k, v.trim()]))).filter((r) => Object.keys(r).length > 0);
@@ -99,12 +105,16 @@ export function RecordEditor({ projectId, recordId, template, record, instanceId
       const signoffs: RecordSignoff[] = [...existing, ...sigs.map((s) => ({ party: s.p.party, signer_name: s.p.signer_name, signature_path: s.path, signed_at: now, signed_by_user_id: userId }))];
       const row = {
         id: recordId, project_id: projectId, template_id: template.id, itp_instance_id: instanceId, activity_no: null,
-        lot_or_element: effectiveLot || null, header: headerOut, items: itemsOut, rows: rowsOut, comments: comments.trim() || null, signoffs,
+        lot_or_element: effectiveLot || null, header: headerOut, items: itemsOut, rows: rowsOut, comments: comments.trim() || null, signoffs, photo_paths: photoPaths,
         submitted_at: submit ? now : (record?.submitted_at ?? null), client_created_at: record?.client_created_at ?? now,
       };
       const live = async () => {
         for (const s of sigs) {
           const { error: upErr } = await supabase.storage.from('entry-photos').upload(s.path, s.p.blob, { contentType: 'image/png', upsert: false });
+          if (upErr && !/already exists|duplicate/i.test(upErr.message)) throw new Error(upErr.message);
+        }
+        for (const f of files) {
+          const { error: upErr } = await supabase.storage.from('entry-photos').upload(f.path, f.ph.blob, { contentType: f.type, upsert: false });
           if (upErr && !/already exists|duplicate/i.test(upErr.message)) throw new Error(upErr.message);
         }
         const { error: e } = await supabase.from('qa_records').upsert(row, { onConflict: 'id' });
@@ -113,13 +123,25 @@ export function RecordEditor({ projectId, recordId, template, record, instanceId
       const queue = async () => {
         const blobs: Record<string, Blob> = {};
         for (const s of sigs) blobs[s.key] = s.p.blob;
-        await outbox.enqueue({ kind: 'qa_record', projectId, subjectId: recordId, payload: { row, sigs: sigs.map((s) => ({ key: s.key, path: s.path })) }, blobs });
+        for (const f of files) blobs[f.key] = f.ph.blob;
+        await outbox.enqueue({ kind: 'qa_record', projectId, subjectId: recordId, payload: { row, sigs: sigs.map((s) => ({ key: s.key, path: s.path })), files: files.map((f) => ({ key: f.key, path: f.path, type: f.type })) }, blobs });
       };
       const outcome = await runOrQueue(live, queue);
-      if (outcome === 'sent') { setPending([]); setDirty(false); router.refresh(); }
+      if (outcome === 'sent') { setPending([]); setPhotos([]); setDirty(false); router.refresh(); }
       else { setKept(true); setDirty(false); }
     } catch (err) { setError(err instanceof Error ? err.message : 'The record did not save.'); }
     finally { setSaving(false); }
+  }
+
+  async function addPhotos(list: FileList | null) {
+    if (!list || !editable) return;
+    for (const file of Array.from(list)) {
+      try {
+        const c = await compressPhoto(file);
+        setPhotos((ps) => [...ps, { key: `ph-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`, blob: c.blob, type: c.contentType, extension: c.extension, previewUrl: URL.createObjectURL(c.blob) }]);
+        setDirty(true);
+      } catch { setError('A photo could not be read.'); }
+    }
   }
 
   async function voidRecord() {
@@ -188,6 +210,7 @@ export function RecordEditor({ projectId, recordId, template, record, instanceId
         <div className="claims-actions" style={{ margin: 0 }}>
           {editable && <button type="button" className={`button${dirty || pending.length ? '' : ' button--quiet'}`} disabled={saving} onClick={() => void save(false)}>{saving ? 'Saving…' : 'Save'}</button>}
           {editable && !isRegister && <button type="button" className="button button--quiet" disabled={saving} onClick={() => void save(true)} title="Saves, and records every blank item as a gap">Submit</button>}
+          {record && <a className="button button--quiet" href={`/api/qa/record/${recordId}/pdf`} target="_blank" rel="noopener">PDF</a>}
           <Link className="button button--quiet" href={backTo}>Back</Link>
         </div>
       </div>
@@ -268,6 +291,22 @@ export function RecordEditor({ projectId, recordId, template, record, instanceId
           {rows.length === 0 && <p className="caption">No loads recorded yet.</p>}
         </section>
       )}
+
+      <section className="qa-section">
+        <p className="label">Photographs · {(record?.photo_paths.length ?? 0) + photos.length}</p>
+        <div className="qa-item__photos">
+          {(record?.photo_paths ?? []).map((p) => signatureUrls[p] ? /* eslint-disable-next-line @next/next/no-img-element */ <img key={p} className="qa-photo" src={signatureUrls[p]} alt="" /> : <span key={p} className="qa-photo qa-photo--pending" />)}
+          {photos.map((ph) => /* eslint-disable-next-line @next/next/no-img-element */ <img key={ph.key} className="qa-photo qa-photo--new" src={ph.previewUrl} alt="" title="Not saved yet" />)}
+          {editable && (
+            <label className="qa-photo__add">
+              <span>+ Photos</span>
+              <input type="file" accept="image/*" multiple hidden onChange={(e) => { const l = e.target.files; void addPhotos(l); e.target.value = ''; }} />
+            </label>
+          )}
+          {!editable && (record?.photo_paths.length ?? 0) === 0 && <span className="caption">None.</span>}
+        </div>
+        {photos.length > 0 && <p className="caption">{photos.length} new photo{photos.length === 1 ? '' : 's'} — saved with the record when you press Save.</p>}
+      </section>
 
       <section className="qa-section">
         <p className="label">{spec.comments_heading ?? 'Comments'}</p>

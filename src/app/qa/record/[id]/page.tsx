@@ -38,7 +38,7 @@ export default async function QaRecordPage({ params, searchParams }: { params: P
   const { record, template: t, instance } = loaded;
   const instanceId = record?.itp_instance_id ?? (itp && UUID_RE.test(itp) ? itp : null);
   // The signatures already given, as links that last the hour.
-  const paths = (record?.signoffs ?? []).map((s) => s.signature_path).filter(Boolean);
+  const paths = [...(record?.signoffs ?? []).map((s) => s.signature_path), ...(record?.photo_paths ?? [])].filter(Boolean);
   const urls: Record<string, string> = {};
   if (paths.length) {
     const { data } = await supabase.storage.from('entry-photos').createSignedUrls(paths, 3600);

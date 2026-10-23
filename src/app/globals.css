@@ -5155,3 +5155,9 @@ body:has(> .topbar) .homefoot--top { display: none; }
 .watch-orders .regs__tick input { margin-top: 0.2rem; }
 .watch-orders__every { display: inline-flex; align-items: center; gap: 0.5rem; }
 .watch-orders__every .field { width: auto; margin: 0; }
+
+/* Photographs on a question (README R166). */
+.qa-item__photos { display: flex; flex-wrap: wrap; gap: 0.35rem; align-items: center; }
+.qa-photo { width: 6rem; height: 4.5rem; object-fit: cover; border-radius: 6px; border: 1px solid var(--ink-08); background: var(--paper-dim); }
+.qa-photo--new { border-color: rgba(154, 106, 9, 0.6); }
+.qa-photo__add { display: inline-flex; align-items: center; min-height: 2.2rem; padding: 0 0.7rem; border: 1px dashed var(--ink-30); border-radius: 8px; font-size: 0.8125rem; font-weight: 600; color: var(--teal); cursor: pointer; }
