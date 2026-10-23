@@ -3493,6 +3493,17 @@ the outbox when there is no signal. The engine's per-item photographs stay in th
 Not built: emailing the PDF to CDI from the app — the file downloads and is sent from the office's own mail, as the
 sign-off sheet is.
 
+**R167. The Earthworks set.** "Do the same for the attached ITP and ITRs." 6425-KBS-ITP-001 Earthworks Rev B (14
+activities, 8 with a hold), the Earthworks Lot Record 6425-KBS-ITR-001 (20 questions in four sections, HP1 after item 14
+released by the geotechnical engineer, HP2 and HP3 both after item 20 — founding approved, then handed over to concrete)
+and the Earthworks Test Register 6425-KBS-ITR-001A, transcribed the same way and loaded, the ITP brought onto Kalgoorlie
+as a draft. Two things the engine had not drawn before: a question may be followed by MORE THAN ONE hold point (the
+editor and the PDF now draw every one in order), and a register may be two tables — the paper has nuke tests and CBR
+tests side by side. The engine's `sub_register` carries the second, its columns keyed apart (`cbr_…`), and a row belongs
+to the table whose keys it carries; the editor keeps a mark on each row while editing and strips it on save, so the
+database sees only the form's columns. The disposal docket register 6425-KBS-ITR-001B is named by the ITP but was not
+among the documents, so it is not transcribed.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;

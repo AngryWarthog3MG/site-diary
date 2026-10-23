@@ -14,7 +14,7 @@ type Section = { title: string; items: Item[] };
 type Column = { key: string; label: string; type: string; unit?: string };
 type HoldPoint = { id: string; after_item: string; text: string; parties: string[] };
 type Spec = {
-  header_fields?: HeaderField[]; sections?: Section[]; columns?: Column[]; signoffs?: Array<Signoff & { hold_point?: string }>;
+  header_fields?: HeaderField[]; sections?: Section[]; columns?: Column[]; sub_register?: { heading?: string; columns: Column[] }; signoffs?: Array<Signoff & { hold_point?: string }>;
   answer_labels?: Record<ItemState, string>; hold_points?: HoldPoint[]; item_columns?: string[]; register_heading?: string; comments_heading?: string; signoff_note?: string;
 };
 
@@ -62,14 +62,18 @@ export function qaRecordHtml(template: QaTemplateRow, record: QaRecordRow, meta:
       const r = byItem.get(it.id);
       // A drawn tick: the embedded faces carry no ✓ glyph, and a missing glyph prints as a box.
       const tick = (st: ItemState) => `<td class="c">${r?.state === st ? TICK : ''}</td>`;
-      const hp = holdPoints.find((h) => h.after_item === it.id);
+      const hps = holdPoints.filter((h) => h.after_item === it.id);
       return `<tr class="${r?.state === 'gap' ? 'qa-gap' : ''}"><td class="mono c">${esc(it.id)}</td><td>${esc(it.text)}</td>${tick('ok')}${tick('gap')}${tick('na')}<td>${esc(r?.value ?? '')}</td></tr>`
-        + (hp ? `<tr class="qa-hp"><td colspan="6"><p class="qa-hp__text">${esc(hp.id)} · ${esc(hp.text)}</p><div class="qa-sigs">${hp.parties.map((p) => signBlock(p, signoffDefs.find((d) => d.party === p))).join('')}</div></td></tr>` : '');
+        + hps.map((hp) => `<tr class="qa-hp"><td colspan="6"><p class="qa-hp__text">${esc(hp.id)} · ${esc(hp.text)}</p><div class="qa-sigs">${hp.parties.map((p) => signBlock(p, signoffDefs.find((d) => d.party === p))).join('')}</div></td></tr>`).join('');
     }).join('');
     return `<tr class="qa-sec"><td colspan="6">${esc(sec.title)}</td></tr>${rows}`;
   }).join('');
 
-  const register = spec.columns?.length ? `<section class="sect"><p class="lbl">${esc(spec.register_heading ?? 'Register')}</p><table class="qa-reg"><thead><tr><th>#</th>${spec.columns.map((c) => `<th>${esc(c.label)}</th>`).join('')}</tr></thead><tbody>${record.rows.length ? record.rows.map((row, i) => `<tr><td class="mono c">${i + 1}</td>${spec.columns!.map((c) => `<td>${esc(row[c.key] ?? '')}</td>`).join('')}</tr>`).join('') : `<tr><td colspan="${spec.columns.length + 1}" class="nil">No loads recorded</td></tr>`}</tbody></table></section>` : '';
+  const subKeys = new Set((spec.sub_register?.columns ?? []).map((c) => c.key));
+  const regTable = (heading: string, cols: Column[], rows: Array<Record<string, unknown>>) => `<section class="sect"><p class="lbl">${esc(heading)}</p><table class="qa-reg"><thead><tr><th>#</th>${cols.map((c) => `<th>${esc(c.label)}</th>`).join('')}</tr></thead><tbody>${rows.length ? rows.map((row, i) => `<tr><td class="mono c">${i + 1}</td>${cols.map((c) => `<td>${esc(c.type === 'date' && row[c.key] ? fmtDate(String(row[c.key])) : (row[c.key] ?? ''))}</td>`).join('')}</tr>`).join('') : `<tr><td colspan="${cols.length + 1}" class="nil">Nothing recorded</td></tr>`}</tbody></table></section>`;
+  const mainRows = record.rows.filter((r) => !Object.keys(r).some((k) => subKeys.has(k)));
+  const subRows = record.rows.filter((r) => Object.keys(r).some((k) => subKeys.has(k)));
+  const register = (spec.columns?.length ? regTable(spec.register_heading ?? 'Register', spec.columns, mainRows) : '') + (spec.sub_register ? regTable(spec.sub_register.heading ?? 'Register', spec.sub_register.columns, subRows) : '');
   const loose = signoffDefs.filter((s) => !inHold.has(s.party));
 
   const html = [

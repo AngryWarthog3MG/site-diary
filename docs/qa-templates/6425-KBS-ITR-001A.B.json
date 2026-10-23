@@ -1,0 +1,161 @@
+{
+ "code": "6425-KBS-ITR-001A",
+ "kind": "itr_register",
+ "title": "Earthworks Test Register",
+ "revision": "B",
+ "governing_itp": "6425-KBS-ITP-001",
+ "modules": [
+  "earthworks"
+ ],
+ "source": "docs/qa-source/6425-KBS-ITR-001A_Earthworks_Test_Register_RevB.docx",
+ "header_fields": [
+  {
+   "key": "lot_area_id",
+   "label": "Lot / area ID",
+   "type": "text"
+  },
+  {
+   "key": "date_opened",
+   "label": "Date opened",
+   "type": "date"
+  },
+  {
+   "key": "location_grids",
+   "label": "Location / grids",
+   "type": "text"
+  },
+  {
+   "key": "drawing_rev",
+   "label": "Drawing no. & rev",
+   "type": "text"
+  }
+ ],
+ "lot_field": "lot_area_id",
+ "register_heading": "1. Nuke (compaction) tests",
+ "columns": [
+  {
+   "key": "test_id",
+   "label": "Test ID",
+   "type": "text"
+  },
+  {
+   "key": "date",
+   "label": "Date",
+   "type": "date"
+  },
+  {
+   "key": "location_layer_rl",
+   "label": "Location / layer / RL",
+   "type": "text"
+  },
+  {
+   "key": "lab_report",
+   "label": "Lab report",
+   "type": "text"
+  },
+  {
+   "key": "density_ratio_pct",
+   "label": "Density ratio %",
+   "type": "number",
+   "unit": "%"
+  },
+  {
+   "key": "moisture_pct",
+   "label": "Moisture %",
+   "type": "number",
+   "unit": "%"
+  },
+  {
+   "key": "required_pct",
+   "label": "Req'd %",
+   "type": "number",
+   "unit": "%"
+  },
+  {
+   "key": "pass_fail",
+   "label": "Pass / Fail",
+   "type": "select",
+   "options": [
+    "Pass",
+    "Fail"
+   ]
+  },
+  {
+   "key": "retest_of",
+   "label": "Retest of",
+   "type": "text"
+  }
+ ],
+ "rows_printed": 10,
+ "sub_register": {
+  "heading": "2. CBR tests",
+  "rows_printed": 6,
+  "columns": [
+   {
+    "key": "cbr_test_id",
+    "label": "Test ID",
+    "type": "text"
+   },
+   {
+    "key": "cbr_date",
+    "label": "Date",
+    "type": "date"
+   },
+   {
+    "key": "cbr_location_grids",
+    "label": "Location / grids",
+    "type": "text"
+   },
+   {
+    "key": "cbr_stage",
+    "label": "Stage (in-situ / post-fill)",
+    "type": "select",
+    "options": [
+     "In-situ",
+     "Post-fill"
+    ]
+   },
+   {
+    "key": "cbr_fill_depth_mm",
+    "label": "Fill depth (mm)",
+    "type": "number",
+    "unit": "mm"
+   },
+   {
+    "key": "cbr_lab_report",
+    "label": "Lab report",
+    "type": "text"
+   },
+   {
+    "key": "cbr_pct",
+    "label": "CBR %",
+    "type": "number",
+    "unit": "%"
+   },
+   {
+    "key": "cbr_pass",
+    "label": "Pass (min 5%)",
+    "type": "select",
+    "options": [
+     "Pass",
+     "Fail"
+    ]
+   },
+   {
+    "key": "cbr_confirmed_by",
+    "label": "Confirmed by",
+    "type": "text"
+   }
+  ]
+ },
+ "comments_heading": "3. Comments: failed tests and retests, lab notes and photo refs",
+ "signoffs": [
+  {
+   "party": "KBS Supervisor",
+   "required": true,
+   "kind": "internal"
+  }
+ ],
+ "signoff_note": "The paper register carries no signature block; the app closes a register under the supervisor's signature so it can be frozen like every other record.",
+ "hold_point": false
+}

@@ -1,0 +1,305 @@
+{
+ "code": "6425-KBS-ITR-001",
+ "kind": "itr_checklist",
+ "title": "Earthworks Lot Record",
+ "revision": "B",
+ "governing_itp": "6425-KBS-ITP-001",
+ "modules": [
+  "earthworks"
+ ],
+ "source": "docs/qa-source/6425-KBS-ITR-001_Earthworks_Lot_Record_RevB.docx",
+ "header_fields": [
+  {
+   "key": "project_name",
+   "label": "Project Name",
+   "type": "text",
+   "default": "Kalgoorlie Airport Hotel (CDI 6425)"
+  },
+  {
+   "key": "location",
+   "label": "Location",
+   "type": "text",
+   "default": "10 Gatacre Drive, Somerville, WA 6430"
+  },
+  {
+   "key": "lot_area_id",
+   "label": "Lot / area ID",
+   "type": "text"
+  },
+  {
+   "key": "date_opened",
+   "label": "Date opened",
+   "type": "date"
+  },
+  {
+   "key": "location_grids",
+   "label": "Location / grids",
+   "type": "text"
+  },
+  {
+   "key": "drawing_rev",
+   "label": "Drawing no. & rev",
+   "type": "text"
+  },
+  {
+   "key": "work_type",
+   "label": "Work type",
+   "type": "select",
+   "options": [
+    "Bulk platform",
+    "Footings / Strips",
+    "Lift pit",
+    "Pavement subgrade",
+    "Other"
+   ]
+  },
+  {
+   "key": "design_formation_rl",
+   "label": "Design formation RL",
+   "type": "text"
+  },
+  {
+   "key": "min_compaction",
+   "label": "Min. compaction",
+   "type": "text",
+   "default": "95% under pads / strips"
+  },
+  {
+   "key": "subgrade_cbr_in_situ",
+   "label": "Subgrade CBR (C-010) — in-situ result (%)",
+   "type": "number",
+   "unit": "%",
+   "note": "Min 5%"
+  },
+  {
+   "key": "improvement_fill_placed_mm",
+   "label": "Improvement fill depth — placed (mm)",
+   "type": "number",
+   "unit": "mm",
+   "note": "Min 500 mm"
+  }
+ ],
+ "lot_field": "lot_area_id",
+ "item_columns": [
+  "No.",
+  "Question",
+  "Yes",
+  "No",
+  "N/A",
+  "Comment / result",
+  "Init."
+ ],
+ "answer_labels": {
+  "ok": "Yes",
+  "gap": "No",
+  "na": "N/A"
+ },
+ "sections": [
+  {
+   "title": "A.  BEFORE STARTING",
+   "items": [
+    {
+     "id": "1",
+     "text": "Have all in ground services been located?",
+     "value_type": "text",
+     "value_label": "Comment / result"
+    },
+    {
+     "id": "2",
+     "text": "Have dated photos been taken of the area and its surrounds before any work started?",
+     "value_type": "text",
+     "value_label": "Comment / result"
+    },
+    {
+     "id": "3",
+     "text": "Are sediment controls and tree protection (by others) in place?",
+     "value_type": "text",
+     "value_label": "Comment / result"
+    },
+    {
+     "id": "4",
+     "text": "Has the work area been set out from CDI's survey control?",
+     "value_type": "text",
+     "value_label": "Comment / result"
+    }
+   ]
+  },
+  {
+   "title": "B.  CLEARING AND STRIP",
+   "items": [
+    {
+     "id": "5",
+     "text": "Have all vegetation, roots, rubbish and organic material been removed from the area?",
+     "value_type": "text",
+     "value_label": "Comment / result"
+    },
+    {
+     "id": "6",
+     "text": "Has the topsoil been stripped and stockpiled separately for landscaping use only?",
+     "value_type": "text",
+     "value_label": "Comment / result"
+    },
+    {
+     "id": "7",
+     "text": "Is the stripped surface free of soft spots, old fill and debris?",
+     "value_type": "text",
+     "value_label": "Comment / result"
+    },
+    {
+     "id": "8",
+     "text": "If any unexpected material was found (unknown fill, contamination, suspected asbestos or rock), was work stopped and CDI notified?",
+     "value_type": "text",
+     "value_label": "Comment / result"
+    }
+   ]
+  },
+  {
+   "title": "C.  SUBGRADE AND FILL",
+   "items": [
+    {
+     "id": "9",
+     "text": "Has the existing subgrade been compacted and tested? Nuke test Result ____ % (95% MMDD) or  CBR Result: ______ % (5%)",
+     "value_type": "text",
+     "value_label": "Comment / result"
+    },
+    {
+     "id": "10",
+     "text": "Where the CBR is below 5%, has at least 500 mm of approved fill been placed?  Depth placed: ______ mm",
+     "value_type": "text",
+     "value_label": "Comment / result"
+    },
+    {
+     "id": "11",
+     "text": "Has the fill source been approved, with test certificates received?",
+     "value_type": "text",
+     "value_label": "Comment / result"
+    },
+    {
+     "id": "12",
+     "text": "Is the imported fill clean sand or cracker dust, free of clay, rubbish and stones over 75 mm?",
+     "value_type": "text",
+     "value_label": "Comment / result"
+    },
+    {
+     "id": "13",
+     "text": "Were service trenches inspected, and as-constructed details received, before filling over them?",
+     "value_type": "text",
+     "value_label": "Comment / result"
+    },
+    {
+     "id": "14",
+     "text": "Is the finished platform at design level and graded to drain, with no ponding?  Survey ref: ______",
+     "value_type": "text",
+     "value_label": "Comment / result",
+     "hold_point": true,
+     "notice": "HP1 — HOLD POINT: Has the subgrade been proof rolled with no deflection, heave or rutting, and has the geotech confirmed CBR of at least 5% after filling?"
+    }
+   ]
+  },
+  {
+   "title": "D.  FOOTING AND PIT EXCAVATION",
+   "items": [
+    {
+     "id": "15",
+     "text": "Have the footings and pits been excavated to the correct line, level and size?",
+     "value_type": "text",
+     "value_label": "Comment / result"
+    },
+    {
+     "id": "16",
+     "text": "Has any over-excavation been recorded and made good?",
+     "value_type": "text",
+     "value_label": "Comment / result"
+    },
+    {
+     "id": "17",
+     "text": "For excavations deeper than 1.5 m: are the sides battered, benched or shored, with edge protection and ladder access, and is the daily inspection signed?",
+     "value_type": "text",
+     "value_label": "Comment / result"
+    },
+    {
+     "id": "18",
+     "text": "Are spoil and plant kept at least 1 m back from the excavation edge?",
+     "value_type": "text",
+     "value_label": "Comment / result"
+    },
+    {
+     "id": "19",
+     "text": "Is the base clean, dry and free of loose material?",
+     "value_type": "text",
+     "value_label": "Comment / result"
+    },
+    {
+     "id": "20",
+     "text": "Has the base under the footings been compacted and nuke tested to 95% modified?  Result: ______ %",
+     "value_type": "text",
+     "value_label": "Comment / result",
+     "hold_point": true,
+     "notice": "HP2 — HOLD POINT: Has the founding been approved? | HP3 — HANDED OVER TO CONCRETE: Is the area ready to hand over to concrete works?"
+    }
+   ]
+  }
+ ],
+ "hold_points": [
+  {
+   "id": "HP1",
+   "after_item": "14",
+   "text": "HOLD POINT: Has the subgrade been proof rolled with no deflection, heave or rutting, and has the geotech confirmed CBR of at least 5% after filling?",
+   "release_line": "Released by (Geotechnical engineer):  Name ____________________   Sign ______________   Date / time ____________",
+   "parties": [
+    "Geotechnical engineer (HP1 release)"
+   ]
+  },
+  {
+   "id": "HP2",
+   "after_item": "20",
+   "text": "HOLD POINT: Has the founding been approved?",
+   "release_line": "Released by (Geotech / structural engineer):  Name ____________________   Sign ______________   Date / time ____________",
+   "parties": [
+    "Geotech / structural engineer (HP2 founding)"
+   ]
+  },
+  {
+   "id": "HP3",
+   "after_item": "20",
+   "text": "HANDED OVER TO CONCRETE: Is the area ready to hand over to concrete works?",
+   "release_line": "KBS Supervisor:  Name ________________  Sign __________  Date ________      CDI:  Name ________________  Sign __________  Date ________",
+   "parties": [
+    "KBS Supervisor (handed over)",
+    "CDI (handed over)"
+   ]
+  }
+ ],
+ "signoffs": [
+  {
+   "party": "Geotechnical engineer (HP1 release)",
+   "required": true,
+   "kind": "external",
+   "is_release": true,
+   "hold_point": "HP1"
+  },
+  {
+   "party": "Geotech / structural engineer (HP2 founding)",
+   "required": true,
+   "kind": "external",
+   "hold_point": "HP2"
+  },
+  {
+   "party": "KBS Supervisor (handed over)",
+   "required": true,
+   "kind": "internal",
+   "hold_point": "HP3"
+  },
+  {
+   "party": "CDI (handed over)",
+   "required": true,
+   "kind": "external",
+   "hold_point": "HP3"
+  }
+ ],
+ "signoff_fields": [
+  "Name / sign / date:"
+ ],
+ "comments_heading": "Comments: record every 'No' answer here with the action taken, plus defects and photo refs",
+ "hold_point": true
+}

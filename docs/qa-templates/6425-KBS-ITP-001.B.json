@@ -1,0 +1,595 @@
+{
+ "code": "6425-KBS-ITP-001",
+ "kind": "itp",
+ "title": "Earthworks",
+ "revision": "B",
+ "modules": [
+  "earthworks"
+ ],
+ "source": "docs/qa-source/6425-KBS-ITP-001_Earthworks_RevB.docx",
+ "document_title": "INSPECTION AND TEST PLAN (ITP)",
+ "project_info": [
+  {
+   "key": "project_name",
+   "label": "Project Name",
+   "value": "Kalgoorlie Airport Hotel (CDI 6425)"
+  },
+  {
+   "key": "location",
+   "label": "Location",
+   "value": "10 Gatacre Drive, Somerville WA 6430"
+  },
+  {
+   "key": "scope_overview",
+   "label": "Scope Overview",
+   "value": "Earthworks - fill, excavation to formation, detailed excavation for footings & pits, fill & compaction (Building 1, Buildings 2 & 3, External Works)"
+  },
+  {
+   "key": "subcontractor",
+   "label": "Subcontractor",
+   "value": "Kooboolong Services Pty Ltd"
+  },
+  {
+   "key": "trade_package",
+   "label": "Trade Package",
+   "value": "Earthworks"
+  },
+  {
+   "key": "itp_ref",
+   "label": "ITP Ref.",
+   "value": "6425-KBS-ITP-001"
+  },
+  {
+   "key": "revision",
+   "label": "Revision",
+   "value": "B"
+  },
+  {
+   "key": "date",
+   "label": "Date",
+   "value": "23/09/2026"
+  },
+  {
+   "key": "lot_location",
+   "label": "Lot/Location",
+   "value": "Building 1 / Buildings 2 & 3 / External Works"
+  }
+ ],
+ "approval": {
+  "heading": "CDI GROUP APPROVAL",
+  "party": "CDI Approval",
+  "fields": [
+   {
+    "key": "name",
+    "label": "Name",
+    "type": "text"
+   },
+   {
+    "key": "position",
+    "label": "Position",
+    "type": "select",
+    "options": [
+     "PM",
+     "SM",
+     "Other (specify)"
+    ]
+   },
+   {
+    "key": "signature",
+    "label": "Signature",
+    "type": "signature"
+   },
+   {
+    "key": "date",
+    "label": "Date",
+    "type": "date"
+   },
+   {
+    "key": "initial",
+    "label": "Initial",
+    "type": "text"
+   }
+  ]
+ },
+ "reference_docs": {
+  "heading": "REFERENCE DOCUMENTATION",
+  "specifications": {
+   "heading": "Project Specifications and Drawings",
+   "columns": [
+    "Specification Number",
+    "Specification Title"
+   ],
+   "rows": [
+    [
+     "Spec REP_GEO",
+     "Geotechnical Report - founding, fill specification, compaction & testing"
+    ],
+    [
+     "DWG No: C-003",
+     "Bulk Earthworks Plan"
+    ],
+    [
+     "DWG No: C-001 / C-002",
+     "Civil General Arrangement / Drainage & Grading Plan"
+    ],
+    [
+     "DWG No: C-010 / C-011",
+     "Civil Details Sheets 1 & 2"
+    ],
+    [
+     "DWG No: S090 / S095 / S100",
+     "Excavation & Batter Plan, Footing Plans - Buildings 2 & 3"
+    ],
+    [
+     "DWG No: S100_B1",
+     "Ground Floor & Footing Plan - Building 1"
+    ],
+    [
+     "DWG No: S001_B1 / S001 / S002",
+     "Structural General Notes - founding requirements"
+    ],
+    [
+     "Site Logistics Plan / Services Clearance",
+     "CDI logistics plan; written underground services clearance per area"
+    ]
+   ]
+  },
+  "standards": {
+   "heading": "Referenced Standards",
+   "columns": [
+    "Standard Reference",
+    "Standard Title"
+   ],
+   "rows": [
+    [
+     "AS 3798",
+     "Guidelines on earthworks for commercial and residential developments"
+    ],
+    [
+     "AS 1289 (1289.5, 5.4.1, 5.7.1, 5.8.1)",
+     "Methods of testing soils for engineering purposes - compaction & density"
+    ],
+    [
+     "AS 1726",
+     "Geotechnical site investigations - soil classification"
+    ],
+    [
+     "AS 1141",
+     "Methods for sampling and testing aggregates"
+    ]
+   ]
+  },
+  "associated_itrs": {
+   "heading": "Associated ITR Inspection Numbers",
+   "columns": [
+    "ITR Reference",
+    "ITR Title"
+   ],
+   "rows": [
+    [
+     "6425-KBS-ITR-001",
+     "Earthworks Lot Record (clearing & strip, proof roll, fill source, founding)"
+    ],
+    [
+     "6425-KBS-ITR-001A",
+     "Earthworks Test Register (compaction & CBR tests)"
+    ],
+    [
+     "6425-KBS-ITR-001B",
+     "Waste / Spoil Disposal Docket Register"
+    ],
+    [
+     "6425-KBS-ITP-002",
+     "Concrete on Ground ITP"
+    ]
+   ]
+  }
+ },
+ "activity_columns": [
+  "Description of required activity",
+  "Governing specification or standard",
+  "Acceptance Criteria",
+  "Record of compliance / completion"
+ ],
+ "inspection_legend": "Type of Inspection:  H = HOLD (work shall not proceed past this point without verified acceptance)   W = WITNESS (nominee notified and invited; work may proceed)   R = REVIEW (verification by documentary evidence)",
+ "parties": [
+  "Kooboolong",
+  "CDI",
+  "Engineer"
+ ],
+ "activities": [
+  {
+   "no": "1",
+   "group": "GENERAL",
+   "activity": "Review SOW, SWMS, drawings, geotechnical report and specification",
+   "governing": [
+    "LOI 6425-COM-SC-LOI-002 Att. 2",
+    "REP_GEO",
+    "CSP"
+   ],
+   "criteria": [
+    "Contract scope, exclusions (rock / hard digging, latent conditions, services location, potholing, retaining walls, swales, dewatering, sediment control) and clarifications confirmed in writing",
+    "Current IFC revision of civil and structural drawings confirmed on Procore",
+    "Fill material specification, layer thickness, compaction standard, moisture range and test frequency extracted from geotechnical report and CSP",
+    "Founding requirements (bearing, material, inspection) extracted from structural general notes"
+   ],
+   "record": [
+    "Prior to works commencing",
+    "Document review record"
+   ],
+   "inspection": {
+    "Kooboolong": "H, R",
+    "CDI": "H, R",
+    "Engineer": ""
+   }
+  },
+  {
+   "no": "2",
+   "group": "GENERAL",
+   "activity": "Survey control and set-out",
+   "governing": [
+    "CDI survey control",
+    "DWG No: C-001 / C-003",
+    "FS-ID-001"
+   ],
+   "criteria": [
+    "Grid lines, datum and control marks received from CDI in writing and checked against the feature survey",
+    "Extent of clearing, strip, cut, fill, batters and building platforms set out; batter and platform RLs taken from IFC drawings",
+    "Pre-start dated photo record of the whole site, adjoining surfaces and access roads"
+   ],
+   "record": [
+    "Set-out record",
+    "Photos"
+   ],
+   "inspection": {
+    "Kooboolong": "W",
+    "CDI": "W",
+    "Engineer": ""
+   }
+  },
+  {
+   "no": "3",
+   "group": "GENERAL",
+   "activity": "Underground services clearance",
+   "governing": [
+    "CDI services information",
+    "Site Logistics Plan"
+   ],
+   "criteria": [
+    "Written clearance from CDI for each area before any ground is broken; location, potholing and protection of services is excluded from KBS scope",
+    "Known services marked on the ground; exclusion zones and hand-dig / spotter requirements briefed at pre-start",
+    "Any unidentified service: stop, isolate, notify CDI immediately"
+   ],
+   "record": [
+    "CDI written clearance",
+    "Pre-start record"
+   ],
+   "inspection": {
+    "Kooboolong": "H",
+    "CDI": "H",
+    "Engineer": ""
+   }
+  },
+  {
+   "no": "4",
+   "group": "GENERAL",
+   "activity": "Environmental controls and existing trees",
+   "governing": [
+    "CSP",
+    "AS 4970"
+   ],
+   "criteria": [
+    "Trees to be retained identified and protected by others; KBS plant kept outside protection zones",
+    "Dust suppression: water cart available during KBS working hours; fill point confirmed by CDI"
+   ],
+   "record": [
+    "Photos",
+    "Pre-start record"
+   ],
+   "inspection": {
+    "Kooboolong": "R",
+    "CDI": "W",
+    "Engineer": ""
+   }
+  },
+  {
+   "no": "5",
+   "group": "STRIP & BULK EARTHWORKS",
+   "activity": "Bulk excavation to formation / cut",
+   "governing": [
+    "DWG No: C-003",
+    "DWG No: S090",
+    "REP_GEO"
+   ],
+   "criteria": [
+    "Cut to formation levels and batters shown",
+    "Formation within tolerance before proof roll",
+    "Excavated material stockpiled for reuse only where the geotech report allows; surplus removed with dockets",
+    "Rock or hard digging is excluded - photograph, measure and notify CDI in writing the same day before proceeding"
+   ],
+   "record": [
+    "Level survey",
+    "Photos",
+    "Notice (if rock)"
+   ],
+   "inspection": {
+    "Kooboolong": "W",
+    "CDI": "W",
+    "Engineer": ""
+   }
+  },
+  {
+   "no": "6",
+   "group": "STRIP & BULK EARTHWORKS",
+   "activity": "Subgrade / formation proof roll",
+   "governing": [
+    "AS 3798 cl. 6",
+    "REP_GEO",
+    "CSP"
+   ],
+   "criteria": [
+    "Exposed subgrade proof rolled with roller",
+    "No visible deflection, heave or rutting; soft or wet areas excavated and replaced with approved fill to Engineer direction",
+    "Subgrade moisture conditioned and compacted before fill",
+    "HOLD POINT - no fill placed on unapproved subgrade"
+   ],
+   "record": [
+    "Earthworks Lot Record 6425-KBS-ITR-001 (HP1)",
+    "Geotech sign-off",
+    "Photos"
+   ],
+   "inspection": {
+    "Kooboolong": "H",
+    "CDI": "W",
+    "Engineer": "H"
+   }
+  },
+  {
+   "no": "7",
+   "group": "FILL & COMPACTION",
+   "activity": "Fill material source approval",
+   "governing": [
+    "REP_GEO",
+    "CSP",
+    "AS 1289 / AS 1726"
+   ],
+   "criteria": [
+    "Imported engineered fill from nominated source tested before delivery: grading, plasticity, CBR, free of organics, contaminants and oversize",
+    "Site fill only where the geotechnical report permits and tested to the same standard",
+    "Source and test results submitted to CDI / geotech for approval before bulk delivery; no change of source without re-approval"
+   ],
+   "record": [
+    "Earthworks Lot Record 6425-KBS-ITR-001 (Q11)",
+    "Lab reports",
+    "Delivery dockets"
+   ],
+   "inspection": {
+    "Kooboolong": "H",
+    "CDI": "R",
+    "Engineer": "H"
+   }
+  },
+  {
+   "no": "8",
+   "group": "FILL & COMPACTION",
+   "activity": "Fill placement",
+   "governing": [
+    "AS 3798 cl. 5",
+    "REP_GEO",
+    "CSP"
+   ],
+   "criteria": [
+    "Fill placed in horizontal layers not exceeding typically 200-300 mm loose thickness, moisture conditioned to spec.",
+    "Fill over service trenches (excavated and initially backfilled by others) only after as-constructed received and initial backfill inspected",
+    "Fill kept free of ponding; rain-affected layers scarified, dried and recompacted"
+   ],
+   "record": [
+    "Layer record",
+    "Test Register 6425-KBS-ITR-001A"
+   ],
+   "inspection": {
+    "Kooboolong": "W",
+    "CDI": "W",
+    "Engineer": ""
+   }
+  },
+  {
+   "no": "9",
+   "group": "FILL & COMPACTION",
+   "activity": "Compaction testing",
+   "governing": [
+    "AS 1289.5.4.1 / 5.7.1 / 5.8.1",
+    "AS 3798 Table 8.1",
+    "REP_GEO / CSP"
+   ],
+   "criteria": [
+    "NATA-accredited field density testing at frequency - typically 1 test per 500 m2 per layer or per 250 m3, minimum 2 per layer",
+    "Acceptance: typically minimum 95% standard MDD general fill; 98% under footings / slabs; 100% within top 300 mm of pavement subgrade",
+    "Failed tests: layer reworked and retested; retest recorded beneath the failed test on the register, no layer covered until passed",
+    "Results to CDI within 2 business days of receipt"
+   ],
+   "record": [
+    "NATA test reports",
+    "Test Register 6425-KBS-ITR-001A"
+   ],
+   "inspection": {
+    "Kooboolong": "H",
+    "CDI": "R",
+    "Engineer": "H"
+   }
+  },
+  {
+   "no": "10",
+   "group": "FILL & COMPACTION",
+   "activity": "Final formation acceptance",
+   "governing": [
+    "DWG No: C-003",
+    "REP_GEO",
+    "AS 3798"
+   ],
+   "criteria": [
+    "Finished formation and pavement subgrade levels surveyed: within tolerance",
+    "Final proof roll witnessed; surface trimmed and lightly compacted; free of loose material",
+    "Platform protected from traffic and weather until following trade takes over; damage before handover made good by KBS",
+    "HOLD POINT - handover to concrete works (ITP-002) and to others"
+   ],
+   "record": [
+    "Level survey",
+    "Proof Roll Record",
+    "Earthworks Lot Record 6425-KBS-ITR-001 (HP3)"
+   ],
+   "inspection": {
+    "Kooboolong": "H",
+    "CDI": "W",
+    "Engineer": "H"
+   }
+  },
+  {
+   "no": "11",
+   "group": "DETAILED EXCAVATION",
+   "activity": "Detailed excavation - footings, pits, lift pit, sumps",
+   "governing": [
+    "DWG No: S100_B1 / S095 / S100",
+    "DWG No: S090",
+    "REP_GEO"
+   ],
+   "criteria": [
+    "Excavated to line, level and dimension",
+    "Sides stable or battered per SWMS; excavations left open protected with barriers and edge protection, never left open overnight unprotected",
+    "Base clean, dry and free of loose material; over-excavation made good with approved fill or concrete per Engineer direction",
+    "Dewatering after detailed excavation or rain is excluded - notify CDI"
+   ],
+   "record": [
+    "Earthworks Lot Record 6425-KBS-ITR-001 (section D)",
+    "Photos"
+   ],
+   "inspection": {
+    "Kooboolong": "W",
+    "CDI": "W",
+    "Engineer": ""
+   }
+  },
+  {
+   "no": "12",
+   "group": "DETAILED EXCAVATION",
+   "activity": "Founding inspection",
+   "governing": [
+    "Structural general notes",
+    "REP_GEO"
+   ],
+   "criteria": [
+    "Founding material at every pad, strip and pit inspected by CDI engineer and confirmed as the material and bearing",
+    "Unsuitable founding: stop, notify CDI in writing, Engineer direction obtained (deepen, replace with engineered fill or concrete)",
+    "HOLD POINT - no blinding, membrane, formwork or reinforcement until released; 24 h notice given to CDI and Engineer"
+   ],
+   "record": [
+    "Earthworks Lot Record 6425-KBS-ITR-001 (HP2)",
+    "Engineer sign-off",
+    "Photos"
+   ],
+   "inspection": {
+    "Kooboolong": "H",
+    "CDI": "W",
+    "Engineer": "H"
+   }
+  },
+  {
+   "no": "13",
+   "group": "ACCESS TRACKS, CRANE PADS & SITE",
+   "activity": "Stockpiles, spoil and waste",
+   "governing": [
+    "CSP",
+    "CDI HSEQ plan",
+    "Waste tracking requirements"
+   ],
+   "criteria": [
+    "Stockpiles in locations agreed with CDI, kept tidy, not against structures or over services",
+    "All spoil and waste removed to a licensed facility; every docket retained and logged (classification per facility requirements)",
+    "Contaminated or unexpected material: stop, isolate, notify CDI - disposal by direction"
+   ],
+   "record": [
+    "Disposal Docket Register 6425-KBS-ITR-001B"
+   ],
+   "inspection": {
+    "Kooboolong": "R",
+    "CDI": "R",
+    "Engineer": ""
+   }
+  },
+  {
+   "no": "14",
+   "group": "COMPLETION",
+   "activity": "Earthworks certification and handover",
+   "governing": [
+    "AS 3798",
+    "REP_GEO"
+   ],
+   "criteria": [
+    "Geotechnical engineer's compliance / certification report covering subgrade approvals, fill source, layer records and all test results",
+    "All test registers, proof roll and founding records, disposal dockets and NCRs closed and issued to CDI",
+    "Site left tidy; tracks reinstated; this ITP signed and issued"
+   ],
+   "record": [
+    "Geotech certification report",
+    "Signed ITP",
+    "Registers"
+   ],
+   "inspection": {
+    "Kooboolong": "H",
+    "CDI": "H",
+    "Engineer": "R"
+   }
+  }
+ ],
+ "comments_heading": "ITP Comments and Notes:",
+ "closing": "Works completed and testing completed in line with this ITP except as noted above.",
+ "acceptance": {
+  "heading": "Reviewed and accepted by:",
+  "parties": [
+   "Earthworks - Kooboolong Services",
+   "CDI Group"
+  ],
+  "defaults": {
+   "Earthworks - Kooboolong Services": {
+    "name": "Mitchell van Zyl",
+    "position": "Project Manager"
+   }
+  },
+  "fields": [
+   {
+    "key": "name",
+    "label": "Name:",
+    "type": "text"
+   },
+   {
+    "key": "position",
+    "label": "Position/Title:",
+    "type": "text"
+   },
+   {
+    "key": "date",
+    "label": "Date:",
+    "type": "date"
+   },
+   {
+    "key": "signature",
+    "label": "Signature:",
+    "type": "signature"
+   }
+  ]
+ },
+ "signoffs": [
+  {
+   "party": "Earthworks - Kooboolong Services",
+   "required": true,
+   "kind": "internal"
+  },
+  {
+   "party": "CDI Group",
+   "required": true,
+   "kind": "external",
+   "is_release": true
+  }
+ ],
+ "hold_point": true
+}

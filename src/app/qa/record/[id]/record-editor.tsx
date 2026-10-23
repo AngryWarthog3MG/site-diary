@@ -19,7 +19,7 @@ type Section = { title: string; items: Item[] };
 type Column = { key: string; label: string; type: string; options?: string[]; unit?: string };
 type HoldPoint = { id: string; after_item: string; text: string; parties: string[] };
 type Spec = {
-  header_fields?: HeaderField[]; sections?: Section[]; columns?: Column[]; signoffs?: Array<Signoff & { hold_point?: string }>;
+  header_fields?: HeaderField[]; sections?: Section[]; columns?: Column[]; sub_register?: { heading?: string; columns: Column[] }; signoffs?: Array<Signoff & { hold_point?: string }>;
   answer_labels?: Record<ItemState, string>; hold_points?: HoldPoint[]; lot_field?: string; register_heading?: string; comments_heading?: string; signoff_note?: string; hold_point?: boolean;
 };
 type Pending = { party: string; signer_name: string; blob: Blob; key: string };
@@ -59,7 +59,9 @@ export function RecordEditor({ projectId, recordId, template, record, instanceId
     for (const it of record?.items ?? []) out[it.item_id] = { state: it.state, value: it.value == null ? '' : String(it.value) };
     return out;
   });
-  const [rows, setRows] = useState<Array<Record<string, string>>>(() => (record?.rows ?? []).map((r) => Object.fromEntries(Object.entries(r).map(([k, v]) => [k, v == null ? '' : String(v)]))));
+  const subKeys = new Set((spec.sub_register?.columns ?? []).map((c) => c.key));
+  // Each row remembers which register it is in (`_reg`), a mark the save strips: a row of the second register is one with any of its keys.
+  const [rows, setRows] = useState<Array<Record<string, string>>>(() => (record?.rows ?? []).map((r) => ({ ...Object.fromEntries(Object.entries(r).map(([k, v]) => [k, v == null ? '' : String(v)])), _reg: Object.keys(r).some((k) => subKeys.has(k)) ? 'sub' : 'main' })));
   const [lot, setLot] = useState(record?.lot_or_element ?? '');
   const [comments, setComments] = useState(record?.comments ?? '');
   const [pending, setPending] = useState<Pending[]>([]);
@@ -100,7 +102,7 @@ export function RecordEditor({ projectId, recordId, template, record, instanceId
       const itemsOut: ItemResult[] = base.map((r) => ({ item_id: r.item_id, state: r.state, ...(r.value ? { value: r.value } : {}) }));
       const headerOut: Record<string, string> = {};
       for (const [k, v] of Object.entries(header)) if (v.trim()) headerOut[k] = v.trim();
-      const rowsOut = rows.map((r) => Object.fromEntries(Object.entries(r).filter(([, v]) => v.trim() !== '').map(([k, v]) => [k, v.trim()]))).filter((r) => Object.keys(r).length > 0);
+      const rowsOut = rows.map((r) => Object.fromEntries(Object.entries(r).filter(([k, v]) => k !== '_reg' && v.trim() !== '').map(([k, v]) => [k, v.trim()]))).filter((r) => Object.keys(r).length > 0);
       const sigs = pending.map((p) => ({ key: p.key, path: `${projectId}/qa/${recordId}/${p.key}.png`, p }));
       const signoffs: RecordSignoff[] = [...existing, ...sigs.map((s) => ({ party: s.p.party, signer_name: s.p.signer_name, signature_path: s.path, signed_at: now, signed_by_user_id: userId }))];
       const row = {
@@ -233,7 +235,8 @@ export function RecordEditor({ projectId, recordId, template, record, instanceId
           <p className="label">{s.title}</p>
           {s.items.map((it) => {
             const r = items[it.id];
-            const hp = holdPoints.find((h) => h.after_item === it.id);
+            const hps = holdPoints.filter((h) => h.after_item === it.id);
+            const hp = hps[0];
             return (
               <div key={it.id}>
                 <div className="qa-item">
@@ -250,47 +253,50 @@ export function RecordEditor({ projectId, recordId, template, record, instanceId
                     </div>
                   )}
                 </div>
-                {hp && (
-                  <div className="qa-hold">
-                    <p className="qa-hold__text">{hp.id} · {hp.text}</p>
+                {hps.map((h) => (
+                  <div key={h.id} className="qa-hold">
+                    <p className="qa-hold__text">{h.id} · {h.text}</p>
                     <div className="qa-signs">
-                      {hp.parties.map((party) => <SignBlock key={party} party={party} def={signoffDefs.find((d) => d.party === party)} />)}
+                      {h.parties.map((party) => <SignBlock key={party} party={party} def={signoffDefs.find((d) => d.party === party)} />)}
                     </div>
                   </div>
-                )}
+                ))}
               </div>
             );
           })}
         </section>
       ))}
 
-      {isRegister && (
-        <section className="qa-section">
-          <p className="label">{spec.register_heading ?? 'Register'}</p>
-          <div className="qa-register">
-            <table>
-              <thead><tr><th>#</th>{(spec.columns ?? []).map((c) => <th key={c.key}>{c.label}</th>)}{editable && <th />}</tr></thead>
-              <tbody>
-                {rows.map((row, i) => (
-                  <tr key={i}>
-                    <td className="mono">{i + 1}</td>
-                    {(spec.columns ?? []).map((c) => (
-                      <td key={c.key}>
-                        {c.type === 'select'
-                          ? <select className="field field--sm" value={row[c.key] ?? ''} disabled={!editable} onChange={(e) => { setRows((rs) => rs.map((x, j) => (j === i ? { ...x, [c.key]: e.target.value } : x))); setDirty(true); }}><option value="">—</option>{(c.options ?? []).map((o) => <option key={o} value={o}>{o}</option>)}</select>
-                          : <input className="field field--sm" inputMode={c.type === 'number' ? 'decimal' : undefined} value={row[c.key] ?? ''} disabled={!editable} onChange={(e) => { setRows((rs) => rs.map((x, j) => (j === i ? { ...x, [c.key]: e.target.value } : x))); setDirty(true); }} />}
-                      </td>
-                    ))}
-                    {editable && <td><button type="button" className="quotebtn quotebtn--remove" onClick={() => { setRows((rs) => rs.filter((_, j) => j !== i)); setDirty(true); }}>Remove</button></td>}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          {editable && <button type="button" className="quotebtn" style={{ marginTop: '0.5rem' }} onClick={() => { setRows((rs) => [...rs, {}]); setDirty(true); }}>+ Add a load</button>}
-          {rows.length === 0 && <p className="caption">No loads recorded yet.</p>}
-        </section>
-      )}
+      {isRegister && ([['main', spec.register_heading ?? 'Register', spec.columns ?? []], ...(spec.sub_register ? [['sub', spec.sub_register.heading ?? 'Register', spec.sub_register.columns]] : [])] as Array<[string, string, Column[]]>).map(([reg, heading, cols]) => {
+        const mine = rows.map((row, i) => [row, i] as const).filter(([row]) => (row._reg ?? 'main') === reg);
+        return (
+          <section key={reg} className="qa-section">
+            <p className="label">{heading}</p>
+            <div className="qa-register">
+              <table>
+                <thead><tr><th>#</th>{cols.map((c) => <th key={c.key}>{c.label}</th>)}{editable && <th />}</tr></thead>
+                <tbody>
+                  {mine.map(([row, i], n) => (
+                    <tr key={i}>
+                      <td className="mono">{n + 1}</td>
+                      {cols.map((c) => (
+                        <td key={c.key}>
+                          {c.type === 'select'
+                            ? <select className="field field--sm" value={row[c.key] ?? ''} disabled={!editable} onChange={(e) => { setRows((rs) => rs.map((x, j) => (j === i ? { ...x, [c.key]: e.target.value } : x))); setDirty(true); }}><option value="">—</option>{(c.options ?? []).map((o) => <option key={o} value={o}>{o}</option>)}</select>
+                            : <input className="field field--sm" type={c.type === 'date' ? 'date' : 'text'} inputMode={c.type === 'number' ? 'decimal' : undefined} value={row[c.key] ?? ''} disabled={!editable} onChange={(e) => { setRows((rs) => rs.map((x, j) => (j === i ? { ...x, [c.key]: e.target.value } : x))); setDirty(true); }} />}
+                        </td>
+                      ))}
+                      {editable && <td><button type="button" className="quotebtn quotebtn--remove" onClick={() => { setRows((rs) => rs.filter((_, j) => j !== i)); setDirty(true); }}>Remove</button></td>}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            {editable && <button type="button" className="quotebtn" style={{ marginTop: '0.5rem' }} onClick={() => { setRows((rs) => [...rs, { _reg: reg }]); setDirty(true); }}>+ Add a row</button>}
+            {mine.length === 0 && <p className="caption">Nothing recorded yet.</p>}
+          </section>
+        );
+      })}
 
       <section className="qa-section">
         <p className="label">Photographs · {(record?.photo_paths.length ?? 0) + photos.length}</p>
