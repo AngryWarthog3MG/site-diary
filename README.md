@@ -3504,6 +3504,12 @@ to the table whose keys it carries; the editor keeps a mark on each row while ed
 database sees only the form's columns. The disposal docket register 6425-KBS-ITR-001B is named by the ITP but was not
 among the documents, so it is not transcribed.
 
+**R168. No diary box for someone without the diary.** Evan, made a leading hand on Kalgoorlie with only the ITRs, the
+gate and the safety doors ticked (R57), opened a home whose today card held a tinted box saying "The diary is not one
+of your screens on this job" — accurate, and a box the size of the day's biggest button for something he will never
+have. The diary block now draws only for a member whose screens include the diary; the gate row, the prestart row and
+the rest of the card are as they were.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;

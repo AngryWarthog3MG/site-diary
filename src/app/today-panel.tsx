@@ -599,11 +599,11 @@ export function TodayPanel({
         </div>
       )}
 
-      {/* The box is for the big button; a quiet row inside it was a box in a box (README R155). */}
-      <div className={`home-actions${doors.entries !== false && entry?.status !== 'signed' && ((othersToday && !entry) || (canRecord && !(entry?.segments || afterTheShift))) ? ' home-actions--flat' : ''}`}>
-        {doors.entries === false ? (
-          <p className="notice">The diary is not one of your screens on this job.</p>
-        ) : entry?.status === 'signed' ? (
+      {/* The box is for the big button; a quiet row inside it was a box in a box (README R155). A member whose
+          screens leave the diary out gets no box at all (README R168). */}
+      {doors.entries !== false && (
+      <div className={`home-actions${entry?.status !== 'signed' && ((othersToday && !entry) || (canRecord && !(entry?.segments || afterTheShift))) ? ' home-actions--flat' : ''}`}>
+        {entry?.status === 'signed' ? (
           <>
             <Link className="button" href={`/entries/${entry.id}/signed`}>View the signed entry</Link>
             {canRecord && (
@@ -644,6 +644,7 @@ export function TodayPanel({
           </p>
         )}
       </div>
+      )}
 
       {doors.entries !== false && canRecord && entry && entry.status !== 'signed' && (entry.hasProposal || entry.hasRecord) && (
         <Link className="button button--quiet home-review" href={`/entries/${entry.id}/review`}>
