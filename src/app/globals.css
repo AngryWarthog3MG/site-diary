@@ -5148,3 +5148,10 @@ body:has(> .topbar) .homefoot--top { display: none; }
   .qa-answers { grid-column: 2 / -1; justify-self: start; }
   .qa-answer { min-width: 3rem; }
 }
+
+/* The office's own watch on orders and plant issues (README R165). */
+.watch-orders { margin: 0.75rem 0 0; padding: 0.6rem 0.8rem; border: 1px dashed var(--ink-12); border-radius: 10px; display: grid; gap: 0.4rem; }
+.watch-orders .regs__tick { align-items: flex-start; }
+.watch-orders .regs__tick input { margin-top: 0.2rem; }
+.watch-orders__every { display: inline-flex; align-items: center; gap: 0.5rem; }
+.watch-orders__every .field { width: auto; margin: 0; }

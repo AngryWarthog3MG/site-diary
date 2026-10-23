@@ -3466,6 +3466,20 @@ carries one sign-off the paper does not, the supervisor's, so it can be closed l
 says so. Not built, on purpose, for review first: the PDF in the Kooboolong format, photos on an item, the office's
 gap and hold point queue across jobs, the evidence pack and the template editor (all in the September brief).
 
+**R165. Watching the orders and plant issues.** "When someone adds an issue or order item, send me a notification each
+time, and a reminder every six hours until it is closed out." The office already heard of an URGENT request by email to
+the job's report list (R46's notify, once). This is a second, personal channel. `order_watchers` is the company's list:
+an admin or PM puts themselves on it from the Orders page ("Tell me of every request…"), picks the gap (2 to 24 hours, 6
+by default), and takes themselves off the same way; a supervisor may not join it. Every request raised — urgent or not,
+on the phone with signal or replayed from the outbox — calls the same notify route, which now tells the watchers first:
+a push to every phone they have the app on and an email to their account, then the urgent email to the report list as
+before. The six-hourly sweep (`/api/ops/check?watch=1`, Vercel cron `0 */6 * * *`) reminds them of every request still
+open or ordered once another gap has passed since they last heard — counted from when they were last told, never from a
+round clock (`watchDue`, pure, tested) — and also catches a first word that was missed. The two stamps on the request,
+`watchers_notified_at` and `last_reminded_at`, are the server's: a signed-in account cannot set them (trigger), the
+service role claims the stamp before sending so two callers cannot both send, and a send that reaches nobody hands the
+stamp back. Nothing is sent once the request is done or cancelled. Mitchell is on Kooboolong's list. Suite 62.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;

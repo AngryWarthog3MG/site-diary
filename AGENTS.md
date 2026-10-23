@@ -199,7 +199,10 @@ improvising; the register once shipped dead because a live smoke test was skippe
   removes their own open one) and `order_updates` (append-only). Raising = `app.can_run_talks`; ordering,
   receiving, fixing, cancelling = `app.can_progress_orders` (crew + PM). Photos `{project}/order/{id}/`. Screens
   `/orders` (raise form inline), `/orders/[id]`. Outbox kinds `order_raise` (photos as blobs), `order_status`.
-  An urgent request emails `projects.report_emails` once via `notify.ts` (`notified_at` server-only; nightly retry).
+  An urgent request emails `projects.report_emails` once via `notify.ts` (`notified_at` server-only; nightly retry). WATCHERS (README R165): `order_watchers` (org; an office person's own row, `every_hours`) are told of EVERY request
+  by push and email (`notifyWatchers`) from the notify route, which every raise now calls, and reminded by the six-hourly
+  sweep (`orderWatchSweep`, `?watch=1`) while it stays open — `watchDue` decides, from when they were last told;
+  `watchers_notified_at` / `last_reminded_at` are the server's (trigger `b_orders_watch_stamps`). Suite 62.
   A plant issue is NOT a prestart defect and never becomes one — Mitchell's decision; see README R46
 - `src/lib/deliveries/` — the deliveries calendar (README R127): `model.ts` (pure, node-tested: `calendarItems` — bookings
   where booked plus unfinished material orders on their needed-by day, an order with a booking shown once; `monthGrid`,

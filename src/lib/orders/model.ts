@@ -44,3 +44,24 @@ export function summarise(rows: readonly OrderFacts[], today: string): OrderSumm
 }
 
 export const isFinished = (status: OrderStatus) => status === 'done' || status === 'cancelled';
+
+export interface WatchFacts { status: OrderStatus; raised_at: string; watchers_notified_at: string | null; last_reminded_at: string | null }
+
+/**
+ * What the watchers are owed about a request right now (README R165): the first word of it, a reminder because it has
+ * sat open or ordered for another `everyHours` since they last heard, or nothing. A finished request owes nothing.
+ * Counted from when they were last told, never from a round clock, so a request raised at 11:59 is not reminded at
+ * 12:00. Pure.
+ */
+export function watchDue(o: WatchFacts, nowIso: string, everyHours: number): 'first' | 'reminder' | null {
+  if (isFinished(o.status)) return null;
+  if (!o.watchers_notified_at) return 'first';
+  const last = Date.parse(o.last_reminded_at ?? o.watchers_notified_at);
+  if (!Number.isFinite(last)) return 'first';
+  return Date.parse(nowIso) - last >= everyHours * 3_600_000 ? 'reminder' : null;
+}
+
+/** Whole hours a request has been open, for the reminder's words. */
+export function hoursOpen(raisedAt: string, nowIso: string): number {
+  return Math.max(0, Math.floor((Date.parse(nowIso) - Date.parse(raisedAt)) / 3_600_000));
+}

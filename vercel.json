@@ -51,6 +51,10 @@
     {
       "path": "/api/ops/check?weather=1",
       "schedule": "0 7 * * *"
+    },
+    {
+      "path": "/api/ops/check?watch=1",
+      "schedule": "0 */6 * * *"
     }
   ]
 }

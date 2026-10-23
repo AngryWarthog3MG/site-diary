@@ -9,6 +9,7 @@ import { fmtDate, fmtPerthDate } from '@/lib/pdf/dates';
 import { perthToday } from '@/lib/push/decide';
 import { KIND_LABEL, orderRef, statusLabel, summarise, isFinished, type OrderKind, type OrderStatus } from '@/lib/orders/model';
 import { RaiseOrder } from './raise-order';
+import { WatchOrders } from './watch-orders';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Orders & plant issues · Kooboolong IMS' };
@@ -76,6 +77,7 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
         <div><p className="label">Late</p><p className={`entries-summary__value mono${s.late > 0 ? ' vr-missing' : ''}`}>{s.late}</p></div>
       </section>
       {canRunTalks(current.role) && <RaiseOrder projectId={current.project_id} userId={userId} plant={plantNames} />}
+      {(current.role === 'admin' || current.role === 'pm') && <WatchOrders orgId={current.project.org.id} userId={userId} />}
       <hr className="rule" />
       <p className="label">{KIND_LABEL.material}s — to order and ordered</p>
       {materials.length === 0 ? <p className="nil">Nothing to order.</p> : materials.map(card)}

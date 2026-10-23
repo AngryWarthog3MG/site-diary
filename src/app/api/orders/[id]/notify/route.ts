@@ -1,5 +1,5 @@
 import { fail, ok, requireApiUser, isUuid } from '@/lib/api';
-import { notifyOfficeOrder } from '@/lib/orders/notify';
+import { notifyOfficeOrder, notifyWatchers } from '@/lib/orders/notify';
 
 /**
  * Tell the office about this urgent request. Any member of the project may
@@ -13,7 +13,9 @@ export async function POST(_request: Request, context: { params: Promise<{ id: s
   if (!isUuid(id)) return fail('bad_request', 'Bad request id.', 400);
   const { data: r } = await supabase.from('orders').select('id').eq('id', id).maybeSingle();
   if (!r) return fail('not_found', 'Not your request.', 404);
+  // The watchers hear of every request (README R165); the job's report list only of an urgent one.
+  const watchers = await notifyWatchers(id, 'first').catch(() => ({ skipped: 'failed' }));
   const outcome = await notifyOfficeOrder(id);
   if (!outcome.sent && outcome.reason === 'send failed') return fail('server_error', 'The email could not be sent. Tell the office by phone; the app will retry tonight.', 502);
-  return ok(outcome);
+  return ok({ ...outcome, watchers });
 }

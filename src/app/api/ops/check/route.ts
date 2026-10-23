@@ -3,7 +3,7 @@ import { buildMatrix, competencies, mergePeople } from '@/lib/training/model';
 import { perthToday } from '@/lib/push/decide';
 import { compliance, DOC_LABEL, VERDICT_LABEL, type DocFacts } from '@/lib/subcontractors/model';
 import { notifyOffice, unnotifiedUrgent } from '@/lib/incidents/notify';
-import { notifyOfficeOrder, unnotifiedUrgentOrders } from '@/lib/orders/notify';
+import { notifyOfficeOrder, unnotifiedUrgentOrders, orderWatchSweep } from '@/lib/orders/notify';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { fetchProduct } from '@/lib/weather/bom';
 import { BOM_PRODUCT_IDS } from '@/lib/weather/derive';
@@ -72,6 +72,8 @@ export async function GET(request: Request) {
   if (url.searchParams.get('errors') === '1') report.errors = await errorDigest();
   // Documents waiting to be read and signed: three days out and overdue, once per 48 hours (README R120).
   if (url.searchParams.get('documents') === '1') report.documents = await documentReminderSweep(createAdminClient());
+  // Watchers of orders and plant issues (README R165): the first word where it was missed, a reminder when one is due.
+  if (url.searchParams.get('watch') === '1') report.watch = await orderWatchSweep();
   if (url.searchParams.get('monthly') === '1') {
     report.monthly = await sendMonthlyBundles(url.searchParams.get('force') === '1');
   }
