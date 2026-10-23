@@ -3510,6 +3510,32 @@ of your screens on this job" — accurate, and a box the size of the day's bigge
 have. The diary block now draws only for a member whose screens include the diary; the gate row, the prestart row and
 the rest of the card are as they were.
 
+**R169. The Curtin soft landscape form, in the record's shape.** KBS-QA-SL-001 was transcribed in R96 as the paper
+reads — a Rev box in its header, three hold points marked on their rows, a completion key of ✓ / × / N/A, an NCR
+register at the foot — and the record screen built for Kalgoorlie (R164) draws none of those: it draws `hold_points`
+as signature blocks, `answer_labels` as the three answers, `lot_field` as the record's lot, and a register only on a
+register form. Mitchell: "change the attached to suit the ITRs then upload to use in Curtin Quality files." Rev B
+(`docs/qa-templates/KBS-QA-SL-001.B.json`) is Rev A in that shape and nothing else: the 44 checks are carried word for
+word (the file is written from Rev A by a script that asserts it), the answers are Conforms / Does not / N/A — the
+completion key's ✓ and × as words, because the embedded faces carry neither glyph (R166) — the Landscape Area / Zone is
+the lot, and the paper's three hold points (items 11, 26, 44, each "24 hrs notice to LL" with an LLB column on its row)
+are HP1–HP3, each an LLB signature block after its item. HP1 is the planter build-up and is not required — it applies
+to GA03 / GA04 and internal planters only — HP3, completed works accepted, releases the hold point; the certification's
+four parties follow, so the LLB Site Manager signs the acceptance twice as on paper. The paper's Rev box is dropped from
+the header: a header field defaulting to "A" on a Rev B form would be wrong, and the template carries its revision.
+Rev A stays issued and frozen; a record begun against it stays as it is.
+
+Two things the screen and the PDF did not do: a checklist with a `sub_register` — the non-conformance register — had
+its rows accepted by the database (the trigger counts a checklist's sub-register) and printed on the PDF, but the editor
+drew registers for `itr_register` only, so there was nowhere to type one. The editor now draws the main register on a
+register form and the second on any form that carries one. And an item's `reference` — the SOW clause, the standard —
+was in the transcription and nowhere else; the screen and the PDF show it under the check in small type, because the
+clause is what the check is held to. The PDF also prints a form's `certification` wording above its sign-offs and its
+`footer` below, as the paper does.
+
+Loaded for Kooboolong as issued; KBS_C001_ITP_002 (Soft Landscaping) brought onto Curtin as a draft ITP instance, so the
+form sits under it on `/qa` and the office issues and approves it from there as it did at Kalgoorlie.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;

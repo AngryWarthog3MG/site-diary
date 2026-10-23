@@ -14,12 +14,12 @@ import { blanksAsGaps, gapCount, recordState, STATE_LABEL, type ItemResult, type
 import type { QaRecordRow, QaTemplateRow } from '@/lib/qa/load';
 
 type HeaderField = { key: string; label: string; type: string; options?: string[]; default?: string; unit?: string };
-type Item = { id: string; text: string; value_type?: string; value_label?: string; hold_point?: boolean; notice?: string };
+type Item = { id: string; text: string; reference?: string; value_type?: string; value_label?: string; hold_point?: boolean; notice?: string };
 type Section = { title: string; items: Item[] };
 type Column = { key: string; label: string; type: string; options?: string[]; unit?: string };
 type HoldPoint = { id: string; after_item: string; text: string; parties: string[] };
 type Spec = {
-  header_fields?: HeaderField[]; sections?: Section[]; columns?: Column[]; sub_register?: { heading?: string; columns: Column[] }; signoffs?: Array<Signoff & { hold_point?: string }>;
+  header_fields?: HeaderField[]; sections?: Section[]; columns?: Column[]; sub_register?: { heading?: string; columns: Column[] }; signoffs?: Array<Signoff & { hold_point?: string; note?: string }>;
   answer_labels?: Record<ItemState, string>; hold_points?: HoldPoint[]; lot_field?: string; register_heading?: string; comments_heading?: string; signoff_note?: string; hold_point?: boolean;
 };
 type Pending = { party: string; signer_name: string; blob: Blob; key: string };
@@ -168,14 +168,14 @@ export function RecordEditor({ projectId, recordId, template, record, instanceId
     return <input className="field field--sm" value={v} disabled={!editable} onChange={(e) => set(e.target.value)} />;
   };
 
-  const SignBlock = ({ party, def }: { party: string; def: Signoff | undefined }) => {
+  const SignBlock = ({ party, def }: { party: string; def: (Signoff & { note?: string }) | undefined }) => {
     const done = signedParty(party);
     const pend = pendingParty(party);
     const open = signing === party;
     return (
       <div className={`qa-sign${done || pend ? ' qa-sign--done' : ''}`}>
         <div className="qa-sign__head">
-          <span className="qa-sign__party">{party}{def?.is_release ? <span className="caption"> · releases the hold point</span> : null}{def && !def.required ? <span className="caption"> · if applicable</span> : null}</span>
+          <span className="qa-sign__party">{party}{def?.is_release ? <span className="caption"> · releases the hold point</span> : null}{def && !def.required ? <span className="caption"> · if applicable{def.note ? ` — ${def.note}` : ''}</span> : null}</span>
           {done ? <span className="caption">{done.signer_name} · {fmtPerthDate(done.signed_at)}</span>
             : pend ? <span className="qa-pending">{pend.signer_name} · signed, not saved yet</span>
               : editable && !open ? <button type="button" className="quotebtn" onClick={() => { setSigning(party); setSignName(def?.kind === 'internal' ? myName : ''); }}>Sign</button>
@@ -241,7 +241,7 @@ export function RecordEditor({ projectId, recordId, template, record, instanceId
               <div key={it.id}>
                 <div className="qa-item">
                   <span className="qa-item__no mono">{it.id}</span>
-                  <span className="qa-item__text">{it.text}{it.notice && !hp ? <span className="qa-item__notice">{it.notice}</span> : null}</span>
+                  <span className="qa-item__text">{it.text}{it.reference && it.reference !== '—' ? <span className="qa-item__ref mono">{it.reference}</span> : null}{it.notice && !hp ? <span className="qa-item__notice">{it.notice}</span> : null}</span>
                   <span className="qa-answers" role="group" aria-label={`Item ${it.id}`}>
                     {(['ok', 'gap', 'na'] as ItemState[]).map((st) => (
                       <button key={st} type="button" className={`qa-answer qa-answer--${st}${r?.state === st ? ' is-on' : ''}`} disabled={!editable} aria-pressed={r?.state === st} onClick={() => mark(it.id, st)}>{labels[st]}</button>
@@ -267,7 +267,7 @@ export function RecordEditor({ projectId, recordId, template, record, instanceId
         </section>
       ))}
 
-      {isRegister && ([['main', spec.register_heading ?? 'Register', spec.columns ?? []], ...(spec.sub_register ? [['sub', spec.sub_register.heading ?? 'Register', spec.sub_register.columns]] : [])] as Array<[string, string, Column[]]>).map(([reg, heading, cols]) => {
+      {([...(isRegister ? [['main', spec.register_heading ?? 'Register', spec.columns ?? []]] : []), ...(spec.sub_register ? [['sub', spec.sub_register.heading ?? 'Register', spec.sub_register.columns]] : [])] as Array<[string, string, Column[]]>).map(([reg, heading, cols]) => {
         const mine = rows.map((row, i) => [row, i] as const).filter(([row]) => (row._reg ?? 'main') === reg);
         return (
           <section key={reg} className="qa-section">

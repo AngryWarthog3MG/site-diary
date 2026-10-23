@@ -5115,6 +5115,7 @@ body:has(> .topbar) .homefoot--top { display: none; }
 .qa-item:first-of-type { border-top: 0; }
 .qa-item__no { font-weight: 600; color: var(--ink-60); padding-top: 0.45rem; }
 .qa-item__text { font-size: 0.95rem; line-height: 1.35; padding-top: 0.4rem; }
+.qa-item__ref { display: block; margin-top: 0.15rem; font-size: 0.75rem; color: var(--ink-60); }
 .qa-item__notice { display: block; margin-top: 0.3rem; padding: 0.4rem 0.6rem; border-radius: 6px; background: #fff4d6; color: #7a5204; font-size: 0.8125rem; font-weight: 600; }
 .qa-answers { display: inline-flex; gap: 0.3rem; }
 .qa-answer { min-width: 3.2rem; min-height: 2.6rem; padding: 0 0.7rem; border: 1px solid var(--ink-12); border-radius: 8px; background: #fff; font: inherit; font-weight: 650; cursor: pointer; }

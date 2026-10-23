@@ -444,7 +444,7 @@ improvising; the register once shipped dead because a live smoke test was skippe
   `completed_at`, released at `released_at`; voided never deleted). Writes = `app.can_write_qa`; files under
   `entry-photos/{project}/qa/{record}/`. Transcribed forms in `docs/qa-templates/` (wording is contractual — never
   paraphrase), sources in `docs/qa-source/`, loader `scripts/qa-seed-templates.mjs <ORG>`. The R66 quality tables stand
-  beside it. Suite 42
+  beside it. Suite 42 A checklist may carry a `sub_register` (the editor draws it; the DB counted it already) and items a `reference` shown under the check; Rev B of a paper form in the record's shape is a new file, never an edit (README R169).
 - `src/lib/calendar.ts` — `isRestDay`: weekends with nothing recorded are rest days, not holes. One definition for
   the screens, the weekly and the reminder
 - `src/lib/dayworks/` — the dayworks schedule (README R72): `schedule.ts` (pure: `readRange`, `buildSchedule` by Monday weeks,
