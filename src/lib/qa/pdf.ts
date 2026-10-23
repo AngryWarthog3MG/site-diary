@@ -5,6 +5,7 @@ import { fmtDate, fmtPerthDate } from '@/lib/pdf/dates';
 import { recordState, STATE_LABEL, type ItemState, type Signoff } from './model';
 import type { QaRecordRow, QaTemplateRow } from './load';
 
+const TICK = '<svg class="qa-tick" viewBox="0 0 16 16" width="11" height="11" aria-hidden="true"><path d="M2.5 8.5 6.2 12 13.5 4" fill="none" stroke="#16211F" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 const esc = (v: unknown) => String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
 type HeaderField = { key: string; label: string; type: string; unit?: string };
@@ -59,7 +60,8 @@ export function qaRecordHtml(template: QaTemplateRow, record: QaRecordRow, meta:
   const sections = (spec.sections ?? []).map((sec) => {
     const rows = sec.items.map((it) => {
       const r = byItem.get(it.id);
-      const tick = (st: ItemState) => `<td class="c">${r?.state === st ? '✓' : ''}</td>`;
+      // A drawn tick: the embedded faces carry no ✓ glyph, and a missing glyph prints as a box.
+      const tick = (st: ItemState) => `<td class="c">${r?.state === st ? TICK : ''}</td>`;
       const hp = holdPoints.find((h) => h.after_item === it.id);
       return `<tr class="${r?.state === 'gap' ? 'qa-gap' : ''}"><td class="mono c">${esc(it.id)}</td><td>${esc(it.text)}</td>${tick('ok')}${tick('gap')}${tick('na')}<td>${esc(r?.value ?? '')}</td></tr>`
         + (hp ? `<tr class="qa-hp"><td colspan="6"><p class="qa-hp__text">${esc(hp.id)} · ${esc(hp.text)}</p><div class="qa-sigs">${hp.parties.map((p) => signBlock(p, signoffDefs.find((d) => d.party === p))).join('')}</div></td></tr>` : '');
@@ -75,7 +77,7 @@ export function qaRecordHtml(template: QaTemplateRow, record: QaRecordRow, meta:
     `<title>${esc(template.title)} — ${esc(record.lot_or_element ?? record.id)}</title>`,
     `<style>${EMBEDDED_FONT_CSS}</style>`, `<style>${DOCKET_CSS}</style>`,
     '<style>.qa .qa-hdr{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5mm 4mm;margin:1mm 0 2mm}.qa .qa-h{border-bottom:0.4pt solid #C9D3CE;padding:1mm 0}.qa .qa-h__v{display:block;font-size:9pt}'
-    + '.qa table.qa-items,.qa table.qa-reg{width:100%;border-collapse:collapse;table-layout:fixed}.qa .qa-items td,.qa .qa-items th,.qa .qa-reg td,.qa .qa-reg th{font-size:8pt;vertical-align:top;border:0.4pt solid #C9D3CE;padding:1.2mm 1.6mm}.qa .qa-items th,.qa .qa-reg th{background:#EEF3F0;text-align:left;font-size:7pt;letter-spacing:.04em;text-transform:uppercase}.qa .c{text-align:center}.qa .qa-items col.c-no{width:9mm}.qa .qa-items col.c-t{width:11mm}.qa .qa-items col.c-cm{width:48mm}.qa tr.qa-sec td{background:#E3EBE6;font-weight:700;font-size:8pt}.qa tr.qa-gap td{background:#FFF4F2}'
+    + '.qa table.qa-items,.qa table.qa-reg{width:100%;border-collapse:collapse;table-layout:fixed}.qa .qa-items td,.qa .qa-items th,.qa .qa-reg td,.qa .qa-reg th{font-size:8pt;vertical-align:top;border:0.4pt solid #C9D3CE;padding:1.2mm 1.6mm}.qa .qa-items th,.qa .qa-reg th{background:#EEF3F0;text-align:left;font-size:7pt;letter-spacing:.04em;text-transform:uppercase}.qa .c{text-align:center}.qa .qa-tick{display:inline-block;vertical-align:middle}.qa .qa-items col.c-no{width:9mm}.qa .qa-items col.c-t{width:11mm}.qa .qa-items col.c-cm{width:48mm}.qa tr.qa-sec td{background:#E3EBE6;font-weight:700;font-size:8pt}.qa tr.qa-gap td{background:#FFF4F2}'
     + '.qa tr.qa-hp td{background:#FFF8E8;border-color:#D9A21B}.qa .qa-hp__text{margin:0 0 1.5mm;font-weight:700;color:#7A5204}.qa .qa-sigs{display:grid;grid-template-columns:repeat(3,1fr);gap:2mm}.qa .qa-sig{border:0.4pt solid #C9D3CE;border-radius:1.5mm;padding:1.5mm 2mm;background:#fff;min-height:16mm}.qa .qa-sig--done{border-color:#1F5C33}.qa .qa-sig__party{margin:0;font-weight:700;font-size:7.5pt}.qa .qa-sig__img{display:block;height:10mm;max-width:100%;object-fit:contain;margin:1mm 0}.qa .qa-sig__by{margin:0;font-size:7pt}.qa .qa-sig__none{margin:1mm 0 0;font-size:7pt;color:#9A6A09}.qa .qa-rel,.qa .qa-opt{font-weight:400;font-size:6.5pt;color:#555}'
     + '.qa .qa-pics{display:block;font-size:6.5pt;color:#555}.qa .qa-plate{break-inside:avoid;margin-top:3mm}.qa .qa-plate__head{margin:0 0 1mm;font-size:8pt;font-weight:700}.qa .photos__grid{grid-template-columns:1fr 1fr 1fr;gap:3mm}.qa .photos__grid img{height:46mm;width:100%;object-fit:cover;border-radius:1.5mm;background:#EEF3F0}.qa .qa-comments{min-height:14mm;border:0.4pt solid #C9D3CE;border-radius:1.5mm;padding:2mm;font-size:8.5pt;white-space:pre-wrap}.qa .nil{color:#777;font-style:italic}</style>',
     '</head><body><div class="docket qa">',
