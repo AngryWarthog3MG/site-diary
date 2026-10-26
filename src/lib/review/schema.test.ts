@@ -242,6 +242,14 @@ test('quality warnings catch soft review issues without becoming blocking gaps',
   ]);
 });
 
+test('a labour row still carrying the gate\'s clocks is asked about before signing, never blocked (README R171)', () => {
+  const gate = ReviewPayload.parse({ ...empty, labour: [{ person_name: 'Evan Burke', hours: 12, start_time: '06:30', finish_time: '18:30', source_quote: 'Gate: in 06:30 · out 18:30' }] });
+  assert.deepEqual(reviewBlockingGaps(gate), []);
+  assert.deepEqual(reviewQualityWarnings(gate), ['labour_gate_unconfirmed']);
+  const confirmed = ReviewPayload.parse({ ...empty, labour: [{ person_name: 'Evan Burke', hours: 12, start_time: '06:30', finish_time: '18:30', source_quote: 'From the gate, confirmed by hand' }] });
+  assert.deepEqual(reviewQualityWarnings(confirmed), []);
+});
+
 test('a person on a daywork without hours is asked about, never blocked (README R129)', () => {
   const payload = ReviewPayload.parse({
     ...empty,

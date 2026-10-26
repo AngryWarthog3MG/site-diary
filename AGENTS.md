@@ -152,7 +152,8 @@ improvising; the register once shipped dead because a live smoke test was skippe
   (`mergeGateIntoLabour`, pure) puts each crew/subbie sign-in on the draft with the gate's clocks, and the
   sign-out brings the finish and hours; the row is the gate's (`source_quote` starts `Gate:`) until a clock is
   edited by hand, and a row typed or heard is only ever filled where blank. The review screen polls it every
-  minute. Nothing is stored until the supervisor saves or signs, as ever
+  minute. Nothing is stored until the supervisor saves or signs, as ever. A row still carrying the gate's mark has "Confirm
+  clocks" (`GATE_CONFIRMED`, README R171) and raises `labour_gate_unconfirmed` before signing, TS and SQL alike
 - `src/lib/swms/` — SWMS and JSA: `model.ts` (the 18 high-risk categories of WHS r.291, the 5×5 risk matrix,
   `readSteps`, `swmsProblems` — the TS half of `app.swms_problems`, the DB wins), `pdf.tsx`. Tables `swms`
   (born a draft; `active` only when complete, then frozen; a revision has `supersedes_id` and supersedes on

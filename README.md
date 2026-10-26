@@ -3553,6 +3553,21 @@ the labour drop silently out of the claim. Every total that carries materials sa
 amount, the costed schedule's tile, the claims register and the Reports page — `CostTotals.materials`, so a reader
 can tell a typed figure from a computed one. Suite 60; `costing.test.ts`.
 
+**R171. Confirming the gate's clocks.** "Evan Thursday hours should be 12 not gate." Evan's row on Kalgoorlie's
+Thursday carried the gate's clocks, 06:30 to 18:30 — which were right — and the timesheet left his hours out under
+R135, because a row keeps the gate's mark until a clock on it is edited by hand. The day had been signed, and then
+corrected once more, and still nothing on the row needed changing, so nothing on it was touched: the one row whose
+clocks were right was the one row the sheet would not pay. R135 stands — the gate's clocks are not hours for pay until
+a supervisor says so — but there was no way to say so without changing something.
+
+Two things: a row still carrying the gate's mark now has "Confirm clocks" beside its chip on the review screen, which
+marks it "From the gate, confirmed by hand" (`GATE_CONFIRMED`) — the row is the supervisor's from then on, exactly as
+an edited one is, and the gate leaves it alone; the timesheet counts it (`gateOnlyRow` reads the prefix alone, so no
+rule changed). And a warning before signing, `labour_gate_unconfirmed` in both halves (`reviewQualityWarnings` and
+`app.entry_warnings`, migration 20261026100000), names every row still carrying the gate's mark with a door to Labour —
+asked about, never blocked, like the other warnings. Thursday itself is fixed the only way a signed day is: a
+correction of KBL-2026-10-22-3 with Evan's clocks confirmed, which Mitchell signs as the day's closer.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;

@@ -1,5 +1,6 @@
 import * as z from 'zod/v4';
 import { SECTION_KEYS, type SectionKey } from '../extraction/schema.ts';
+import { GATE_PREFIX } from '../signin/labour.ts';
 
 /**
  * What the supervisor confirms.
@@ -268,6 +269,7 @@ export type ReviewQualityWarning =
   | 'daywork_without_docket'
   | 'daywork_labour_missing_hours'
   | 'plant_without_prestart'
+  | 'labour_gate_unconfirmed'
   | 'low_confidence_items';
 
 /** What the screen knows beyond the payload: which machines have a signed plant prestart for this day. */
@@ -298,6 +300,11 @@ export function reviewQualityWarnings(payload: ReviewPayload, context: ReviewCon
 
   if (payload.labour.some((item) => item.hours == null)) {
     warnings.add('labour_missing_hours');
+  }
+  // A row still carrying the gate's clocks is attendance, not hours for pay (README R135): the timesheet leaves it
+  // out until the supervisor edits or confirms it (R171). Asked about before signing, never blocked.
+  if (payload.labour.some((item) => typeof item.source_quote === 'string' && item.source_quote.startsWith(GATE_PREFIX))) {
+    warnings.add('labour_gate_unconfirmed');
   }
   if (payload.plant.some((item) => item.hours == null)) {
     warnings.add('plant_missing_hours');
@@ -418,6 +425,8 @@ export const WARNING_PROMPTS: Record<string, string> = {
     'A daywork has no photo. Add one if you can; the docket itself is chased after signing and prints as “docket to chase” on the client sheet until it is recorded.',
   low_confidence_items:
     'One or more extracted items were low confidence. Open the highlighted section and check them before signing.',
+  labour_gate_unconfirmed:
+    'Someone on Labour still has the clocks the gate saw, and the gate’s clocks are not hours for pay — the timesheet leaves them out. Tap “Confirm clocks” on their row if the times are right, or edit them.',
 };
 
 export const WARNING_GROUPS: Partial<Record<ReviewQualityWarning, ItemGroup | 'weather'>> = {
@@ -432,4 +441,5 @@ export const WARNING_GROUPS: Partial<Record<ReviewQualityWarning, ItemGroup | 'w
   plant_without_prestart: 'plant',
   daywork_without_docket: 'dayworks',
   daywork_labour_missing_hours: 'dayworks',
+  labour_gate_unconfirmed: 'labour',
 };

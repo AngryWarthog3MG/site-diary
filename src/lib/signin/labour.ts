@@ -15,6 +15,8 @@ import { workedHours } from '../review/hours.ts';
  */
 export const GATE_PREFIX = 'Gate:';
 export const GATE_EDITED = 'From the gate, then edited by hand';
+/** The clocks were the gate's and the supervisor confirmed them as they stood (README R171): theirs from then on. */
+export const GATE_CONFIRMED = 'From the gate, confirmed by hand';
 
 export interface GateSignIn {
   person_name: string;

@@ -49,7 +49,7 @@ import type { ReviewWeather } from './page';
 import { fmtDate } from '@/lib/pdf/dates';
 import { minutesBetween } from '@/lib/review/minutes';
 import { workedHours } from '@/lib/review/hours';
-import { fromGate, mergeGateIntoLabour, GATE_CLOCK_FIELDS, GATE_EDITED, normaliseName as gateName, type GateSignIn, type LabourItem } from '@/lib/signin/labour';
+import { fromGate, mergeGateIntoLabour, GATE_CLOCK_FIELDS, GATE_EDITED, GATE_CONFIRMED, normaliseName as gateName, type GateSignIn, type LabourItem } from '@/lib/signin/labour';
 import { loadPlantOnJob, asKnownPlant } from '@/lib/plant/on-job';
 
 type Item = Record<string, unknown>;
@@ -1835,8 +1835,16 @@ function ItemCard({
 
       <div className="itemfoot">
         {quote && fromGate(item) ? (
-          <span className="quotebtn quotebtn--muted" title="Follows the gate until a clock is edited by hand">{quote.replace(/^Gate:/, 'From the gate —')}</span>
-        ) : quote === GATE_EDITED ? (
+          <>
+            <span className="quotebtn quotebtn--muted" title="Follows the gate until a clock is edited or confirmed by hand">{quote.replace(/^Gate:/, 'From the gate —')}</span>
+            {/* The clocks are right as the gate saw them: say so, and the row is the supervisor's (README R171). */}
+            {section.group === 'labour' && (
+              <button type="button" className="quotebtn" title="The gate's clocks are not hours for pay until you confirm or edit them" onClick={() => onPatch(section.group, index, { source_quote: GATE_CONFIRMED })}>
+                Confirm clocks
+              </button>
+            )}
+          </>
+        ) : quote === GATE_EDITED || quote === GATE_CONFIRMED ? (
           <span className="quotebtn quotebtn--muted">{quote}</span>
         ) : quote ? (
           <button type="button" className="quotebtn" onClick={() => setShowQuote((v) => !v)}>

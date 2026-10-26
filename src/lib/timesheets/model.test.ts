@@ -198,6 +198,7 @@ test('gateOnlyRow reads the gate\'s mark and nothing else', () => {
   assert.equal(gateOnlyRow('Gate: in 06:48 · still on site'), true);
   assert.equal(gateOnlyRow('Gate: ABC Civil · in 07:00 · out 17:00'), true);
   assert.equal(gateOnlyRow('From the gate, then edited by hand'), false);
+  assert.equal(gateOnlyRow('From the gate, confirmed by hand'), false);
   assert.equal(gateOnlyRow(''), false);
   assert.equal(gateOnlyRow(null), false);
 });
