@@ -69,6 +69,17 @@ async function replay(item: OutboxItem): Promise<void> {
       if (!data || data.length === 0) throw Object.assign(new Error('The prestart was finished before this change reached it; the change was not applied.'), { code: '42501' });
       return;
     }
+    case 'day_photo': {
+      // A progress photo from the crew (README R172): the file to the job's folder for the day, then the row that
+      // names it — once, however many times the phone retries. The review screen takes it from there.
+      const blob = blobs.photo;
+      if (!blob) throw Object.assign(new Error('The photo was lost from this phone. Take it again.'), { code: '42501' });
+      const row = p.row as { url: string } & Record<string, unknown>;
+      await uploadIfMissing(row.url, blob, (p.type as string | undefined) ?? 'image/jpeg');
+      const { error } = await supabase.from('day_photos').insert(row);
+      if (error && !isAlreadyDone(error)) throw error;
+      return;
+    }
     case 'qa_record': {
       // An ITR or site form (README R164): the signatures first, then the record itself, upserted on its client-chosen
       // id — once, however many times the phone retries. The database checks every item, column and party.

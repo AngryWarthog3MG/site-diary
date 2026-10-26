@@ -3568,6 +3568,25 @@ rule changed). And a warning before signing, `labour_gate_unconfirmed` in both h
 asked about, never blocked, like the other warnings. Thursday itself is fixed the only way a signed day is: a
 correction of KBL-2026-10-22-3 with Evan's clocks confirmed, which Mitchell signs as the day's closer.
 
+**R172. Progress photos from the crew.** "Allow Evan Burke to upload progress daily photos too." Evan is a leading
+hand on Kalgoorlie. The day's photographs are rows on the entry, and the database lets only the authoring roles write
+the draft — `app.can_author_entries` is supervisor, admin and PM, on the entries table, every child table and the
+bucket alike (the TypeScript `canAuthorEntries` had counted the leading hand in; the database won, as it should).
+Opening the draft to a leading hand would open the whole day to them, and a photograph taken at 7 am has no draft to
+land on in any case. So the crew's photographs have a home of their own beside the day, the way the gate's sign-ins
+do (R: the gate FEEDS the labour list): `day_photos`, one row per photograph by job and the day it was taken, the file
+in `entry-photos/{project}/day/{date}/`, written by anyone who runs the site (`app.can_run_talks`) and never changed or
+removed by a user. Screen `photos` — Progress photos, under Diary, a leading hand's by default and tickable for a
+supervisor who has the diary already — takes a photo or picks from the gallery, with one caption for the pick, and the
+row is written the moment the file lands; no signal, and it is kept on the phone as outbox kind `day_photo`.
+
+The review screen feeds on it the way it feeds on the gate: every minute, and when it comes to the front, it reads the
+day's `day_photos` and puts each on the draft once (`freshDayPhotos`, pure). Everything offered is remembered for the
+life of the screen, so a photograph the supervisor took off stays off, and nothing is added twice. From there it is a
+photograph of the day as ever — confirmed at signing, on the docket, in the hash — and nothing is on the record until
+the supervisor saves or signs. The nightly orphan check reads `day_photos.url`, so a photograph waiting for a draft is
+referenced, never stranded. A signed day takes none: the door says so, and the supervisor's correction picks them up.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;

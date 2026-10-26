@@ -49,6 +49,7 @@ import type { ReviewWeather } from './page';
 import { fmtDate } from '@/lib/pdf/dates';
 import { minutesBetween } from '@/lib/review/minutes';
 import { workedHours } from '@/lib/review/hours';
+import { freshDayPhotos } from '@/lib/photos/day';
 import { fromGate, mergeGateIntoLabour, GATE_CLOCK_FIELDS, GATE_EDITED, GATE_CONFIRMED, normaliseName as gateName, type GateSignIn, type LabourItem } from '@/lib/signin/labour';
 import { loadPlantOnJob, asKnownPlant } from '@/lib/plant/on-job';
 
@@ -477,6 +478,39 @@ export function ReviewScreen(props: {
     void syncGate();
     const timer = window.setInterval(() => void syncGate(), 60_000);
     const onVisible = () => { if (document.visibilityState === 'visible') void syncGate(); };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => {
+      cancelled = true;
+      window.clearInterval(timer);
+      document.removeEventListener('visibilitychange', onVisible);
+    };
+  }, [props.projectId, props.entryDate]);
+
+  /**
+   * The crew's progress photos feed the day (README R172): whatever was taken on this job today sits in
+   * `day_photos`, and each is put on the draft once — a photograph the supervisor took off stays off, because
+   * everything offered is remembered. Same cadence as the gate. Nothing is stored until the supervisor saves or signs.
+   */
+  const offeredPhotosRef = useRef<Set<string>>(new Set(props.initial.photos.map((p) => p.url)));
+  useEffect(() => {
+    let cancelled = false;
+    const supabase = createClient();
+    async function syncDayPhotos() {
+      if (typeof document !== 'undefined' && document.visibilityState === 'hidden') return;
+      try {
+        const { data } = await supabase.from('day_photos').select('url, caption, taken_at').eq('project_id', props.projectId).eq('taken_on', props.entryDate).order('created_at');
+        if (cancelled || !data || data.length === 0) return;
+        const fresh = freshDayPhotos(data as Array<{ url: string; caption: string | null; taken_at: string | null }>, offeredPhotosRef.current);
+        if (fresh.length === 0) return;
+        for (const f of fresh) offeredPhotosRef.current.add(f.url);
+        setPayload((prev) => ({ ...prev, photos: [...prev.photos, ...fresh] }));
+      } catch {
+        // No signal: the photos stand as they are until the next look.
+      }
+    }
+    void syncDayPhotos();
+    const timer = window.setInterval(() => void syncDayPhotos(), 60_000);
+    const onVisible = () => { if (document.visibilityState === 'visible') void syncDayPhotos(); };
     document.addEventListener('visibilitychange', onVisible);
     return () => {
       cancelled = true;

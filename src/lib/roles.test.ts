@@ -20,6 +20,8 @@ test('ticks decide exactly which screens open, and Home is always open', () => {
 
 test('a tick can open a screen the role would not have had', () => {
   assert.equal(canSee('leading_hand', 'claims'), false);
+  assert.equal(canSee('leading_hand', 'photos'), true);
+  assert.equal(canSee('labourer', 'photos'), false);
   assert.equal(sees({ role: 'leading_hand', screens: ['claims'] }, 'claims'), true);
 });
 

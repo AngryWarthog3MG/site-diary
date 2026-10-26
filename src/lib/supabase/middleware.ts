@@ -20,6 +20,7 @@ const SELF_AUTHENTICATING = ['/api/ops'];
 const SCREEN_OF_PATH: Array<[prefix: string, screen: Screen]> = [
   ['/signin/gate', 'settings'], ['/api/gate/sign', 'settings'],
   ['/entries', 'entries'], ['/record', 'entries'], ['/api/entries', 'entries'], ['/api/deepgram', 'entries'],
+  ['/photos', 'photos'],
   ['/portfolio', 'weekly'],
   ['/reports', 'weekly'], ['/api/reports', 'weekly'],
   ['/reports/company', 'company_weekly'], ['/api/reports/company', 'company_weekly'],

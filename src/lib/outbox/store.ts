@@ -14,6 +14,7 @@ import { createStore, get, set, del, entries as idbEntries } from 'idb-keyval';
 const store = createStore('site-diary-outbox', 'outbox');
 
 export type OutboxKind =
+  | 'day_photo'
   | 'qa_record'
   | 'prestart_create'
   | 'prestart_edit'
@@ -60,6 +61,7 @@ export interface OutboxItem {
 export type OutboxSummary = Omit<OutboxItem, 'blobs'>;
 
 export const KIND_LABEL: Record<OutboxKind, string> = {
+  day_photo: 'a progress photo',
   qa_record: 'an inspection and test record',
   prestart_create: 'a prestart',
   prestart_edit: 'a prestart change',
