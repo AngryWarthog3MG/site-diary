@@ -2,6 +2,9 @@ import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { requireUser, canAuthorEntries, guardScreen } from '@/lib/auth';
+import { canRunTalks } from '@/lib/roles';
+import { loadDayPhotos } from '@/lib/photos/load';
+import { DayPhotosBlock } from '../../day-photos-block';
 import { PdfButton } from './pdf-button';
 import { CorrectButton } from './correct-button';
 import { EmailPdfButton } from './email-button';
@@ -69,6 +72,9 @@ export default async function SignedPage({ params }: { params: Promise<{ id: str
       memberships.some((m) => m.project_id === (entry.project_id as string) && canAuthorEntries(m.role))
     ) redirect(`/entries/${id}/review`);
     const who = author?.full_name ?? author?.email ?? 'someone else';
+    // Someone who runs the site but does not write the draft — the leading hand — adds the day's photographs here (README R172).
+    const addsPhotos = memberships.some((m) => m.project_id === (entry.project_id as string) && canRunTalks(m.role));
+    const dayPhotos = addsPhotos ? await loadDayPhotos(supabase, entry.project_id as string, entry.entry_date as string) : null;
     return (
       <main className="sheet">
         <p className="label">{org?.name}</p>
@@ -84,6 +90,7 @@ export default async function SignedPage({ params }: { params: Promise<{ id: str
           Not signed yet. {who} is still working on this day; nothing in it is on the record
           until they sign it, and only they can change it.
         </p>
+        {dayPhotos && <DayPhotosBlock projectId={entry.project_id as string} date={entry.entry_date as string} photos={dayPhotos.photos} dayState={dayPhotos.dayState} />}
         <Link className="button" href={`/entries/${id}/docket`}>
           See what has been entered so far
         </Link>

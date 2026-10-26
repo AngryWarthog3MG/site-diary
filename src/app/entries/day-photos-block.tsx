@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import * as outbox from '@/lib/outbox/store';
@@ -13,18 +12,19 @@ import { photoTakenAt } from '@/lib/photos/taken-at';
 import { dayPhotoPath, localDate } from '@/lib/photos/day';
 import { fmtPerthDate } from '@/lib/pdf/dates';
 
-export interface DayPhotoView { id: string; url: string; caption: string | null; takenAt: string | null; by: string | null; createdAt: string; signedUrl: string | null }
+import type { DayPhotoView, DayState } from '@/lib/photos/load';
 
 const BUCKET = 'entry-photos';
 
 /**
- * Take or pick photographs; each is on the job the moment its upload lands — the row is written right after the
+ * Adding photographs to the day's diary from inside the diary (README R172), for someone who runs the site but does not
+ * write the draft — the leading hand. Take or pick photographs; each is on the job the moment its upload lands — the row is written right after the
  * file, and nothing between the two can throw — or kept on the phone and sent when there is signal (outbox kind
  * `day_photo`). The caption typed goes on every photo of that pick. Nothing here edits or removes: a photograph taken
  * is kept; the supervisor decides what the day's record shows.
  */
-export function ProgressPhotos({ projectId, today, photos, dayState, backTo }: {
-  projectId: string; today: string; photos: DayPhotoView[]; dayState: 'none' | 'open' | 'signed'; backTo: string;
+export function DayPhotosBlock({ projectId, date, photos, dayState }: {
+  projectId: string; date: string; photos: DayPhotoView[]; dayState: DayState;
 }) {
   const router = useRouter();
   const [caption, setCaption] = useState('');
@@ -37,7 +37,8 @@ export function ProgressPhotos({ projectId, today, photos, dayState, backTo }: {
   async function add(files: FileList | null) {
     if (!files || files.length === 0) return;
     setBusy(true); setError(null); setDone(null);
-    const takenOn = localDate();
+    // Today's photos carry the device's date (README R: entry_date comes from the device); a past day's carry that day.
+    const takenOn = date === localDate() ? localDate() : date;
     let sent = 0; let kept = 0;
     try {
       for (const file of Array.from(files)) {
@@ -70,7 +71,7 @@ export function ProgressPhotos({ projectId, today, photos, dayState, backTo }: {
     <div className="qa-edit">
       <OutboxStatus />
       <section className="qa-section">
-        <p className="label">Add photos · {fmtPerthDate(today)}</p>
+        <p className="label">Add photos to the diary · {fmtPerthDate(date)}</p>
         <label className="fieldcell"><span className="label">What they show · optional</span>
           <input className="field field--sm" value={caption} placeholder="Where, and what — e.g. Zone 3 subgrade proof rolled" onChange={(e) => setCaption(e.target.value)} disabled={busy} /></label>
         <div className="photo-add-pair" style={{ marginTop: '0.5rem' }}>
@@ -92,15 +93,15 @@ export function ProgressPhotos({ projectId, today, photos, dayState, backTo }: {
         {error && <p className="alert">{error}</p>}
         {queued.length > 0 && <p className="caption">{queued.length} photo{queued.length === 1 ? '' : 's'} waiting on this phone for signal.</p>}
         <p className="caption">
-          {dayState === 'open' ? 'Today’s diary is open: each photo joins it the next time the supervisor’s screen looks, within a minute.'
-            : dayState === 'signed' ? 'Today’s diary is already signed. The photos are kept on the job; the supervisor can put them on a correction.'
-              : 'Today’s diary has not been started yet. The photos wait on the job and join it when it is.'}
+          {dayState === 'open' ? 'The diary for this day is open: each photo joins it the next time the supervisor’s screen looks, within a minute.'
+            : dayState === 'signed' ? 'The diary for this day is already signed. The photos are kept on the job; the supervisor can put them on a correction.'
+              : 'The diary for this day has not been started yet. The photos wait on the job and join it when it is.'}
         </p>
       </section>
 
       <section className="qa-section">
-        <p className="label">Today so far · {photos.length}</p>
-        {photos.length === 0 ? <p className="caption">No photos yet today.</p> : (
+        <p className="label">Photos added this day · {photos.length}</p>
+        {photos.length === 0 ? <p className="caption">None yet.</p> : (
           <div className="qa-item__photos">
             {photos.map((p) => (
               <figure key={p.id} style={{ margin: 0 }}>
@@ -111,7 +112,6 @@ export function ProgressPhotos({ projectId, today, photos, dayState, backTo }: {
           </div>
         )}
       </section>
-      <Link className="button button--quiet" href={backTo}>Back to Home</Link>
       <p className="caption">Photos are never removed from here. The record of the day is what the supervisor signs.</p>
     </div>
   );

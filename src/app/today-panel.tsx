@@ -73,12 +73,15 @@ function firstOrNull<T>(value: unknown): T | null {
 export function TodayPanel({
   projectId,
   canRecord,
+  addsPhotos,
   canPrestart,
   roleLabel,
   doors = { prestart: true, permits: true, incidents: true, signin: true, plant: true, entries: true, weekly: true },
 }: {
   projectId: string;
   canRecord: boolean;
+  /** Runs the site but does not write the draft (the leading hand): adds the day's photographs from the diary (README R172). */
+  addsPhotos?: boolean;
   canPrestart: boolean;
   roleLabel: string;
   /** Which of the screens this panel links to are ticked for this person (README R57). A row for a closed screen is not drawn. */
@@ -646,6 +649,9 @@ export function TodayPanel({
       </div>
       )}
 
+      {doors.entries !== false && !canRecord && addsPhotos && (
+        <Link className="button button--quiet home-review" href={`/entries?project=${projectId}`}>Add photos to today’s diary</Link>
+      )}
       {doors.entries !== false && canRecord && entry && entry.status !== 'signed' && (entry.hasProposal || entry.hasRecord) && (
         <Link className="button button--quiet home-review" href={`/entries/${entry.id}/review`}>
           {entry.hasRecord ? 'Check today’s entry over and sign' : 'Check it over and sign'}

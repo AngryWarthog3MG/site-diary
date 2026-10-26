@@ -118,6 +118,7 @@ export default async function TodayPage({
           <TodayPanel
             projectId={current.project_id}
             canRecord={authors}
+            addsPhotos={!authors && canRunTalks(current.role)}
             canPrestart={talks}
             doors={{ prestart: opens('prestart'), permits: opens('permits'), incidents: opens('incidents'), signin: opens('signin'), plant: opens('plant'), entries: opens('entries'), weekly: opens('weekly') }}
             roleLabel={ROLE_LABEL[current.role].toLowerCase() === 'project manager' ? 'the project manager' : `the ${ROLE_LABEL[current.role].toLowerCase()}`}

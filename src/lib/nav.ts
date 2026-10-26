@@ -46,7 +46,6 @@ export const NAV_GROUPS: NavGroup[] = [
     label: 'Diary', scope: 'site',
     items: [
       { href: '/entries', name: 'Daily Diary', what: 'Every day’s diary — signed days and their PDFs', screen: 'entries' },
-      { href: '/photos', name: 'Progress photos', short: 'Photos', what: 'Today’s photographs of the work, from whoever is on site — they join the day’s diary', screen: 'photos' },
       { href: '/signin', name: 'Site sign-in', what: 'Who is on site now — in and out at the gate', screen: 'signin' },
       { href: '/prestart', name: 'Prestarts', what: 'Morning briefing and sign-on — with each machine’s check', screen: 'prestart' },
       { href: '/plant', name: 'Plant prestarts', short: 'Plant', what: 'Each machine checked before use, daily — defects and the register', screen: 'plant' },
@@ -173,7 +172,7 @@ export const NAV_GROUPS: NavGroup[] = [
  * drawer and rail learn it a moment after they open), so nobody sees a door
  * that closes on them; the pages refuse anything a role should not reach anyway.
  */
-export const EVERY_ROLE: Screen[] = ['today', 'entries', 'photos', 'weekly', 'prestart', 'prestart_sign', 'plant', 'toolbox', 'signin', 'swms', 'swms_sign', 'incidents', 'inspections', 'permits', 'procedures', 'safety', 'orders', 'chemicals', 'obligations', 'emergency', 'construction', 'quality', 'qa', 'audits', 'asbestos', 'environment'];
+export const EVERY_ROLE: Screen[] = ['today', 'entries', 'weekly', 'prestart', 'prestart_sign', 'plant', 'toolbox', 'signin', 'swms', 'swms_sign', 'incidents', 'inspections', 'permits', 'procedures', 'safety', 'orders', 'chemicals', 'obligations', 'emergency', 'construction', 'quality', 'qa', 'audits', 'asbestos', 'environment'];
 
 export interface NavViewer { role: MemberRole | null; screens?: readonly string[] | null; finance?: boolean | null; canRecord: boolean; multiJob: boolean }
 

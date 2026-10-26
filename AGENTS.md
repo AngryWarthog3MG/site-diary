@@ -154,9 +154,10 @@ improvising; the register once shipped dead because a live smoke test was skippe
   edited by hand, and a row typed or heard is only ever filled where blank. The review screen polls it every
   minute. Nothing is stored until the supervisor saves or signs, as ever. A row still carrying the gate's mark has "Confirm
   clocks" (`GATE_CONFIRMED`, README R171) and raises `labour_gate_unconfirmed` before signing, TS and SQL alike
-- `src/lib/photos/day.ts` — the crew's progress photos (README R172): table `day_photos` (by job and day, file in
-  `entry-photos/{project}/day/{date}/`, written by `app.can_run_talks`, frozen), screen `photos` (`/photos`, Diary, leading
-  hand+), outbox kind `day_photo`. The review screen FEEDS on it like the gate (`freshDayPhotos`, offered-set, once each,
+- `src/lib/photos/day.ts` — the leading hand's photographs of the day (README R172): table `day_photos` (by job and day, file
+  in `entry-photos/{project}/day/{date}/`, written by `app.can_run_talks`, frozen), NO screen of its own — `DayPhotosBlock`
+  (`src/app/entries/day-photos-block.tsx`) sits inside the Daily Diary for someone who runs the site but does not write
+  the draft (`loadDayPhotos`), outbox kind `day_photo`. The review screen FEEDS on it like the gate (`freshDayPhotos`, offered-set, once each,
   a removed one stays off); the day's `photos` rows stay the record. `app.can_author_entries` in SQL is supervisor/admin/pm
   ONLY — a leading hand never writes the draft, whatever `canAuthorEntries` in TS says
 - `src/lib/swms/` — SWMS and JSA: `model.ts` (the 18 high-risk categories of WHS r.291, the 5×5 risk matrix,

@@ -4,7 +4,10 @@ import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { requireUser, resolveProject, guardScreen } from '@/lib/auth';
 import { RegisterList, type RegisterRow } from './register-list';
-import { canAuthorEntries } from '@/lib/roles';
+import { canAuthorEntries, canRunTalks } from '@/lib/roles';
+import { perthToday } from '@/lib/push/decide';
+import { loadDayPhotos } from '@/lib/photos/load';
+import { DayPhotosBlock } from './day-photos-block';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Daily Diary · Kooboolong IMS' };
@@ -40,6 +43,10 @@ export default async function EntriesPage({
     .limit(100);
 
   const rows = entries ?? [];
+  // A leading hand adds photographs to the day from here (README R172): they run the site but do not write the draft.
+  const addsPhotos = canRunTalks(current.role) && !canAuthorEntries(current.role);
+  const today = perthToday();
+  const dayPhotos = addsPhotos ? await loadDayPhotos(supabase, current.project_id, today) : null;
   const signedCount = rows.filter((entry) => entry.status === 'signed').length;
   const draftCount = rows.filter((entry) => entry.status !== 'signed').length;
   const correctionCount = rows.filter((entry) => Boolean(entry.supersedes_entry_id)).length;
@@ -56,6 +63,8 @@ export default async function EntriesPage({
             </p>
           </div>
         </header>
+
+        {dayPhotos && <DayPhotosBlock projectId={current.project_id} date={today} photos={dayPhotos.photos} dayState={dayPhotos.dayState} />}
 
         <section className="entries-summary" aria-label="Register summary">
           <div>
