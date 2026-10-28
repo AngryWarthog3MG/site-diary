@@ -160,6 +160,11 @@ improvising; the register once shipped dead because a live smoke test was skippe
   the draft (`loadDayPhotos`), outbox kind `day_photo`. The review screen FEEDS on it like the gate (`freshDayPhotos`, offered-set, once each,
   a removed one stays off); the day's `photos` rows stay the record. `app.can_author_entries` in SQL is supervisor/admin/pm
   ONLY — a leading hand never writes the draft, whatever `canAuthorEntries` in TS says
+- `src/lib/photos/library.ts` + `library-load.ts` — the job's photographs in one place, by day (README R173): `/entries/photos`
+  (screen `entries`, linked from the diary's hero, never a section of its own) lists every photograph the diary and
+  `day_photos` hold, current version of a day only, signed links for the hour, no copy kept. `GET /api/entries/photos/zip
+  ?project[&month]` streams them as a zip of dated folders through `src/lib/zip.ts` (STORE, streamed, dependency-free,
+  node-tested) — nothing stored. Incident, order and inspection photographs are NOT in it (their own read rules)
 - `src/lib/swms/` — SWMS and JSA: `model.ts` (the 18 high-risk categories of WHS r.291, the 5×5 risk matrix,
   `readSteps`, `swmsProblems` — the TS half of `app.swms_problems`, the DB wins), `pdf.tsx`. Tables `swms`
   (born a draft; `active` only when complete, then frozen; a revision has `supersedes_id` and supersedes on

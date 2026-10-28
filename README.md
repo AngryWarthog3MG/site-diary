@@ -3592,6 +3592,24 @@ the supervisor saves or signs. The nightly orphan check reads `day_photos.url`, 
 referenced, never stranded. A signed day takes none: the block says so, and the supervisor's correction picks them up.
 Suite 63.
 
+**R173. The job's photographs, in one place, by day.** "Can we create a folder with all the pictures taken from the job
+in one location, with the dates." Every photograph the job holds, on one page and in one download — the diary's own
+photographs, the ones on dayworks, variations, instructions and concrete dockets, and the crew's progress photographs
+(R172) — grouped by the day it was taken, newest first. `/entries/photos` is part of the Daily Diary (screen `entries`,
+"All photographs, by day" on the diary's hero), not a section of its own; it lists the record's files under the
+caller's RLS and signs links for the hour. It keeps no copy. `src/lib/photos/library.ts` (pure, node-tested) is the
+order, the grouping and the names; `library-load.ts` gathers the rows exactly as the weekly's `photos.ts` does — the
+CURRENT version of a day only, drafts included and marked — plus `day_photos`, a crew photograph already carried onto
+the day folding in by path. The download is `GET /api/entries/photos/zip?project[&month=YYYY-MM]`: a zip of dated
+folders, `{job} photographs/{date}/{date} {nn} {context} - {caption}.jpg`, the date in the folder AND the file name so
+a photograph copied out still says when it was taken; a draft day's file says `(draft)`, a crew photograph not yet on a
+day says so. `src/lib/zip.ts` writes it — STORE only (a JPEG does not shrink), streamed file by file as each download
+from the bucket lands, nothing held whole and nothing stored, no dependency; Node-tested against its own directory
+reader, the system `unzip -t` and Python's `zipfile`. A month at a time is the usual size; the whole job is offered
+too. Not in it: incident, order and inspection photographs — those are their own records with their own readers (a
+labourer reads only the reports they made, R75), and a library that showed them to everyone on the job would be a
+second read rule. Say the word if the office wants them in the download.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;

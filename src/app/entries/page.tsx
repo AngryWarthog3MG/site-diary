@@ -61,6 +61,9 @@ export default async function EntriesPage({
             <p className="entries-subtitle">
               Every day on the job. Signed days carry the docket and its PDF; drafts are still being worked on.
             </p>
+            <p className="entries-hero__links">
+              <Link href={`/entries/photos?project=${current.project_id}`} className="entries-hero__link">All photographs, by day →</Link>
+            </p>
           </div>
         </header>
 
