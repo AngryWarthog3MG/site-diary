@@ -30,9 +30,9 @@ insert into public.qa_templates (id, org_id, spec, issued_at) values
   ('cccccccc-bbbb-0000-0000-000000000001', 'aaaaaaaa-bbbb-0000-0000-000000000001',
    '{"code":"KBS-QA-SL-001","kind":"itr_checklist","title":"Soft landscape","revision":"A","hold_point":true,"sections":[{"title":"A","items":[{"id":"1","text":"x"},{"id":"2","text":"y","hold_point":true}]}],"hold_points":[{"id":"HP1","after_item":"2","text":"Hold","parties":["LLB"]}],"signoffs":[{"party":"LLB","required":true,"kind":"external","hold_point":"HP1"},{"party":"KBS","required":true,"kind":"internal"}]}', now() - interval '1 day'),
   ('cccccccc-bbbb-0000-0000-000000000002', 'aaaaaaaa-bbbb-0000-0000-000000000001',
-   '{"code":"KBS-QA-SL-001","kind":"itr_checklist","title":"Soft landscape","revision":"B","hold_point":true,"sections":[{"title":"A","items":[{"id":"1","text":"x"},{"id":"2","text":"y","hold_point":true}]}],"hold_points":[{"id":"HP1","after_item":"2","text":"Hold","parties":[]}],"signoffs":[{"party":"Certified by – Kooboolong Services","required":true,"kind":"internal"}]}', now()),
+   '{"code":"KBS-QA-SL-001","kind":"itr_checklist","title":"Soft landscape","revision":"B","hold_point":true,"sections":[{"title":"A","items":[{"id":"1","text":"x"},{"id":"2","text":"y","hold_point":true}]}],"hold_points":[{"id":"HP1","after_item":"2","text":"Hold","parties":[]}],"signoffs":[{"party":"Certified by – Kooboolong Services","required":true,"kind":"internal"},{"party":"KBS","required":false,"kind":"internal"}]}', now()),
   ('cccccccc-bbbb-0000-0000-000000000003', 'aaaaaaaa-bbbb-0000-0000-000000000001',
-   '{"code":"KBS-QA-OTHER","kind":"itr_checklist","title":"Other","revision":"B","sections":[{"title":"A","items":[{"id":"1","text":"x"}]}],"signoffs":[{"party":"KBS","required":true,"kind":"internal"}]}', now());
+   '{"code":"KBS-QA-OTHER","kind":"itr_checklist","title":"Other","revision":"B","sections":[{"title":"A","items":[{"id":"1","text":"x"},{"id":"2","text":"y"}]}],"signoffs":[{"party":"KBS","required":true,"kind":"internal"}]}', now());
 
 insert into public.qa_records (id, project_id, template_id, items, lot_or_element) values
   ('dddddddd-bbbb-0000-0000-000000000001', 'bbbbbbbb-bbbb-0000-0000-000000000001', 'cccccccc-bbbb-0000-0000-000000000001', '[{"item_id":"1","state":"ok"},{"item_id":"2","state":"na"}]', 'Old Brand Drive');
@@ -49,13 +49,14 @@ begin
     raise exception 'TESTFAIL: the record should be on Rev B with its answers'; end if;
 end; $$;
 select tests.expect_error($$ update public.qa_records set template_id = 'cccccccc-bbbb-0000-0000-000000000001' where id = 'dddddddd-bbbb-0000-0000-000000000001' $$, 'newer issued revision of the same form');
--- 3. Signed on Rev B (its one party), the record is complete and frozen; a Rev C issued after cannot take it.
+-- 3. Signed on Rev B (its one party), the record is complete and frozen; a Rev C issued after cannot take it — the
+--    signature rule answers first, the freeze stands behind it.
 update public.qa_records set signoffs = '[{"party":"Certified by – Kooboolong Services","signer_name":"M","signature_path":"bbbbbbbb-bbbb-0000-0000-000000000001/qa/dddddddd-bbbb-0000-0000-000000000001/sig.png","signed_at":"2026-10-29T01:00:00Z"}]'
   where id = 'dddddddd-bbbb-0000-0000-000000000001';
 insert into public.qa_templates (id, org_id, spec, issued_at) values
   ('cccccccc-bbbb-0000-0000-000000000004', 'aaaaaaaa-bbbb-0000-0000-000000000001',
    '{"code":"KBS-QA-SL-001","kind":"itr_checklist","title":"Soft landscape","revision":"C","sections":[{"title":"A","items":[{"id":"1","text":"x"},{"id":"2","text":"y"}]}],"signoffs":[{"party":"Certified by – Kooboolong Services","required":true,"kind":"internal"}]}', now() + interval '1 minute');
-select tests.expect_error($$ update public.qa_records set template_id = 'cccccccc-bbbb-0000-0000-000000000004' where id = 'dddddddd-bbbb-0000-0000-000000000001' $$, 'frozen');
+select tests.expect_error($$ update public.qa_records set template_id = 'cccccccc-bbbb-0000-0000-000000000004' where id = 'dddddddd-bbbb-0000-0000-000000000001' $$, 'stays on the revision it was signed on');
 -- 4. One party signed of two, not yet complete: still stays where it was signed.
 insert into public.qa_records (id, project_id, template_id, items, signoffs) values
   ('dddddddd-bbbb-0000-0000-000000000002', 'bbbbbbbb-bbbb-0000-0000-000000000001', 'cccccccc-bbbb-0000-0000-000000000001', '[{"item_id":"1","state":"ok"}]',
