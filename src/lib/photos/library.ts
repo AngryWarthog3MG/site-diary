@@ -131,6 +131,14 @@ export function zipEntries(jobCode: string, days: LibraryDay[]): Array<{ name: s
   return out;
 }
 
+/** The first and last day of a month (YYYY-MM): "2026-09" → 2026-09-01 to 2026-09-30. A made-up 31st is not a date. */
+export function monthRange(month: string): { from: string; to: string } {
+  const m = /^(\d{4})-(\d{2})$/.exec(month);
+  if (!m) throw new Error('month must be YYYY-MM');
+  const last = new Date(Date.UTC(Number(m[1]), Number(m[2]), 0)).getUTCDate();
+  return { from: `${month}-01`, to: `${month}-${String(last).padStart(2, '0')}` };
+}
+
 /** The download's own name. */
 export function zipFileName(jobCode: string, month: string | null): string {
   return `${safeName(jobCode, 40)} photographs${month ? ` ${month}` : ''}.zip`;

@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { distinctPhotos, groupByDay, groupByMonth, monthLabel, zipEntries, zipFileName, type LibraryPhoto } from './library.ts';
+import { distinctPhotos, groupByDay, groupByMonth, monthLabel, monthRange, zipEntries, zipFileName, type LibraryPhoto } from './library.ts';
 
 const photo = (over: Partial<LibraryPhoto>): LibraryPhoto => ({
   date: '2026-10-22',
@@ -66,4 +66,11 @@ test('a long caption is cut, not dropped', () => {
   const [e] = zipEntries('C010', groupByDay([photo({ caption: long })]));
   assert.ok(e.name.length < 200);
   assert.ok(e.name.includes('…'));
+});
+
+test('a month’s range ends on its real last day — September has no 31st, which the database read as no month at all', () => {
+  assert.deepEqual(monthRange('2026-09'), { from: '2026-09-01', to: '2026-09-30' });
+  assert.deepEqual(monthRange('2026-10'), { from: '2026-10-01', to: '2026-10-31' });
+  assert.deepEqual(monthRange('2028-02'), { from: '2028-02-01', to: '2028-02-29' });
+  assert.throws(() => monthRange('2026-9'));
 });

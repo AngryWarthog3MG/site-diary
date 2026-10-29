@@ -1,6 +1,6 @@
 import { fail, forbidUnlessSees, isUuid, requireApiUser } from '@/lib/api';
 import { loadPhotoLibrary } from '@/lib/photos/library-load';
-import { groupByDay, zipEntries, zipFileName } from '@/lib/photos/library';
+import { groupByDay, monthRange, zipEntries, zipFileName } from '@/lib/photos/library';
 import { zipStream, type ZipEntry } from '@/lib/zip';
 
 // A job's photographs, several hundred downloads from Tokyo: the stream starts at once, the whole may take a while.
@@ -31,7 +31,7 @@ export async function GET(request: Request) {
   const { data: project } = await supabase.from('projects').select('id, code').eq('id', projectId).maybeSingle();
   if (!project) return fail('not_found', 'That project is not on your account.', 404);
 
-  const range = month ? { from: `${month}-01`, to: `${month}-31` } : {};
+  const range = month ? monthRange(month) : {};
   const photos = await loadPhotoLibrary(supabase, projectId, range);
   if (!photos.length) return fail('not_found', month ? 'No photographs in that month.' : 'No photographs on this job yet.', 404);
   const entries = zipEntries(String(project.code), groupByDay(photos));
