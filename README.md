@@ -3610,6 +3610,22 @@ too. Not in it: incident, order and inspection photographs — those are their o
 labourer reads only the reports they made, R75), and a library that showed them to everyone on the job would be a
 second read rule. Say the word if the office wants them in the download.
 
+**R174. The soft landscape sheet tidied: no hold-point signatures, one sign-off.** "Please tidy up the sheet, also
+remove any hold point signatures and also only have one signature for me to sign on. Basically Lendlease get a
+compilation which they sign onto, so this sheet doesn't require them to sign." KBS-QA-SL-001 Rev C
+(`docs/qa-templates/KBS-QA-SL-001.C.json`): the same 44 checks, word for word; the three hold points kept as notes on the
+sheet (`hold_points[].parties = []` — a hold point with no signing party prints and draws as a line, not a signature box);
+ONE sign-off, "Certified by – Kooboolong Services"; the certification wording says where Lendlease's acceptance is given
+— on the compilation this sheet forms part of. The LLB hold-point releases, the project manager, the LLB site manager
+and the landscape consultant are gone from the form. The renderer tidied with it, for every form: a typed unit is not
+printed twice ("250mm" stays "250mm"), the lot is not repeated in the record-details grid when the masthead carries it,
+a register's column headings wrap instead of overprinting their neighbour. And a record may now MOVE to a newer issued
+revision of its form — migration 20261029100000, suite 64: the same company's same code, a later `issued_at`, only
+while the record carries no sign-off; a signed record stays on the revision it was signed on. Before this the trigger
+refused any change of `template_id`, which would have meant voiding the Old Brand Drive record (in progress on Rev B,
+nothing signed) and retyping it to print on the tidied sheet. `scripts/qa-move-record.mjs <record> <rev>` does the move
+from a terminal; the database decides.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;
