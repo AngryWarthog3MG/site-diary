@@ -123,3 +123,18 @@ export async function loadQaInstance(supabase: SupabaseClient, projectId: string
   const home = await loadQaHome(supabase, orgId, projectId);
   return home.itps.find((b) => b.instance.id === instanceId) ?? null;
 }
+
+export interface QaVoidEvent { action: 'voided' | 'restored'; reason: string; by: string | null; at: string }
+
+/** The record's void trail (README R175): every void and every restore, oldest first, with the person's name where kept. */
+export async function loadVoidTrail(supabase: SupabaseClient, recordId: string): Promise<QaVoidEvent[]> {
+  const { data } = await supabase.from('qa_record_void_events').select('action, reason, by_user_id, at').eq('record_id', recordId).order('at');
+  const rows = (data ?? []) as Array<{ action: 'voided' | 'restored'; reason: string; by_user_id: string | null; at: string }>;
+  const ids = [...new Set(rows.map((r) => r.by_user_id).filter((x): x is string => !!x))];
+  const names = new Map<string, string | null>();
+  if (ids.length) {
+    const { data: people } = await supabase.from('profiles').select('id, full_name').in('id', ids);
+    for (const p of (people ?? []) as Array<{ id: string; full_name: string | null }>) names.set(p.id, p.full_name);
+  }
+  return rows.map((r) => ({ action: r.action, reason: r.reason, by: r.by_user_id ? (names.get(r.by_user_id) ?? null) : null, at: r.at }));
+}

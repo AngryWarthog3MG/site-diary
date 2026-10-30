@@ -3626,6 +3626,20 @@ refused any change of `template_id`, which would have meant voiding the Old Bran
 nothing signed) and retyping it to print on the tidied sheet. `scripts/qa-move-record.mjs <record> <rev>` does the move
 from a terminal; the database decides.
 
+**R175. Restoring a record voided by mistake.** "Building 2 that has been released should have been voided, and the
+other Building 2 that was voided should have been released. I need to unvoid that one." On Kalgoorlie the strip pour
+record Rod (CDI) and the engineer had signed was voided "Test", and the test record signed "Test" was left live. The
+engine's rule was that a voided record takes no change at all, so the way back was to retype and re-sign a record
+other people had already signed — a different record, not the one they signed. Now the OFFICE (pm/admin,
+`app.is_office`) restores a voided record, with a reason, through `restore_qa_record` — migration 20261030100000,
+suite 65 — and the database puts it back exactly as it stood: answers, signatures, photographs, the completed and
+released stamps, unchanged; a restore that changes anything on the way is refused, and a plain update that clears
+`voided_at` still is. Nothing is lost: `qa_record_void_events` keeps every void and every restore — who, when, why —
+append-only, never changed or removed by anyone, the voids already on the file carried in (their voider was not kept
+before, so those rows say so). The record screen shows the trail under the voided notice and a "Restore this record"
+button for the office; the crew still only voids. A restored record is as frozen as it was: a signed record stays
+signed, so nothing is added to it after — the photographs it carries are the ones it was signed with.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;

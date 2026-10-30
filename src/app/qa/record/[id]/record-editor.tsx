@@ -11,7 +11,7 @@ import * as outbox from '@/lib/outbox/store';
 import { compressPhoto } from '@/lib/photos/compress';
 import { fmtPerthDate } from '@/lib/pdf/dates';
 import { blanksAsGaps, gapCount, recordState, STATE_LABEL, type ItemResult, type ItemState, type RecordSignoff, type Signoff, type TemplateSection } from '@/lib/qa/model';
-import type { QaRecordRow, QaTemplateRow } from '@/lib/qa/load';
+import type { QaRecordRow, QaTemplateRow, QaVoidEvent } from '@/lib/qa/load';
 
 type HeaderField = { key: string; label: string; type: string; options?: string[]; default?: string; unit?: string };
 type Item = { id: string; text: string; reference?: string; value_type?: string; value_label?: string; hold_point?: boolean; notice?: string };
@@ -34,9 +34,9 @@ const slug = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(
  * is an answer, never a block. A sign-off once saved is never changed; when every required party has signed, the
  * record is frozen and this screen reads only.
  */
-export function RecordEditor({ projectId, recordId, template, record, instanceId, canWrite, myName, today, signatureUrls, people, backTo }: {
+export function RecordEditor({ projectId, recordId, template, record, instanceId, canWrite, isOffice, trail, myName, today, signatureUrls, people, backTo }: {
   projectId: string; recordId: string; template: QaTemplateRow; record: QaRecordRow | null; instanceId: string | null;
-  canWrite: boolean; myName: string; today: string; signatureUrls: Record<string, string>; people: string[]; backTo: string;
+  canWrite: boolean; isOffice: boolean; trail: QaVoidEvent[]; myName: string; today: string; signatureUrls: Record<string, string>; people: string[]; backTo: string;
 }) {
   const router = useRouter();
   const spec = template.spec as unknown as Spec;
@@ -72,6 +72,8 @@ export function RecordEditor({ projectId, recordId, template, record, instanceId
   const [error, setError] = useState<string | null>(null);
   const [voiding, setVoiding] = useState(false);
   const [voidReason, setVoidReason] = useState('');
+  const [restoring, setRestoring] = useState(false);
+  const [restoreReason, setRestoreReason] = useState('');
   const [signing, setSigning] = useState<string | null>(null);
   const [signName, setSignName] = useState('');
 
@@ -158,6 +160,19 @@ export function RecordEditor({ projectId, recordId, template, record, instanceId
     finally { setSaving(false); }
   }
 
+  // The office puts back a record voided by mistake (README R175): the database restores it exactly as it stood and
+  // keeps the void and the restore on the record's trail.
+  async function restoreRecord() {
+    if (!record || !restoreReason.trim()) return;
+    setSaving(true); setError(null);
+    try {
+      const { error: e } = await createClient().rpc('restore_qa_record', { p_record: recordId, p_reason: restoreReason.trim() });
+      if (e) throw new Error(e.message);
+      setRestoring(false); router.refresh();
+    } catch (err) { setError(err instanceof Error ? err.message : 'That did not save.'); }
+    finally { setSaving(false); }
+  }
+
   const field = (f: HeaderField) => {
     const v = header[f.key] ?? '';
     const set = (x: string) => { setHeader((h) => ({ ...h, [f.key]: x })); setDirty(true); };
@@ -218,7 +233,12 @@ export function RecordEditor({ projectId, recordId, template, record, instanceId
       </div>
       <OutboxStatus />
       {error && <p className="alert">{error}</p>}
-      {record?.voided_at && <p className="notice gap">This record was voided{record.void_reason ? `: ${record.void_reason}` : ''}. It stays readable; raise a new one if the work is to be recorded.</p>}
+      {record?.voided_at && <p className="notice gap">This record was voided{record.void_reason ? `: ${record.void_reason}` : ''}. It stays readable; raise a new one if the work is to be recorded{isOffice ? ', or restore it below if it was voided by mistake' : ''}.</p>}
+      {trail.length > 0 && (
+        <p className="caption">
+          {trail.map((e) => `${e.action === 'voided' ? 'Voided' : 'Restored'} ${fmtPerthDate(e.at)}${e.by ? ` by ${e.by}` : ''}: ${e.reason}`).join(' · ')}
+        </p>
+      )}
 
       {(spec.header_fields ?? []).length > 0 && (
         <section className="qa-section">
@@ -337,6 +357,18 @@ export function RecordEditor({ projectId, recordId, template, record, instanceId
             </div>
           )}
           <p className="caption">A voided record stays on the file, readable, with its reason. Nothing is deleted.</p>
+        </div>
+      )}
+      {record?.voided_at && isOffice && (
+        <div className="qa-section">
+          {!restoring ? <button type="button" className="quotebtn" onClick={() => setRestoring(true)}>Restore this record</button> : (
+            <div className="dw-rates__form">
+              <input className="field field--sm" placeholder="Why it is restored" value={restoreReason} onChange={(e) => setRestoreReason(e.target.value)} />
+              <button type="button" className="button button--quiet" disabled={saving || !restoreReason.trim()} onClick={() => void restoreRecord()}>Restore it</button>
+              <button type="button" className="quotebtn" onClick={() => setRestoring(false)}>Leave it</button>
+            </div>
+          )}
+          <p className="caption">Restored exactly as it stood — its answers, signatures and photographs unchanged. The void and the restore both stay on its trail.</p>
         </div>
       )}
       <p className="caption">Yes, No or N/A on every line; No is a gap and the office reads it. Submit records every unanswered line as a gap. {today ? `Today is ${fmtPerthDate(today)}.` : ''}</p>
