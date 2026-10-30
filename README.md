@@ -3638,7 +3638,21 @@ released stamps, unchanged; a restore that changes anything on the way is refuse
 append-only, never changed or removed by anyone, the voids already on the file carried in (their voider was not kept
 before, so those rows say so). The record screen shows the trail under the voided notice and a "Restore this record"
 button for the office; the crew still only voids. A restored record is as frozen as it was: a signed record stays
-signed, so nothing is added to it after — the photographs it carries are the ones it was signed with.
+signed — but see R176 for the one thing that may be added to it.
+
+**R176. Photographs added after sign-off.** "Option 2, add the photos after sign off." The Building 2 pour record
+restored under R175 was signed by every party with no photographs on it, and the photographs of the pour belong with
+it, not on a second record. A signed record's list of photographs may now GROW — migration 20261030110000, suite 66:
+the ones it was signed with stay first and stay put, new ones follow, none is ever removed or reordered, and nothing
+else on the record changes with them (the same trigger refuses a comment, an answer or a sign-off riding along).
+Every addition is kept on `qa_record_photo_additions` — which paths, who, when — append-only, so the record never
+passes a later photograph off as one it was signed with: the record screen titles each one "Added after sign-off
+<date> by <name>" and says how many came after, and the PDF captions them the same way and counts them in the
+Photographs heading. A voided record takes none. The crew and the office add them (`app.can_write_qa`, as the
+record's own photographs); on the phone a signed record shows "+ Photos" and "Add N photos to the signed record",
+which uploads and appends now or goes through the outbox as kind `qa_record_photos` — the replay reads the list as it
+stands and appends, so two phones adding at once drop nothing. The signatures attest to the checks as they were made;
+a photograph added later is marked as later, every time it is read.
 
 ## Not built, and deliberately so
 

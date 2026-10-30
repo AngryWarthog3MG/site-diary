@@ -10,6 +10,7 @@ import { runOrQueue } from '@/lib/outbox/sync';
 import * as outbox from '@/lib/outbox/store';
 import { compressPhoto } from '@/lib/photos/compress';
 import { fmtPerthDate } from '@/lib/pdf/dates';
+import { appendQaPhotos } from '@/lib/qa/photos';
 import { blanksAsGaps, gapCount, recordState, STATE_LABEL, type ItemResult, type ItemState, type RecordSignoff, type Signoff, type TemplateSection } from '@/lib/qa/model';
 import type { QaRecordRow, QaTemplateRow, QaVoidEvent } from '@/lib/qa/load';
 
@@ -34,15 +35,18 @@ const slug = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(
  * is an answer, never a block. A sign-off once saved is never changed; when every required party has signed, the
  * record is frozen and this screen reads only.
  */
-export function RecordEditor({ projectId, recordId, template, record, instanceId, canWrite, isOffice, trail, myName, today, signatureUrls, people, backTo }: {
+export function RecordEditor({ projectId, recordId, template, record, instanceId, canWrite, isOffice, trail, addedAfter, myName, today, signatureUrls, people, backTo }: {
   projectId: string; recordId: string; template: QaTemplateRow; record: QaRecordRow | null; instanceId: string | null;
-  canWrite: boolean; isOffice: boolean; trail: QaVoidEvent[]; myName: string; today: string; signatureUrls: Record<string, string>; people: string[]; backTo: string;
+  canWrite: boolean; isOffice: boolean; trail: QaVoidEvent[]; addedAfter: Record<string, { at: string; by: string | null }>; myName: string; today: string; signatureUrls: Record<string, string>; people: string[]; backTo: string;
 }) {
   const router = useRouter();
   const spec = template.spec as unknown as Spec;
   const isRegister = template.kind === 'itr_register';
   const frozen = Boolean(record?.completed_at || record?.voided_at);
   const editable = canWrite && !frozen;
+  // A signed record still takes photographs — added after the ones it was signed with, never removed (README R176).
+  const signedPhotosOpen = canWrite && Boolean(record?.completed_at) && !record?.voided_at;
+  const photosOpen = editable || signedPhotosOpen;
   const labels = spec.answer_labels ?? { ok: 'OK', gap: 'Gap', na: 'N/A' };
   const lotField = spec.lot_field ?? null;
 
@@ -138,7 +142,7 @@ export function RecordEditor({ projectId, recordId, template, record, instanceId
   }
 
   async function addPhotos(list: FileList | null) {
-    if (!list || !editable) return;
+    if (!list || !photosOpen) return;
     for (const file of Array.from(list)) {
       try {
         const c = await compressPhoto(file);
@@ -146,6 +150,32 @@ export function RecordEditor({ projectId, recordId, template, record, instanceId
         setDirty(true);
       } catch { setError('A photo could not be read.'); }
     }
+  }
+
+  // The photographs alone, onto a signed record: the files, then the append — now, or from the outbox when there is signal.
+  async function savePhotosOnly() {
+    if (!signedPhotosOpen || !photos.length) return;
+    setSaving(true); setError(null); setKept(false);
+    try {
+      const supabase = createClient();
+      const files = photos.map((ph) => ({ key: ph.key, path: `${projectId}/qa/${recordId}/${ph.key}.${ph.extension}`, type: ph.type, ph }));
+      const live = async () => {
+        for (const f of files) {
+          const { error: upErr } = await supabase.storage.from('entry-photos').upload(f.path, f.ph.blob, { contentType: f.type, upsert: false });
+          if (upErr && !/already exists|duplicate/i.test(upErr.message)) throw new Error(upErr.message);
+        }
+        await appendQaPhotos(supabase, recordId, files.map((f) => f.path));
+      };
+      const queue = async () => {
+        const blobs: Record<string, Blob> = {};
+        for (const f of files) blobs[f.key] = f.ph.blob;
+        await outbox.enqueue({ kind: 'qa_record_photos', projectId, subjectId: recordId, payload: { files: files.map((f) => ({ key: f.key, path: f.path, type: f.type })) }, blobs });
+      };
+      const outcome = await runOrQueue(live, queue);
+      if (outcome === 'sent') { setPhotos([]); setDirty(false); router.refresh(); }
+      else { setKept(true); setDirty(false); }
+    } catch (err) { setError(err instanceof Error ? err.message : 'The photographs did not save.'); }
+    finally { setSaving(false); }
   }
 
   async function voidRecord() {
@@ -321,17 +351,28 @@ export function RecordEditor({ projectId, recordId, template, record, instanceId
       <section className="qa-section">
         <p className="label">Photographs · {(record?.photo_paths.length ?? 0) + photos.length}</p>
         <div className="qa-item__photos">
-          {(record?.photo_paths ?? []).map((p) => signatureUrls[p] ? /* eslint-disable-next-line @next/next/no-img-element */ <img key={p} className="qa-photo" src={signatureUrls[p]} alt="" /> : <span key={p} className="qa-photo qa-photo--pending" />)}
+          {(record?.photo_paths ?? []).map((p) => signatureUrls[p] ? /* eslint-disable-next-line @next/next/no-img-element */ <img key={p} className="qa-photo" src={signatureUrls[p]} alt="" title={addedAfter[p] ? `Added after sign-off ${fmtPerthDate(addedAfter[p].at)}${addedAfter[p].by ? ` by ${addedAfter[p].by}` : ''}` : undefined} /> : <span key={p} className="qa-photo qa-photo--pending" />)}
           {photos.map((ph) => /* eslint-disable-next-line @next/next/no-img-element */ <img key={ph.key} className="qa-photo qa-photo--new" src={ph.previewUrl} alt="" title="Not saved yet" />)}
-          {editable && (
+          {photosOpen && (
             <label className="qa-photo__add">
               <span>+ Photos</span>
               <input type="file" accept="image/*" multiple hidden onChange={(e) => { const l = e.target.files; void addPhotos(l); e.target.value = ''; }} />
             </label>
           )}
-          {!editable && (record?.photo_paths.length ?? 0) === 0 && <span className="caption">None.</span>}
+          {!photosOpen && (record?.photo_paths.length ?? 0) === 0 && <span className="caption">None.</span>}
         </div>
-        {photos.length > 0 && <p className="caption">{photos.length} new photo{photos.length === 1 ? '' : 's'} — saved with the record when you press Save.</p>}
+        {Object.keys(addedAfter).length > 0 && (
+          <p className="caption">{(record?.photo_paths ?? []).filter((p) => addedAfter[p]).length} added after sign-off: {[...new Set(Object.values(addedAfter).map((a) => `${fmtPerthDate(a.at)}${a.by ? ` by ${a.by}` : ''}`))].join(' · ')}. The rest were there when it was signed.</p>
+        )}
+        {photos.length > 0 && editable && <p className="caption">{photos.length} new photo{photos.length === 1 ? '' : 's'} — saved with the record when you press Save.</p>}
+        {photos.length > 0 && signedPhotosOpen && (
+          <div className="dw-rates__form">
+            <button type="button" className="button" disabled={saving} onClick={() => void savePhotosOnly()}>{saving ? 'Saving…' : `Add ${photos.length} photo${photos.length === 1 ? '' : 's'} to the signed record`}</button>
+            <button type="button" className="quotebtn" onClick={() => { setPhotos([]); setDirty(false); }}>Discard</button>
+            <span className="caption">The record stays as signed; these are marked as added after sign-off, with the date and your name.</span>
+          </div>
+        )}
+        {kept && signedPhotosOpen && <p className="caption">Kept on this phone, sends with signal.</p>}
       </section>
 
       <section className="qa-section">

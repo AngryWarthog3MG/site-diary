@@ -23,6 +23,8 @@ export interface QaPdfMeta {
   orgName: string; orgCode: string; projectName: string; projectCode: string; today: string;
   /** Signature images by signature_path, and photographs by path, as data URIs — handed to the renderer one at a time (README R84). */
   images: Record<string, string>;
+  /** Photographs added after every required party had signed (README R176): path → when, by whom. */
+  addedAfter?: Record<string, { at: string; by: string | null }>;
 }
 
 /**
@@ -61,7 +63,10 @@ export function qaRecordHtml(template: QaTemplateRow, record: QaRecordRow, meta:
   const signoffDefs = spec.signoffs ?? [];
   const inHold = new Set(holdPoints.flatMap((h) => h.parties));
 
-  const photoKeys = record.photo_paths.map((p) => key('ph', p)).filter((k): k is string => Boolean(k));
+  const addedAfter = meta.addedAfter ?? {};
+  const photoKeys: Array<{ k: string; after: { at: string; by: string | null } | null }> = [];
+  for (const p of record.photo_paths) { const k = key('ph', p); if (k) photoKeys.push({ k, after: addedAfter[p] ?? null }); }
+  const afterCount = photoKeys.filter((x) => x.after).length;
   const sections = (spec.sections ?? []).map((sec) => {
     const rows = sec.items.map((it) => {
       const r = byItem.get(it.id);
@@ -97,7 +102,7 @@ export function qaRecordHtml(template: QaTemplateRow, record: QaRecordRow, meta:
     register,
     `<section class="sect"><p class="lbl">${esc(spec.comments_heading ?? 'Comments')}</p><div class="qa-comments">${esc(record.comments ?? '')}</div></section>`,
     loose.length ? `<section class="sect"><p class="lbl">${spec.certification ? 'Certification' : 'Sign-off'}</p>${spec.certification ? `<p class="qa-cert">${esc(spec.certification)}</p>` : ''}<div class="qa-sigs">${loose.map((s) => signBlock(s.party, s)).join('')}</div>${spec.footer ? `<p class="qa-foot">${esc(spec.footer)}</p>` : ''}</section>` : '',
-    photoKeys.length ? `<section class="sect"><p class="lbl">Photographs · ${photoKeys.length}</p><div class="photos__grid">${photoKeys.map((k) => `<figure><img data-photo="${k}" alt="" /></figure>`).join('')}</div></section>` : '',
+    photoKeys.length ? `<section class="sect"><p class="lbl">Photographs · ${photoKeys.length}${afterCount ? ` · ${afterCount} added after sign-off` : ''}</p><div class="photos__grid">${photoKeys.map(({ k, after }) => `<figure><img data-photo="${k}" alt="" />${after ? `<figcaption class="qa-pics">Added after sign-off ${esc(fmtPerthDate(after.at))}${after.by ? ` · ${esc(after.by)}` : ''}</figcaption>` : ''}</figure>`).join('')}</div></section>` : '',
     `<p class="src">Record ${esc(record.id)} · ${esc(STATE_LABEL[state])}${record.gap_count ? ` · ${record.gap_count} gap${record.gap_count === 1 ? '' : 's'}` : ''}${record.completed_at ? ` · signed by every required party ${esc(fmtPerthDate(record.completed_at))}` : ''}${record.voided_at ? ` · VOIDED ${esc(fmtPerthDate(record.voided_at))}: ${esc(record.void_reason ?? '')}` : ''} · last saved ${esc(fmtPerthDate(record.updated_at))} · printed ${esc(fmtDate(meta.today))}. Signatures as drawn on the device; a sign-off once made is never changed.</p>`,
     '</div></body></html>',
   ].join('');

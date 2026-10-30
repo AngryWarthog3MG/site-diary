@@ -16,6 +16,7 @@ const store = createStore('site-diary-outbox', 'outbox');
 export type OutboxKind =
   | 'day_photo'
   | 'qa_record'
+  | 'qa_record_photos'
   | 'prestart_create'
   | 'prestart_edit'
   | 'prestart_attendee'
@@ -63,6 +64,7 @@ export type OutboxSummary = Omit<OutboxItem, 'blobs'>;
 export const KIND_LABEL: Record<OutboxKind, string> = {
   day_photo: 'a progress photo',
   qa_record: 'an inspection and test record',
+  qa_record_photos: 'photographs on a signed record',
   prestart_create: 'a prestart',
   prestart_edit: 'a prestart change',
   prestart_attendee: 'a sign-on',
