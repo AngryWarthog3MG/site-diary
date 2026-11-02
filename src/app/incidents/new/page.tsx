@@ -14,9 +14,10 @@ export default async function NewIncidentPage({ searchParams }: { searchParams: 
   if (!current) redirect('/');
   if (!canReport(current.role)) redirect(`/incidents?project=${current.project_id}`);
   const supabase = await createClient();
-  const [{ data: crew }, { data: plant }] = await Promise.all([
+  const [{ data: crew }, { data: plant }, { data: hazardTypes }] = await Promise.all([
     supabase.from('crew').select('name').eq('project_id', current.project_id).eq('active', true).order('sort_order').order('name'),
     supabase.from('project_plant').select('plant:plant_register!inner(name)').eq('project_id', current.project_id),
+    supabase.from('org_incident_causes').select('kind, key, label, active').eq('org_id', current.project.org.id).eq('kind', 'hazard_type'),
   ]);
   const plantNames = (plant ?? []).map((p) => { const r = Array.isArray(p.plant) ? p.plant[0] : p.plant; return String((r as { name: string } | null)?.name ?? ''); }).filter(Boolean);
   return (
@@ -28,7 +29,7 @@ export default async function NewIncidentPage({ searchParams }: { searchParams: 
       ) : (
         <p className="page-subtitle">What happened, where, who. Photos if you can. It saves the moment you tap Report, with or without signal.</p>
       )}
-      <ReportForm projectId={current.project_id} userId={userId} crew={(crew ?? []).map((c) => String(c.name))} plant={plantNames} simple={current.role === 'labourer'} />
+      <ReportForm projectId={current.project_id} userId={userId} crew={(crew ?? []).map((c) => String(c.name))} plant={plantNames} hazardTypes={(hazardTypes ?? []) as Array<{ kind: string; key: string; label: string; active: boolean }>} simple={current.role === 'labourer'} />
     </main>
   );
 }

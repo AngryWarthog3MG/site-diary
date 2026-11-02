@@ -31,7 +31,7 @@ bones; the Stems feature adds something. **Missing** — nothing in the IMS does
 | Event files, log, summary, **Export to Word** | Partly | Photos and PDF. No Word |
 | GPS location on events and hazards, GPS map reports | Missing | — |
 | Person-involved types, environmental amount types | Missing | — |
-| Hazard register with control lifecycle: No controls → Control-pending → Controlled → Eliminated; hazard type / sub-type; hierarchy of controls; critical-risk flag; Simple / Risk / Grid / Advanced views | Partly | A hazard is an incident kind with actions; no control status or hierarchy-of-controls field |
+| Hazard register with control lifecycle: No controls → Control-pending → Controlled → Eliminated; hazard type / sub-type; hierarchy of controls; critical-risk flag; Simple / Risk / Grid / Advanced views | Have (R179) | Controls on the hierarchy, planned → in place → withdrawn; state read off them (no controls / pending / controlled / eliminated); hazard type (built-in + company list); critical-risk flag; a hazard closes only once controlled. One view, not four, by design |
 | Injury management: claims register (claim number, claim status, medical status, total costs, lost days, RTW), manual claims | Missing | `classify` MTI/FAI and lost-time stats only |
 | Injury detail lists: part of body, nature, mechanism, agency, treatment type | Partly | Treatment only |
 | Drug & alcohol results register (type, result, unit, file, log) and random-selection generator | Missing | Health monitoring is the confidentiality tier, but D&A is not in it |
@@ -171,7 +171,7 @@ Grouped so each step is one README section, one migration set, one suite, and sh
 
 1. **Action register** — one register over every origin, manual actions, priority, assigned-to, overdue, "my actions". Most other gaps raise actions into it. **Built — README R177, 02/11/2026.**
 2. **Incident investigation** — investigation stage, root causes and contributing factors (company lists), 5 Why, confidential flag, sign-off, investigation due dates. **Built — README R178, 02/11/2026.**
-3. **Hazard controls** — control status lifecycle, hierarchy of controls, hazard types, critical-risk flag.
+3. **Hazard controls** — control status lifecycle, hierarchy of controls, hazard types, critical-risk flag. **Built — README R179, 02/11/2026.**
 4. **Forms engine** (Comply One's heart) — a designer for checklists (sections, question types, score, fail-raises-action, photo required), public vs scheduled profiles, calendar, completed-forms register, non-compliance register. Then the missing forms as templates: fatigue, journey management plan, Take Time, field leadership observation, workplace hazard inspection, VOC, on/off hire, light and heavy vehicle pre-starts, weekly crack inspection, training evaluation.
 5. **Asset register** — every asset, not only plant: types/categories, barcode, check in/out, maintenance & inspection profiles that raise actions, meter entry, electrical test & tag, third-party assets. Plant register becomes one kind of asset without moving a row.
 6. **Risk register** — risk profiles (project / asset), inherent/residual/potential, existing vs planned controls, critical controls, owner/assessor/review date, dashboard gauges; SWMS risk feeds it.

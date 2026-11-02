@@ -219,6 +219,23 @@ async function replay(item: OutboxItem): Promise<void> {
       await fetch(`/api/incidents/${item.subjectId}/notify`, { method: 'POST' }).catch(() => undefined);
       return;
     }
+    case 'hazard_control': {
+      // A control put down with no signal (README R179); the database stamps when it went in.
+      const { error } = await supabase.from('hazard_controls').insert({ id: p.id as string, ...(p.row as Record<string, unknown>) });
+      if (error && !isAlreadyDone(error)) throw error;
+      return;
+    }
+    case 'hazard_control_update': {
+      // In place, or withdrawn with a reason. A control frozen in the meantime (withdrawn, or on a closed report) is left as it is.
+      const { data, error } = await supabase.from('hazard_controls').update(p.patch as Record<string, unknown>).eq('id', p.controlId as string).select('id');
+      if (error && !isFrozen(error)) throw error;
+      if (!error && (!data || data.length === 0)) {
+        const { data: row } = await supabase.from('hazard_controls').select('status').eq('id', p.controlId as string).maybeSingle();
+        if (!row) throw Object.assign(new Error('That control no longer exists.'), { code: '42501' });
+        if (row.status === 'planned') throw Object.assign(new Error('The control could not be moved from this account.'), { code: '42501' });
+      }
+      return;
+    }
     case 'order_raise': {
       // Photos first, then the request that names them; the number is the database's.
       const paths = (p.photoPaths as string[] | undefined) ?? [];

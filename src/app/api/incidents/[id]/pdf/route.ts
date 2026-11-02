@@ -6,6 +6,7 @@ import { DOCKET_CSS } from '@/lib/pdf/styles';
 import { EMBEDDED_FONT_CSS } from '@/lib/pdf/fonts';
 import { finishedAtAwst } from '@/lib/pdf/finished-at';
 import { IncidentDoc, INCIDENT_CSS, type IncidentPdfData } from '@/lib/incidents/pdf';
+import { hazardTypeLabel, type ControlLevel, type ControlStatus } from '@/lib/incidents/controls';
 
 export const maxDuration = 300;
 export const runtime = 'nodejs';
@@ -19,10 +20,11 @@ export async function POST(_request: Request, context: { params: Promise<{ id: s
 
   const { data: r } = await supabase
     .from('incidents')
-    .select(`*, project:projects!inner(name, code, org:organisations!inner(name, code)),
+    .select(`*, project:projects!inner(name, code, org_id, org:organisations!inner(name, code)),
       reporter:profiles!incidents_reported_by_profiles_fkey(full_name, email),
       incident_updates(kind, body, created_at, author:profiles!incident_updates_created_by_profiles_fkey(full_name, email)),
-      incident_actions(action, owner_name, due_on, done_at, done_note, created_at)`)
+      incident_actions(action, owner_name, due_on, done_at, done_note, created_at),
+      hazard_controls(level, description, status, created_by, created_at, in_place_at, withdrawn_at, withdrawn_reason)`)
     .eq('id', id)
     .maybeSingle();
   if (!r) return fail('not_found', 'That report is not on any of your projects.', 404);
@@ -39,7 +41,9 @@ export async function POST(_request: Request, context: { params: Promise<{ id: s
   const { data: inv } = await supabase.from('incident_investigations')
     .select('status, confidential, due_on, investigator_name, opened_at, opened_by, finished_at, finished_by, summary, sequence_of_events, findings, signed_off_at, signed_name, signature_path, updated_at, incident_causes(kind, cause_label, detail), incident_whys(seq, why)')
     .eq('incident_id', r.id).maybeSingle();
-  const stateHash = createHash('sha256').update(JSON.stringify({ s: r.status, c: r.closed_at, u: updates.map((u) => u.created_at), a: actions, v: inv ? [inv.status, inv.updated_at, inv.confidential] : null })).digest('hex');
+  type ControlRow = { level: string; description: string; status: string; created_by: string; created_at: string; in_place_at: string | null; withdrawn_at: string | null; withdrawn_reason: string | null };
+  const controlRows = ((r.hazard_controls ?? []) as ControlRow[]).slice().sort((a, b) => a.created_at.localeCompare(b.created_at));
+  const stateHash = createHash('sha256').update(JSON.stringify({ s: r.status, c: r.closed_at, k: r.critical_risk, u: updates.map((u) => u.created_at), a: actions, h: controlRows.map((c) => [c.status, c.in_place_at, c.withdrawn_at]), v: inv ? [inv.status, inv.updated_at, inv.confidential] : null })).digest('hex');
   const objectPath = `${r.project_id}/incident/${r.id}-${stateHash.slice(0, 8)}.pdf`;
   const existing = await admin.storage.from('exports').download(objectPath);
   if (existing.data) {
@@ -54,6 +58,12 @@ export async function POST(_request: Request, context: { params: Promise<{ id: s
     const bytes = Buffer.from(await data.arrayBuffer());
     photos.push({ src: `data:${data.type || 'image/jpeg'};base64,${bytes.toString('base64')}` });
   }
+  const { data: typeRows } = r.hazard_type ? await admin.from('org_incident_causes').select('kind, key, label').eq('org_id', (project as { org_id?: string }).org_id ?? '').eq('kind', 'hazard_type') : { data: [] as Array<{ kind: string; key: string; label: string }> };
+  const controlNames = await admin.from('profiles').select('id, full_name, email').in('id', [...new Set(controlRows.map((c) => c.created_by))]);
+  const controls: IncidentPdfData['controls'] = controlRows.map((c) => {
+    const n = (controlNames.data ?? []).find((p) => p.id === c.created_by);
+    return { level: c.level as ControlLevel, description: c.description, status: c.status as ControlStatus, created_at: c.created_at, in_place_at: c.in_place_at, withdrawn_at: c.withdrawn_at, withdrawn_reason: c.withdrawn_reason, by: n ? (n.full_name ?? n.email ?? '—') : '—' };
+  });
   let investigation: IncidentPdfData['investigation'] = null;
   if (inv) {
     const ids = [inv.opened_by, inv.finished_by].filter((v): v is string => Boolean(v));
@@ -75,7 +85,7 @@ export async function POST(_request: Request, context: { params: Promise<{ id: s
       signed_off_at: inv.signed_off_at, signed_name: inv.signed_name, signature,
     };
   }
-  const latest = [r.reported_at as string, r.closed_at as string | null, inv?.updated_at as string | null, ...updates.map((u) => u.created_at), ...actions.map((a) => a.done_at)].filter((v): v is string => Boolean(v)).sort().at(-1);
+  const latest = [r.reported_at as string, r.closed_at as string | null, inv?.updated_at as string | null, ...controlRows.flatMap((c) => [c.created_at, c.in_place_at, c.withdrawn_at]), ...updates.map((u) => u.created_at), ...actions.map((a) => a.done_at)].filter((v): v is string => Boolean(v)).sort().at(-1);
   const instant = new Date(latest ?? (r.reported_at as string));
   const data: IncidentPdfData = {
     orgName: org.name, orgCode: org.code, projectName: project.name, projectCode: project.code,
@@ -86,6 +96,7 @@ export async function POST(_request: Request, context: { params: Promise<{ id: s
     updates: updates.map((u) => ({ kind: u.kind, body: u.body, at: u.created_at, by: who(u.author) })),
     actions: actions.map((a) => ({ action: a.action, owner: a.owner_name, due: a.due_on, done_at: a.done_at, done_note: a.done_note })),
     closed_at: r.closed_at, printedAwst: finishedAtAwst(instant.toISOString(), null), investigation,
+    hazard_type: hazardTypeLabel(r.hazard_type ?? null, (typeRows ?? []) as Array<{ kind: string; key: string; label: string }>), critical_risk: Boolean(r.critical_risk), controls,
   };
 
   let pdf: Uint8Array;

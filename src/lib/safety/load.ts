@@ -5,6 +5,7 @@ import { coverage } from '@/lib/documents-control/model';
 import { injurySummary, daysSinceLastInjury, monthBuckets, overdue, openActions, type IncidentFacts } from './stats';
 import { perthWindowDate, perthWindowEnd, perthWindowStart } from './window';
 import { originHref, sortActions, type ActionOrigin, type RegisterRow } from '@/lib/actions/model';
+import { summariseHazards, type ControlFacts } from '@/lib/incidents/controls';
 
 /**
  * Everything the dashboard shows, gathered once under the caller's RLS.
@@ -25,6 +26,8 @@ export interface SafetyData {
     recent: Array<IncidentFacts & { id: string; seq: number; description: string }>;
   };
   inspections: { last90: number; issuesOpen: number };
+  /** Open hazard reports and how many have no control in place (README R179) — the register's own arithmetic. */
+  hazards: ReturnType<typeof summariseHazards>;
   tickets: { expired: Array<{ person: string; label: string; on: string }>; soon: Array<{ person: string; label: string; on: string }> };
   subcontractors: Array<{ name: string; verdict: string }>;
   swms: Array<{ title: string; version: number; unsigned: string[] }>;
@@ -44,7 +47,7 @@ export async function loadSafety(supabase: SupabaseClient, projectId: string, or
   const ninety = perthWindowDate(today, 90);
   const weekAgo = perthWindowDate(today, 7);
   const nowIso = new Date().toISOString();
-  const [onSite, week, prestart, plant, permits, incidents, lastInjury, inspections, openActs, crew, tickets, subs, swms, docs, labour] = await Promise.all([
+  const [onSite, week, prestart, plant, permits, incidents, lastInjury, inspections, openActs, openHazards, crew, tickets, subs, swms, docs, labour] = await Promise.all([
     supabase.from('site_signins').select('id', { count: 'exact', head: true }).eq('project_id', projectId).eq('signin_date', today).is('signed_out_at', null),
     supabase.from('site_signins').select('id', { count: 'exact', head: true }).eq('project_id', projectId).gte('signin_date', weekAgo).lte('signin_date', today),
     supabase.from('prestarts').select('completed_at').eq('project_id', projectId).eq('prestart_date', today).order('created_at', { ascending: false }).limit(1).maybeSingle(),
@@ -57,6 +60,7 @@ export async function loadSafety(supabase: SupabaseClient, projectId: string, or
     // Open actions of every origin, this job's and the company-wide ones, through the action register (README R177):
     // open however old their record is, so no date window.
     supabase.from('action_register').select('origin, record_id, record_ref, project_id, action, owner_name, priority, due_on, done_at, raised_at').eq('org_id', orgId).or(`project_id.eq.${projectId},project_id.is.null`).is('done_at', null),
+    supabase.from('incidents').select('kind, status, critical_risk, hazard_controls(level, status)').eq('project_id', projectId).eq('kind', 'hazard').neq('status', 'closed'),
     supabase.from('crew').select('name').eq('project_id', projectId).eq('active', true),
     supabase.from('crew_tickets').select('person_name, ticket_type, expires_on, active').eq('org_id', orgId),
     supabase.from('project_subcontractors').select('subcontractor:subcontractors!inner(name, active, subcontractor_documents(kind, expires_on, active))').eq('project_id', projectId).is('engaged_to', null),
@@ -89,6 +93,7 @@ export async function loadSafety(supabase: SupabaseClient, projectId: string, or
     taggedOut: plantRows.filter((p) => p.completed_at && p.fit_for_use === false).map((p) => (Array.isArray(p.plant) ? p.plant[0] : p.plant).name),
     permits: { live: permitRows.filter((p) => p.valid_from <= nowIso && nowIso <= p.valid_to).length, expired: permitRows.filter((p) => p.valid_to < nowIso).length },
     actions: { open: openActions(allActions), overdue: overdue(allActions, today), list: actionList.slice(0, LISTED_ACTIONS) },
+    hazards: summariseHazards(((openHazards.data ?? []) as Array<{ kind: string; status: string; critical_risk: boolean; hazard_controls: ControlFacts[] | null }>).map((h) => ({ kind: h.kind, status: h.status, critical_risk: h.critical_risk, controls: h.hazard_controls ?? [] }))),
     incidents: {
       open: incRows.filter((i) => i.status !== 'closed').length,
       year: injurySummary(incRows, hours),

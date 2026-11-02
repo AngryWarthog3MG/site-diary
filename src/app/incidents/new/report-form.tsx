@@ -11,8 +11,9 @@ import {
   INCIDENT_KINDS, KIND_LABEL, TREATMENTS, TREATMENT_LABEL, SEVERITIES, SEVERITY_LABEL,
   type IncidentKind, type Treatment, type Severity,
 } from '@/lib/incidents/model';
+import { hazardTypeOptions } from '@/lib/incidents/controls';
 
-interface Props { projectId: string; userId: string; crew: string[]; plant: string[]; /** A labourer's form: kind, where, what, a photo — the supervisor fills in the rest as updates. */ simple?: boolean }
+interface Props { projectId: string; userId: string; crew: string[]; plant: string[]; /** The company's own hazard types, beside the built-in ones (README R179). */ hazardTypes?: Array<{ kind: string; key: string; label: string; active?: boolean }>; /** A labourer's form: kind, where, what, a photo — the supervisor fills in the rest as updates. */ simple?: boolean }
 
 function localNow(): string {
   const d = new Date();
@@ -25,7 +26,7 @@ function localNow(): string {
  * signal — and frozen from then on; the office is emailed for anything
  * urgent. Nothing here is a guess: unanswered stays blank.
  */
-export function ReportForm({ projectId, userId, crew, plant, simple = false }: Props) {
+export function ReportForm({ projectId, userId, crew, plant, hazardTypes = [], simple = false }: Props) {
   const router = useRouter();
   const [kind, setKind] = useState<IncidentKind>('hazard');
   const [occurred, setOccurred] = useState(localNow());
@@ -44,6 +45,7 @@ export function ReportForm({ projectId, userId, crew, plant, simple = false }: P
   const [potential, setPotential] = useState<Severity | ''>('');
   const [notifiable, setNotifiable] = useState(false);
   const [plantItem, setPlantItem] = useState('');
+  const [hazardType, setHazardType] = useState('');
   const [photos, setPhotos] = useState<Array<{ blob: Blob; type: string; ext: string; preview: string }>>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -84,6 +86,7 @@ export function ReportForm({ projectId, userId, crew, plant, simple = false }: P
       injured_name: isInjury ? injured.trim() || null : null, injury_type: isInjury ? injuryType.trim() || null : null,
       body_part: isInjury ? bodyPart.trim() || null : null, treatment: isInjury && treatment ? treatment : null,
       actual_severity: actual || null, potential_severity: potential || null, notifiable, plant: plantItem.trim() || null,
+      hazard_type: hazardType || null,
       reported_by: userId,
     };
     try {
@@ -147,6 +150,11 @@ export function ReportForm({ projectId, userId, crew, plant, simple = false }: P
         <label className="fieldcell"><span className="label">Where</span>
           <input className="field field--sm" value={location} placeholder="Chainage, area, gate…" onChange={(e) => setLocation(e.target.value)} /></label>
       </div>
+      <label className="fieldcell"><span className="label">Type of hazard</span>
+        <select className="field field--sm" value={hazardType} onChange={(e) => setHazardType(e.target.value)}>
+          <option value="">—</option>
+          {hazardTypeOptions(hazardTypes).filter((t) => !t.retired).map((t) => <option key={t.key} value={t.key}>{t.label}</option>)}
+        </select></label>
       <label className="fieldcell"><span className="label">What happened</span>
         <textarea className="field field--sm" rows={4} value={description} placeholder="In plain words, as you saw it." onChange={(e) => setDescription(e.target.value)} /></label>
       <label className="fieldcell"><span className="label">What was done straight away</span>

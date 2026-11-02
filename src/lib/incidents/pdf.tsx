@@ -4,6 +4,7 @@ import { fmtDate, fmtPerthDate } from '@/lib/pdf/dates';
 import { awstClock } from '@/lib/signin/register';
 import { KIND_LABEL, STATUS_LABEL, TREATMENT_LABEL, SEVERITY_LABEL, incidentRef, type IncidentKind, type IncidentStatus, type Treatment, type Severity } from './model';
 import { INVESTIGATION_STATUS_LABEL, type InvestigationStatus } from './investigation';
+import { controlState, sortControls, CONTROL_LEVEL_SHORT, CONTROL_STATUS_LABEL, CONTROL_STATE_LABEL, type ControlLevel, type ControlStatus } from './controls';
 
 export interface IncidentPdfData {
   orgName: string; orgCode: string; projectName: string; projectCode: string;
@@ -16,6 +17,9 @@ export interface IncidentPdfData {
   updates: Array<{ kind: string; body: string; at: string; by: string }>;
   actions: Array<{ action: string; owner: string | null; due: string | null; done_at: string | null; done_note: string | null }>;
   closed_at: string | null; printedAwst: string;
+  /** The hazard's type and the controls on it (README R179). */
+  hazard_type: string | null; critical_risk: boolean;
+  controls: Array<{ level: ControlLevel; description: string; status: ControlStatus; created_at: string; in_place_at: string | null; withdrawn_at: string | null; withdrawn_reason: string | null; by: string }>;
   /** The investigation (README R178), when the report has one the caller may read; a confidential one prints only for its managers. */
   investigation: {
     status: InvestigationStatus; confidential: boolean; due_on: string | null; investigator: string | null;
@@ -57,9 +61,32 @@ export function IncidentDoc({ data }: { data: IncidentPdfData }): ReactElement {
             <tr><th>Witnesses</th><td>{data.witnesses.length ? data.witnesses.join(', ') : '—'}</td></tr>
             <tr><th>Severity</th><td>{data.actual_severity ? SEVERITY_LABEL[data.actual_severity] : '—'} actual · {data.potential_severity ? SEVERITY_LABEL[data.potential_severity] : '—'} potential</td></tr>
             <tr><th>Plant</th><td>{data.plant ?? '—'}</td></tr>
+            {data.hazard_type && <tr><th>Hazard type</th><td>{data.hazard_type}</td></tr>}
+            {data.critical_risk && <tr><th>Critical risk</th><td>Yes — set by the job's managers</td></tr>}
           </tbody>
         </table>
       </section>
+
+      {(data.kind === 'hazard' || data.controls.length > 0) && (
+        <section className="sect">
+          <p className="lbl">Controls{data.kind === 'hazard' ? ` — ${CONTROL_STATE_LABEL[controlState(data.controls)]}` : ''}</p>
+          {data.controls.length === 0 ? <p className="nil vr-missing">No controls recorded</p> : (
+            <table>
+              <thead><tr><th>Level</th><th className="w">Control</th><th>Status</th><th>By</th></tr></thead>
+              <tbody>
+                {sortControls(data.controls).map((c, i) => (
+                  <tr key={i}>
+                    <td>{CONTROL_LEVEL_SHORT[c.level]}</td>
+                    <td className="w">{c.description}{c.withdrawn_reason ? <span className="src"> — withdrawn: {c.withdrawn_reason}</span> : null}</td>
+                    <td className={`mono${c.status === 'planned' ? ' vr-missing' : ''}`}>{CONTROL_STATUS_LABEL[c.status]}{c.status === 'in_place' && c.in_place_at ? ` ${fmtPerthDate(c.in_place_at)}` : c.status === 'withdrawn' && c.withdrawn_at ? ` ${fmtPerthDate(c.withdrawn_at)}` : ''}</td>
+                    <td>{c.by}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </section>
+      )}
 
       {data.investigation && (
         <section className="sect">

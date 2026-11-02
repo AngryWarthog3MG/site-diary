@@ -14,6 +14,7 @@ import type { IncidentNotice } from '@/lib/subcontract/model';
 import type { EnvEvent } from '@/lib/environment/model';
 import { InvestigationPanel, type InvestigationView, type OrgCause, type JobPerson } from './investigation-panel';
 import type { CauseKind } from '@/lib/incidents/investigation';
+import { ControlsPanel, type ControlView } from './controls-panel';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Incident · Kooboolong IMS' };
@@ -27,7 +28,8 @@ export default async function IncidentPage({ params }: { params: Promise<{ id: s
     .select(`*, project:projects!inner(name, org_id),
       reporter:profiles!incidents_reported_by_profiles_fkey(full_name, email),
       incident_updates(id, kind, body, photo_urls, created_at, author:profiles!incident_updates_created_by_profiles_fkey(full_name, email)),
-      incident_actions(id, action, owner_name, due_on, done_at, done_note, created_by)`)
+      incident_actions(id, action, owner_name, due_on, done_at, done_note, created_by),
+      hazard_controls(id, level, description, status, created_by, created_at, in_place_at, withdrawn_at, withdrawn_reason)`)
     .eq('id', id)
     .maybeSingle();
   if (!r) notFound();
@@ -62,6 +64,7 @@ export default async function IncidentPage({ params }: { params: Promise<{ id: s
   const nameIds = new Set<string>(((memberRows ?? []) as Array<{ user_id: string }>).map((m) => m.user_id));
   if (invRow?.opened_by) nameIds.add(invRow.opened_by);
   if (invRow?.finished_by) nameIds.add(invRow.finished_by);
+  for (const c of (r.hazard_controls ?? []) as Array<{ created_by: string }>) nameIds.add(c.created_by);
   const { data: nameRows } = nameIds.size ? await supabase.from('profiles').select('id, full_name, email').in('id', [...nameIds]) : { data: [] as Array<{ id: string; full_name: string | null; email: string | null }> };
   const nameOf = new Map<string, string>();
   for (const n of (nameRows ?? []) as Array<{ id: string; full_name: string | null; email: string | null }>) nameOf.set(n.id, n.full_name ?? n.email ?? '—');
@@ -73,6 +76,7 @@ export default async function IncidentPage({ params }: { params: Promise<{ id: s
     causes: ((invRow.incident_causes ?? []) as InvestigationView['causes']).slice().sort((a, b) => a.cause_label.localeCompare(b.cause_label)),
     whys: ((invRow.incident_whys ?? []) as InvestigationView['whys']).slice(),
   } : null;
+  const controls: ControlView[] = ((r.hazard_controls ?? []) as Array<Omit<ControlView, 'by'>>).map((c) => ({ ...c, by: nameOf.get(c.created_by) ?? '—' }));
   const people: JobPerson[] = ((memberRows ?? []) as Array<{ user_id: string; role: string }>)
     .filter((m) => m.role !== 'labourer')
     .map((m) => ({ id: m.user_id, name: nameOf.get(m.user_id) ?? '—' }))
@@ -101,6 +105,21 @@ export default async function IncidentPage({ params }: { params: Promise<{ id: s
         canManage={canAuthorEntries(role)}
         userId={userId}
         today={perthToday()}
+        controls={(r.kind === 'hazard' || controls.length > 0 || canAuthorEntries(role)) ? (
+          <ControlsPanel
+            incidentId={r.id}
+            projectId={r.project_id}
+            kind={r.kind}
+            status={r.status}
+            hazardType={r.hazard_type ?? null}
+            critical={Boolean(r.critical_risk)}
+            hazardTypes={((orgCauseRows ?? []) as Array<{ kind: string; key: string; label: string }>)}
+            controls={controls}
+            canRunTalks={canRunTalks(role)}
+            canManage={canAuthorEntries(role)}
+            userId={userId}
+          />
+        ) : null}
         investigation={role === 'labourer' ? null : (
           <InvestigationPanel
             incidentId={r.id}

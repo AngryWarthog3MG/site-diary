@@ -4,6 +4,7 @@ import { loadChemicals } from '@/lib/chemicals/load';
 import { SDS_STATUS_LABEL } from '@/lib/chemicals/model';
 import { regulatorState, perthDay, type RegulatorEvent } from '@/lib/incidents/regulator';
 import { incidentRef } from '@/lib/incidents/model';
+import { controlState, type ControlFacts } from '@/lib/incidents/controls';
 import { loadEmergency } from '@/lib/emergency/load';
 import { withoutWhiteCard } from '@/lib/construction/model';
 import { registerInForce, planReviewDue, notBriefed } from '@/lib/asbestos/model';
@@ -205,6 +206,14 @@ export async function loadObligations(
         href: `/incidents/${id}`,
       });
     }
+  }
+
+  // A critical hazard with no control in place (README R179) is overdue from the day it was reported.
+  const { data: critRows } = await supabase.from('incidents').select('id, seq, occurred_at, hazard_controls(level, status)').eq('project_id', projectId).eq('kind', 'hazard').eq('critical_risk', true).neq('status', 'closed');
+  for (const h of (critRows ?? []) as Array<{ id: string; seq: number; occurred_at: string; hazard_controls: ControlFacts[] | null }>) {
+    const cs = controlState(h.hazard_controls ?? []);
+    if (cs === 'controlled' || cs === 'eliminated') continue;
+    items.push({ key: `hazard-control:${h.id}`, source: 'incident', title: `Critical hazard with no control in place — ${incidentRef(h.seq)}`, basis: 'WHS Act 2020 (WA) s. 19 · eliminate or minimise so far as is reasonably practicable', dueOn: perthDay(h.occurred_at), status: 'overdue', href: `/incidents/${h.id}` });
   }
 
   // Investigations (README R178): an open one with a due date falls due here; one past it is overdue.

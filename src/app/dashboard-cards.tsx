@@ -139,6 +139,17 @@ export async function DashboardCards({ projectId, orgId, member, userId }: { pro
       </section>
     ),
   });
+  if (see('incidents')) cards.push({
+    key: 'hazards', name: 'uncontrolled hazards', attention: s.hazards.uncontrolled > 0,
+    node: (
+      <section className="dash-card">
+        <p className="dash-card__title">Hazards uncontrolled</p>
+        <Big n={s.hazards.uncontrolled} tone={s.hazards.criticalUncontrolled > 0 ? 'bad' : undefined} />
+        <p className="dash-card__sub">of {s.hazards.open} open hazard{s.hazards.open === 1 ? '' : 's'}{s.hazards.criticalUncontrolled > 0 ? ` · ${s.hazards.criticalUncontrolled} critical` : ''}</p>
+        <Foot href={`/incidents${q}`} />
+      </section>
+    ),
+  });
   if (due) cards.push({
     key: 'due', name: 'schedules, sheets and tickets', attention: due.summary.attention > 0,
     node: (

@@ -8,7 +8,7 @@ import { CausesEditor } from './causes-editor';
 import type { CauseKind } from '@/lib/incidents/investigation';
 
 export const dynamic = 'force-dynamic';
-export const metadata = { title: 'Causes and factors · Kooboolong IMS' };
+export const metadata = { title: 'Hazard types, causes and factors · Kooboolong IMS' };
 
 /** The company's own root causes and contributing factors (README R178), beside the built-in ones. */
 export default async function CausesPage({ searchParams }: { searchParams: Promise<{ project?: string }> }) {
@@ -23,12 +23,12 @@ export default async function CausesPage({ searchParams }: { searchParams: Promi
   return (
     <main className="sheet">
       <p className="label"><BrandMark size={18} /> {current.project.org.name}</p>
-      <h1 className="page-title">Causes and factors</h1>
+      <h1 className="page-title">Hazard types, causes and factors</h1>
       <p className="page-subtitle">
-        The lists an investigation picks from. The built-in ones are always there; add the company&rsquo;s own here. A record
+        The lists a report and an investigation pick from. The built-in ones are always there; add the company&rsquo;s own here. A record
         keeps the words as they read when chosen, so retiring one changes nothing already written. <Link href={`/incidents?project=${current.project_id}`}>Back to the register</Link>
       </p>
-      <CausesEditor orgId={current.project.org.id} userId={userId} rows={(data ?? []) as Array<{ id: string; kind: CauseKind; key: string; label: string; active: boolean }>} />
+      <CausesEditor orgId={current.project.org.id} userId={userId} rows={(data ?? []) as Array<{ id: string; kind: CauseKind | 'hazard_type'; key: string; label: string; active: boolean }>} />
     </main>
   );
 }

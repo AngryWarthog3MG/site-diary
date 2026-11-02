@@ -475,6 +475,14 @@ improvising; the register once shipped dead because a live smoke test was skippe
   `app.reads_investigation`), `incident_causes` (label frozen when chosen), `incident_whys` (numbered). A report with one closes
   only when it is signed off. Panel `src/app/incidents/[id]/investigation-panel.tsx` (writes straight to the tables under RLS),
   `/incidents/causes` the company lists. The incident PDF prints it for whoever may read it. Suite 68
+- `src/lib/incidents/controls.ts` — hazard controls (README R179; pure, node-tested): the hierarchy (`CONTROL_LEVELS`), `controlState` —
+  the TS twin of `public.hazard_control_state`, change both together — `bestLevelInPlace`, `sortControls`, built-in hazard types +
+  `hazardTypeOptions` (company's own on `org_incident_causes` kind `hazard_type`), `summariseHazards` (the one arithmetic for the
+  register, Safety and the home card). Table `hazard_controls` (planned → in_place → withdrawn with a reason; stamped by the DB;
+  in place = frozen; a planned one removed by its author; `app.can_run_talks` writes; the labourer reads their own report's).
+  `incidents.hazard_type` is part of the frozen first account; `incidents.critical_risk` is the managers' while open. A HAZARD
+  closes only once a control is in place. Panel `src/app/incidents/[id]/controls-panel.tsx`; outbox kinds `hazard_control` /
+  `hazard_control_update`. Suite 69
 - `src/lib/calendar.ts` — `isRestDay`: weekends with nothing recorded are rest days, not holes. One definition for
   the screens, the weekly and the reminder
 - `src/lib/dayworks/` — the dayworks schedule (README R72): `schedule.ts` (pure: `readRange`, `buildSchedule` by Monday weeks,

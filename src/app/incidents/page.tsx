@@ -8,13 +8,15 @@ import { OutboxStatus } from '@/components/outbox-status';
 import { fmtDate, fmtPerthDate } from '@/lib/pdf/dates';
 import { perthToday } from '@/lib/push/decide';
 import { KIND_LABEL, STATUS_LABEL, incidentRef, summarise, actionOverdue, type IncidentKind, type IncidentStatus } from '@/lib/incidents/model';
+import { controlState, summariseHazards, CONTROL_STATE_LABEL, type ControlFacts } from '@/lib/incidents/controls';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Hazards & incidents · Kooboolong IMS' };
 
 interface Row {
   id: string; seq: number; kind: IncidentKind; status: IncidentStatus; notifiable: boolean; occurred_at: string;
-  location: string | null; description: string; injured_name: string | null;
+  location: string | null; description: string; injured_name: string | null; critical_risk: boolean;
+  hazard_controls: ControlFacts[];
   incident_actions: Array<{ due_on: string | null; done_at: string | null }>;
   /** One per report, so PostgREST hands it back as an object, not a list. */
   incident_investigations: { status: string; due_on: string | null } | Array<{ status: string; due_on: string | null }> | null;
@@ -34,7 +36,7 @@ export default async function IncidentsPage({ searchParams }: { searchParams: Pr
   const ownOnly = current.role === 'labourer';
   let query = supabase
     .from('incidents')
-    .select('id, seq, kind, status, notifiable, occurred_at, location, description, injured_name, incident_actions(due_on, done_at), incident_investigations(status, due_on)')
+    .select('id, seq, kind, status, notifiable, occurred_at, location, description, injured_name, critical_risk, hazard_controls(level, status), incident_actions(due_on, done_at), incident_investigations(status, due_on)')
     .eq('project_id', current.project_id);
   if (ownOnly) query = query.eq('reported_by', userId);
   const { data } = await query.order('occurred_at', { ascending: false }).limit(200);
@@ -44,6 +46,7 @@ export default async function IncidentsPage({ searchParams }: { searchParams: Pr
   const closed = rows.filter((r) => r.status === 'closed');
   const s = summarise(rows);
   const overdue = rows.reduce((n, r) => n + r.incident_actions.filter((a) => actionOverdue(a, today)).length, 0);
+  const hz = summariseHazards(rows.map((r) => ({ kind: r.kind, status: r.status, critical_risk: r.critical_risk, controls: r.hazard_controls ?? [] })));
   const q = `?project=${current.project_id}`;
 
   const card = (r: Row) => {
@@ -51,16 +54,18 @@ export default async function IncidentsPage({ searchParams }: { searchParams: Pr
     const late = r.incident_actions.filter((a) => actionOverdue(a, today)).length;
     const inv = Array.isArray(r.incident_investigations) ? r.incident_investigations[0] ?? null : r.incident_investigations ?? null;
     const invLate = inv?.status === 'open' && inv.due_on != null && inv.due_on < today;
+    const cs = r.kind === 'hazard' ? controlState(r.hazard_controls ?? []) : null;
+    const uncontrolled = cs === 'no_controls' || cs === 'control_pending';
     return (
-      <Link key={r.id} href={`/incidents/${r.id}`} className={`prestart-row ${r.status === 'closed' ? 'prestart-row--done' : late > 0 || r.notifiable ? 'prestart-row--open' : ''}`}>
+      <Link key={r.id} href={`/incidents/${r.id}`} className={`prestart-row ${r.status === 'closed' ? 'prestart-row--done' : late > 0 || r.notifiable || (uncontrolled && r.critical_risk) ? 'prestart-row--open' : ''}`}>
         <span>
-          <strong>{incidentRef(r.seq)}</strong> · {KIND_LABEL[r.kind]}{r.notifiable ? ' · NOTIFIABLE' : ''}
+          <strong>{incidentRef(r.seq)}</strong> · {KIND_LABEL[r.kind]}{r.notifiable ? ' · NOTIFIABLE' : ''}{r.critical_risk && r.status !== 'closed' ? ' · CRITICAL' : ''}
           <br />
           <span className="caption">
             {fmtPerthDate(r.occurred_at)}{r.location ? ` · ${r.location}` : ''} · {r.description.slice(0, 80)}{r.description.length > 80 ? '…' : ''}
           </span>
           <br />
-          <span className="caption">{STATUS_LABEL[r.status]}{openActions > 0 ? ` · ${openActions} action${openActions === 1 ? '' : 's'} open` : ''}{late > 0 ? ` · ${late} overdue` : ''}{inv ? (inv.status === 'signed_off' ? ' · investigation signed off' : inv.status === 'finished' ? ' · investigation awaiting sign-off' : invLate ? ' · investigation OVERDUE' : ' · under investigation') : ''}</span>
+          <span className="caption">{STATUS_LABEL[r.status]}{cs && r.status !== 'closed' ? <> · <span className={uncontrolled ? 'vr-missing' : undefined}>{CONTROL_STATE_LABEL[cs]}</span></> : ''}{openActions > 0 ? ` · ${openActions} action${openActions === 1 ? '' : 's'} open` : ''}{late > 0 ? ` · ${late} overdue` : ''}{inv ? (inv.status === 'signed_off' ? ' · investigation signed off' : inv.status === 'finished' ? ' · investigation awaiting sign-off' : invLate ? ' · investigation OVERDUE' : ' · under investigation') : ''}</span>
         </span>
         <span>Open</span>
       </Link>
@@ -77,9 +82,11 @@ export default async function IncidentsPage({ searchParams }: { searchParams: Pr
           : 'Report it in a minute, on the phone, with photos. The report is frozen as the first account; what is learned goes on as updates, and corrective actions stay open until they are done.'}
       </p>
       {canReport(current.role) && <Link className="button" href={`/incidents/new${q}`}>Report a hazard or incident</Link>}
+      {!ownOnly && canReport(current.role) && <p className="caption"><Link href={`/incidents/causes${q}`}>Hazard types, causes and factors</Link> — the company's lists.</p>}
       <OutboxStatus />
       <section className="entries-summary" aria-label="Register summary" style={{ marginTop: '1rem' }}>
         <div><p className="label">Open</p><p className="entries-summary__value mono">{s.open + s.investigating}</p></div>
+        {!ownOnly && <div><p className="label">Hazards uncontrolled</p><p className={`entries-summary__value mono${hz.uncontrolled > 0 ? ' vr-missing' : ''}`}>{hz.uncontrolled}{hz.criticalUncontrolled > 0 ? <span className="caption"> · {hz.criticalUncontrolled} critical</span> : null}</p></div>}
         <div><p className="label">Actions overdue</p><p className={`entries-summary__value mono${overdue > 0 ? ' vr-missing' : ''}`}>{overdue}</p></div>
         <div><p className="label">Closed</p><p className="entries-summary__value mono">{s.closed}</p></div>
       </section>

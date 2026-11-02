@@ -3707,6 +3707,29 @@ statement inserted, so an insert with RETURNING was refused — the policy now r
 20261102130000); and a one-per-report child comes back from PostgREST as an object, not a list, which the register
 page now reads either way.
 
+**R179. Hazard controls.** Item 3 of the Stems migration. Stems One keeps a hazard register whose rows move No controls
+→ Control pending → Controlled → Eliminated, each hazard typed, each control placed on the hierarchy of controls, with a
+critical-risk flag. The IMS had a hazard as one kind of report with corrective actions, and nothing that said what was
+done about the hazard itself or how well. Migration 20261102140000, suite 69. The report gains a HAZARD TYPE, picked at
+reporting from the built-in list in `src/lib/incidents/controls.ts` plus the company's own (`org_incident_causes` kind
+`hazard_type`, on `/incidents/causes` beside the causes and factors) and frozen with the first account; and a
+CRITICAL-RISK flag the job's managers set while the report is open — the crew cannot, and a closed report freezes it.
+A CONTROL is a row of its own on `hazard_controls`: its level on the hierarchy (elimination, substitution, isolation,
+engineering, administrative, PPE), what it is, planned or in place. Whoever runs the site puts one down
+(`app.can_run_talks`) — on the spot, with no signal, through outbox kinds `hazard_control` and `hazard_control_update`
+— and the database stamps who and when it went in. A planned control may be reworded or moved on the hierarchy until it
+is in; its author alone removes it. A control in place never changes: it is withdrawn, with a reason, stamped, and then
+frozen, and another is added. The hazard's STATE is never typed: `public.hazard_control_state` (TS twin `controlState`;
+change both together) reads it off the controls — no controls, control pending (planned only), controlled (one in
+place), eliminated (an elimination control in place); a withdrawn control counts for nothing. A HAZARD REPORT CLOSES
+ONLY ONCE A CONTROL IS IN PLACE; a near miss or an injury closes as before. The register card says the state and marks
+a critical one; the register, the Safety dashboard and a home card count open hazards, the uncontrolled and the critical
+uncontrolled through `summariseHazards`, one arithmetic; a critical hazard with nothing in place is overdue on What's due
+from the day it was reported (WHS Act s. 19); the incident PDF prints the type, the flag and the controls with their
+stamps. The labourer who reported a hazard reads the controls on it, as they read the report (R75), and writes none.
+Not built, on purpose: a hazard register of its own (the incidents register, filtered by kind, is it), Stems's four
+views of the same rows, and a control status typed by hand — the state is the controls.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;
