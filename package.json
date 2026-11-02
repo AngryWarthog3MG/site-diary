@@ -58,6 +58,6 @@
     "qrcode-terminal": "^0.12.0",
     "supabase": "^2.115.0",
     "typescript": "^5.9.0",
-    "vercel": "^59.5.0"
+    "vercel": "^65.9.0"
   }
 }
