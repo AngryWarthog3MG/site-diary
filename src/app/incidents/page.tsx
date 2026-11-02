@@ -16,7 +16,8 @@ interface Row {
   id: string; seq: number; kind: IncidentKind; status: IncidentStatus; notifiable: boolean; occurred_at: string;
   location: string | null; description: string; injured_name: string | null;
   incident_actions: Array<{ due_on: string | null; done_at: string | null }>;
-  incident_investigations: Array<{ status: string; due_on: string | null }>;
+  /** One per report, so PostgREST hands it back as an object, not a list. */
+  incident_investigations: { status: string; due_on: string | null } | Array<{ status: string; due_on: string | null }> | null;
 }
 
 /** The register: open first, the oldest open at the top, closed below. */
@@ -48,7 +49,7 @@ export default async function IncidentsPage({ searchParams }: { searchParams: Pr
   const card = (r: Row) => {
     const openActions = r.incident_actions.filter((a) => a.done_at == null).length;
     const late = r.incident_actions.filter((a) => actionOverdue(a, today)).length;
-    const inv = r.incident_investigations?.[0] ?? null;
+    const inv = Array.isArray(r.incident_investigations) ? r.incident_investigations[0] ?? null : r.incident_investigations ?? null;
     const invLate = inv?.status === 'open' && inv.due_on != null && inv.due_on < today;
     return (
       <Link key={r.id} href={`/incidents/${r.id}`} className={`prestart-row ${r.status === 'closed' ? 'prestart-row--done' : late > 0 || r.notifiable ? 'prestart-row--open' : ''}`}>

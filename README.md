@@ -3701,7 +3701,11 @@ due; the register card says where each stands; `investigationExpected` prompts f
 event or a high/extreme severity — a prompt, never a rule. Actions found by investigating stay on the report's
 corrective actions, which is the action register (R177). Not built, on purpose: a notification on the investigation
 dates (the assignee push of R177 covers the actions that come out of it), an offline queue for it (an investigation
-is written at a desk), and editable lists on a record (the label is frozen when chosen).
+is written at a desk), and editable lists on a record (the label is frozen when chosen). The first live drill found two
+things the suite had not: a select policy that looked the row up through a STABLE function cannot see a row the same
+statement inserted, so an insert with RETURNING was refused — the policy now reads the row's own columns (migration
+20261102130000); and a one-per-report child comes back from PostgREST as an object, not a list, which the register
+page now reads either way.
 
 ## Not built, and deliberately so
 
