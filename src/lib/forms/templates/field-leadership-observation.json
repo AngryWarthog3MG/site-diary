@@ -1,0 +1,103 @@
+{
+  "title": "Field leadership observation",
+  "category": "people",
+  "profile": "scheduled",
+  "subject": "person",
+  "audience": [
+    "supervisor",
+    "leading_hand",
+    "pm",
+    "admin"
+  ],
+  "signature": "optional",
+  "pass_mark": null,
+  "basis": "ISO 45001 cl. 5.1 and 9.1 — leadership on the ground and monitoring of how work is done. Talked through with the person before anyone leaves the spot.",
+  "competency_key": null,
+  "spec": {
+    "header": [
+      {
+        "key": "task",
+        "label": "Task observed",
+        "type": "text"
+      }
+    ],
+    "sections": [
+      {
+        "title": "What was seen",
+        "questions": [
+          {
+            "key": "swms",
+            "label": "Working to the SWMS or procedure",
+            "type": "ok_issue_na"
+          },
+          {
+            "key": "ppe",
+            "label": "PPE right for the task and worn properly",
+            "type": "ok_issue_na"
+          },
+          {
+            "key": "housekeeping",
+            "label": "Housekeeping and access around the work",
+            "type": "ok_issue_na"
+          },
+          {
+            "key": "plant",
+            "label": "Plant and people separated — exclusion zones, spotters, eye contact",
+            "type": "ok_issue_na"
+          },
+          {
+            "key": "services",
+            "label": "Services located and marked where digging",
+            "type": "ok_issue_na"
+          },
+          {
+            "key": "lifting",
+            "label": "Manual handling and lifting done well",
+            "type": "ok_issue_na"
+          },
+          {
+            "key": "permits",
+            "label": "Permits and isolations in place where needed",
+            "type": "ok_issue_na"
+          },
+          {
+            "key": "env",
+            "label": "Environmental controls in place — silt, dust, spills",
+            "type": "ok_issue_na"
+          }
+        ]
+      },
+      {
+        "title": "The conversation",
+        "questions": [
+          {
+            "key": "positive",
+            "label": "What was done well — said to the person",
+            "type": "text",
+            "required": true
+          },
+          {
+            "key": "improve",
+            "label": "What could be done better — agreed with the person",
+            "type": "text"
+          },
+          {
+            "key": "discussed",
+            "label": "Discussed with the person before leaving",
+            "type": "yes_no",
+            "required": true,
+            "fail": "no"
+          },
+          {
+            "key": "stopped",
+            "label": "Work was stopped",
+            "type": "yes_no",
+            "fail": "yes",
+            "raise_action": true,
+            "help": "A yes raises an action to follow up."
+          }
+        ]
+      }
+    ]
+  }
+}

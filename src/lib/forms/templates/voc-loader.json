@@ -1,0 +1,117 @@
+{
+  "title": "VOC — Loader",
+  "category": "plant",
+  "profile": "public",
+  "subject": "person",
+  "audience": [
+    "supervisor",
+    "pm",
+    "admin"
+  ],
+  "signature": "required",
+  "pass_mark": 100,
+  "basis": "WHS (General) Regs 2022 (WA) reg. 39 — information, training and instruction; the company verifies competency on each class of plant before a person operates it alone. A pass offers the loader ticket on the training matrix.",
+  "competency_key": "loader",
+  "spec": {
+    "header": [
+      {
+        "key": "machine",
+        "label": "Machine used for the assessment",
+        "type": "text"
+      },
+      {
+        "key": "assessor",
+        "label": "Assessor",
+        "type": "text"
+      }
+    ],
+    "sections": [
+      {
+        "title": "Before operating",
+        "questions": [
+          {
+            "key": "licence",
+            "label": "Licence or ticket sighted (number, expiry)",
+            "type": "text",
+            "required": true
+          },
+          {
+            "key": "prestart",
+            "label": "Does the prestart check properly — walk-around, fluids, safety devices, defects recorded",
+            "type": "pass_fail",
+            "required": true
+          },
+          {
+            "key": "ppe",
+            "label": "PPE and three points of contact mounting",
+            "type": "pass_fail",
+            "required": true
+          },
+          {
+            "key": "exclusion",
+            "label": "Sets the exclusion zone and checks for people and services before moving",
+            "type": "pass_fail",
+            "required": true
+          }
+        ]
+      },
+      {
+        "title": "Operating the loader",
+        "questions": [
+          {
+            "key": "controls",
+            "label": "Controls operated smoothly and correctly",
+            "type": "pass_fail",
+            "required": true
+          },
+          {
+            "key": "travel",
+            "label": "Travels and positions the machine safely on the ground available",
+            "type": "pass_fail",
+            "required": true
+          },
+          {
+            "key": "task",
+            "label": "Carries out the set task to the standard asked",
+            "type": "pass_fail",
+            "required": true
+          },
+          {
+            "key": "awareness",
+            "label": "Keeps watch on people, plant and overhead and underground services throughout",
+            "type": "pass_fail",
+            "required": true
+          },
+          {
+            "key": "communication",
+            "label": "Uses horn, eye contact and the spotter as needed",
+            "type": "pass_fail",
+            "required": true
+          },
+          {
+            "key": "shutdown",
+            "label": "Parks, lowers attachments, isolates and shuts down correctly",
+            "type": "pass_fail",
+            "required": true
+          }
+        ]
+      },
+      {
+        "title": "Outcome",
+        "questions": [
+          {
+            "key": "comments",
+            "label": "Assessor’s comments",
+            "type": "text",
+            "required": true
+          },
+          {
+            "key": "reassess",
+            "label": "Reassess by (if any part was marginal)",
+            "type": "date"
+          }
+        ]
+      }
+    ]
+  }
+}

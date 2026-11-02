@@ -151,13 +151,13 @@ export async function DashboardCards({ projectId, orgId, member, userId }: { pro
     ),
   });
   if (see('forms')) cards.push({
-    key: 'forms', name: 'form non-compliances', attention: s.forms.ncOpen > 0,
+    key: 'forms', name: 'forms', attention: s.forms.ncOpen > 0 || s.forms.overdue > 0,
     node: (
       <section className="dash-card">
-        <p className="dash-card__title">Non-compliances open</p>
-        <Big n={s.forms.ncOpen} tone={s.forms.ncOpen > 0 ? 'bad' : undefined} />
-        <p className="dash-card__sub">{s.forms.completed90} form{s.forms.completed90 === 1 ? '' : 's'} in 90 days{s.forms.failed90 > 0 ? ` · ${s.forms.failed90} failed` : ''}</p>
-        <Foot href={`/forms/non-compliance${q}`} />
+        <p className="dash-card__title">{s.forms.overdue > 0 ? 'Forms overdue' : 'Non-compliances open'}</p>
+        <Big n={s.forms.overdue > 0 ? s.forms.overdue : s.forms.ncOpen} tone={s.forms.overdue > 0 || s.forms.ncOpen > 0 ? 'bad' : undefined} />
+        <p className="dash-card__sub">{s.forms.overdue > 0 ? `${s.forms.ncOpen} non-compliance${s.forms.ncOpen === 1 ? '' : 's'} open · ` : ''}{s.forms.completed90} form{s.forms.completed90 === 1 ? '' : 's'} in 90 days{s.forms.failed90 > 0 ? ` · ${s.forms.failed90} failed` : ''}</p>
+        <Foot href={s.forms.overdue > 0 ? `/forms/calendar${q}` : `/forms/non-compliance${q}`} />
       </section>
     ),
   });

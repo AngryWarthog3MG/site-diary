@@ -1,7 +1,8 @@
 import { notFound } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { requireUser, guardScreen } from '@/lib/auth';
-import { canRunTalks } from '@/lib/roles';
+import { canRunTalks, canManageRegisters } from '@/lib/roles';
+import { competencies } from '@/lib/training/model';
 import { BrandMark } from '@/components/brand-mark';
 import { OutboxStatus } from '@/components/outbox-status';
 import { perthToday } from '@/lib/push/decide';
@@ -21,10 +22,19 @@ export default async function SubmissionPage({ params }: { params: Promise<{ id:
   const membership = memberships.find((m) => m.project_id === s.project_id);
   if (!membership) notFound();
   guardScreen(membership, 'forms');
-  const [ncs, { data: machine }] = await Promise.all([
+  const [ncs, { data: machine }, { data: tpl }, { data: ticketRow }, { data: orgComps }] = await Promise.all([
     loadNonCompliances(supabase, { submissionId: s.id }, { includeClosed: true }),
     s.subject_plant_id ? supabase.from('plant_register').select('name, plant_no').eq('id', s.subject_plant_id).maybeSingle() : Promise.resolve({ data: null }),
+    supabase.from('form_templates').select('competency_key').eq('id', s.template_id).maybeSingle(),
+    supabase.from('crew_tickets').select('id').eq('form_submission_id', s.id).maybeSingle(),
+    supabase.from('org_competencies').select('key, label').eq('org_id', membership.project.org.id),
   ]);
+  const competencyKey = (tpl as { competency_key: string | null } | null)?.competency_key ?? null;
+  const ticket = competencyKey ? {
+    competencyKey,
+    label: competencies((orgComps ?? []) as Array<{ key: string; label: string }>).find((c) => c.key === competencyKey)?.label ?? competencyKey,
+    recorded: Boolean(ticketRow), canRecord: canManageRegisters(membership.role),
+  } : null;
   const nameOf = await namesFor(supabase, [s.started_by, s.completed_by, ...ncs.map((n) => n.resolved_by), ...ncs.map((n) => n.assigned_to)]);
   const isOffice = membership.role === 'pm' || membership.role === 'admin';
   return (
@@ -38,6 +48,7 @@ export default async function SubmissionPage({ params }: { params: Promise<{ id:
           machine: machine ? `${(machine as { name: string }).name}${(machine as { plant_no: string | null }).plant_no ? ` · ${(machine as { plant_no: string | null }).plant_no}` : ''}` : null,
           startedBy: nameOf.get(s.started_by) ?? 'someone', startedAt: s.started_at, completedBy: s.completed_by ? nameOf.get(s.completed_by) ?? null : null,
           completedAt: s.completed_at, completedOnDeviceAt: s.completed_on_device_at, signaturePath: s.signature_path, voidedAt: s.voided_at, voidReason: s.void_reason,
+          ticket,
         }}
         ncs={ncs.map((n) => toNcView(n, nameOf))}
         canAct={canRunTalks(membership.role)}

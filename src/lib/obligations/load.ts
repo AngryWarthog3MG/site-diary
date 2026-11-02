@@ -13,6 +13,7 @@ import { envIncidentState, rainPrompts, type EnvEvent } from '@/lib/environment/
 import { currentDocs, noticeState, swmsReviewStatus, headContractorName, HC_DOC_EXPECTED, HC_DOC_LABEL, HC_NOTICE_FROM, type HcDoc, type IncidentNotice, type SwmsReview } from '@/lib/subcontract/model';
 import { ncrRef, lotRef, ncrReportState, holdsAwaitingRelease, calibrationStatus, CALIBRATION_LABEL, type PointType, type Result } from '@/lib/quality/model';
 import { nextInspection, registrationStatus, REGISTRATION_LABEL, type InspectionBasis, type RecordKind, type Outcome } from '@/lib/plant/inspections';
+import { loadSchedules, fillHref } from '@/lib/forms/load';
 import {
   dueStatus, nextDue, onTime, sortItems, summarise, KIND_LABEL,
   type ObligationItem, type ObligationKind,
@@ -406,6 +407,19 @@ export async function loadObligations(
     const ev = Array.isArray(a.evaluation) ? a.evaluation[0] : a.evaluation;
     if (!ev) continue;
     items.push({ key: `env-action:${a.id}`, source: 'environment', title: `Compliance action — ${a.action}`, basis: `From the evaluation of compliance of ${ev.evaluated_on.slice(8, 10)}/${ev.evaluated_on.slice(5, 7)}/${ev.evaluated_on.slice(0, 4)}`, dueOn: a.due_on ?? ev.evaluated_on, status: a.due_on ? dueStatus(a.due_on, today) : 'due_soon', href: `/environment/evaluation/${ev.id}${q}` });
+  }
+
+  // Scheduled forms (README R181): DERIVED, the next due read off the last completed form — never a row here.
+  // A schedule whose form has no issued revision cannot be filled and is not listed as due.
+  for (const sc of await loadSchedules(supabase, orgId, projectId, today)) {
+    if (!sc.active || !sc.nextDue || !sc.template) continue;
+    const href = fillHref(sc, projectId) ?? `/forms/calendar${q}`;
+    items.push({
+      key: `form:${sc.id}`, source: 'forms',
+      title: `Form — ${sc.template.title}${sc.about ? ` · ${sc.about}` : ''}${sc.assignee ? ` (${sc.assignee})` : ''}`,
+      basis: sc.template.basis ?? `Scheduled ${sc.every === 1 ? `every ${sc.unit}` : `every ${sc.every} ${sc.unit}s`}; the next is due an interval from when the last was done`,
+      dueOn: sc.nextDue, status: dueStatus(sc.nextDue, today), href,
+    });
   }
 
   const sorted = sortItems(items);

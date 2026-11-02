@@ -13,6 +13,7 @@ import { classifyOrphan, isRecent, type EntryFacts, type StoredFile } from '@/li
 import { expiring } from '@/lib/crew/tickets';
 import { documentReminderSweep } from '@/lib/documents-control/sweep';
 import { actionReminderSweep } from '@/lib/actions/notify';
+import { formScheduleSweep } from '@/lib/forms/sweep';
 
 export const maxDuration = 300;
 export const runtime = 'nodejs';
@@ -75,6 +76,8 @@ export async function GET(request: Request) {
   if (url.searchParams.get('documents') === '1') report.documents = await documentReminderSweep(createAdminClient());
   // Actions on the register (README R177): the assignee is reminded nightly while one is overdue or due within the week.
   if (url.searchParams.get('actions') === '1') report.actions = await actionReminderSweep();
+  // Scheduled forms (README R181): the assignee's push when due within three days or overdue, the job's email for the overdue.
+  if (url.searchParams.get('forms') === '1') report.forms = await formScheduleSweep();
   // Watchers of orders and plant issues (README R165): the first word where it was missed, a reminder when one is due.
   if (url.searchParams.get('watch') === '1') report.watch = await orderWatchSweep();
   if (url.searchParams.get('monthly') === '1') {

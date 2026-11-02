@@ -14,6 +14,8 @@ export interface SubmissionView {
   status: SubmissionStatus; score: number | null; outcome: Outcome | null; passMark: number | null; subjectPerson: string | null; machine: string | null;
   startedBy: string; startedAt: string; completedBy: string | null; completedAt: string | null; completedOnDeviceAt: string | null; signaturePath: string | null;
   voidedAt: string | null; voidReason: string | null;
+  /** A passed VOC offers its ticket by one tap (README R181): the competency it assesses, whether one is already on the file, and whether the caller keeps tickets. */
+  ticket: { competencyKey: string; label: string; recorded: boolean; canRecord: boolean } | null;
 }
 interface Props { s: SubmissionView; ncs: NcView[]; canAct: boolean; isOffice: boolean; today: string; userId: string }
 
@@ -50,6 +52,11 @@ export function SubmissionScreen({ s, ncs, canAct, isOffice, today, userId }: Pr
     const body = (await res.json()) as { url?: string; error?: { message?: string } };
     if (!res.ok || !body.url) throw new Error(body.error?.message ?? 'The PDF could not be made.');
     window.open(body.url, '_blank', 'noopener');
+  });
+  const recordTicket = () => run('record the ticket', async () => {
+    const res = await fetch(`/api/forms/${s.id}/ticket`, { method: 'POST' });
+    const body = (await res.json()) as { error?: { message?: string } };
+    if (!res.ok) throw new Error(body.error?.message ?? 'The ticket could not be recorded.');
   });
   const doVoid = () => run('void the form', async () => {
     if (!voidReason.trim()) throw new Error('Say why.');
@@ -119,6 +126,16 @@ export function SubmissionScreen({ s, ncs, canAct, isOffice, today, userId }: Pr
         <div className="talk-attendee">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={urls[s.signaturePath]} alt="" /><span>{s.completedBy ?? ''}</span>
+        </div>
+      )}
+      {s.ticket && s.status === 'completed' && s.outcome === 'pass' && (
+        <div className="item">
+          <p className="label">Ticket</p>
+          {s.ticket.recorded
+            ? <p className="nil">{s.ticket.label} recorded for {s.subjectPerson} on the strength of this assessment.</p>
+            : <p className="caption">This assessment passed. {s.ticket.canRecord
+                ? <>Record <strong>{s.ticket.label}</strong> for {s.subjectPerson}, dated the day of the assessment and naming this form — one tap, nothing automatic. <button type="button" className="button button--quiet" style={{ marginTop: '0.5rem' }} disabled={busy != null} onClick={() => void recordTicket()}>{busy === 'record the ticket' ? 'Recording…' : 'Record the ticket'}</button></>
+                : <>A ticket keeper records {s.ticket.label} for {s.subjectPerson} from here.</>}</p>}
         </div>
       )}
       {error && <p className="alert" role="alert">{error}</p>}

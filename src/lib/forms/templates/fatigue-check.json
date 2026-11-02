@@ -1,0 +1,100 @@
+{
+  "title": "Fatigue check",
+  "category": "people",
+  "profile": "public",
+  "subject": "none",
+  "audience": [],
+  "signature": "required",
+  "pass_mark": null,
+  "basis": "WHS Act 2020 (WA) s. 28 — a worker takes reasonable care; the company manages fatigue as a hazard (WHS (General) Regs 2022 reg. 34). Before every shift on a long day or after a short night.",
+  "competency_key": null,
+  "spec": {
+    "header": [
+      {
+        "key": "shift",
+        "label": "Shift",
+        "type": "select",
+        "options": [
+          "Day",
+          "Night"
+        ]
+      }
+    ],
+    "sections": [
+      {
+        "title": "Sleep and the day ahead",
+        "questions": [
+          {
+            "key": "slept_hours",
+            "label": "Hours slept in the last 24 hours",
+            "type": "number",
+            "required": true,
+            "min": 5,
+            "max": 24,
+            "unit": "h",
+            "help": "Under 5 hours fails and the supervisor is told. Say it as it was."
+          },
+          {
+            "key": "slept_enough",
+            "label": "Slept 7 hours or more in the last 24",
+            "type": "yes_no",
+            "required": true,
+            "fail": "no",
+            "raise_action": false
+          },
+          {
+            "key": "awake_hours",
+            "label": "Hours you will have been awake at the end of this shift",
+            "type": "number",
+            "required": true,
+            "min": 0,
+            "max": 16,
+            "unit": "h",
+            "help": "Past 16 hours awake fails."
+          },
+          {
+            "key": "long_week",
+            "label": "Worked more than 12 of the last 14 days",
+            "type": "yes_no",
+            "fail": "yes"
+          }
+        ]
+      },
+      {
+        "title": "How you feel",
+        "questions": [
+          {
+            "key": "alert",
+            "label": "How alert do you feel right now",
+            "type": "score",
+            "required": true,
+            "max": 5,
+            "fail": 3,
+            "help": "0 struggling to stay awake · 5 fully alert"
+          },
+          {
+            "key": "medication",
+            "label": "Taking medication that could affect alertness, or alcohol in the last 8 hours",
+            "type": "yes_no",
+            "required": true,
+            "fail": "yes"
+          },
+          {
+            "key": "fit",
+            "label": "Fit to start this shift",
+            "type": "yes_no",
+            "required": true,
+            "fail": "no",
+            "raise_action": true,
+            "help": "A no stops the shift until the supervisor has talked it through."
+          },
+          {
+            "key": "comment",
+            "label": "Anything the supervisor should know",
+            "type": "text"
+          }
+        ]
+      }
+    ]
+  }
+}

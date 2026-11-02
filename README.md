@@ -3784,6 +3784,46 @@ the calendar, the nightly push, What's due items, the ten Kooboolong templates a
 "Record the ticket". Not built, on purpose: Excel export (the PDF prints), per-form dashboards (the Safety screen is the
 dashboard), and any form that writes another record by itself.
 
+**R181. Form schedules, the calendar, the Kooboolong templates, and the VOC's ticket.** Second ship of the forms engine
+(item 4 of the Stems migration). Migration 20261102180000, suite 71. Comply One's "scheduled" profile was a calendar the
+office looked at; here a schedule is a row that puts a form on What's due, on the calendar, on the assignee's phone and on
+the Forms screen, and the next one is due an interval from when the last was DONE — the same arithmetic as an obligation
+(R61): a weekly crack inspection done nine days late is next due a week from the doing, not two from the missed date, and
+a month from the 31st of January is the last day of February, as Postgres has it (`app.form_next_due`, TS twin `nextDue`
+in `src/lib/forms/schedule.ts`; change both together).
+
+`form_schedules` names a FORM CODE, not a revision, so when the office issues revision B the schedule fills B from then
+on; a job's (set by whoever manages the job — supervisor, PM, admin) or the company's (`project_id` null, the office, shown
+on every job); what it is about where the current issued revision is about a machine or a person (one schedule per
+excavator — the trigger insists); who it is assigned to (someone on the job; null is whoever runs the site); every N
+days, weeks or months from a first due day. Retired, never deleted — the forms it produced point at it. A form started
+from a schedule carries `schedule_id`, frozen with the rest; the trigger refuses another job's schedule or one for another
+form. Nothing stores the next due: every screen reads it off the last completed form, so it can never disagree with the
+record. `last_reminded_on` is the server's — a signed-in account cannot move it.
+
+The nightly sweep (`forms=1` on the ops check, in the nightly cron) pushes the assignee when a form is due within three
+days or overdue, once a night per schedule, and emails `projects.report_emails` one note per job listing the overdue
+ones. `/forms/calendar?month=` draws the month: each schedule on its next due and every interval after, the month's
+completed forms on the day they were done, an overdue list with "Fill it now", and the schedules themselves with Add and
+Retire (direct rows under RLS — a desk act, not an outbox one; a labourer's due forms sit on their Forms screen instead).
+What's due lists each as a DERIVED item (source `forms`, basis the template's own); the Forms screen opens with a Due
+section; Safety has "Forms overdue" and the home card turns to it when any is late.
+
+The VOC's ticket: a template may name a `competency_key` (the training matrix's keys — the fixed ticket types or the
+company's own). A completed VOC that PASSED, about a person, shows "Record the ticket" to whoever keeps tickets: one tap
+through `POST /api/forms/[id]/ticket` inserts the `crew_tickets` row under the caller's RLS, dated the day of the
+assessment, expiring by the competency's validity where it has one, and naming the form in `form_submission_id`. The
+database checks all of it (`app.crew_tickets_voc_link`: completed, passed, the person named, the template assesses that
+competency, the same company) and allows one ticket per form. The form never writes it — Mitchell's decision, R180: a
+form never writes another record by itself.
+
+Twelve templates in `src/lib/forms/templates/*.json` — fatigue check, journey management plan, Take Time, field leadership
+observation, workplace hazard inspection, VOC for excavator, roller and loader, plant on-hire and off-hire, the weekly
+excavator crack inspection, training evaluation — in Kooboolong's own words with the clause each stands on, not Stems'
+data. A node test holds each to `templateProblems` and the engine's lists before it can be seeded;
+`scripts/forms-seed-templates.mjs <ORG>` loads them AS DRAFTS, once per title, and the office issues each from the designer
+after reading it. Light and heavy vehicle prestarts stay plant prestarts (R180).
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;

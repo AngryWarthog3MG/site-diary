@@ -1,0 +1,159 @@
+{
+  "title": "Journey management plan",
+  "category": "vehicle",
+  "profile": "public",
+  "subject": "plant",
+  "audience": [],
+  "signature": "required",
+  "pass_mark": null,
+  "basis": "Driving to and from a remote job is work (WHS Act 2020 (WA) s. 19). Fill it before any trip over two hours or onto an unsealed road; the contact person holds the plan until arrival is confirmed.",
+  "competency_key": null,
+  "spec": {
+    "header": [
+      {
+        "key": "from",
+        "label": "From",
+        "type": "text"
+      },
+      {
+        "key": "to",
+        "label": "To",
+        "type": "text"
+      },
+      {
+        "key": "depart",
+        "label": "Planned departure",
+        "type": "text"
+      }
+    ],
+    "sections": [
+      {
+        "title": "The trip",
+        "questions": [
+          {
+            "key": "driver",
+            "label": "Driver",
+            "type": "person",
+            "required": true
+          },
+          {
+            "key": "passengers",
+            "label": "Passengers",
+            "type": "text"
+          },
+          {
+            "key": "distance",
+            "label": "Distance",
+            "type": "number",
+            "required": true,
+            "min": 0,
+            "max": 3000,
+            "unit": "km"
+          },
+          {
+            "key": "hours",
+            "label": "Driving time planned",
+            "type": "number",
+            "required": true,
+            "min": 0,
+            "max": 10,
+            "unit": "h",
+            "help": "Over 10 hours of driving in a day fails — split the trip."
+          },
+          {
+            "key": "rest",
+            "label": "Rest stops planned (where, roughly when)",
+            "type": "text",
+            "required": true
+          },
+          {
+            "key": "arrive",
+            "label": "Planned arrival",
+            "type": "time",
+            "required": true
+          }
+        ]
+      },
+      {
+        "title": "Before leaving",
+        "questions": [
+          {
+            "key": "fatigue",
+            "label": "Fatigue check done today",
+            "type": "yes_no",
+            "required": true,
+            "fail": "no"
+          },
+          {
+            "key": "prestart",
+            "label": "Vehicle prestart done",
+            "type": "yes_no",
+            "required": true,
+            "fail": "no",
+            "help": "The light vehicle prestart is a plant prestart in this app."
+          },
+          {
+            "key": "fuel",
+            "label": "Fuel and water for the trip, plus a margin",
+            "type": "yes_no",
+            "required": true,
+            "fail": "no"
+          },
+          {
+            "key": "comms",
+            "label": "Phone charged and a satellite or UHF option where there is no coverage",
+            "type": "yes_no",
+            "required": true,
+            "fail": "no"
+          },
+          {
+            "key": "spare",
+            "label": "Spare wheel, jack and recovery gear checked",
+            "type": "yes_no",
+            "required": true,
+            "fail": "no"
+          },
+          {
+            "key": "weather",
+            "label": "Road and weather conditions checked — note anything that matters",
+            "type": "text"
+          },
+          {
+            "key": "contact",
+            "label": "Contact person who holds this plan",
+            "type": "person",
+            "required": true
+          },
+          {
+            "key": "contact_told",
+            "label": "Contact person told the plan and the arrival time",
+            "type": "yes_no",
+            "required": true,
+            "fail": "no"
+          }
+        ]
+      },
+      {
+        "title": "Driving",
+        "questions": [
+          {
+            "key": "night",
+            "label": "Driving between dusk and dawn",
+            "type": "select",
+            "options": [
+              "No",
+              "Yes — unavoidable, slower and watching for stock and roos"
+            ],
+            "fail_options": []
+          },
+          {
+            "key": "no_night",
+            "label": "No driving on unsealed roads after dark",
+            "type": "yes_no",
+            "fail": "no"
+          }
+        ]
+      }
+    ]
+  }
+}

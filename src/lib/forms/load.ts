@@ -1,5 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { readSpec, readAnswers, type FormSpec, type Answers, type FormCategory, type FormSubject, type SignatureRule, type SubmissionStatus, type Outcome, type NcStatus, type TemplateStatus, type FormProfile } from './model';
+import { nextDue, scheduleState, type Unit, type ScheduleState } from './schedule';
+import { perthDate } from '@/lib/pdf/dates';
 
 /**
  * Reading forms under the caller's RLS (README R180). The database decides what each role sees — an issued form
@@ -29,9 +31,9 @@ export interface SubmissionRow {
   spec: FormSpec; pass_mark: number | null; signature_rule: SignatureRule; subject: FormSubject; subject_plant_id: string | null; subject_person: string | null;
   header: Record<string, unknown>; answers: Answers; status: SubmissionStatus; score: number | null; outcome: Outcome | null;
   started_by: string; started_at: string; completed_by: string | null; completed_at: string | null; completed_on_device_at: string | null;
-  signature_path: string | null; voided_at: string | null; voided_by: string | null; void_reason: string | null;
+  signature_path: string | null; voided_at: string | null; voided_by: string | null; void_reason: string | null; schedule_id: string | null;
 }
-const SUBMISSION_COLS = 'id, project_id, template_id, template_code, template_title, revision, category, spec, pass_mark, signature_rule, subject, subject_plant_id, subject_person, header, answers, status, score, outcome, started_by, started_at, completed_by, completed_at, completed_on_device_at, signature_path, voided_at, voided_by, void_reason';
+const SUBMISSION_COLS = 'id, project_id, template_id, template_code, template_title, revision, category, spec, pass_mark, signature_rule, subject, subject_plant_id, subject_person, header, answers, status, score, outcome, started_by, started_at, completed_by, completed_at, completed_on_device_at, signature_path, voided_at, voided_by, void_reason, schedule_id';
 
 export function asSubmission(r: Record<string, unknown>): SubmissionRow {
   return {
@@ -94,4 +96,73 @@ export async function namesFor(supabase: SupabaseClient, ids: Iterable<string | 
   const { data } = await supabase.from('profiles').select('id, full_name, email').in('id', set);
   for (const p of (data ?? []) as Array<{ id: string; full_name: string | null; email: string | null }>) out.set(p.id, p.full_name ?? p.email ?? 'Unnamed');
   return out;
+}
+
+// ---------------------------------------------------------------------------
+// Schedules (README R181).
+// ---------------------------------------------------------------------------
+
+export interface ScheduleRow {
+  id: string; org_id: string; project_id: string | null; template_code: string; assigned_to: string | null; subject_plant_id: string | null;
+  subject_person: string | null; every: number; unit: Unit; first_due_on: string; active: boolean; notes: string | null; last_reminded_on: string | null;
+  created_by: string | null; created_at: string;
+}
+const SCHEDULE_COLS = 'id, org_id, project_id, template_code, assigned_to, subject_plant_id, subject_person, every, unit, first_due_on, active, notes, last_reminded_on, created_by, created_at';
+
+export interface ScheduleView extends ScheduleRow {
+  /** The current issued revision of the form the schedule names; null when none is issued (nothing can be filled). */
+  template: { id: string; title: string; subject: FormSubject; basis: string | null; category: FormCategory } | null;
+  lastDoneOn: string | null;
+  nextDue: string | null;
+  state: ScheduleState;
+  machine: string | null;
+  assignee: string | null;
+  /** What it is about, for a line on a screen. */
+  about: string | null;
+}
+
+/**
+ * The schedules that reach a job — its own and the company-wide ones — with the next due read off the last COMPLETED
+ * form each produced (never stored), the current issued revision of the form, and the names. Under the caller's
+ * RLS: a labourer gets the ones assigned to them and no other. `projectId` null = every schedule of the company.
+ */
+export async function loadSchedules(supabase: SupabaseClient, orgId: string, projectId: string | null, today: string): Promise<ScheduleView[]> {
+  let q = supabase.from('form_schedules').select(SCHEDULE_COLS).eq('org_id', orgId);
+  if (projectId) q = q.or(`project_id.eq.${projectId},project_id.is.null`);
+  const { data, error } = await q.order('first_due_on');
+  if (error) throw new Error(error.message);
+  const rows = (data ?? []) as ScheduleRow[];
+  if (rows.length === 0) return [];
+  const ids = rows.map((r) => r.id);
+  const [{ data: done }, { data: tpls }, { data: plant }] = await Promise.all([
+    supabase.from('form_submissions').select('schedule_id, completed_at, completed_on_device_at').in('schedule_id', ids).eq('status', 'completed'),
+    supabase.from('form_templates').select('id, code, title, subject, basis, category').eq('org_id', orgId).eq('status', 'issued'),
+    supabase.from('plant_register').select('id, name, plant_no').in('id', [...new Set(rows.map((r) => r.subject_plant_id).filter((v): v is string => Boolean(v)))]),
+  ]);
+  const lastDone = new Map<string, string>();
+  for (const d of (done ?? []) as Array<{ schedule_id: string; completed_at: string | null; completed_on_device_at: string | null }>) {
+    const day = perthDate(d.completed_on_device_at ?? d.completed_at);
+    if (!day) continue;
+    const prev = lastDone.get(d.schedule_id);
+    if (!prev || day > prev) lastDone.set(d.schedule_id, day);
+  }
+  const tplByCode = new Map<string, ScheduleView['template']>();
+  for (const t of (tpls ?? []) as Array<{ id: string; code: string; title: string; subject: FormSubject; basis: string | null; category: FormCategory }>) tplByCode.set(t.code, t);
+  const machineOf = new Map<string, string>();
+  for (const p of (plant ?? []) as Array<{ id: string; name: string; plant_no: string | null }>) machineOf.set(p.id, p.plant_no ? `${p.name} · ${p.plant_no}` : p.name);
+  const nameOf = await namesFor(supabase, rows.map((r) => r.assigned_to));
+  return rows.map((r) => {
+    const last = lastDone.get(r.id) ?? null;
+    const due = nextDue(r, last);
+    const machine = r.subject_plant_id ? machineOf.get(r.subject_plant_id) ?? 'a machine' : null;
+    return {
+      ...r, template: tplByCode.get(r.template_code) ?? null, lastDoneOn: last, nextDue: due, state: scheduleState(due, today),
+      machine, assignee: r.assigned_to ? nameOf.get(r.assigned_to) ?? 'someone' : null, about: machine ?? r.subject_person,
+    };
+  });
+}
+
+/** Where a schedule's form is filled: the current issued revision, with the schedule named. */
+export function fillHref(s: ScheduleView, projectId: string): string | null {
+  return s.template ? `/forms/fill/new?project=${projectId}&template=${s.template.id}&schedule=${s.id}` : null;
 }

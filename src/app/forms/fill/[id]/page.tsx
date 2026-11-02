@@ -16,9 +16,9 @@ export const metadata = { title: 'Fill a form · Kooboolong IMS' };
  * resumes an open one. The database decides who may fill which form (`app.can_fill_form`); this page only
  * refuses what it can already see is wrong.
  */
-export default async function FillPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ project?: string; template?: string }> }) {
+export default async function FillPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ project?: string; template?: string; schedule?: string }> }) {
   const { id } = await params;
-  const { project, template } = await searchParams;
+  const { project, template, schedule } = await searchParams;
   const { memberships, userId } = await requireUser();
   const supabase = await createClient();
 
@@ -35,11 +35,18 @@ export default async function FillPage({ params, searchParams }: { params: Promi
   if (open && open.started_by !== userId) redirect(`/forms${q}`);
 
   let tpl = null as ReturnType<typeof asTemplate> | null;
+  // Started from a schedule (README R181): the link is kept on the row and what the schedule is about is filled in.
+  let sched: { id: string; subject_plant_id: string | null; subject_person: string | null } | null = null;
   if (!open) {
     if (!template) redirect(`/forms${q}`);
-    const { data } = await supabase.from('form_templates').select('*').eq('id', template).eq('status', 'issued').maybeSingle();
+    const [{ data }, { data: sc }] = await Promise.all([
+      supabase.from('form_templates').select('*').eq('id', template).eq('status', 'issued').maybeSingle(),
+      schedule ? supabase.from('form_schedules').select('id, template_code, subject_plant_id, subject_person').eq('id', schedule).maybeSingle() : Promise.resolve({ data: null }),
+    ]);
     if (!data) notFound();
     tpl = asTemplate(data as Record<string, unknown>);
+    const scRow = sc as { id: string; template_code: string; subject_plant_id: string | null; subject_person: string | null } | null;
+    if (scRow && scRow.template_code === tpl.code) sched = scRow;
   }
   const [machines, { data: crew }, { data: members }] = await Promise.all([
     loadPlantOnJob(supabase, current.project_id),
@@ -69,7 +76,8 @@ export default async function FillPage({ params, searchParams }: { params: Promi
         signatureRule={open?.signature_rule ?? tpl?.signature ?? 'required'}
         subject={open?.subject ?? tpl?.subject ?? 'none'}
         basis={tpl?.basis ?? null}
-        initial={{ answers: open?.answers ?? {}, header: open?.header ?? {}, subjectPlantId: open?.subject_plant_id ?? null, subjectPerson: open?.subject_person ?? null }}
+        scheduleId={open?.schedule_id ?? sched?.id ?? null}
+        initial={{ answers: open?.answers ?? {}, header: open?.header ?? {}, subjectPlantId: open?.subject_plant_id ?? sched?.subject_plant_id ?? null, subjectPerson: open?.subject_person ?? sched?.subject_person ?? null }}
         machines={machines.map((m) => ({ id: m.id, name: m.plant_no ? `${m.name} · ${m.plant_no}` : m.name }))}
         people={people}
         isNew={!open}

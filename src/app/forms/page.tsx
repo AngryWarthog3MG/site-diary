@@ -7,7 +7,9 @@ import { OutboxStatus } from '@/components/outbox-status';
 import { Fold } from '@/components/fold';
 import { fmtPerthDate } from '@/lib/pdf/dates';
 import { perthToday } from '@/lib/push/decide';
-import { loadTemplates, loadSubmissions, loadNonCompliances, namesFor } from '@/lib/forms/load';
+import { loadTemplates, loadSubmissions, loadNonCompliances, namesFor, loadSchedules, fillHref } from '@/lib/forms/load';
+import { fmtDate } from '@/lib/pdf/dates';
+import { describeEvery } from '@/lib/forms/schedule';
 import { summariseForms, CATEGORY_LABEL } from '@/lib/forms/model';
 
 export const dynamic = 'force-dynamic';
@@ -26,11 +28,14 @@ export default async function FormsPage({ searchParams }: { searchParams: Promis
   const supabase = await createClient();
   const today = perthToday();
   const q = `?project=${current.project_id}`;
-  const [templates, subs, ncs] = await Promise.all([
+  const [templates, subs, ncs, schedules] = await Promise.all([
     loadTemplates(supabase, current.project.org.id),
     loadSubmissions(supabase, current.project_id, { month: month ?? null }),
     loadNonCompliances(supabase, { projectId: current.project_id }),
+    loadSchedules(supabase, current.project.org.id, current.project_id, today),
   ]);
+  // Scheduled forms due within three days or gone by (README R181); the calendar holds the rest.
+  const due = schedules.filter((sc) => sc.active && sc.template && (sc.state === 'overdue' || sc.state === 'due_soon'));
   const fillable = templates.filter((t) => t.status === 'issued');
   const nameOf = await namesFor(supabase, subs.map((s) => s.completed_by ?? s.started_by));
   const mine = subs.filter((s) => s.status === 'open' && s.started_by === userId);
@@ -49,6 +54,20 @@ export default async function FormsPage({ searchParams }: { searchParams: Promis
       </p>
       <OutboxStatus />
 
+      {due.length > 0 && (
+        <section className="item">
+          <p className="label">Due · {due.length}</p>
+          <div className="inspection-pick">
+            {due.map((sc) => (
+              <Link key={sc.id} href={fillHref(sc, current.project_id) ?? `/forms/calendar${q}`} className={`prestart-row inspection-pick__row${sc.state === 'overdue' ? ' prestart-row--open' : ''}`}>
+                <span><strong>{sc.template!.title}</strong>{sc.about ? ` · ${sc.about}` : ''}<br /><span className={`caption${sc.state === 'overdue' ? ' vr-missing' : ''}`}>{sc.state === 'overdue' ? 'Overdue — was due' : 'Due'} {fmtDate(sc.nextDue)} · {describeEvery(sc.every, sc.unit)}{sc.assignee ? ` · ${sc.assignee}` : ''}{sc.lastDoneOn ? ` · last done ${fmtDate(sc.lastDoneOn)}` : ' · not yet done'}</span></span>
+                <span>Fill it</span>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
+
       <section className="item">
         <p className="label">Fill a form</p>
         {fillable.length === 0 ? <p className="nil">No forms issued for you yet{isOffice ? <> — <Link href={`/forms/design${q}`}>design one</Link></> : ''}.</p> : (
@@ -61,7 +80,7 @@ export default async function FormsPage({ searchParams }: { searchParams: Promis
             ))}
           </div>
         )}
-        {isOffice && <p className="caption"><Link href={`/forms/design${q}`}>Form designer</Link></p>}
+        <p className="caption">{!labourer && <><Link href={`/forms/calendar${q}`}>Forms calendar</Link>{isOffice ? ' · ' : ''}</>}{isOffice && <Link href={`/forms/design${q}`}>Form designer</Link>}</p>
       </section>
 
       {mine.length > 0 && (

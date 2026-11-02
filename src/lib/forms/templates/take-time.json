@@ -1,0 +1,99 @@
+{
+  "title": "Take Time — before the task",
+  "category": "safety",
+  "profile": "public",
+  "subject": "none",
+  "audience": [],
+  "signature": "required",
+  "pass_mark": null,
+  "basis": "WHS (General) Regs 2022 (WA) regs 34–38 — identify, assess, control. Done by the person doing the task, before a task not covered step by step in the prestart; the SWMS stays the control for high-risk work.",
+  "competency_key": null,
+  "spec": {
+    "header": [
+      {
+        "key": "task",
+        "label": "The task",
+        "type": "text"
+      },
+      {
+        "key": "where",
+        "label": "Where",
+        "type": "text"
+      }
+    ],
+    "sections": [
+      {
+        "title": "Stop and look",
+        "questions": [
+          {
+            "key": "understand",
+            "label": "I know what the task is and how it will be done",
+            "type": "yes_no",
+            "required": true,
+            "fail": "no"
+          },
+          {
+            "key": "swms",
+            "label": "The SWMS or procedure for this task is read and signed, or the task needs none",
+            "type": "yes_no",
+            "required": true,
+            "fail": "no"
+          },
+          {
+            "key": "permit",
+            "label": "A permit is in hand where one is needed — hot work, confined space, excavation, working at heights",
+            "type": "yes_no",
+            "required": true,
+            "fail": "no"
+          },
+          {
+            "key": "hazards",
+            "label": "Hazards I can see — services, plant moving, people below, weather, manual handling, traffic",
+            "type": "text",
+            "required": true
+          }
+        ]
+      },
+      {
+        "title": "Control",
+        "questions": [
+          {
+            "key": "controls",
+            "label": "What is in place for each hazard",
+            "type": "text",
+            "required": true
+          },
+          {
+            "key": "ppe",
+            "label": "The right PPE for the task is on",
+            "type": "yes_no",
+            "required": true,
+            "fail": "no"
+          },
+          {
+            "key": "exclusion",
+            "label": "Exclusion zones and spotters are set where plant and people mix",
+            "type": "yes_no",
+            "required": true,
+            "fail": "no"
+          },
+          {
+            "key": "stop",
+            "label": "I will stop and get the supervisor if anything changes",
+            "type": "yes_no",
+            "required": true,
+            "fail": "no"
+          },
+          {
+            "key": "safe",
+            "label": "Safe to start",
+            "type": "yes_no",
+            "required": true,
+            "fail": "no",
+            "raise_action": true
+          }
+        ]
+      }
+    ]
+  }
+}

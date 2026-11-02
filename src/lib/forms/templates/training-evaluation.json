@@ -1,0 +1,105 @@
+{
+  "title": "Training evaluation",
+  "category": "people",
+  "profile": "public",
+  "subject": "person",
+  "audience": [
+    "supervisor",
+    "pm",
+    "admin"
+  ],
+  "signature": "optional",
+  "pass_mark": null,
+  "basis": "ISO 45001 cl. 7.2 and ISO 9001 cl. 7.2 — competence, and evaluating the effectiveness of what was done about it. Filled by the person after the course, and again by their supervisor a month on.",
+  "competency_key": null,
+  "spec": {
+    "header": [
+      {
+        "key": "course",
+        "label": "Course or training",
+        "type": "text"
+      },
+      {
+        "key": "provider",
+        "label": "Provider",
+        "type": "text"
+      },
+      {
+        "key": "date",
+        "label": "Date of training",
+        "type": "date"
+      }
+    ],
+    "sections": [
+      {
+        "title": "By the person trained",
+        "questions": [
+          {
+            "key": "objectives",
+            "label": "The training met what it set out to teach",
+            "type": "score",
+            "required": true,
+            "max": 5,
+            "fail": 3
+          },
+          {
+            "key": "trainer",
+            "label": "The trainer knew the subject and explained it well",
+            "type": "score",
+            "required": true,
+            "max": 5,
+            "fail": 3
+          },
+          {
+            "key": "relevant",
+            "label": "It was relevant to the work I do",
+            "type": "score",
+            "required": true,
+            "max": 5,
+            "fail": 3
+          },
+          {
+            "key": "learned",
+            "label": "The main thing I took from it",
+            "type": "text",
+            "required": true
+          },
+          {
+            "key": "gaps",
+            "label": "What was missing, or what I still need",
+            "type": "text"
+          }
+        ]
+      },
+      {
+        "title": "By the supervisor, a month on",
+        "questions": [
+          {
+            "key": "applied",
+            "label": "The person applies what was taught, seen on the job",
+            "type": "score",
+            "max": 5,
+            "fail": 3
+          },
+          {
+            "key": "ticket",
+            "label": "A ticket or certificate was issued and is on the training matrix",
+            "type": "yes_no",
+            "fail": "no"
+          },
+          {
+            "key": "again",
+            "label": "Would send others to the same training",
+            "type": "yes_no",
+            "fail": "no"
+          },
+          {
+            "key": "follow",
+            "label": "Follow-up agreed",
+            "type": "text"
+          }
+        ]
+      }
+    ]
+  }
+}

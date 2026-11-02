@@ -60,6 +60,7 @@ export default async function SafetyPage({ searchParams }: { searchParams: Promi
         {tile('Critical, uncontrolled', d.hazards.criticalUncontrolled, d.hazards.criticalUncontrolled > 0 ? 'bad' : 'ok', '/incidents')}
         {tile('Forms, 90 days', d.forms.completed90, undefined, '/forms')}
         {tile('Non-compliances open', d.forms.ncOpen, d.forms.ncOpen > 0 ? 'bad' : 'ok', '/forms/non-compliance')}
+        {tile('Forms overdue', d.forms.overdue, d.forms.overdue > 0 ? 'bad' : 'ok', '/forms/calendar')}
       </div>
       {d.actions.list.length > 0 && (
         <table className="safety__table">

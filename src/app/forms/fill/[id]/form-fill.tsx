@@ -29,6 +29,8 @@ export interface FillProps {
   signatureRule: SignatureRule;
   subject: FormSubject;
   basis: string | null;
+  /** The schedule it discharges, when started from one (README R181); frozen on the row with the rest. */
+  scheduleId: string | null;
   initial: { answers: Answers; header: Record<string, unknown>; subjectPlantId: string | null; subjectPerson: string | null };
   machines: Array<{ id: string; name: string }>;
   people: string[];
@@ -88,7 +90,7 @@ export function FormFill(p: FillProps) {
   }
 
   const row = (status: 'open' | 'completed', sigPath: string | null, at: string) => ({
-    template_id: p.templateId, started_by: p.userId, header, answers: fullAnswers(),
+    template_id: p.templateId, started_by: p.userId, schedule_id: p.scheduleId, header, answers: fullAnswers(),
     subject_plant_id: p.subject === 'plant' ? plantId : null, subject_person: p.subject === 'person' ? (person.trim() || null) : null,
     status, ...(status === 'completed' ? { signature_path: sigPath, completed_on_device_at: at } : {}),
   });

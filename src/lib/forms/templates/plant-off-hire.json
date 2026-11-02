@@ -1,0 +1,129 @@
+{
+  "title": "Plant off-hire inspection",
+  "category": "plant",
+  "profile": "public",
+  "subject": "plant",
+  "audience": [
+    "supervisor",
+    "leading_hand",
+    "pm",
+    "admin"
+  ],
+  "signature": "required",
+  "pass_mark": null,
+  "basis": "What the machine was like the day it left, against the on-hire record. Done before the truck arrives, with the hire company told the off-hire number the same day.",
+  "competency_key": null,
+  "spec": {
+    "header": [],
+    "sections": [
+      {
+        "title": "The hire",
+        "questions": [
+          {
+            "key": "hire_company",
+            "label": "Hire company",
+            "type": "text",
+            "required": true
+          },
+          {
+            "key": "docket",
+            "label": "Hire docket or contract number",
+            "type": "text",
+            "required": true
+          },
+          {
+            "key": "hours",
+            "label": "Hour meter reading",
+            "type": "number",
+            "required": true,
+            "min": 0,
+            "max": 100000,
+            "unit": "h"
+          },
+          {
+            "key": "fuel",
+            "label": "Fuel level",
+            "type": "select",
+            "required": true,
+            "options": [
+              "Full",
+              "3/4",
+              "1/2",
+              "1/4",
+              "Empty"
+            ]
+          },
+          {
+            "key": "offhire_no",
+            "label": "Off-hire reference number from the hire company",
+            "type": "text",
+            "required": true
+          },
+          {
+            "key": "told",
+            "label": "Hire company told the machine is off hire today",
+            "type": "yes_no",
+            "required": true,
+            "fail": "no"
+          },
+          {
+            "key": "attachments",
+            "label": "Attachments and keys returned",
+            "type": "text",
+            "required": true
+          }
+        ]
+      },
+      {
+        "title": "Condition on leaving",
+        "questions": [
+          {
+            "key": "walkaround",
+            "label": "Walk-around — panels, glass, mirrors, steps, handrails",
+            "type": "ok_issue_na"
+          },
+          {
+            "key": "tyres",
+            "label": "Tyres or tracks, pads and sprockets",
+            "type": "ok_issue_na"
+          },
+          {
+            "key": "fluids",
+            "label": "Fluids and no leaks under the machine",
+            "type": "ok_issue_na"
+          },
+          {
+            "key": "safety",
+            "label": "Safety devices — seatbelt, horn, lights, beacon, reverse alarm, fire extinguisher, ROPS/FOPS",
+            "type": "ok_issue_na"
+          },
+          {
+            "key": "clean",
+            "label": "Cleaned down — cab, tracks, bucket",
+            "type": "ok_issue_na"
+          },
+          {
+            "key": "damage",
+            "label": "Damage since on-hire — describe exactly, or say none",
+            "type": "text",
+            "required": true
+          },
+          {
+            "key": "photos",
+            "label": "Photographs of every side and every mark",
+            "type": "photo",
+            "required": true
+          },
+          {
+            "key": "claim",
+            "label": "A damage claim is expected",
+            "type": "yes_no",
+            "fail": "yes",
+            "raise_action": true,
+            "help": "A yes raises an action for the office to hold the on-hire record ready."
+          }
+        ]
+      }
+    ]
+  }
+}

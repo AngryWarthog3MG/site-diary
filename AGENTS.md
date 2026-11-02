@@ -498,6 +498,18 @@ improvising; the register once shipped dead because a live smoke test was skippe
   `/forms/non-compliance`) and `forms_design` (`/forms/design`, pm/admin, Company › Standards). PDF `/api/forms/[id]/pdf`
   (in `outputFileTracingIncludes`). Inspections (R37) stay; vehicle prestarts are plant prestarts, not forms. Schedules,
   the calendar, the ten templates and the VOC ticket offer are R181. Design: `docs/forms-engine.md`. Suite 70
+  SCHEDULES (README R181, suite 71): table `form_schedules` (names a form CODE, so a new revision is filled from then on; a job's by
+  `app.can_manage_incidents`, company-wide by the office; subject machine/person as the issued revision demands; assigned_to on the
+  job; every N day|week|month from `first_due_on`; retired never deleted; `last_reminded_on` is the server's). `app.form_next_due` =
+  the last COMPLETED form's Perth day + the interval, else the first due — TS twin `nextDue` in `schedule.ts` (pure, node-tested;
+  `occurrences`, `scheduleState`, `remindDue`), change both together; NEVER store a next due. `form_submissions.schedule_id` is frozen
+  with the row. `sweep.ts` `formScheduleSweep` = nightly `forms=1` (push the assignee within 3 days / overdue, once a night; email the
+  job's `report_emails` the overdue). `/forms/calendar` (screen `forms`, not a labourer door) draws it and sets/retires schedules under
+  RLS; What's due source `forms` (derived in `obligations/load.ts`); Safety `forms.overdue`. VOC ticket: `competency_key` on the
+  template, `POST /api/forms/[id]/ticket` inserts `crew_tickets` (`form_submission_id`, one per form, checked by
+  `app.crew_tickets_voc_link`) on a keeper's tap — never by the form. Templates in `src/lib/forms/templates/*.json` (held by
+  `templates.test.ts`), seeded AS DRAFTS by `scripts/forms-seed-templates.mjs <ORG>`. Completing a form is a plain UPDATE, never
+  an upsert — the before-insert trigger forces EXCLUDED open (suite 70 test 9)
 - `src/lib/calendar.ts` — `isRestDay`: weekends with nothing recorded are rest days, not holes. One definition for
   the screens, the weekly and the reminder
 - `src/lib/dayworks/` — the dayworks schedule (README R72): `schedule.ts` (pure: `readRange`, `buildSchedule` by Monday weeks,

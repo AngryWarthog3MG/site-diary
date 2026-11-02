@@ -1,0 +1,110 @@
+{
+  "title": "Weekly excavator crack inspection",
+  "category": "plant",
+  "profile": "scheduled",
+  "subject": "plant",
+  "audience": [
+    "supervisor",
+    "leading_hand",
+    "pm",
+    "admin"
+  ],
+  "signature": "required",
+  "pass_mark": null,
+  "basis": "WHS (General) Regs 2022 (WA) reg. 213 — plant inspected and maintained by a competent person; the manufacturer’s weekly structural check. One schedule per excavator, every week while it is on hire or on site.",
+  "competency_key": null,
+  "spec": {
+    "header": [
+      {
+        "key": "hours",
+        "label": "Hour meter",
+        "type": "number"
+      }
+    ],
+    "sections": [
+      {
+        "title": "Structure — look for cracks, weld failures, bent or loose steel",
+        "questions": [
+          {
+            "key": "boom",
+            "label": "Boom — welds, pivot bosses, cylinder mounts",
+            "type": "ok_issue_na",
+            "raise_action": true,
+            "photo_required": true
+          },
+          {
+            "key": "dipper",
+            "label": "Dipper or stick — welds, bucket pivot, link plates",
+            "type": "ok_issue_na",
+            "raise_action": true,
+            "photo_required": true
+          },
+          {
+            "key": "bucket",
+            "label": "Bucket, teeth, side cutters and quick hitch",
+            "type": "ok_issue_na",
+            "raise_action": true,
+            "photo_required": true
+          },
+          {
+            "key": "hitch_lock",
+            "label": "Quick hitch safety lock and pin engagement",
+            "type": "ok_issue_na",
+            "raise_action": true,
+            "photo_required": true
+          },
+          {
+            "key": "slew",
+            "label": "Slew ring bolts and house-to-undercarriage",
+            "type": "ok_issue_na",
+            "raise_action": true,
+            "photo_required": true
+          },
+          {
+            "key": "track_frames",
+            "label": "Track frames, idler mounts and sprocket mounts",
+            "type": "ok_issue_na",
+            "raise_action": true,
+            "photo_required": true
+          },
+          {
+            "key": "counterweight",
+            "label": "Counterweight mounting",
+            "type": "ok_issue_na",
+            "raise_action": true,
+            "photo_required": true
+          },
+          {
+            "key": "cab",
+            "label": "Cab, ROPS/FOPS and handrails",
+            "type": "ok_issue_na",
+            "raise_action": true,
+            "photo_required": true
+          },
+          {
+            "key": "blade",
+            "label": "Dozer blade and its cylinder mounts",
+            "type": "ok_issue_na"
+          }
+        ]
+      },
+      {
+        "title": "Outcome",
+        "questions": [
+          {
+            "key": "tagged",
+            "label": "Tagged out pending repair",
+            "type": "yes_no",
+            "fail": "yes",
+            "help": "A yes is answered when any crack is found; the machine does not work until a competent person has signed it off."
+          },
+          {
+            "key": "notes",
+            "label": "What was found and what was done",
+            "type": "text"
+          }
+        ]
+      }
+    ]
+  }
+}

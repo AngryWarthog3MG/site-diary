@@ -1,0 +1,141 @@
+{
+  "title": "Workplace hazard inspection",
+  "category": "safety",
+  "profile": "scheduled",
+  "subject": "none",
+  "audience": [
+    "supervisor",
+    "leading_hand",
+    "pm",
+    "admin"
+  ],
+  "signature": "required",
+  "pass_mark": null,
+  "basis": "WHS (General) Regs 2022 (WA) regs 34–38, and the head contractor’s site rules where there is one. Weekly on a working site; the one inspection that walks the whole job.",
+  "competency_key": null,
+  "spec": {
+    "header": [
+      {
+        "key": "area",
+        "label": "Area walked",
+        "type": "text"
+      }
+    ],
+    "sections": [
+      {
+        "title": "Access and the site",
+        "questions": [
+          {
+            "key": "access",
+            "label": "Site access and egress clear, gates and fencing secure",
+            "type": "ok_issue_na"
+          },
+          {
+            "key": "signage",
+            "label": "Signage in place — site, speed, PPE, emergency",
+            "type": "ok_issue_na"
+          },
+          {
+            "key": "housekeeping",
+            "label": "Housekeeping — materials stacked, waste contained, no trip hazards",
+            "type": "ok_issue_na"
+          },
+          {
+            "key": "amenities",
+            "label": "Amenities clean, water and shade available",
+            "type": "ok_issue_na"
+          },
+          {
+            "key": "emergency",
+            "label": "Emergency plan, muster point and first aid kit in place and in date",
+            "type": "ok_issue_na"
+          },
+          {
+            "key": "fire",
+            "label": "Fire extinguishers in place and in date",
+            "type": "ok_issue_na"
+          }
+        ]
+      },
+      {
+        "title": "The work",
+        "questions": [
+          {
+            "key": "excavations",
+            "label": "Excavations — batters or shoring, edge protection, access, nothing stored on the edge",
+            "type": "ok_issue_na",
+            "raise_action": true,
+            "photo_required": true
+          },
+          {
+            "key": "services",
+            "label": "Services located, marked and protected",
+            "type": "ok_issue_na"
+          },
+          {
+            "key": "traffic",
+            "label": "Traffic management and pedestrian separation as the plan says",
+            "type": "ok_issue_na"
+          },
+          {
+            "key": "plant",
+            "label": "Plant parked and isolated, prestarts done, exclusion zones set",
+            "type": "ok_issue_na"
+          },
+          {
+            "key": "heights",
+            "label": "Working at heights — edge protection, harnesses, ladders tied",
+            "type": "ok_issue_na",
+            "raise_action": true,
+            "photo_required": true
+          },
+          {
+            "key": "lifting",
+            "label": "Lifting gear tagged and in date, loads not over people",
+            "type": "ok_issue_na"
+          },
+          {
+            "key": "electrical",
+            "label": "Leads, RCDs and tags in date; no leads through water",
+            "type": "ok_issue_na"
+          },
+          {
+            "key": "chemicals",
+            "label": "Chemicals stored and labelled, SDS on the register, spill kit at hand",
+            "type": "ok_issue_na"
+          }
+        ]
+      },
+      {
+        "title": "Environment",
+        "questions": [
+          {
+            "key": "silt",
+            "label": "Silt fences and sediment controls standing and clean",
+            "type": "ok_issue_na"
+          },
+          {
+            "key": "dust",
+            "label": "Dust under control",
+            "type": "ok_issue_na"
+          },
+          {
+            "key": "spills",
+            "label": "No spills; refuelling over a bund or drip tray",
+            "type": "ok_issue_na"
+          },
+          {
+            "key": "noise",
+            "label": "Noise and hours within the permit",
+            "type": "ok_issue_na"
+          },
+          {
+            "key": "other",
+            "label": "Anything else seen",
+            "type": "text"
+          }
+        ]
+      }
+    ]
+  }
+}

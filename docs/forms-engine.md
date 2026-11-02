@@ -1,7 +1,7 @@
 # Forms engine — design (item 4 of docs/stems-migration.md §6)
 
 Status: confirmed by Mitchell 02/11/2026 (two ships; Inspections stay; one row in both registers; VOC offers the ticket).
-4a is built — README R180 is the record of what shipped; 4b is R181. This file is the design as agreed.
+4a is built (README R180) and 4b is built (README R181, 02/11/2026) — those sections are the record of what shipped. This file is the design as agreed.
 
 ## What it is for
 
@@ -102,7 +102,7 @@ substances checklist: the chemicals register (R60) — not duplicated.
 ## Two ships
 
 - **4a — the engine (R180):** tables, triggers, policies, suite 70; `src/lib/forms/model.ts` (pure, node-tested); designer; fill; submission; completed-forms register; non-compliance register joined to the action register; PDF; outbox kinds `form_save` / `form_complete` / `form_nc_update`; Safety tiles and home card; README R180.
-- **4b — schedules, calendar, the ten templates, the VOC ticket offer (R181):** `form_schedules`, `nextDue`, the sweep and push, `/forms/calendar`, What's due items, the templates and seed script, suite 71.
+- **4b — schedules, calendar, the templates, the VOC ticket offer (R181) — built:** `form_schedules`, `nextDue`, the sweep and push, `/forms/calendar`, What's due items, twelve templates (the VOC per machine kind: excavator, roller, loader) and the seed script, suite 71.
 
 Each ships, is pushed and deployed by Mitchell, and is drilled on T001 before the next starts.
 

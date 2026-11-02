@@ -1,0 +1,136 @@
+{
+  "title": "Plant on-hire inspection",
+  "category": "plant",
+  "profile": "public",
+  "subject": "plant",
+  "audience": [
+    "supervisor",
+    "leading_hand",
+    "pm",
+    "admin"
+  ],
+  "signature": "required",
+  "pass_mark": null,
+  "basis": "What the machine was like the day it arrived — the record the off-hire claim is argued against. WHS (General) Regs 2022 (WA) reg. 213 for the inspection and maintenance it comes with.",
+  "competency_key": null,
+  "spec": {
+    "header": [],
+    "sections": [
+      {
+        "title": "The hire",
+        "questions": [
+          {
+            "key": "hire_company",
+            "label": "Hire company",
+            "type": "text",
+            "required": true
+          },
+          {
+            "key": "docket",
+            "label": "Hire docket or contract number",
+            "type": "text",
+            "required": true
+          },
+          {
+            "key": "hours",
+            "label": "Hour meter reading",
+            "type": "number",
+            "required": true,
+            "min": 0,
+            "max": 100000,
+            "unit": "h"
+          },
+          {
+            "key": "fuel",
+            "label": "Fuel level",
+            "type": "select",
+            "required": true,
+            "options": [
+              "Full",
+              "3/4",
+              "1/2",
+              "1/4",
+              "Empty"
+            ]
+          },
+          {
+            "key": "docs",
+            "label": "Service history and registration or plant number supplied",
+            "type": "yes_no",
+            "required": true,
+            "fail": "no"
+          },
+          {
+            "key": "manual",
+            "label": "Operator’s manual and daily checklist in the cab",
+            "type": "yes_no",
+            "required": true,
+            "fail": "no"
+          },
+          {
+            "key": "attachments",
+            "label": "Attachments and keys received",
+            "type": "text",
+            "required": true
+          }
+        ]
+      },
+      {
+        "title": "Condition on arrival",
+        "questions": [
+          {
+            "key": "walkaround",
+            "label": "Walk-around — panels, glass, mirrors, steps, handrails",
+            "type": "ok_issue_na"
+          },
+          {
+            "key": "tyres",
+            "label": "Tyres or tracks, pads and sprockets",
+            "type": "ok_issue_na"
+          },
+          {
+            "key": "fluids",
+            "label": "Fluids and no leaks under the machine",
+            "type": "ok_issue_na"
+          },
+          {
+            "key": "safety",
+            "label": "Safety devices — seatbelt, horn, lights, beacon, reverse alarm, fire extinguisher, ROPS/FOPS",
+            "type": "ok_issue_na"
+          },
+          {
+            "key": "cab",
+            "label": "Cab, seat, controls and gauges",
+            "type": "ok_issue_na"
+          },
+          {
+            "key": "hydraulics",
+            "label": "Hoses, rams and attachments",
+            "type": "ok_issue_na"
+          },
+          {
+            "key": "damage",
+            "label": "Existing damage, wear or defects — describe exactly",
+            "type": "text",
+            "required": true,
+            "help": "Photograph every mark. This is what the off-hire is compared against."
+          },
+          {
+            "key": "photos",
+            "label": "Photographs of every side and every mark",
+            "type": "photo",
+            "required": true
+          },
+          {
+            "key": "fit",
+            "label": "Fit to use on this job",
+            "type": "yes_no",
+            "required": true,
+            "fail": "no",
+            "raise_action": true
+          }
+        ]
+      }
+    ]
+  }
+}
