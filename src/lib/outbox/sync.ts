@@ -249,6 +249,12 @@ async function replay(item: OutboxItem): Promise<void> {
     }
     case 'form_complete': {
       // The same save with the signature and status = completed: the database checks every rule and freezes it.
+      // The open row is upserted first (it may never have reached the server), then the completion is a plain
+      // UPDATE — an upsert's EXCLUDED row has already been forced open by the before-insert trigger, and the
+      // completion would land silently as open.
+      const rowIn = p.row as Record<string, unknown>;
+      const { error: e0 } = await supabase.from('form_submissions').upsert({ id: item.subjectId, project_id: item.projectId, ...rowIn, status: 'open', signature_path: null, completed_on_device_at: null }, { onConflict: 'id' });
+      if (e0 && !isFrozen(e0)) throw e0;
       for (const f of (p.files as Array<{ key: string; path: string; type: string }> | undefined) ?? []) {
         if (blobs[f.key]) await uploadIfMissing(f.path, blobs[f.key], f.type);
       }
@@ -256,7 +262,7 @@ async function replay(item: OutboxItem): Promise<void> {
         if (!blobs.signature) throw Object.assign(new Error('The signature was lost from this phone. Ask them to sign again.'), { code: '42501' });
         await uploadIfMissing(p.sigPath as string, blobs.signature, 'image/png');
       }
-      const { error } = await supabase.from('form_submissions').upsert({ id: item.subjectId, project_id: item.projectId, ...(p.row as Record<string, unknown>) }, { onConflict: 'id' });
+      const { error } = await supabase.from('form_submissions').update(rowIn).eq('id', item.subjectId);
       if (error && !isFrozen(error)) throw error;
       return;
     }

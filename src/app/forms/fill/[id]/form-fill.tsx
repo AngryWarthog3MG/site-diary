@@ -103,7 +103,10 @@ export function FormFill(p: FillProps) {
     try {
       const live = async () => {
         const supabase = createClient();
-        // The row first on a new form, so the storage policy can see whose folder this is; then the files; then the row again with them.
+        // The row first, so the storage policy can see whose folder this is; then the files; then the row again with
+        // them. The open row is always an upsert; the completion below is a plain UPDATE, never an upsert — an
+        // upsert is INSERT … ON CONFLICT DO UPDATE SET col = EXCLUDED.col, and the before-insert trigger has already
+        // forced the proposed row back to open by then, so the completion would land silently as open.
         if (p.isNew || kind === 'form_save') {
           const { error: e0 } = await supabase.from('form_submissions').upsert({ id: p.submissionId, project_id: p.projectId, ...row('open', null, at) }, { onConflict: 'id' });
           if (e0) throw new Error(e0.message);
@@ -116,7 +119,9 @@ export function FormFill(p: FillProps) {
           const { error: e } = await supabase.storage.from('entry-photos').upload(sigPath, sig, { contentType: 'image/png', upsert: false });
           if (e) throw new Error(e.message);
         }
-        const { data, error: e1 } = await supabase.from('form_submissions').upsert({ id: p.submissionId, project_id: p.projectId, ...r }, { onConflict: 'id' }).select('status');
+        const { data, error: e1 } = kind === 'form_complete'
+          ? await supabase.from('form_submissions').update(r).eq('id', p.submissionId).select('status')
+          : await supabase.from('form_submissions').upsert({ id: p.submissionId, project_id: p.projectId, ...r }, { onConflict: 'id' }).select('status');
         if (e1) throw new Error(e1.message);
         if (kind === 'form_complete' && (!data || data[0]?.status !== 'completed')) throw new Error('The form was saved but could not be completed from this account.');
       };

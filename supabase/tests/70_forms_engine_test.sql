@@ -232,4 +232,24 @@ do $$ declare r record; begin
 end $$;
 do $$ begin raise notice 'PASS  8 a clean form passes with nothing raised'; end $$;
 
+-- 9. Why the phone completes with a plain UPDATE, never an upsert (README R180): an upsert is INSERT … ON CONFLICT DO
+--    UPDATE SET col = EXCLUDED.col, and the before-insert trigger has forced the proposed row open before the conflict
+--    is resolved — so a completion sent as an upsert lands silently as open. Pinned here so the client's reason stays true.
+insert into public.form_submissions (id, project_id, template_id, started_by)
+values ('dddddddd-0000-0000-ac70-000000000004', 'bbbbbbbb-0000-0000-ac70-000000000001', 'cccccccc-0000-0000-ac70-000000000003', '00000000-0000-0000-ac70-000000000001');
+insert into public.form_submissions as s (id, project_id, template_id, started_by, status, answers, signature_path)
+values ('dddddddd-0000-0000-ac70-000000000004', 'bbbbbbbb-0000-0000-ac70-000000000001', 'cccccccc-0000-0000-ac70-000000000003', '00000000-0000-0000-ac70-000000000001',
+  'completed', '{"ppe": {"value": "ok"}}'::jsonb, 'bbbbbbbb-0000-0000-ac70-000000000001/form/dddddddd-0000-0000-ac70-000000000004/sig.png')
+on conflict (id) do update set status = excluded.status, answers = excluded.answers, signature_path = excluded.signature_path;
+do $$ declare r record; begin
+  select * into r from public.form_submissions where id = 'dddddddd-0000-0000-ac70-000000000004';
+  assert r.status = 'open' and r.answers = '{"ppe": {"value": "ok"}}'::jsonb, 'an upsert now completes a form: the client may upsert again, and this pin can go';
+end $$;
+update public.form_submissions set status = 'completed', signature_path = 'bbbbbbbb-0000-0000-ac70-000000000001/form/dddddddd-0000-0000-ac70-000000000004/sig.png'
+  where id = 'dddddddd-0000-0000-ac70-000000000004';
+do $$ begin
+  assert (select status from public.form_submissions where id = 'dddddddd-0000-0000-ac70-000000000004') = 'completed', 'a plain update did not complete it';
+end $$;
+do $$ begin raise notice 'PASS  9 completion is an UPDATE: an upsert lands open'; end $$;
+
 rollback;
