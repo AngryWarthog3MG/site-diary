@@ -66,6 +66,7 @@ const nextConfig: NextConfig = {
     '/api/qa/record/*/pdf': CHROMIUM,
     '/api/incidents/*/pdf': CHROMIUM,
     '/api/inspections/*/pdf': CHROMIUM,
+    '/api/forms/*/pdf': CHROMIUM,
     '/api/permits/*/pdf': CHROMIUM,
     '/api/gate/sign': CHROMIUM,
     '/api/training/pdf': CHROMIUM,

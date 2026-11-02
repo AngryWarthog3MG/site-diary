@@ -29,6 +29,9 @@ export type OutboxKind =
   | 'swms_signon'
   | 'incident_report'
   | 'hazard_control'
+  | 'form_save'
+  | 'form_complete'
+  | 'form_nc_update'
   | 'hazard_control_update'
   | 'inspection_submit'
   | 'permit_issue'
@@ -79,6 +82,9 @@ export const KIND_LABEL: Record<OutboxKind, string> = {
   swms_signon: 'a SWMS sign-on',
   incident_report: 'a hazard or incident report',
   hazard_control: 'a hazard control',
+  form_save: 'a form being filled',
+  form_complete: 'a completed form',
+  form_nc_update: 'a non-compliance change',
   hazard_control_update: 'a hazard control change',
   inspection_submit: 'an inspection',
   permit_issue: 'a permit to work',

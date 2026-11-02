@@ -150,6 +150,17 @@ export async function DashboardCards({ projectId, orgId, member, userId }: { pro
       </section>
     ),
   });
+  if (see('forms')) cards.push({
+    key: 'forms', name: 'form non-compliances', attention: s.forms.ncOpen > 0,
+    node: (
+      <section className="dash-card">
+        <p className="dash-card__title">Non-compliances open</p>
+        <Big n={s.forms.ncOpen} tone={s.forms.ncOpen > 0 ? 'bad' : undefined} />
+        <p className="dash-card__sub">{s.forms.completed90} form{s.forms.completed90 === 1 ? '' : 's'} in 90 days{s.forms.failed90 > 0 ? ` · ${s.forms.failed90} failed` : ''}</p>
+        <Foot href={`/forms/non-compliance${q}`} />
+      </section>
+    ),
+  });
   if (due) cards.push({
     key: 'due', name: 'schedules, sheets and tickets', attention: due.summary.attention > 0,
     node: (

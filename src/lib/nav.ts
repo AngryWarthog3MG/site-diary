@@ -91,6 +91,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { href: '/due', name: "What's due", what: 'Audits, reviews, drills, safety data sheets and tickets, in the order they need doing', screen: 'obligations' },
       { href: '/incidents', name: 'Hazards & incidents', what: 'Report it in a minute; actions until it is closed', screen: 'incidents' },
       { href: '/inspections', name: 'Inspections', what: 'Site walks, environmental and quality checks', screen: 'inspections' },
+      { href: '/forms', name: 'Forms', what: 'The company’s checklists filled on the phone — fatigue, observations, hire, crack checks — and what they found', screen: 'forms' },
       { href: '/permits', name: 'Permits to work', what: 'Hot work, excavation, confined space, heights, electrical', screen: 'permits' },
       { href: '/swms', name: 'SWMS & JSA', what: 'Method statements — written here or filed as documents — and who has signed on', screen: 'swms' },
       { href: '/swms/sign', name: 'Sign on to a SWMS', short: 'Sign on', what: 'Read the method statement for your work and sign on from your own phone', screen: 'swms_sign' },
@@ -164,6 +165,7 @@ export const NAV_GROUPS: NavGroup[] = [
     items: [
       { href: '/templates', name: 'Templates', what: 'What every job starts with — mobilisation items, hold points, submittals, consumables, risks, folders — by module', screen: 'templates' },
       { href: '/quality/equipment', name: 'Calibration register', short: 'Calibration', what: 'The company’s measuring equipment and when each is due', screen: 'quality' },
+      { href: '/forms/design', name: 'Form designer', short: 'Forms', what: 'Write and issue the company’s checklists: sections, questions, scores, what raises an action', screen: 'forms_design' },
     ],
   },
 ];
@@ -173,7 +175,7 @@ export const NAV_GROUPS: NavGroup[] = [
  * drawer and rail learn it a moment after they open), so nobody sees a door
  * that closes on them; the pages refuse anything a role should not reach anyway.
  */
-export const EVERY_ROLE: Screen[] = ['today', 'entries', 'weekly', 'prestart', 'prestart_sign', 'plant', 'toolbox', 'signin', 'swms', 'swms_sign', 'incidents', 'inspections', 'permits', 'procedures', 'safety', 'orders', 'chemicals', 'obligations', 'emergency', 'construction', 'quality', 'qa', 'audits', 'asbestos', 'environment'];
+export const EVERY_ROLE: Screen[] = ['today', 'entries', 'weekly', 'prestart', 'prestart_sign', 'plant', 'toolbox', 'signin', 'swms', 'swms_sign', 'incidents', 'inspections', 'forms', 'permits', 'procedures', 'safety', 'orders', 'chemicals', 'obligations', 'emergency', 'construction', 'quality', 'qa', 'audits', 'asbestos', 'environment'];
 
 export interface NavViewer { role: MemberRole | null; screens?: readonly string[] | null; finance?: boolean | null; canRecord: boolean; multiJob: boolean }
 

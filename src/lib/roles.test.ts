@@ -32,7 +32,8 @@ test('a labourer never gets past their own doors, whatever is ticked', () => {
   // register. The last three are the law reaching the worker: reg. 43(1)(c), r. 299/300 and
   // reg. 346(3) (README R60, R63, R89).
   // And the day's prestart, signed on to from their own phone (R141), and the plant they operate, checked in their own name (R162).
-  assert.deepEqual(grantableScreens('labourer'), ['signin', 'prestart_sign', 'plant_check', 'emergency', 'incidents', 'swms_sign', 'chemicals', 'inbox', 'procedures']);
+  // And forms: only an issued form whose audience names them, and only their own submissions (R180).
+  assert.deepEqual(grantableScreens('labourer'), ['signin', 'prestart_sign', 'plant_check', 'emergency', 'incidents', 'forms', 'swms_sign', 'chemicals', 'inbox', 'procedures']);
 });
 
 test('an admin keeps Settings — the screen the ticks are set from', () => {

@@ -483,6 +483,21 @@ improvising; the register once shipped dead because a live smoke test was skippe
   `incidents.hazard_type` is part of the frozen first account; `incidents.critical_risk` is the managers' while open. A HAZARD
   closes only once a control is in place. Panel `src/app/incidents/[id]/controls-panel.tsx`; outbox kinds `hazard_control` /
   `hazard_control_update`. Suite 69
+- `src/lib/forms/` — the forms engine (README R180): `model.ts` (pure, node-tested; `templateProblems`, `answerFails`, `score`,
+  `completionProblems`, `outcome`, `specFromLines` — each the TS half of an `app.form_*` function; the DB wins), `load.ts`,
+  `pdf.tsx`. Tables `form_templates` (company; FRM-001 by the DB; a revision is a NEW row with `supersedes_id`, issued =
+  frozen, retired never deleted; `audience` roles[] empty = everyone — ticking `labourer` is the one way a form reaches a
+  labourer), `form_submissions` (phone-chosen id; the trigger copies the template at the first save; upserted through outbox
+  kinds `form_save` / `form_complete`; completes only whole; frozen; voided by the office with a reason) and
+  `form_non_compliances` (written BY THE DB at completion, one per failing answer; resolved by the site / removed by the
+  office, then frozen; never deleted; a `raise_action` question's row is ALSO an action — origin `form` in
+  `action_register`, `update_action` / `complete_action` branch on it; outbox kind `form_nc_update`). Office designs
+  (`app.is_org_office`), the audience fills (`app.can_fill_form`), `can_run_talks` works the register; reads are the record
+  plus one's OWN rows (the labourer reads back only what they filled; storage folder `{project}/form/{id}/` follows via
+  `app.form_photo_readable`). Screens `forms` (every role; `/forms`, `/forms/fill/[id]`, `/forms/[id]`,
+  `/forms/non-compliance`) and `forms_design` (`/forms/design`, pm/admin, Company › Standards). PDF `/api/forms/[id]/pdf`
+  (in `outputFileTracingIncludes`). Inspections (R37) stay; vehicle prestarts are plant prestarts, not forms. Schedules,
+  the calendar, the ten templates and the VOC ticket offer are R181. Design: `docs/forms-engine.md`. Suite 70
 - `src/lib/calendar.ts` — `isRestDay`: weekends with nothing recorded are rest days, not holes. One definition for
   the screens, the weekly and the reminder
 - `src/lib/dayworks/` — the dayworks schedule (README R72): `schedule.ts` (pure: `readRange`, `buildSchedule` by Monday weeks,

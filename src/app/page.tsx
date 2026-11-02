@@ -106,6 +106,7 @@ export default async function TodayPage({
           {reports && opens('incidents') && <Link className="dash-action" href={`/incidents/new${q}`}><span aria-hidden>⚠</span> New hazard</Link>}
           {!talks && reports && opens('signin') && <Link className="dash-action" href={`/signin${q}`}><span aria-hidden>⇥</span> Sign in / out</Link>}
           {talks && opens('inspections') && <Link className="dash-action" href={`/inspections/new${q}`}><span aria-hidden>☑</span> New inspection</Link>}
+          {opens('forms') && <Link className="dash-action" href={`/forms${q}`}><span aria-hidden>▦</span> Fill a form</Link>}
           {authors && opens('permits') && <Link className="dash-action" href={`/permits/new${q}`}><span aria-hidden>▤</span> New permit</Link>}
           {talks && opens('prestart') && <Link className="dash-action" href={`/prestart/new${q}`}><span aria-hidden>☀</span> New prestart</Link>}
           {talks && opens('orders') && <Link className="dash-action" href={`/orders${q}#raise`}><span aria-hidden>▣</span> Order / plant issue</Link>}

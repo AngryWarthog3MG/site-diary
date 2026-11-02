@@ -5202,3 +5202,12 @@ body:has(> .topbar) .homefoot--top { display: none; }
   .actreg__row { grid-template-columns: minmax(0, 1fr); }
   .actreg__row .signin__actions { flex-direction: row; justify-content: flex-start; flex-wrap: wrap; }
 }
+
+/* Forms (README R180) */
+.formdes__section { margin-top: 1rem; padding: 0.6rem 0.75rem; border: 1px solid var(--ink-08); border-radius: 10px; background: var(--paper); }
+.formdes__q { padding: 0.5rem 0; border-top: 1px solid var(--ink-08); }
+.formdes__q .crewchips { margin: 0.35rem 0 0; align-items: center; }
+.formdes__q .chip { display: inline-flex; align-items: center; gap: 0.3rem; }
+.formdes__num { width: 5rem; }
+.formfill .tri .field { margin-top: 0.3rem; }
+.formfill .notice { margin: 0.5rem 0; }

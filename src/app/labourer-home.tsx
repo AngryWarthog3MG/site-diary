@@ -62,6 +62,14 @@ export async function LabourerHome({ current, name, userId, jobs = [] }: { curre
   const checkedToday = new Set(((myChecks ?? []) as Array<{ plant_id: string }>).map((r) => r.plant_id));
   const unchecked = machines.filter((m) => !checkedToday.has(m.id));
   const [plan, sitePlan] = await Promise.all([planPromise, sitePlanPromise]);
+  // The forms that name a labourer (README R180): the database returns only an issued form whose audience includes
+  // their role, and only their own submissions.
+  const [{ data: myForms }, { data: myOpenForms }] = await Promise.all([
+    supabase.from('form_templates').select('id, title').eq('status', 'issued').order('title'),
+    supabase.from('form_submissions').select('id, template_title').eq('project_id', current.project_id).eq('status', 'open').eq('started_by', userId),
+  ]);
+  const formsToFill = ((myForms ?? []) as Array<{ id: string; title: string }>);
+  const openForms = ((myOpenForms ?? []) as Array<{ id: string; template_title: string }>);
 
   return (
     <main className="app-shell home-shell dash labhome">
@@ -125,6 +133,18 @@ export async function LabourerHome({ current, name, userId, jobs = [] }: { curre
             </span>
             {swmsToSign.length > 0 ? <Link className="labhome__go" href={`/swms/sign${q}`}>Sign on</Link> : swmsIds.length > 0 ? <Link className="labhome__go labhome__go--quiet" href={`/swms/sign${q}`}>Look</Link> : null}
           </li>
+          {formsToFill.length > 0 && (
+            <li className={`labhome__row${openForms.length > 0 ? ' labhome__row--todo' : ''}`}>
+              <span className="labhome__tick" aria-hidden>{openForms.length > 0 ? '○' : '–'}</span>
+              <span className="labhome__what">
+                <b>Forms</b>
+                {openForms.length > 0
+                  ? <>{openForms.length} not finished: {openForms.map((f) => f.template_title).join(', ')}</>
+                  : <>{formsToFill.length} you can fill: {formsToFill.map((f) => f.title).join(', ')}</>}
+              </span>
+              <Link className={openForms.length > 0 ? 'labhome__go' : 'labhome__go labhome__go--quiet'} href={openForms.length > 0 ? `/forms/fill/${openForms[0].id}${q}` : `/forms${q}`}>{openForms.length > 0 ? 'Finish it' : 'Fill one'}</Link>
+            </li>
+          )}
           {machines.length > 0 && (
             <li className={`labhome__row${checkedToday.size > 0 ? ' labhome__row--done' : ' labhome__row--todo'}`}>
               <span className="labhome__tick" aria-hidden>{checkedToday.size > 0 ? '✓' : '○'}</span>

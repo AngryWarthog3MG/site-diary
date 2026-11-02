@@ -3730,6 +3730,60 @@ stamps. The labourer who reported a hazard reads the controls on it, as they rea
 Not built, on purpose: a hazard register of its own (the incidents register, filtered by kind, is it), Stems's four
 views of the same rows, and a control status typed by hand — the state is the controls.
 
+**R180. The forms engine.** Item 4 of the Stems migration, first of two ships. Comply One's heart is a form designer:
+the office writes a checklist once, the crew fill it on the phone, every failing answer lands on a register, and the ones
+that need fixing become actions. The IMS had three different shapes of checklist — inspections as a flat list of lines
+(R37), plant prestarts per kind in code, QA records from a transcribed `spec` — and no home for the forms Kooboolong
+fills on paper: fatigue, journey management, Take Time, field leadership observations, on/off hire, the weekly crack
+inspection, VOC, training evaluation. Migration 20261102150000, suite 70. Design: `docs/forms-engine.md`.
+
+Three tables. `form_templates` is the form as the office wrote it: a `spec` of sections and questions, each question a
+type (yes/no, OK/issue/N/A, pass/fail, score out of N with a weight, number with a range and unit, pick one, pick any,
+text, date, time, photograph, person, machine, an extra signature), required or not, what counts as a fail, whether a
+fail RAISES AN ACTION and whether it NEEDS A PHOTOGRAPH; plus a pass mark, a signature rule, an audience of roles (empty
+is every member — ticking `labourer` is the one way a form reaches a labourer), and what the form is about (nothing, a
+machine from the register, a person by name). Numbered FRM-001… per company by the database; a revision is a NEW row
+with the same code and the next letter, and issuing it supersedes the last (the setting `app.form_supersede` is the only
+way an issued row moves to superseded). A draft changes freely; `app.form_template_problems` refuses to issue a broken
+one; issued is frozen but for retiring; nothing issued is ever deleted. `form_submissions` is one filled form on a
+PHONE-CHOSEN id: the trigger copies the template's spec, code, title, revision, pass mark, signature rule and subject
+the moment it starts, so a reworded template never changes what was asked (R37's rule). It is saved as it goes — every
+answer upserts the row through outbox kind `form_save`, so a journey plan half filled at the depot survives a reload
+with no signal — and completes only whole: `app.form_completion_problems` names every required question unanswered and
+every failing answer with no photograph where one was demanded, the signature must sit in the form's own folder
+(`{project}/form/{id}/`), a machine or a person must be named where the form is about one. Then the database stamps
+`completed_at`, computes `score` (`app.form_score`, a weighted percentage over the ANSWERED score questions) and
+`outcome` (fail on any failing answer, or a score under the pass mark), and freezes the row. The office voids a completed
+form with a reason; it stays, marked. `form_non_compliances` is written BY THE DATABASE at completion, one row per
+failing answer with the question's wording, the answer, the note and the photographs as they were; nobody else has an
+insert. The site resolves one with a note or raises it as an action by hand; the office removes one that was not a
+finding, with a reason; resolved or removed is frozen; there is no delete. A question marked `raise_action` makes its
+row an action from birth — and that row joins `public.action_register` as origin `form`, so the R177 register, the push
+to the assignee and the nightly reminder cover it with no new code. `complete_action('form', …)` resolves it and
+resolving it completes the action: one row, two registers.
+
+Access, SQL first and mirrored in `src/lib/roles.ts`: the office (`app.is_org_office`) designs and issues; a member
+whose role the audience names starts and fills (`app.can_fill_form`); the filler or anyone who runs the site completes;
+`app.can_run_talks` works the non-compliances. Reads are the record (`reads_record`) plus the person's OWN submissions
+and their non-compliances — so the labourer, who sees only an issued form that names them, reads back what they filled
+and nothing else; the storage policy's `form` folder follows the same rule (`app.form_photo_readable`). Screens: `/forms`
+(screen `forms`, every role; the forms you may fill, your open ones, the completed-forms register by month, the tiles),
+`/forms/fill/new?template=` and `/forms/fill/[id]` (one screen, big answer buttons, Save for later, sign to complete),
+`/forms/[id]` (the record, its non-compliances, the PDF, the office's void), `/forms/non-compliance` (every failing
+answer on the job, open first), `/forms/design` (screen `forms_design`, Company › Standards: the designer, with "paste a
+paper checklist" one line per question). The PDF is `/api/forms/[id]/pdf`, stored per state like an inspection's.
+Safety tiles "Forms, 90 days" and "Non-compliances open"; a home card when any is open; "Fill a form" among the quick
+actions; a Forms row on the labourer's home.
+
+The TS half, `src/lib/forms/model.ts` (pure, node-tested), mirrors every SQL rule — `templateProblems`, `answerFails`,
+`score`, `completionProblems`, `outcome` — for the live amber prompts; the database wins. Inspections (R37) stay as they
+are: frozen records exist, and the four built-in checklists can be pasted into a form in a minute. Light and heavy
+vehicle prestarts are already plant prestarts (kind `truck`), and the hazardous substances checklist is the chemicals
+register (R60) — neither is duplicated as a form. Second ship (R181): schedules with a next-due from the last completion,
+the calendar, the nightly push, What's due items, the ten Kooboolong templates as reviewed JSON, and the VOC's one-tap
+"Record the ticket". Not built, on purpose: Excel export (the PDF prints), per-form dashboards (the Safety screen is the
+dashboard), and any form that writes another record by itself.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;

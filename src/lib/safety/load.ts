@@ -28,6 +28,8 @@ export interface SafetyData {
   inspections: { last90: number; issuesOpen: number };
   /** Open hazard reports and how many have no control in place (README R179) — the register's own arithmetic. */
   hazards: ReturnType<typeof summariseHazards>;
+  /** Forms completed in 90 days, how many failed, and the non-compliances still open (README R180). */
+  forms: { completed90: number; failed90: number; ncOpen: number };
   tickets: { expired: Array<{ person: string; label: string; on: string }>; soon: Array<{ person: string; label: string; on: string }> };
   subcontractors: Array<{ name: string; verdict: string }>;
   swms: Array<{ title: string; version: number; unsigned: string[] }>;
@@ -47,7 +49,7 @@ export async function loadSafety(supabase: SupabaseClient, projectId: string, or
   const ninety = perthWindowDate(today, 90);
   const weekAgo = perthWindowDate(today, 7);
   const nowIso = new Date().toISOString();
-  const [onSite, week, prestart, plant, permits, incidents, lastInjury, inspections, openActs, openHazards, crew, tickets, subs, swms, docs, labour] = await Promise.all([
+  const [onSite, week, prestart, plant, permits, incidents, lastInjury, inspections, openActs, openHazards, formsDone, formNcs, crew, tickets, subs, swms, docs, labour] = await Promise.all([
     supabase.from('site_signins').select('id', { count: 'exact', head: true }).eq('project_id', projectId).eq('signin_date', today).is('signed_out_at', null),
     supabase.from('site_signins').select('id', { count: 'exact', head: true }).eq('project_id', projectId).gte('signin_date', weekAgo).lte('signin_date', today),
     supabase.from('prestarts').select('completed_at').eq('project_id', projectId).eq('prestart_date', today).order('created_at', { ascending: false }).limit(1).maybeSingle(),
@@ -61,6 +63,8 @@ export async function loadSafety(supabase: SupabaseClient, projectId: string, or
     // open however old their record is, so no date window.
     supabase.from('action_register').select('origin, record_id, record_ref, project_id, action, owner_name, priority, due_on, done_at, raised_at').eq('org_id', orgId).or(`project_id.eq.${projectId},project_id.is.null`).is('done_at', null),
     supabase.from('incidents').select('kind, status, critical_risk, hazard_controls(level, status)').eq('project_id', projectId).eq('kind', 'hazard').neq('status', 'closed'),
+    supabase.from('form_submissions').select('outcome').eq('project_id', projectId).eq('status', 'completed').gte('completed_at', `${perthWindowStart(today, 90)}`),
+    supabase.from('form_non_compliances').select('id').eq('project_id', projectId).eq('status', 'open'),
     supabase.from('crew').select('name').eq('project_id', projectId).eq('active', true),
     supabase.from('crew_tickets').select('person_name, ticket_type, expires_on, active').eq('org_id', orgId),
     supabase.from('project_subcontractors').select('subcontractor:subcontractors!inner(name, active, subcontractor_documents(kind, expires_on, active))').eq('project_id', projectId).is('engaged_to', null),
@@ -93,6 +97,11 @@ export async function loadSafety(supabase: SupabaseClient, projectId: string, or
     taggedOut: plantRows.filter((p) => p.completed_at && p.fit_for_use === false).map((p) => (Array.isArray(p.plant) ? p.plant[0] : p.plant).name),
     permits: { live: permitRows.filter((p) => p.valid_from <= nowIso && nowIso <= p.valid_to).length, expired: permitRows.filter((p) => p.valid_to < nowIso).length },
     actions: { open: openActions(allActions), overdue: overdue(allActions, today), list: actionList.slice(0, LISTED_ACTIONS) },
+    forms: {
+      completed90: (formsDone.data ?? []).length,
+      failed90: ((formsDone.data ?? []) as Array<{ outcome: string | null }>).filter((f) => f.outcome === 'fail').length,
+      ncOpen: (formNcs.data ?? []).length,
+    },
     hazards: summariseHazards(((openHazards.data ?? []) as Array<{ kind: string; status: string; critical_risk: boolean; hazard_controls: ControlFacts[] | null }>).map((h) => ({ kind: h.kind, status: h.status, critical_risk: h.critical_risk, controls: h.hazard_controls ?? [] }))),
     incidents: {
       open: incRows.filter((i) => i.status !== 'closed').length,

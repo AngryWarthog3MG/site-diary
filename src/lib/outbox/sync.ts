@@ -236,6 +236,41 @@ async function replay(item: OutboxItem): Promise<void> {
       }
       return;
     }
+    case 'form_save': {
+      // A form being filled with no signal (README R180): the photographs first, then the row upserted on its
+      // phone-chosen id — the database copies the template on the first save and keeps it from then on. A form
+      // completed or voided in the meantime is left as it is.
+      for (const f of (p.files as Array<{ key: string; path: string; type: string }> | undefined) ?? []) {
+        if (blobs[f.key]) await uploadIfMissing(f.path, blobs[f.key], f.type);
+      }
+      const { error } = await supabase.from('form_submissions').upsert({ id: item.subjectId, project_id: item.projectId, ...(p.row as Record<string, unknown>) }, { onConflict: 'id' });
+      if (error && !isFrozen(error)) throw error;
+      return;
+    }
+    case 'form_complete': {
+      // The same save with the signature and status = completed: the database checks every rule and freezes it.
+      for (const f of (p.files as Array<{ key: string; path: string; type: string }> | undefined) ?? []) {
+        if (blobs[f.key]) await uploadIfMissing(f.path, blobs[f.key], f.type);
+      }
+      if (p.sigPath) {
+        if (!blobs.signature) throw Object.assign(new Error('The signature was lost from this phone. Ask them to sign again.'), { code: '42501' });
+        await uploadIfMissing(p.sigPath as string, blobs.signature, 'image/png');
+      }
+      const { error } = await supabase.from('form_submissions').upsert({ id: item.subjectId, project_id: item.projectId, ...(p.row as Record<string, unknown>) }, { onConflict: 'id' });
+      if (error && !isFrozen(error)) throw error;
+      return;
+    }
+    case 'form_nc_update': {
+      // Resolved, raised as an action, or removed with a reason. One frozen in the meantime is left as it is.
+      const { data, error } = await supabase.from('form_non_compliances').update(p.patch as Record<string, unknown>).eq('id', p.ncId as string).select('id');
+      if (error && !isFrozen(error)) throw error;
+      if (!error && (!data || data.length === 0)) {
+        const { data: row } = await supabase.from('form_non_compliances').select('status').eq('id', p.ncId as string).maybeSingle();
+        if (!row) throw Object.assign(new Error('That non-compliance no longer exists.'), { code: '42501' });
+        if (row.status === 'open') throw Object.assign(new Error('The non-compliance could not be changed from this account.'), { code: '42501' });
+      }
+      return;
+    }
     case 'order_raise': {
       // Photos first, then the request that names them; the number is the database's.
       const paths = (p.photoPaths as string[] | undefined) ?? [];
