@@ -35,7 +35,11 @@ export async function POST(_request: Request, context: { params: Promise<{ id: s
     .sort((a, b) => a.created_at.localeCompare(b.created_at));
   const actions = ((r.incident_actions ?? []) as Array<{ action: string; owner_name: string | null; due_on: string | null; done_at: string | null; done_note: string | null; created_at: string }>)
     .sort((a, b) => a.created_at.localeCompare(b.created_at));
-  const stateHash = createHash('sha256').update(JSON.stringify({ s: r.status, c: r.closed_at, u: updates.map((u) => u.created_at), a: actions })).digest('hex');
+  // The investigation (README R178), read as the caller: a confidential one is in the PDF only for the job's managers.
+  const { data: inv } = await supabase.from('incident_investigations')
+    .select('status, confidential, due_on, investigator_name, opened_at, opened_by, finished_at, finished_by, summary, sequence_of_events, findings, signed_off_at, signed_name, signature_path, updated_at, incident_causes(kind, cause_label, detail), incident_whys(seq, why)')
+    .eq('incident_id', r.id).maybeSingle();
+  const stateHash = createHash('sha256').update(JSON.stringify({ s: r.status, c: r.closed_at, u: updates.map((u) => u.created_at), a: actions, v: inv ? [inv.status, inv.updated_at, inv.confidential] : null })).digest('hex');
   const objectPath = `${r.project_id}/incident/${r.id}-${stateHash.slice(0, 8)}.pdf`;
   const existing = await admin.storage.from('exports').download(objectPath);
   if (existing.data) {
@@ -50,7 +54,28 @@ export async function POST(_request: Request, context: { params: Promise<{ id: s
     const bytes = Buffer.from(await data.arrayBuffer());
     photos.push({ src: `data:${data.type || 'image/jpeg'};base64,${bytes.toString('base64')}` });
   }
-  const latest = [r.reported_at as string, r.closed_at as string | null, ...updates.map((u) => u.created_at), ...actions.map((a) => a.done_at)].filter((v): v is string => Boolean(v)).sort().at(-1);
+  let investigation: IncidentPdfData['investigation'] = null;
+  if (inv) {
+    const ids = [inv.opened_by, inv.finished_by].filter((v): v is string => Boolean(v));
+    const { data: names } = await admin.from('profiles').select('id, full_name, email').in('id', ids);
+    const nameOf = (id: string | null) => { const n = (names ?? []).find((p) => p.id === id); return n ? (n.full_name ?? n.email ?? '—') : null; };
+    let signature: string | null = null;
+    if (inv.signature_path) {
+      const { data: sig } = await admin.storage.from('entry-photos').download(inv.signature_path as string);
+      if (sig) signature = `data:image/png;base64,${Buffer.from(await sig.arrayBuffer()).toString('base64')}`;
+    }
+    const causes = (inv.incident_causes ?? []) as Array<{ kind: string; cause_label: string; detail: string | null }>;
+    investigation = {
+      status: inv.status, confidential: inv.confidential, due_on: inv.due_on, investigator: inv.investigator_name,
+      opened_at: inv.opened_at, opened_by: nameOf(inv.opened_by) ?? '—', finished_at: inv.finished_at, finished_by: nameOf(inv.finished_by),
+      summary: inv.summary, sequence_of_events: inv.sequence_of_events, findings: inv.findings,
+      root_causes: causes.filter((c) => c.kind === 'root_cause').map((c) => ({ label: c.cause_label, detail: c.detail })).sort((a, b) => a.label.localeCompare(b.label)),
+      factors: causes.filter((c) => c.kind === 'contributing_factor').map((c) => ({ label: c.cause_label, detail: c.detail })).sort((a, b) => a.label.localeCompare(b.label)),
+      whys: ((inv.incident_whys ?? []) as Array<{ seq: number; why: string }>).slice().sort((a, b) => a.seq - b.seq),
+      signed_off_at: inv.signed_off_at, signed_name: inv.signed_name, signature,
+    };
+  }
+  const latest = [r.reported_at as string, r.closed_at as string | null, inv?.updated_at as string | null, ...updates.map((u) => u.created_at), ...actions.map((a) => a.done_at)].filter((v): v is string => Boolean(v)).sort().at(-1);
   const instant = new Date(latest ?? (r.reported_at as string));
   const data: IncidentPdfData = {
     orgName: org.name, orgCode: org.code, projectName: project.name, projectCode: project.code,
@@ -60,7 +85,7 @@ export async function POST(_request: Request, context: { params: Promise<{ id: s
     treatment: r.treatment, actual_severity: r.actual_severity, potential_severity: r.potential_severity, plant: r.plant, photos,
     updates: updates.map((u) => ({ kind: u.kind, body: u.body, at: u.created_at, by: who(u.author) })),
     actions: actions.map((a) => ({ action: a.action, owner: a.owner_name, due: a.due_on, done_at: a.done_at, done_note: a.done_note })),
-    closed_at: r.closed_at, printedAwst: finishedAtAwst(instant.toISOString(), null),
+    closed_at: r.closed_at, printedAwst: finishedAtAwst(instant.toISOString(), null), investigation,
   };
 
   let pdf: Uint8Array;

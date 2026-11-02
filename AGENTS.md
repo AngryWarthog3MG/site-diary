@@ -467,6 +467,14 @@ improvising; the register once shipped dead because a live smoke test was skippe
   only by its raiser while open; `app.action_assignee_ok` refuses anyone not on the job. Screen `actions` (`/actions`, Safety,
   leading hand yes, labourer no), API `/api/actions`. The Safety dashboard and home card count actions through the view — never
   add a seventh source without adding it to the view. Suite 67
+- `src/lib/incidents/investigation.ts` — the investigation behind a report (README R178; pure, node-tested): built-in root causes and
+  contributing factors, `causeOptions` (+ the company's `org_incident_causes`), `finishProblems` (TS half of the trigger's finish
+  rule), `investigationDue`, `investigationExpected` (a prompt, never a rule). Tables `incident_investigations` (one per report,
+  opened by `app.can_manage_incidents`; open → finished → signed_off; finish needs summary + findings + a root cause; sign-off needs
+  a name and a signature under `{project}/incident/{incident}/`; then frozen, never removed; `confidential` = managers only via
+  `app.reads_investigation`), `incident_causes` (label frozen when chosen), `incident_whys` (numbered). A report with one closes
+  only when it is signed off. Panel `src/app/incidents/[id]/investigation-panel.tsx` (writes straight to the tables under RLS),
+  `/incidents/causes` the company lists. The incident PDF prints it for whoever may read it. Suite 68
 - `src/lib/calendar.ts` — `isRestDay`: weekends with nothing recorded are rest days, not holes. One definition for
   the screens, the weekly and the reminder
 - `src/lib/dayworks/` — the dayworks schedule (README R72): `schedule.ts` (pure: `readRange`, `buildSchedule` by Monday weeks,

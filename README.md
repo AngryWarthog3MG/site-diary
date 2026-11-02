@@ -3677,6 +3677,32 @@ number on the register. Not built, on purpose: an Excel export (the register pri
 asked for), archiving (nothing here is ever archived; done is done), and a status word of its own — overdue, due this
 week, open and done are read off the dates, never typed.
 
+**R178. The investigation behind a report.** Item 2 of the Stems migration. Stems One runs an event through Draft →
+investigation → investigation finished → sign-off, with root causes and contributing factors from configurable lists
+and a 5 Why; the IMS had a status word `investigating`, a note kind `root_cause`, and nothing that held an
+investigation together or said when one was done. Migration 20261102120000, suite 68. The report stays the first
+account, frozen (R36); the investigation is a second document that unfolds after it — `incident_investigations`, one
+per report, opened by a manager (`app.can_manage_incidents`) with a due date and an investigator (someone on the job,
+or a name where they have no login), and opening it moves the report to investigating. It carries what happened,
+the sequence of events and the findings; `incident_causes` holds the root causes and contributing factors, picked
+from the built-in lists in `src/lib/incidents/investigation.ts` plus the company's own on `org_incident_causes`
+(`/incidents/causes`, written by the office, readable by every member) — each kept as the words at the time, so
+retiring one from the list changes nothing written; `incident_whys` is the five whys, numbered. It FINISHES only with
+a summary, findings and at least one root cause (the trigger says so; the screen shows the amber first), may be
+reopened, and is SIGNED OFF by a manager with their name and a drawn signature kept in the report's own folder —
+then it is frozen entirely, row, causes and whys, for anyone, the service role included, and is never removed. A
+report that has an investigation closes only once it is signed off. CONFIDENTIAL is a flag on the investigation:
+set, it is read by the job's managers alone (`app.reads_investigation`) — the crew's screen says "under
+investigation, confidential" through `incident_has_investigation` and nothing more; the labourer reads none of it
+either way, and the signature image, which carries no finding, sits under the report's folder as before. The
+incident PDF prints the investigation section for whoever may read it (the state hash carries it, so a changed
+investigation is a new document and the stored one stands). An open investigation with a due date is on What's
+due; the register card says where each stands; `investigationExpected` prompts for one on an injury, a notifiable
+event or a high/extreme severity — a prompt, never a rule. Actions found by investigating stay on the report's
+corrective actions, which is the action register (R177). Not built, on purpose: a notification on the investigation
+dates (the assignee push of R177 covers the actions that come out of it), an offline queue for it (an investigation
+is written at a desk), and editable lists on a record (the label is frozen when chosen).
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;

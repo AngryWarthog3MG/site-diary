@@ -3,6 +3,7 @@ import { LOGO_DATA_URI } from '@/lib/pdf/logo';
 import { fmtDate, fmtPerthDate } from '@/lib/pdf/dates';
 import { awstClock } from '@/lib/signin/register';
 import { KIND_LABEL, STATUS_LABEL, TREATMENT_LABEL, SEVERITY_LABEL, incidentRef, type IncidentKind, type IncidentStatus, type Treatment, type Severity } from './model';
+import { INVESTIGATION_STATUS_LABEL, type InvestigationStatus } from './investigation';
 
 export interface IncidentPdfData {
   orgName: string; orgCode: string; projectName: string; projectCode: string;
@@ -15,6 +16,15 @@ export interface IncidentPdfData {
   updates: Array<{ kind: string; body: string; at: string; by: string }>;
   actions: Array<{ action: string; owner: string | null; due: string | null; done_at: string | null; done_note: string | null }>;
   closed_at: string | null; printedAwst: string;
+  /** The investigation (README R178), when the report has one the caller may read; a confidential one prints only for its managers. */
+  investigation: {
+    status: InvestigationStatus; confidential: boolean; due_on: string | null; investigator: string | null;
+    opened_at: string; opened_by: string; finished_at: string | null; finished_by: string | null;
+    summary: string | null; sequence_of_events: string | null; findings: string | null;
+    root_causes: Array<{ label: string; detail: string | null }>; factors: Array<{ label: string; detail: string | null }>;
+    whys: Array<{ seq: number; why: string }>;
+    signed_off_at: string | null; signed_name: string | null; signature: string | null;
+  } | null;
 }
 
 export function IncidentDoc({ data }: { data: IncidentPdfData }): ReactElement {
@@ -50,6 +60,34 @@ export function IncidentDoc({ data }: { data: IncidentPdfData }): ReactElement {
           </tbody>
         </table>
       </section>
+
+      {data.investigation && (
+        <section className="sect">
+          <p className="lbl">Investigation{data.investigation.confidential ? ' — CONFIDENTIAL' : ''}</p>
+          <table>
+            <tbody>
+              <tr><th>Status</th><td>{INVESTIGATION_STATUS_LABEL[data.investigation.status]}</td></tr>
+              <tr><th>Opened</th><td>{fmtPerthDate(data.investigation.opened_at)} by {data.investigation.opened_by}{data.investigation.due_on ? ` · due ${fmtDate(data.investigation.due_on)}` : ''}</td></tr>
+              <tr><th>Investigator</th><td>{data.investigation.investigator ?? '—'}</td></tr>
+              <tr><th>What happened</th><td className="w">{data.investigation.summary ?? '—'}</td></tr>
+              <tr><th>Sequence of events</th><td className="w">{data.investigation.sequence_of_events ?? '—'}</td></tr>
+              <tr><th>Findings</th><td className="w">{data.investigation.findings ?? '—'}</td></tr>
+              <tr><th>Root causes</th><td className="w">{data.investigation.root_causes.length === 0 ? '—' : data.investigation.root_causes.map((c, i) => <span key={i}>{i > 0 ? <br /> : null}{c.label}{c.detail ? ` — ${c.detail}` : ''}</span>)}</td></tr>
+              <tr><th>Contributing factors</th><td className="w">{data.investigation.factors.length === 0 ? '—' : data.investigation.factors.map((c, i) => <span key={i}>{i > 0 ? <br /> : null}{c.label}{c.detail ? ` — ${c.detail}` : ''}</span>)}</td></tr>
+              <tr><th>Five whys</th><td className="w">{data.investigation.whys.length === 0 ? '—' : data.investigation.whys.map((w) => <span key={w.seq}>{w.seq > 1 ? <br /> : null}{w.seq}. {w.why}</span>)}</td></tr>
+              {data.investigation.finished_at && <tr><th>Finished</th><td>{fmtPerthDate(data.investigation.finished_at)} {awstClock(data.investigation.finished_at)} AWST{data.investigation.finished_by ? ` by ${data.investigation.finished_by}` : ''}</td></tr>}
+              <tr><th>Signed off</th><td>
+                {data.investigation.signed_off_at ? (
+                  <>
+                    {data.investigation.signed_name} · {fmtPerthDate(data.investigation.signed_off_at)} {awstClock(data.investigation.signed_off_at)} AWST
+                    {data.investigation.signature && <><br /><img className="incident-doc__sig" src={data.investigation.signature} alt="" /></>}
+                  </>
+                ) : <span className="vr-missing">NOT SIGNED OFF</span>}
+              </td></tr>
+            </tbody>
+          </table>
+        </section>
+      )}
 
       <section className="sect">
         <p className="lbl">Corrective actions</p>
@@ -94,6 +132,7 @@ export function IncidentDoc({ data }: { data: IncidentPdfData }): ReactElement {
 }
 
 export const INCIDENT_CSS = `
+.incident-doc__sig { height: 48px; margin-top: 4px; }
 .incident-doc .head__right .big { font-size: 13pt; font-weight: 700; margin: 0.5mm 0 0; }
 .incident-doc .head__right .small { font-size: 7.5pt; color: #5A6469; margin: 0.5mm 0 0; }
 .incident-doc tbody th { text-align: left; width: 32mm; font-weight: 600; vertical-align: top; }

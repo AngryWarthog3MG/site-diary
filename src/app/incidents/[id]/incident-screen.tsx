@@ -21,13 +21,13 @@ export interface IncidentView {
   actions: Array<{ id: string; action: string; owner_name: string | null; due_on: string | null; done_at: string | null; done_note: string | null; created_by: string }>;
 }
 
-interface Props { incident: IncidentView; crew: string[]; canReport: boolean; canManage: boolean; userId: string; today: string; /** The WorkSafe trail, drawn under the notifiable warning. */ regulator?: React.ReactNode }
+interface Props { incident: IncidentView; crew: string[]; canReport: boolean; canManage: boolean; userId: string; today: string; /** The WorkSafe trail, drawn under the notifiable warning. */ regulator?: React.ReactNode; /** The investigation (README R178), drawn after the report. */ investigation?: React.ReactNode }
 
 const UPDATE_KINDS: Array<{ key: string; label: string }> = [
   { key: 'note', label: 'Note' }, { key: 'investigation', label: 'Investigation' }, { key: 'root_cause', label: 'Root cause' }, { key: 'regulator', label: 'Regulator contact' },
 ];
 
-export function IncidentScreen({ incident: r, crew, canReport, canManage, userId, today, regulator }: Props) {
+export function IncidentScreen({ incident: r, crew, canReport, canManage, userId, today, regulator, investigation }: Props) {
   const router = useRouter();
   const [urls, setUrls] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState<string | null>(null);
@@ -148,6 +148,8 @@ export function IncidentScreen({ incident: r, crew, canReport, canManage, userId
           </div>
         )}
       </div>
+
+      {investigation}
 
       <div className="item">
         <p className="label">Corrective actions {openActions.length > 0 ? `· ${openActions.length} open` : r.actions.length ? '· all done' : ''}</p>

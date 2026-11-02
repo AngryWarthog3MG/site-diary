@@ -16,6 +16,7 @@ interface Row {
   id: string; seq: number; kind: IncidentKind; status: IncidentStatus; notifiable: boolean; occurred_at: string;
   location: string | null; description: string; injured_name: string | null;
   incident_actions: Array<{ due_on: string | null; done_at: string | null }>;
+  incident_investigations: Array<{ status: string; due_on: string | null }>;
 }
 
 /** The register: open first, the oldest open at the top, closed below. */
@@ -32,7 +33,7 @@ export default async function IncidentsPage({ searchParams }: { searchParams: Pr
   const ownOnly = current.role === 'labourer';
   let query = supabase
     .from('incidents')
-    .select('id, seq, kind, status, notifiable, occurred_at, location, description, injured_name, incident_actions(due_on, done_at)')
+    .select('id, seq, kind, status, notifiable, occurred_at, location, description, injured_name, incident_actions(due_on, done_at), incident_investigations(status, due_on)')
     .eq('project_id', current.project_id);
   if (ownOnly) query = query.eq('reported_by', userId);
   const { data } = await query.order('occurred_at', { ascending: false }).limit(200);
@@ -47,6 +48,8 @@ export default async function IncidentsPage({ searchParams }: { searchParams: Pr
   const card = (r: Row) => {
     const openActions = r.incident_actions.filter((a) => a.done_at == null).length;
     const late = r.incident_actions.filter((a) => actionOverdue(a, today)).length;
+    const inv = r.incident_investigations?.[0] ?? null;
+    const invLate = inv?.status === 'open' && inv.due_on != null && inv.due_on < today;
     return (
       <Link key={r.id} href={`/incidents/${r.id}`} className={`prestart-row ${r.status === 'closed' ? 'prestart-row--done' : late > 0 || r.notifiable ? 'prestart-row--open' : ''}`}>
         <span>
@@ -56,7 +59,7 @@ export default async function IncidentsPage({ searchParams }: { searchParams: Pr
             {fmtPerthDate(r.occurred_at)}{r.location ? ` · ${r.location}` : ''} · {r.description.slice(0, 80)}{r.description.length > 80 ? '…' : ''}
           </span>
           <br />
-          <span className="caption">{STATUS_LABEL[r.status]}{openActions > 0 ? ` · ${openActions} action${openActions === 1 ? '' : 's'} open` : ''}{late > 0 ? ` · ${late} overdue` : ''}</span>
+          <span className="caption">{STATUS_LABEL[r.status]}{openActions > 0 ? ` · ${openActions} action${openActions === 1 ? '' : 's'} open` : ''}{late > 0 ? ` · ${late} overdue` : ''}{inv ? (inv.status === 'signed_off' ? ' · investigation signed off' : inv.status === 'finished' ? ' · investigation awaiting sign-off' : invLate ? ' · investigation OVERDUE' : ' · under investigation') : ''}</span>
         </span>
         <span>Open</span>
       </Link>

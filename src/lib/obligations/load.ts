@@ -207,6 +207,19 @@ export async function loadObligations(
     }
   }
 
+  // Investigations (README R178): an open one with a due date falls due here; one past it is overdue.
+  const { data: invRows } = await supabase.from('incident_investigations').select('id, incident_id, due_on, status, incident:incidents!inner(seq)').eq('project_id', projectId).eq('status', 'open').not('due_on', 'is', null);
+  for (const v of (invRows ?? []) as Array<{ id: string; incident_id: string; due_on: string; status: 'open'; incident: { seq: number } | Array<{ seq: number }> }>) {
+    const inc = Array.isArray(v.incident) ? v.incident[0] : v.incident;
+    items.push({
+      key: `investigation:${v.id}`, source: 'incident',
+      title: `Investigation — ${incidentRef(inc.seq)}`,
+      basis: 'Finish and sign off the investigation by the date set when it was opened',
+      dueOn: v.due_on, status: dueStatus(v.due_on, today),
+      href: `/incidents/${v.incident_id}`,
+    });
+  }
+
   // The emergency plan: one per workplace is the law, and its procedures are tested at the
   // frequency the plan itself states (WHS (General) Regs 2022 (WA) reg. 43; ISO 45001 cl. 8.2).
   // Under a head contractor, their site emergency plan received and on file answers for the workplace's plan.

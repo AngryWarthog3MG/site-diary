@@ -23,8 +23,8 @@ bones; the Stems feature adds something. **Missing** — nothing in the IMS does
 | Stems feature | IMS | Notes |
 |---|---|---|
 | Event register: configurable event records × event forms (Injury, Damage, Environmental, Near miss…), types, categories, sub-categories | Partly | Incidents have seven fixed kinds + severities. No admin-configurable taxonomy |
-| Event lifecycle: Draft → investigation → investigation finished → sign-off; event manager, supervisor, reported by, line manager | Partly | Open/closed with actions; no investigation stage or sign-off |
-| Investigation tab: investigation dates with notification, summary, root cause analysis, contributing factors (configurable lists, can be mandatory), **5 Why** | Missing | `incident_updates` has a `root_cause` note kind only |
+| Event lifecycle: Draft → investigation → investigation finished → sign-off; event manager, supervisor, reported by, line manager | Have (R178) | Open → investigating (investigation open → finished → signed off) → closed; opener, investigator, due date |
+| Investigation tab: investigation dates with notification, summary, root cause analysis, contributing factors (configurable lists, can be mandatory), **5 Why** | Have (R178) | Investigation with due date, summary, sequence, findings; root causes and contributing factors from built-in + company lists (`/incidents/causes`); five whys; confidential flag; sign-off with signature. Lists are not mandatory per field |
 | Confidential flag (manager, line manager, admins only) | Missing | — |
 | Notifiable / High Potential flags with legal-obligation settings | Have | `notifiable`, potential severity, regulator trail (R62) |
 | Hazards & risks linked to an event; risk profile link | Partly | Event ↔ SWMS/risk not linked |
@@ -170,7 +170,7 @@ capture, and a money permission enforced in the database.
 Grouped so each step is one README section, one migration set, one suite, and ships on its own.
 
 1. **Action register** — one register over every origin, manual actions, priority, assigned-to, overdue, "my actions". Most other gaps raise actions into it. **Built — README R177, 02/11/2026.**
-2. **Incident investigation** — investigation stage, root causes and contributing factors (company lists), 5 Why, confidential flag, sign-off, investigation due dates.
+2. **Incident investigation** — investigation stage, root causes and contributing factors (company lists), 5 Why, confidential flag, sign-off, investigation due dates. **Built — README R178, 02/11/2026.**
 3. **Hazard controls** — control status lifecycle, hierarchy of controls, hazard types, critical-risk flag.
 4. **Forms engine** (Comply One's heart) — a designer for checklists (sections, question types, score, fail-raises-action, photo required), public vs scheduled profiles, calendar, completed-forms register, non-compliance register. Then the missing forms as templates: fatigue, journey management plan, Take Time, field leadership observation, workplace hazard inspection, VOC, on/off hire, light and heavy vehicle pre-starts, weekly crack inspection, training evaluation.
 5. **Asset register** — every asset, not only plant: types/categories, barcode, check in/out, maintenance & inspection profiles that raise actions, meter entry, electrical test & tag, third-party assets. Plant register becomes one kind of asset without moving a row.
