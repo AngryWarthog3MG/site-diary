@@ -3654,6 +3654,29 @@ which uploads and appends now or goes through the outbox as kind `qa_record_phot
 stands and appends, so two phones adding at once drop nothing. The signatures attest to the checks as they were made;
 a photograph added later is marked as later, every time it is read.
 
+**R177. The action register.** The first item of the Stems migration (`docs/stems-migration.md`): Stems One keeps one
+action register across every origin, and the IMS kept actions in five places — on an incident, an inspection, an audit,
+a management review and a compliance evaluation — with nowhere to raise one by hand, no priority, no one person it was
+given to, and no screen that answered "what is on me" or "what is late". Migration 20261102100000, suite 67. No row
+moves: the five tables stay the record (an incident's action is still frozen with its incident), each grows `priority`
+and `assigned_to`, a sixth table `actions` holds the ones raised by hand (on a job, or company-wide with no job — those
+show on every job), and the view `action_register` (`security_invoker`, so each table's own read policy decides)
+unions the six in one shape with the record's reference beside each. `update_action` and `complete_action` dispatch by
+origin, as the caller: who holds it, its priority, and for a manual, incident or inspection action its due date and
+owner may change while it is open; an issued audit, review or evaluation keeps its wording, owner and date, as those
+records always have. The assignee may close what is theirs, on any origin — that is the point of assigning it — and a
+done action is frozen; a manual one is removed only by whoever raised it, only while open. An assignee must be on the
+job (or in the company, for a company-wide action); the DB refuses anyone else. Raising by hand is `app.can_run_talks`
+on a job and `app.can_manage_crew` company-wide; the labourer reads none of it (restrictive `actions_reads_record`).
+`/actions` (screen `actions`, Safety, leading hand included) lists this job's plus the company's, overdue first, then
+due this week, then the rest by priority, with Add an action, Assign and Done inline and the done ones folded; the
+assignee's phone is told once when it is given to them (`notifyAssigned`) and nightly while it is overdue or due within
+the week (`actionReminderSweep`, `?actions=1` on the 20:00 UTC cron) — pushes, nothing stored. The Safety dashboard
+and the home's "Actions overdue" card now count every origin through the same view, so the number on the home is the
+number on the register. Not built, on purpose: an Excel export (the register prints like every register when it is
+asked for), archiving (nothing here is ever archived; done is done), and a status word of its own — overdue, due this
+week, open and done are read off the dates, never typed.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;

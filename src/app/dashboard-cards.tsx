@@ -134,8 +134,8 @@ export async function DashboardCards({ projectId, orgId, member, userId }: { pro
       <section className="dash-card">
         <p className="dash-card__title">Actions overdue</p>
         <Big n={s.actions.overdue} tone={s.actions.overdue > 0 ? 'bad' : undefined} />
-        <p className="dash-card__sub">of {s.actions.open} corrective action{s.actions.open === 1 ? '' : 's'} open</p>
-        <Foot href={`/safety${q}`} />
+        <p className="dash-card__sub">of {s.actions.open} action{s.actions.open === 1 ? '' : 's'} open</p>
+        <Foot href={`/actions${q}`} />
       </section>
     ),
   });

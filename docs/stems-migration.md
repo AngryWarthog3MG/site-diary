@@ -47,7 +47,7 @@ bones; the Stems feature adds something. **Missing** — nothing in the IMS does
 ### Action register
 | Stems feature | IMS | Notes |
 |---|---|---|
-| One action register across every origin (event, hazard, asset maintenance, audit, manual) with raised by, assigned to, due, closed, status incl. Pending-Overdue, priority, archive, Excel export, group-by | Partly | Actions live on incidents, inspections, audits, reviews; What's due aggregates them. No manual actions, no priority, no single register |
+| One action register across every origin (event, hazard, asset maintenance, audit, manual) with raised by, assigned to, due, closed, status incl. Pending-Overdue, priority, archive, Excel export, group-by | Have (R177) | `/actions`: one register over incidents, inspections, audits, reviews, compliance evaluations and manual actions; priority, assigned-to with push, overdue/due-this-week off the dates, "on you". No Excel, no archive, by design |
 | Add manual action / add multiple manual actions | Missing | — |
 | Configurable action types, priorities, field labels | Missing | — |
 
@@ -169,7 +169,7 @@ capture, and a money permission enforced in the database.
 
 Grouped so each step is one README section, one migration set, one suite, and ships on its own.
 
-1. **Action register** — one register over every origin, manual actions, priority, assigned-to, overdue, "my actions". Most other gaps raise actions into it.
+1. **Action register** — one register over every origin, manual actions, priority, assigned-to, overdue, "my actions". Most other gaps raise actions into it. **Built — README R177, 02/11/2026.**
 2. **Incident investigation** — investigation stage, root causes and contributing factors (company lists), 5 Why, confidential flag, sign-off, investigation due dates.
 3. **Hazard controls** — control status lifecycle, hierarchy of controls, hazard types, critical-risk flag.
 4. **Forms engine** (Comply One's heart) — a designer for checklists (sections, question types, score, fail-raises-action, photo required), public vs scheduled profiles, calendar, completed-forms register, non-compliance register. Then the missing forms as templates: fatigue, journey management plan, Take Time, field leadership observation, workplace hazard inspection, VOC, on/off hire, light and heavy vehicle pre-starts, weekly crack inspection, training evaluation.

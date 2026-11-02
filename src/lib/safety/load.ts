@@ -2,8 +2,9 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { compliance, type DocFacts } from '@/lib/subcontractors/model';
 import { expiring, normaliseName, type TicketFacts } from '@/lib/crew/tickets';
 import { coverage } from '@/lib/documents-control/model';
-import { injurySummary, daysSinceLastInjury, monthBuckets, overdue, openActions, type IncidentFacts, type ActionFacts } from './stats';
+import { injurySummary, daysSinceLastInjury, monthBuckets, overdue, openActions, type IncidentFacts } from './stats';
 import { perthWindowDate, perthWindowEnd, perthWindowStart } from './window';
+import { originHref, sortActions, type ActionOrigin, type RegisterRow } from '@/lib/actions/model';
 
 /**
  * Everything the dashboard shows, gathered once under the caller's RLS.
@@ -17,7 +18,7 @@ export interface SafetyData {
   taggedOut: string[];
   permits: { live: number; expired: number };
   /** `list` is the soonest-due `LISTED_ACTIONS`; `open` counts them all, so `open - list.length` is how many the table leaves out. */
-  actions: { open: number; overdue: number; list: Array<{ source: 'incident' | 'inspection'; ref: string; href: string; action: string; owner: string | null; due_on: string | null }> };
+  actions: { open: number; overdue: number; list: Array<{ source: ActionOrigin; ref: string; href: string; action: string; owner: string | null; due_on: string | null }> };
   incidents: {
     open: number; year: ReturnType<typeof injurySummary>; daysSinceInjury: number | null; months: ReturnType<typeof monthBuckets>;
     /** Every report in the last twelve months, newest first — the home cards count the last 30 days from it. */
@@ -43,7 +44,7 @@ export async function loadSafety(supabase: SupabaseClient, projectId: string, or
   const ninety = perthWindowDate(today, 90);
   const weekAgo = perthWindowDate(today, 7);
   const nowIso = new Date().toISOString();
-  const [onSite, week, prestart, plant, permits, incidents, lastInjury, inspections, openIncActs, openInspActs, crew, tickets, subs, swms, docs, labour] = await Promise.all([
+  const [onSite, week, prestart, plant, permits, incidents, lastInjury, inspections, openActs, crew, tickets, subs, swms, docs, labour] = await Promise.all([
     supabase.from('site_signins').select('id', { count: 'exact', head: true }).eq('project_id', projectId).eq('signin_date', today).is('signed_out_at', null),
     supabase.from('site_signins').select('id', { count: 'exact', head: true }).eq('project_id', projectId).gte('signin_date', weekAgo).lte('signin_date', today),
     supabase.from('prestarts').select('completed_at').eq('project_id', projectId).eq('prestart_date', today).order('created_at', { ascending: false }).limit(1).maybeSingle(),
@@ -53,9 +54,9 @@ export async function loadSafety(supabase: SupabaseClient, projectId: string, or
     // The last injury ever, not the last within the year: "days since" is a lag indicator that keeps counting past 365.
     supabase.from('incidents').select('kind, occurred_at').eq('project_id', projectId).eq('kind', 'injury').order('occurred_at', { ascending: false }).limit(1).maybeSingle(),
     supabase.from('inspections').select('id, completed_at').eq('project_id', projectId).gte('inspection_date', ninety).lte('inspection_date', today),
-    // Open corrective actions are open however old their report is: no date window on these two.
-    supabase.from('incident_actions').select('action, owner_name, due_on, done_at, incident:incidents!inner(id, seq, project_id)').eq('incident.project_id', projectId).is('done_at', null),
-    supabase.from('inspection_actions').select('action, owner_name, due_on, done_at, inspection:inspections!inner(id, template_name, inspection_date, project_id)').eq('inspection.project_id', projectId).is('done_at', null),
+    // Open actions of every origin, this job's and the company-wide ones, through the action register (README R177):
+    // open however old their record is, so no date window.
+    supabase.from('action_register').select('origin, record_id, record_ref, project_id, action, owner_name, priority, due_on, done_at, raised_at').eq('org_id', orgId).or(`project_id.eq.${projectId},project_id.is.null`).is('done_at', null),
     supabase.from('crew').select('name').eq('project_id', projectId).eq('active', true),
     supabase.from('crew_tickets').select('person_name, ticket_type, expires_on, active').eq('org_id', orgId),
     supabase.from('project_subcontractors').select('subcontractor:subcontractors!inner(name, active, subcontractor_documents(kind, expires_on, active))').eq('project_id', projectId).is('engaged_to', null),
@@ -67,15 +68,11 @@ export async function loadSafety(supabase: SupabaseClient, projectId: string, or
   const crewNames = ((crew.data ?? []) as Array<{ name: string }>).map((c) => c.name);
   const incRows = ((incidents.data ?? []) as Array<IncidentFacts & { id: string; seq: number; description: string }>);
   const inspRows = ((inspections.data ?? []) as Array<{ id: string; completed_at: string | null }>);
-  const one = <T,>(v: T | T[]): T => (Array.isArray(v) ? v[0] : v);
-  type OpenAction = ActionFacts & { action: string; owner_name: string | null };
-  const incActs = ((openIncActs.data ?? []) as Array<OpenAction & { incident: { id: string; seq: number } | Array<{ id: string; seq: number }> }>);
-  const inspActs = ((openInspActs.data ?? []) as Array<OpenAction & { inspection: { id: string; template_name: string; inspection_date: string } | Array<{ id: string; template_name: string; inspection_date: string }> }>);
-  const actionList: SafetyData['actions']['list'] = [];
-  for (const a of incActs) { const i = one(a.incident); actionList.push({ source: 'incident', ref: `INC-${String(i.seq).padStart(3, '0')}`, href: `/incidents/${i.id}`, action: a.action, owner: a.owner_name, due_on: a.due_on }); }
-  for (const a of inspActs) { const i = one(a.inspection); actionList.push({ source: 'inspection', ref: `${i.template_name} ${i.inspection_date}`, href: `/inspections/${i.id}`, action: a.action, owner: a.owner_name, due_on: a.due_on }); }
-  const allActions: ActionFacts[] = [...incActs, ...inspActs];
-  actionList.sort((a, b) => (a.due_on ?? '9999').localeCompare(b.due_on ?? '9999'));
+  type OpenAction = Pick<RegisterRow, 'origin' | 'record_id' | 'record_ref' | 'project_id' | 'action' | 'owner_name' | 'priority' | 'due_on' | 'done_at' | 'raised_at'>;
+  const allActions = sortActions((openActs.data ?? []) as OpenAction[], today);
+  const actionList: SafetyData['actions']['list'] = allActions.map((a) => ({
+    source: a.origin, ref: a.record_ref ?? 'By hand', href: originHref(a, '') ?? '/actions', action: a.action, owner: a.owner_name, due_on: a.due_on,
+  }));
 
   const hours = ((labour.data ?? []) as Array<{ hours: number | string | null; overtime_hours: number | string | null }>).reduce((n, r) => n + (Number(r.hours) || 0) + (Number(r.overtime_hours) || 0), 0);
   const ticketRows = ((tickets.data ?? []) as Array<TicketFacts & { person_name: string }>).filter((t) => crewNames.some((c) => norm(c) === norm(t.person_name)));
@@ -101,7 +98,7 @@ export async function loadSafety(supabase: SupabaseClient, projectId: string, or
     },
     inspections: {
       last90: inspRows.filter((i) => i.completed_at).length,
-      issuesOpen: inspActs.length,
+      issuesOpen: allActions.filter((a) => a.origin === 'inspection').length,
     },
     tickets: {
       expired: expired.map((t) => ({ person: t.person_name, label: label(t.ticket_type), on: t.expires_on as string })),

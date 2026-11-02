@@ -60,6 +60,7 @@ const SCREEN_OF_PATH: Array<[prefix: string, screen: Screen]> = [
   ['/api/procedures', 'procedures'],
   ['/messages', 'messages'], ['/api/messages', 'messages'], ['/inbox', 'inbox'],
   ['/safety', 'safety'], ['/api/safety', 'safety'],
+  ['/actions', 'actions'], ['/api/actions', 'actions'],
   ['/claims', 'claims'], ['/dayworks', 'claims'], ['/api/dayworks', 'claims'], ['/variations', 'variations'], ['/rates', 'rates'], ['/progress', 'progress'],
   ['/ask', 'ask'], ['/api/ask', 'ask'],
   ['/documents', 'documents'], ['/api/documents', 'documents'],

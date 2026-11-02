@@ -457,6 +457,16 @@ improvising; the register once shipped dead because a live smoke test was skippe
   `entry-photos/{project}/qa/{record}/`. Transcribed forms in `docs/qa-templates/` (wording is contractual — never
   paraphrase), sources in `docs/qa-source/`, loader `scripts/qa-seed-templates.mjs <ORG>`. The R66 quality tables stand
   beside it. Suite 42 A checklist may carry a `sub_register` (the editor draws it; the DB counted it already) and items a `reference` shown under the check; Rev B of a paper form in the record's shape is a new file, never an edit (README R169). An UNSIGNED record may move to a newer issued revision of the same form (README R174: `scripts/qa-move-record.mjs`, suite 64; the trigger refuses a signed one, another code, an older revision); a hold point with `parties: []` is a note on the sheet, no signature. A VOIDED record is restored by the office alone, with a reason, through `restore_qa_record` (README R175, suite 65): back exactly as it stood, still frozen if it was signed; every void and restore sits on `qa_record_void_events`, append-only — never clear `voided_at` any other way. A SIGNED record's `photo_paths` may GROW and nothing else (README R176, suite 66): signed-with first, additions after, never removed; each addition on `qa_record_photo_additions` (who, when) and marked "Added after sign-off" on screen and PDF; append through `appendQaPhotos` (`src/lib/qa/photos.ts`), outbox kind `qa_record_photos`.
+- `src/lib/actions/` — the action register (README R177): `model.ts` (pure, node-tested: origins, priorities, `actionStatus`,
+  `sortActions` overdue first, `summarise`, `originHref`, `remindDue`), `load.ts` (`loadActionRegister` — this job's plus the
+  company-wide, under the caller's RLS through view `action_register`), `notify.ts` (`notifyAssigned` on assignment,
+  `actionReminderSweep` nightly `actions=1`). The five record tables (`incident_actions`, `inspection_actions`, `audit_findings`,
+  `review_actions`, `compliance_evaluation_results`) STAY the record and grew `priority` + `assigned_to`; table `actions` is the
+  ones raised by hand (`project_id` null = company-wide, shown on every job); the view unions the six. `update_action` /
+  `complete_action` dispatch by origin as the caller — the assignee closes any origin, done is frozen, a manual action is removed
+  only by its raiser while open; `app.action_assignee_ok` refuses anyone not on the job. Screen `actions` (`/actions`, Safety,
+  leading hand yes, labourer no), API `/api/actions`. The Safety dashboard and home card count actions through the view — never
+  add a seventh source without adding it to the view. Suite 67
 - `src/lib/calendar.ts` — `isRestDay`: weekends with nothing recorded are rest days, not holes. One definition for
   the screens, the weekly and the reminder
 - `src/lib/dayworks/` — the dayworks schedule (README R72): `schedule.ts` (pure: `readRange`, `buildSchedule` by Monday weeks,

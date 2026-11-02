@@ -51,8 +51,8 @@ export default async function SafetyPage({ searchParams }: { searchParams: Promi
 
       <p className="label" style={{ marginTop: '1.25rem' }}>Actions</p>
       <div className="safety__tiles">
-        {tile('Open', d.actions.open, undefined, '/incidents')}
-        {tile('Overdue', d.actions.overdue, d.actions.overdue > 0 ? 'bad' : 'ok')}
+        {tile('Open', d.actions.open, undefined, '/actions')}
+        {tile('Overdue', d.actions.overdue, d.actions.overdue > 0 ? 'bad' : 'ok', '/actions')}
         {tile('Reports open', d.incidents.open, undefined, '/incidents')}
         {tile('Inspections, 90 days', d.inspections.last90, undefined, '/inspections')}
       </div>
@@ -72,7 +72,7 @@ export default async function SafetyPage({ searchParams }: { searchParams: Promi
         </table>
       )}
       {d.actions.open > d.actions.list.length && (
-        <p className="caption">Showing the {d.actions.list.length} due soonest; {d.actions.open - d.actions.list.length} more open under <Link href={`/incidents${q}`}>Incidents</Link> and <Link href={`/inspections${q}`}>Inspections</Link>.</p>
+        <p className="caption">Showing the {d.actions.list.length} due soonest; {d.actions.open - d.actions.list.length} more open on the <Link href={`/actions${q}`}>Action register</Link>.</p>
       )}
 
       <p className="label" style={{ marginTop: '1.25rem' }}>Injuries and reports, last 12 months</p>

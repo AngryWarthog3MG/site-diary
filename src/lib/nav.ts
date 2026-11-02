@@ -86,6 +86,7 @@ export const NAV_GROUPS: NavGroup[] = [
     label: 'Safety', scope: 'site',
     items: [
       { href: '/safety', name: 'Safety dashboard', short: 'Safety', what: 'Open actions, expiring tickets, injuries and rates — read from the record', screen: 'safety' },
+      { href: '/actions', name: 'Action register', short: 'Actions', what: 'Everything to be done, from every record and by hand — who holds it and when it is due', screen: 'actions' },
       { href: '/emergency', name: 'Emergency plan', short: 'Emergency', what: 'Muster point, nearest hospital, who to call — and the drills that test it', screen: 'emergency' },
       { href: '/due', name: "What's due", what: 'Audits, reviews, drills, safety data sheets and tickets, in the order they need doing', screen: 'obligations' },
       { href: '/incidents', name: 'Hazards & incidents', what: 'Report it in a minute; actions until it is closed', screen: 'incidents' },
