@@ -39,10 +39,10 @@ bones; the Stems feature adds something. **Missing** — nothing in the IMS does
 ### Risk management
 | Stems feature | IMS | Notes |
 |---|---|---|
-| Risk profile register (Project / Asset profiles; originator, assessor, owner, status, review date; Risk profile view and Risk assessment view) | Missing | SWMS steps carry a 5×5 risk; environment aspects carry significance; no company risk register |
-| Task → step → hazard → unwanted event → inherent risk → controls (existing/planned) → residual → potential residual; critical controls; control type | Partly | SWMS has task/step/hazard/controls/risk-before-after. No planned-vs-existing, no critical controls |
-| Risk matrix designer (admin sets the matrix) | Missing | 5×5 fixed in code |
-| Business risk dashboard (average inherent / residual / potential gauges, level-of-risk counts), risk reallocation | Missing | — |
+| Risk profile register (Project / Asset profiles; originator, assessor, owner, status, review date; Risk profile view and Risk assessment view) | Have (R187) | `risk_profiles` by company / job / asset; originator, assessor, owner; draft → current → archived; review due counted from the last review |
+| Task → step → hazard → unwanted event → inherent risk → controls (existing/planned) → residual → potential residual; critical controls; control type | Have (R187) | `risks` + `risk_controls`; a planned control is an action in the register; critical controls marked; the SWMS feeds it |
+| Risk matrix designer (admin sets the matrix) | Have (R187) | `org_risk_matrices`, the office sets the 5×5; ratings already made keep their level |
+| Business risk dashboard (average inherent / residual / potential gauges, level-of-risk counts), risk reallocation | Partly (R187) | The three gauges and level counts on the register and the Safety dashboard; no reallocation — a risk keeps its profile |
 
 ### Action register
 | Stems feature | IMS | Notes |
@@ -174,7 +174,7 @@ Grouped so each step is one README section, one migration set, one suite, and sh
 3. **Hazard controls** — control status lifecycle, hierarchy of controls, hazard types, critical-risk flag. **Built — README R179, 02/11/2026.**
 4. **Forms engine** (Comply One's heart) — **Built — 4a README R180, 4b README R181, 02/11/2026 (twelve templates seeded as drafts by `scripts/forms-seed-templates.mjs`; the office issues each after reading it).** — — a designer for checklists (sections, question types, score, fail-raises-action, photo required), public vs scheduled profiles, calendar, completed-forms register, non-compliance register. Then the missing forms as templates: fatigue, journey management plan, Take Time, field leadership observation, workplace hazard inspection, VOC, on/off hire, light and heavy vehicle pre-starts, weekly crack inspection, training evaluation.
 5. **Asset register** — every asset, not only plant: types/categories, barcode, check in/out, maintenance & inspection profiles that raise actions, meter entry, electrical test & tag, third-party assets. Plant register becomes one kind of asset without moving a row. **Built — README R186, 03/11/2026.**
-6. **Risk register** — risk profiles (project / asset), inherent/residual/potential, existing vs planned controls, critical controls, owner/assessor/review date, dashboard gauges; SWMS risk feeds it.
+6. **Risk register** — risk profiles (project / asset), inherent/residual/potential, existing vs planned controls, critical controls, owner/assessor/review date, dashboard gauges; SWMS risk feeds it. **Built — README R187, 03/11/2026.**
 7. **Training courses and classes** — course catalogue (UoC, duration, expiry, owner), class sessions with attendees and booking, completed-training and training-hours reports, VOC form → ticket.
 8. **People profile** — levels/types/status categories, employment date, line manager, personal and emergency details, licences and visa, work history, performance reviews, discipline (admin-only), assets/consumables issued, log.
 9. **Injury management and D&A** — claims (status, medical status, costs, lost days, RTW), injury detail lists, D&A results register with random selection (confidentiality tier).

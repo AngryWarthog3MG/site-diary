@@ -75,6 +75,8 @@ const nextConfig: NextConfig = {
     // The asset register and its QR labels (README R186).
     '/api/assets/register/pdf': CHROMIUM,
     '/api/assets/labels': CHROMIUM,
+    // The risk register (README R187).
+    '/api/risks/pdf': CHROMIUM,
     '/api/chemicals/pdf': CHROMIUM,
     '/api/quality/equipment/pdf': CHROMIUM,
     '/api/safety/pdf': CHROMIUM,

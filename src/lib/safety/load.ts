@@ -7,6 +7,8 @@ import { perthWindowDate, perthWindowEnd, perthWindowStart } from './window';
 import { originHref, sortActions, type ActionOrigin, type RegisterRow } from '@/lib/actions/model';
 import { summariseHazards, type ControlFacts } from '@/lib/incidents/controls';
 import { loadSchedules } from '@/lib/forms/load';
+import { loadRiskRegister } from '@/lib/risks/load';
+import { summariseRisks } from '@/lib/risks/model';
 
 /**
  * Everything the dashboard shows, gathered once under the caller's RLS.
@@ -29,6 +31,8 @@ export interface SafetyData {
   inspections: { last90: number; issuesOpen: number };
   /** Open hazard reports and how many have no control in place (README R179) — the register's own arithmetic. */
   hazards: ReturnType<typeof summariseHazards>;
+  /** The risk register in view of this job (README R187): open risks, those with no control in place, planned controls overdue, profile reviews overdue — the register's own arithmetic. */
+  risks: { open: number; critical: number; uncontrolled: number; criticalUncontrolled: number; controlsOverdue: number; reviewsOverdue: number };
   /** Forms completed in 90 days, how many failed, the non-compliances still open (README R180), and the scheduled forms past due (README R181). */
   forms: { completed90: number; failed90: number; ncOpen: number; overdue: number };
   tickets: { expired: Array<{ person: string; label: string; on: string }>; soon: Array<{ person: string; label: string; on: string }> };
@@ -50,6 +54,9 @@ export async function loadSafety(supabase: SupabaseClient, projectId: string, or
   const ninety = perthWindowDate(today, 90);
   const weekAgo = perthWindowDate(today, 7);
   const nowIso = new Date().toISOString();
+  const riskReg = await loadRiskRegister(supabase, orgId, today, { projectId }).catch(() => null);
+  const liveProfiles = new Set((riskReg?.verdicts ?? []).filter((v) => v.profile.status !== 'archived').map((v) => v.profile.id));
+  const riskSum = summariseRisks((riskReg?.risks ?? []).filter((r) => liveProfiles.has(r.profile_id)), riskReg?.controls ?? [], today);
   const [onSite, week, prestart, plant, permits, incidents, lastInjury, inspections, openActs, openHazards, formsDone, formNcs, schedules, crew, tickets, subs, swms, docs, labour] = await Promise.all([
     supabase.from('site_signins').select('id', { count: 'exact', head: true }).eq('project_id', projectId).eq('signin_date', today).is('signed_out_at', null),
     supabase.from('site_signins').select('id', { count: 'exact', head: true }).eq('project_id', projectId).gte('signin_date', weekAgo).lte('signin_date', today),
@@ -105,6 +112,7 @@ export async function loadSafety(supabase: SupabaseClient, projectId: string, or
       ncOpen: (formNcs.data ?? []).length,
       overdue: schedules.filter((sc) => sc.state === 'overdue' && sc.template).length,
     },
+    risks: { open: riskSum.open, critical: riskSum.critical, uncontrolled: riskSum.uncontrolled, criticalUncontrolled: riskSum.criticalUncontrolled, controlsOverdue: riskSum.controlsOverdue, reviewsOverdue: (riskReg?.verdicts ?? []).filter((v) => v.reviewStatus === 'overdue').length },
     hazards: summariseHazards(((openHazards.data ?? []) as Array<{ kind: string; status: string; critical_risk: boolean; hazard_controls: ControlFacts[] | null }>).map((h) => ({ kind: h.kind, status: h.status, critical_risk: h.critical_risk, controls: h.hazard_controls ?? [] }))),
     incidents: {
       open: incRows.filter((i) => i.status !== 'closed').length,

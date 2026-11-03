@@ -15,6 +15,7 @@ import { ncrRef, lotRef, ncrReportState, holdsAwaitingRelease, calibrationStatus
 import { nextInspection, registrationStatus, REGISTRATION_LABEL, type InspectionBasis, type RecordKind, type Outcome } from '@/lib/plant/inspections';
 import { loadSchedules, fillHref } from '@/lib/forms/load';
 import { loadAssetRegister } from '@/lib/assets/load';
+import { loadRiskRegister } from '@/lib/risks/load';
 import {
   dueStatus, nextDue, onTime, sortItems, summarise, KIND_LABEL,
   type ObligationItem, type ObligationKind,
@@ -266,6 +267,19 @@ export async function loadObligations(
         dueOn, status: s.status === 'overdue' ? 'overdue' : dueStatus(dueOn, today), href: `/assets/${v.asset.id}${q}`,
       });
     }
+  }
+
+  // Risk profiles (README R187): the company's, this job's and the assets' — each due its review on its own cycle,
+  // counted from the last review recorded. Read under the caller's RLS; the date is the model's, the same the profile shows.
+  const risks = await loadRiskRegister(supabase, orgId, today, { projectId }).catch(() => null);
+  for (const v of risks?.verdicts ?? []) {
+    if (!v.reviewDue || (v.reviewStatus !== 'overdue' && v.reviewStatus !== 'due_soon')) continue;
+    items.push({
+      key: `risk-review:${v.profile.id}`, source: 'risks',
+      title: `Risk profile reviewed — ${v.profile.name}${v.lastReviewedOn ? '' : ' (never yet reviewed)'}`,
+      basis: `WHS (General) Regs 2022 (WA) reg. 38 · ISO 45001 cl. 6.1.2 · every ${v.profile.review_interval_months} months, per the profile`,
+      dueOn: v.reviewDue, status: dueStatus(v.reviewDue, today), href: `/risks/${v.profile.id}${q}`,
+    });
   }
 
   // Plant on this job: its reg. 213 inspection and, where it must be registered, its registration (s. 42).

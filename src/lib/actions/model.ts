@@ -7,7 +7,7 @@
  * calendar days in Perth; nothing here reads a clock.
  */
 
-export const ACTION_ORIGINS = ['manual', 'incident', 'inspection', 'form', 'asset', 'audit', 'review', 'compliance'] as const;
+export const ACTION_ORIGINS = ['manual', 'incident', 'inspection', 'form', 'asset', 'risk', 'audit', 'review', 'compliance'] as const;
 export type ActionOrigin = (typeof ACTION_ORIGINS)[number];
 
 export const ORIGIN_LABEL: Record<ActionOrigin, string> = {
@@ -16,6 +16,7 @@ export const ORIGIN_LABEL: Record<ActionOrigin, string> = {
   inspection: 'Inspection',
   form: 'Form answer',
   asset: 'Asset falling due',
+  risk: 'Planned risk control',
   audit: 'Audit finding',
   review: 'Management review',
   compliance: 'Compliance evaluation',
@@ -111,6 +112,7 @@ export function originHref(a: Pick<RegisterRow, 'origin' | 'record_id' | 'projec
     case 'inspection': return `/inspections/${a.record_id}${q}`;
     case 'form': return `/forms/${a.record_id}${q}`;
     case 'asset': return `/assets/${a.record_id}${q}`;
+    case 'risk': return `/risks/${a.record_id}${q}`;
     case 'audit': return `/audits/audit/${a.record_id}${q}`;
     case 'review': return `/audits/review/${a.record_id}${q}`;
     case 'compliance': return `/environment/evaluation/${a.record_id}${q}`;

@@ -3939,6 +3939,64 @@ asset's page, so a scan on an extinguisher lands on what is due and where to rec
 Not done: the register on the home card and the Safety dashboard (an overdue asset is on What's due and the action
 register already); consumables and stock (item 10); a photograph of the asset.
 
+**R187. The risk register.** Item 6 of the Stems migration. Stems One keeps risk *profiles* — one assessment per
+project or asset, with an originator, an assessor, an owner, a status and a review date — and on each profile a line per
+task → step → hazard → unwanted event, rated three ways: *inherent* (before any control), *residual* (with the existing
+controls) and *potential* (with the planned controls in place too); controls are existing or planned, critical or not; a
+dashboard averages the three ratings and counts the levels. The app had the 5×5 on each SWMS step (R35), the hazard
+register's controls on the hierarchy (R179) and the environment register's significance (R73), and no company risk
+register at all. The brief: that register, and the SWMS feeding it.
+
+What was built, and the decisions:
+
+- **A profile has a scope** — `company`, `project` or `asset` (`risk_profiles`, one of the three keys set). A job's
+  profile is written by the job's supervisor, PM or admin (`app.can_write_swms`, the same people who write its SWMS);
+  the company's and an asset's by the office. `app.can_assess_risk(org, project)` is the one rule; `canAssess` the TS
+  twin. Draft → current → archived, never back; archiving needs a reason and freezes the profile and everything under
+  it; nothing is deleted.
+- **The level is the database's.** `app.risk_level(org, likelihood, consequence)` reads the company's matrix
+  (`org_risk_matrices`, the office sets it; the built-in `app.risk_matrix_default()` is the SWMS's, cell for cell —
+  `DEFAULT_MATRIX` in TS, and the node test holds the three equal). `app.risks_before_write` stamps `inherent_level` /
+  `residual_level` / `potential_level` from the pair whenever both halves are given, so the screen cannot type a level
+  that disagrees with the pair; a level *alone* stands, because a SWMS step carries only a level. **A rating already
+  made keeps its level when the matrix changes** — the level is a fact of the day it was rated, not a formula; suite 73
+  proves it. Half a pair is refused.
+- **Risks are numbered per company** (RSK-001, advisory lock, as INC and ORD are) so a number means one thing across
+  every job's profile. Closed with a reason, then frozen. The assignee must be on the job (`app.action_assignee_ok`).
+- **A planned control IS an action.** `risk_controls.kind` is existing or planned and never changes; an existing
+  control is in place from the moment it is written down; a planned one is `planned` until it is in place, and while it
+  is, it is a row of `action_register` (origin `risk`, record RSK-nnn, the profile's page as its door). `update_action`
+  moves its assignee, priority and due day; `complete_action` sets it `in_place` with the note — the one way an action
+  of this origin is done, so the register and the risk cannot disagree. The assignee may move their own planned control
+  (the update policy's second half); they may not touch the risk. Withdrawn needs a reason, then frozen; never deleted.
+  `critical` marks a critical control; `level` is null until classed, because the SWMS brings controls as words.
+- **Reviews count forward.** `risk_profile_reviews` is append-only; `app.risk_profile_review_due` = the last review,
+  else the Perth day the profile was made, plus `review_interval_months` — never stored. TS twin `reviewDue`. What's due
+  carries it (source `risks`).
+- **The SWMS feeds it, nothing invented.** `proposeFromSwms` turns an active SWMS's steps into risks: the step's hazards,
+  its "before" level as the inherent, "after" as the residual — levels only — and its controls text as ONE existing
+  control, unclassed, verbatim. A step with no hazard or no rating is left out and the screen says how many. Each step
+  is held once per profile (`risks_source_once`); the trigger refuses a SWMS from another job.
+- **The gauges are one arithmetic.** `summariseRisks` — open, critical, uncontrolled (no control in place; a withdrawn
+  control does not count), high-or-extreme after controls, the average likelihood × consequence (1–25) over the open
+  risks that carry the pair, level counts per rating, planned controls and how many are overdue. The register page,
+  the profile page and the Safety dashboard's four tiles all call it; `gaugeLevel` bands the average.
+- **Reads** follow the record lock: every member behind `app.reads_org_record`; the labourer reads none of it, in the
+  tables or through `action_register`. The leading hand reads. A job's view (`loadRiskRegister(..., { projectId })`)
+  is the company's profiles, that job's and the assets' — never another job's; another job's profile page redirects to
+  its own job.
+- **No outbox.** Assessing risk is desk work with a document open, not a form filled in a trench; every write here is a
+  live write under RLS through `useSave`, and the screen says plainly when one did not land. If a site form ever needs
+  to raise a risk from the field, that is a new outbox kind with a README section, not a change here.
+- **Printed** through the R117 layout: `/api/risks/pdf?project=` — everything, this job's, the ticked profiles, or one
+  profile (`profile=`); archived profiles print only when named. Never stored.
+
+Screens `/risks` (screen `risks`, Safety; supervisor, PM, admin write, leading hand reads) and `/risks/[id]`.
+Migration `20261103160000_risk_register.sql`, suite 73. Not built: a hazard report raising a risk on a profile
+(the hazard register stays its own lifecycle, R179); risk "reallocation" between profiles (a risk keeps its profile —
+close it and raise it on the other); a profile per SWMS automatically (the feed is a tap, so the assessor reads what came
+in). The nightly reminder for planned controls is the action register's (R177) — nothing new to run.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;

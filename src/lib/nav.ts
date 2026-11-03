@@ -91,6 +91,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { href: '/actions', name: 'Action register', short: 'Actions', what: 'Everything to be done, from every record and by hand — who holds it and when it is due', screen: 'actions' },
       { href: '/emergency', name: 'Emergency plan', short: 'Emergency', what: 'Muster point, nearest hospital, who to call — and the drills that test it', screen: 'emergency' },
       { href: '/due', name: "What's due", what: 'Audits, reviews, drills, safety data sheets and tickets, in the order they need doing', screen: 'obligations' },
+      { href: '/risks', name: 'Risk register', short: 'Risks', what: 'Risk profiles for the company, the job and its assets — each hazard rated before and after controls, the controls in place and planned', screen: 'risks' },
       { href: '/incidents', name: 'Hazards & incidents', what: 'Report it in a minute; actions until it is closed', screen: 'incidents' },
       { href: '/inspections', name: 'Inspections', what: 'Site walks, environmental and quality checks', screen: 'inspections' },
       { href: '/forms', name: 'Forms', what: 'The company’s checklists filled on the phone — fatigue, observations, hire, crack checks — and what they found', screen: 'forms' },

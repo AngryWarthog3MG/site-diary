@@ -21,6 +21,7 @@ const SOURCE_LABEL: Record<ObligationItem['source'], string> = {
   emergency: 'Emergency plan',
   plant: 'Plant',
   assets: 'Assets',
+  risks: 'Risk register',
   construction: 'Construction',
   quality: 'Quality',
   audits: 'Audits and reviews',

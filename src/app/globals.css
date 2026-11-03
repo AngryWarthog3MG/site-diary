@@ -5213,3 +5213,15 @@ body:has(> .topbar) .homefoot--top { display: none; }
 .formdes__num { width: 5rem; }
 .formfill .tri .field { margin-top: 0.3rem; }
 .formfill .notice { margin: 0.5rem 0; }
+
+/* ==========================================================================
+   Risk register (README R187): the three gauges and the matrix.
+   ========================================================================== */
+.risk-gauge { text-align: left; }
+.risk-gauge .label { margin: 0; }
+.risk-gauge .caption { margin: 0; }
+.risk-gauge__bar { display: flex; height: 0.9rem; margin-top: 0.4rem; border-radius: 0.45rem; overflow: hidden; font-size: 0.62rem; line-height: 0.9rem; color: #fff; }
+.risk-gauge__bar span { text-align: center; min-width: 0.9rem; }
+.risk-matrix th, .risk-matrix td { padding: 0.3rem 0.4rem; border: 1px solid var(--ink-12); text-align: center; }
+.risk-matrix th:first-child { text-align: left; white-space: nowrap; }
+.risk-matrix .field { width: auto; min-width: 6rem; margin: 0; }

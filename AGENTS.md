@@ -500,6 +500,19 @@ improvising; the register once shipped dead because a live smoke test was skippe
   Screens `/assets`, `/assets/[id]` (screen `assets`; outbox kinds `asset_checkout`, `asset_checkin`, `asset_meter`);
   `/api/assets/register/pdf` (R117 layout, `?scope=job` = the job's plant list + what is checked out onto it) and
   `/api/assets/labels?ids=` (QR labels), both in `outputFileTracingIncludes`. What's due source `assets`. Suite 72
+- `src/lib/risks/` — the risk register (README R187): `model.ts` (pure, node-tested; `DEFAULT_MATRIX` = the SWMS matrix =
+  `app.risk_matrix_default()`, held equal by test; `riskLevelOn` / `reviewDue` the TS twins of `app.risk_level` /
+  `app.risk_profile_review_due` — change both together; `riskScore`, `summariseRisks` the ONE arithmetic for the gauges,
+  `proposeFromSwms`, `canAssess`), `load.ts` (`loadRiskRegister`, `{ projectId }` = the company's, this job's and the assets'
+  profiles). Tables `org_risk_matrices` (office sets; a rating already made keeps its level), `risk_profiles` (scope company |
+  project | asset; a job's by `app.can_write_swms`, the rest by the office — `app.can_assess_risk`; draft → current → archived
+  with a reason, then frozen; never deleted), `risk_profile_reviews` (append-only; next due derived, never stored), `risks`
+  (RSK-001 per company; the DB stamps each level from its pair on the matrix, a level alone stands; closed with a reason, frozen),
+  `risk_controls` (kind existing | planned is fixed; existing = in place at once; a PLANNED control is `action_register`
+  origin `risk` — `complete_action` is what puts it in place; withdrawn with a reason, frozen). Reads behind
+  `reads_org_record`; labourer none. Screens `risks` (`/risks`, `/risks/[id]`, Safety; leading hand reads), PDF
+  `/api/risks/pdf` (in `outputFileTracingIncludes`), What's due source `risks`, four Safety tiles. NO outbox — desk work, live
+  writes. Suite 73
 - `src/lib/forms/` — the forms engine (README R180): `model.ts` (pure, node-tested; `templateProblems`, `answerFails`, `score`,
   `completionProblems`, `outcome`, `specFromLines` — each the TS half of an `app.form_*` function; the DB wins), `load.ts`,
   `pdf.tsx`. Tables `form_templates` (company; FRM-001 by the DB; a revision is a NEW row with `supersedes_id`, issued =

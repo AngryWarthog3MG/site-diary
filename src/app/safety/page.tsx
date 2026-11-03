@@ -58,6 +58,10 @@ export default async function SafetyPage({ searchParams }: { searchParams: Promi
         {tile('Hazards open', d.hazards.open, undefined, '/incidents')}
         {tile('Hazards uncontrolled', d.hazards.uncontrolled, d.hazards.uncontrolled > 0 ? 'bad' : 'ok', '/incidents')}
         {tile('Critical, uncontrolled', d.hazards.criticalUncontrolled, d.hazards.criticalUncontrolled > 0 ? 'bad' : 'ok', '/incidents')}
+        {tile('Risks open', d.risks.open, undefined, '/risks')}
+        {tile('Risks, no control in place', d.risks.uncontrolled, d.risks.uncontrolled > 0 ? 'bad' : 'ok', '/risks')}
+        {tile('Risk controls overdue', d.risks.controlsOverdue, d.risks.controlsOverdue > 0 ? 'bad' : 'ok', '/risks')}
+        {tile('Risk reviews overdue', d.risks.reviewsOverdue, d.risks.reviewsOverdue > 0 ? 'bad' : 'ok', '/risks')}
         {tile('Forms, 90 days', d.forms.completed90, undefined, '/forms')}
         {tile('Non-compliances open', d.forms.ncOpen, d.forms.ncOpen > 0 ? 'bad' : 'ok', '/forms/non-compliance')}
         {tile('Forms overdue', d.forms.overdue, d.forms.overdue > 0 ? 'bad' : 'ok', '/forms/calendar')}
