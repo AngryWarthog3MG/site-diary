@@ -107,6 +107,7 @@ export const NAV_GROUPS: NavGroup[] = [
     label: 'People', scope: 'site',
     items: [
       { href: '/training', name: 'Training matrix', what: 'Who holds what, what each role needs, what is expiring — this job, or the whole company', screen: 'training' },
+      { href: '/training/classes', name: 'Training classes', short: 'Classes', what: 'The courses the company runs and sends people to, the classes coming up, who is booked, who came — and the ticket a class earns', screen: 'training' },
       { href: '/settings/members', name: 'Who is on this job', what: 'Crew, roles, access and inductions — the office manages people on the People page', when: 'canRecord' },
     ],
   },

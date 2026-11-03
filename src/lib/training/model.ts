@@ -18,7 +18,8 @@ export function competencies(custom: ReadonlyArray<{ key: string; label: string;
 }
 
 export type CellState = 'current' | 'expiring' | 'expired' | 'missing';
-export interface Cell { state: CellState; required: boolean; expires_on: string | null }
+/** `booked_on`: the day of a class the person is booked on that earns this competency (README R188) — shown beside a gap, never filling it. */
+export interface Cell { state: CellState; required: boolean; expires_on: string | null; booked_on?: string | null }
 
 export interface PersonRecords { name: string; role: string | null; roles: string[]; tickets: Array<TicketFacts & { issued_on?: string | null }> }
 
@@ -41,13 +42,14 @@ export function effectiveExpiry(t: TicketFacts & { issued_on?: string | null }, 
   return null;
 }
 
-export function cellFor(tickets: ReadonlyArray<TicketFacts & { issued_on?: string | null }>, key: string, required: boolean, today: string, horizonDays = 30, validMonths?: number | null): Cell {
+export function cellFor(tickets: ReadonlyArray<TicketFacts & { issued_on?: string | null }>, key: string, required: boolean, today: string, horizonDays = 30, validMonths?: number | null, bookedOn: string | null = null): Cell {
   const held = tickets.filter((t) => t.active && t.ticket_type === key).map((t) => ({ ...t, expires_on: effectiveExpiry(t, validMonths) }));
-  if (held.length === 0) return { state: 'missing', required, expires_on: null };
+  if (held.length === 0) return { state: 'missing', required, expires_on: null, booked_on: bookedOn };
   const best = held.reduce((a, b) => (a.expires_on == null ? a : b.expires_on == null ? b : a.expires_on >= b.expires_on ? a : b));
-  if (best.expires_on != null && best.expires_on < today) return { state: 'expired', required, expires_on: best.expires_on };
-  if (best.expires_on != null && best.expires_on <= addDays(today, horizonDays)) return { state: 'expiring', required, expires_on: best.expires_on };
-  return { state: 'current', required, expires_on: best.expires_on };
+  if (best.expires_on != null && best.expires_on < today) return { state: 'expired', required, expires_on: best.expires_on, booked_on: bookedOn };
+  if (best.expires_on != null && best.expires_on <= addDays(today, horizonDays)) return { state: 'expiring', required, expires_on: best.expires_on, booked_on: bookedOn };
+  // Current: a booking is a refresher on the way, still worth showing.
+  return { state: 'current', required, expires_on: best.expires_on, booked_on: bookedOn };
 }
 
 export interface MatrixRow { name: string; role: string | null; roles: string[]; cells: Record<string, Cell>; gaps: string[]; expiring: string[] }
@@ -63,6 +65,8 @@ export function buildMatrix(
   comps: readonly Competency[],
   requirements: ReadonlyArray<{ role: string; competency: string }>,
   today: string,
+  /** `bookingsByPerson` from courses.ts: `normalisedName|competencyKey` → the class's day. */
+  bookings: ReadonlyMap<string, string> = new Map(),
 ): { rows: MatrixRow[]; columns: Competency[] } {
   const rows = people
     .slice()
@@ -70,14 +74,14 @@ export function buildMatrix(
     .map((p) => {
       const req = requiredFor(p.roles, requirements);
       const cells: Record<string, Cell> = {};
-      for (const c of comps) cells[c.key] = cellFor(p.tickets, c.key, req.has(c.key), today, 30, c.validMonths);
+      for (const c of comps) cells[c.key] = cellFor(p.tickets, c.key, req.has(c.key), today, 30, c.validMonths, bookings.get(`${normaliseName(p.name)}|${c.key}`) ?? null);
       const gaps = comps.filter((c) => cells[c.key].required && (cells[c.key].state === 'missing' || cells[c.key].state === 'expired')).map((c) => c.label);
       const expiring = comps.filter((c) => cells[c.key].state === 'expiring').map((c) => c.label);
       return { name: p.name, role: p.roles.length > 1 ? p.roles.join(' / ') : p.role, roles: p.roles, cells, gaps, expiring };
     });
   // Columns: anything required of anyone, or held by anyone. Empty columns clutter.
   const used = new Set<string>();
-  for (const r of rows) for (const [k, c] of Object.entries(r.cells)) if (c.required || c.state !== 'missing') used.add(k);
+  for (const r of rows) for (const [k, c] of Object.entries(r.cells)) if (c.required || c.state !== 'missing' || c.booked_on) used.add(k);
   return { rows, columns: comps.filter((c) => used.has(c.key)) };
 }
 

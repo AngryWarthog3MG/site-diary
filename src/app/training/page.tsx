@@ -6,6 +6,8 @@ import { sees, canAuthorEntries } from '@/lib/roles';
 import { BrandMark } from '@/components/brand-mark';
 import { perthToday } from '@/lib/push/decide';
 import { buildMatrix, competencies, mergePeople } from '@/lib/training/model';
+import { bookingsByPerson } from '@/lib/training/courses';
+import { loadTraining } from '@/lib/training/load';
 import type { TicketFacts } from '@/lib/crew/tickets';
 import { Matrix } from './matrix';
 
@@ -23,13 +25,15 @@ export default async function TrainingPage({ searchParams }: { searchParams: Pro
   const orgId = current.project.org.id;
   const wholeCompany = scope === 'company';
   const crewQuery = supabase.from('crew').select('name, role, project:projects!inner(org_id)').eq('active', true);
-  const [{ data: crew }, { data: tickets }, { data: reqs }, { data: custom }, { data: staff }] = await Promise.all([
+  const [{ data: crew }, { data: tickets }, { data: reqs }, { data: custom }, { data: staff }, training] = await Promise.all([
     wholeCompany ? crewQuery.eq('project.org_id', orgId) : crewQuery.eq('project_id', current.project_id),
     supabase.from('crew_tickets').select('person_name, ticket_type, expires_on, active, issued_on').eq('org_id', orgId),
     supabase.from('competency_requirements').select('role, competency').eq('org_id', orgId),
     supabase.from('org_competencies').select('key, label, valid_months, active').eq('org_id', orgId).order('label'),
     // Whole company: the staff list too (README R123), so someone on no job yet still shows with what their role needs.
     wholeCompany ? supabase.from('staff').select('name, role').eq('org_id', orgId).eq('active', true) : Promise.resolve({ data: [] as Array<{ name: string; role: string | null }> }),
+    // Classes people are booked on (README R188): shown beside a gap, never filling it.
+    loadTraining(supabase, orgId),
   ]);
   const today = perthToday();
   const crewList = [...((crew ?? []) as Array<{ name: string; role: string | null }>), ...((staff ?? []) as Array<{ name: string; role: string | null }>)].map((c) => ({ name: c.name, role: c.role }));
@@ -37,7 +41,7 @@ export default async function TrainingPage({ searchParams }: { searchParams: Pro
   // On a job: its crew, with their tickets. Whole company: everyone with a ticket too.
   const people = mergePeople(crewList, wholeCompany ? ticketRows : ticketRows.filter((t) => crewList.some((c) => c.name.trim().toLowerCase().replace(/\s+/g, ' ') === t.person_name.trim().toLowerCase().replace(/\s+/g, ' '))));
   const comps = competencies((custom ?? []) as Array<{ key: string; label: string; valid_months: number | null; active: boolean }>);
-  const { rows, columns } = buildMatrix(people, comps, (reqs ?? []) as Array<{ role: string; competency: string }>, today);
+  const { rows, columns } = buildMatrix(people, comps, (reqs ?? []) as Array<{ role: string; competency: string }>, today, bookingsByPerson(training.attendees, training.classes, training.courses, today));
   const q = `?project=${current.project_id}`;
   const canManage = canAuthorEntries(current.role);
   const gaps = rows.reduce((n, r) => n + r.gaps.length, 0);
@@ -51,7 +55,12 @@ export default async function TrainingPage({ searchParams }: { searchParams: Pro
         <Link className={`button ${wholeCompany ? 'button--quiet' : ''}`} href={`/training${q}`}>This job</Link>
         <Link className={`button ${wholeCompany ? '' : 'button--quiet'}`} href={`/training${q}&scope=company`}>Whole company</Link>
       </div>
-      {canManage && <Link className="button button--quiet" href={`/training/requirements${q}`}>What each role must hold</Link>}
+      <div className="photo-add-pair">
+        {canManage && <Link className="button button--quiet" href={`/training/requirements${q}`}>What each role must hold</Link>}
+        <Link className="button button--quiet" href={`/training/classes${q}`}>Classes</Link>
+        <Link className="button button--quiet" href={`/training/courses${q}`}>Courses</Link>
+        <Link className="button button--quiet" href={`/training/report${q}`}>Training report</Link>
+      </div>
       <section className="entries-summary" aria-label="Summary" style={{ marginTop: '1rem' }}>
         <div><p className="label">People</p><p className="entries-summary__value mono">{rows.length}</p></div>
         <div><p className="label">Gaps</p><p className={`entries-summary__value mono${gaps > 0 ? ' vr-missing' : ''}`}>{gaps}</p></div>

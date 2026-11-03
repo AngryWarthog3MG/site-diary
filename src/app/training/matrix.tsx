@@ -62,10 +62,10 @@ export function Matrix({ rows, columns, allCompetencies, orgId, projectId, userI
                   const cell = r.cells[c.key];
                   const cls = `matrix__cell matrix__cell--${cell.state}${cell.required ? ' matrix__cell--required' : ''}`;
                   return (
-                    <td key={c.key} className={cls} title={`${c.label}: ${cell.state}${cell.expires_on ? ` · ${fmtDate(cell.expires_on)}` : ''}${cell.required ? ' · required' : ''}`}>
+                    <td key={c.key} className={cls} title={`${c.label}: ${cell.state}${cell.expires_on ? ` · ${fmtDate(cell.expires_on)}` : ''}${cell.required ? ' · required' : ''}${cell.booked_on ? ` · booked on a class ${fmtDate(cell.booked_on)}` : ''}`}>
                       {canManage && (cell.state === 'missing' || cell.state === 'expired' || cell.state === 'expiring') ? (
-                        <button type="button" className="matrix__mark" onClick={() => setAdding({ person: r.name, key: c.key })}>{MARK[cell.state]}</button>
-                      ) : <span className="matrix__mark">{MARK[cell.state]}</span>}
+                        <button type="button" className="matrix__mark" onClick={() => setAdding({ person: r.name, key: c.key })}>{MARK[cell.state]}{cell.booked_on ? <span className="matrix__booked">◷</span> : null}</button>
+                      ) : <span className="matrix__mark">{MARK[cell.state]}{cell.booked_on ? <span className="matrix__booked">◷</span> : null}</span>}
                     </td>
                   );
                 })}
@@ -74,7 +74,7 @@ export function Matrix({ rows, columns, allCompetencies, orgId, projectId, userI
           </tbody>
         </table>
       </div>
-      <p className="caption">● current · ◔ expiring within 30 days · ✕ expired · · none recorded · red cell = required by the role and not held{canManage ? ' · tap a cell to record a ticket' : ''}</p>
+      <p className="caption">● current · ◔ expiring within 30 days · ✕ expired · · none recorded · ◷ booked on a class · red cell = required by the role and not held{canManage ? ' · tap a cell to record a ticket' : ''}</p>
       {open && (() => {
         const r = rows.find((x) => x.name === open)!;
         return (
@@ -82,6 +82,7 @@ export function Matrix({ rows, columns, allCompetencies, orgId, projectId, userI
             <p className="label">{r.name}{r.role ? ` · ${r.role}` : ''}</p>
             {r.gaps.length > 0 && <p className="vr-missing">Gaps: {r.gaps.join(', ')}</p>}
             {r.expiring.length > 0 && <p>Expiring: {r.expiring.join(', ')}</p>}
+            {allCompetencies.some((c) => r.cells[c.key]?.booked_on) && <p className="caption">Booked: {allCompetencies.filter((c) => r.cells[c.key]?.booked_on).map((c) => `${c.label} (${fmtDate(r.cells[c.key].booked_on)})`).join(', ')}</p>}
             <p className="caption">Held: {allCompetencies.filter((c) => r.cells[c.key]?.state === 'current' || r.cells[c.key]?.state === 'expiring').map((c) => `${c.label}${r.cells[c.key].expires_on ? ` (to ${fmtDate(r.cells[c.key].expires_on)})` : ''}`).join(', ') || 'nothing recorded'}</p>
             {canManage && (
               <div className="crewchips">{allCompetencies.filter((c) => r.cells[c.key]?.state !== 'current').map((c) => <button key={c.key} type="button" className="quotebtn crewchip" onClick={() => setAdding({ person: r.name, key: c.key })}>+ {c.label}</button>)}</div>

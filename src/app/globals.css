@@ -4052,6 +4052,7 @@ a.dash-row:hover { background: var(--teal-tint); }
 .matrix__cell--required.matrix__cell--missing, .matrix__cell--required.matrix__cell--expired { background: #FDECEC; }
 .matrix__cell--required-on { background: var(--teal-tint, rgba(13,90,88,0.08)); }
 .matrix__cell--required-on .matrix__mark { color: var(--teal); font-weight: 700; }
+.matrix__booked { font-size: 0.7em; color: #1f5f9f; margin-left: 0.1rem; vertical-align: super; }
 .matrix__row--gap .matrix__person { border-left: 3px solid #9A2B2B; }
 
 /* Safety dashboard. */
