@@ -15,6 +15,9 @@ test('a template is checked before it is saved', () => {
   assert.ok(templateProblems({ ...checklist, hold_point: false }).includes('a release sign-off only on a hold point form'));
   assert.ok(templateProblems({ code: 'I', kind: 'itp', title: 't', revision: 'A', parties: ['Kooboolong'], activities: [{ no: '1', activity: 'x', governing: [], criteria: [], record: [], inspection: { Lendlease: 'H', Kooboolong: 'X' } }] }).some((p) => p.includes('unknown party')));
   assert.ok(templateProblems({ code: 'R', kind: 'itr_register', title: 't', revision: 'A', columns: [] }).includes('at least one column'));
+  // A header field picked from another form's records names that form (README R182).
+  assert.ok(templateProblems({ ...checklist, header_fields: [{ key: 'earthworks_lot', label: 'Earthworks lot', type: 'record' }] }).includes('header field earthworks_lot names the form it picks from'));
+  assert.deepEqual(templateProblems({ ...checklist, header_fields: [{ key: 'earthworks_lot', label: 'Earthworks lot', type: 'record', template_code: 'KBS-QA-E' }] }), []);
 });
 
 test('blank items become gaps at submit, in template order; gaps are counted', () => {

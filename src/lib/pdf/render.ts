@@ -338,8 +338,13 @@ async function placeImage({ key, src, max }: { key: string; src: string; max: nu
   canvas.height = Math.round(h * scale);
   const ctx = canvas.getContext('2d');
   if (!ctx) { await settle(img, () => { img.src = src; }); source.src = ''; return; }
+  // A signature is a PNG with a transparent ground, and a phone draws it wider than this limit. Re-encoded as JPEG
+  // with nothing under it, the transparent ground becomes black and the sheet shows a black box with the strokes
+  // lost in it (README R182). Paint the ground white first, and keep a PNG a PNG so the strokes stay crisp.
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
   ctx.drawImage(source, 0, 0, canvas.width, canvas.height);
-  const small = canvas.toDataURL('image/jpeg', 0.72);
+  const small = /^data:image\/png[;,]/i.test(src) ? canvas.toDataURL('image/png') : canvas.toDataURL('image/jpeg', 0.72);
   await settle(img, () => { img.src = small; });
   source.src = '';
 }

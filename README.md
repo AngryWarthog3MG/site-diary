@@ -3824,6 +3824,27 @@ data. A node test holds each to `templateProblems` and the engine's lists before
 `scripts/forms-seed-templates.mjs <ORG>` loads them AS DRAFTS, once per title, and the office issues each from the designer
 after reading it. Light and heavy vehicle prestarts stay plant prestarts (R180).
 
+**R182. The concrete lot record's earthworks lot is picked, and a signature prints as a signature.** Mitchell printed
+Building 2 & 3's concrete lot record (6425-KBS-ITR-002 Rev B, Kalgoorlie) and clouded two things. "Earthworks lot
+(ITR-001)" read `6425-KBS-ITR-001` — the form's code, typed into a text box that asked for a lot — and the KBS
+Supervisor's signature on HP1 was a black box with the strokes lost in it.
+
+The signature: the pad draws at the phone's pixel ratio, so a signature PNG is 1,500-odd pixels wide with a transparent
+ground. `placeImage` in `src/lib/pdf/render.ts` shrinks any image wider than the document's limit through a canvas and
+re-encoded it as JPEG — which has no transparency, so the ground went black. It now paints the canvas white before
+drawing and keeps a PNG a PNG. Every document that hands images through `images` gets this (the QA record, the
+dayworks sign-off sheet); the daily docket does not go through it and its bytes are untouched.
+
+The lot: a header field may now be of type `record`, naming in `template_code` another of the company's forms. The
+record screen offers the job's records of that form — the lot or element each names, with where it stands (`loadFormLots`,
+every issued revision, voided ones left out) — and stores the lot's TEXT, so the sheet prints as the paper did and the
+value can only be a lot the job has. The template check, TS and SQL, asks such a field to name its form. An issued
+revision is frozen, so this is `6425-KBS-ITR-002` **Rev C**: Rev B word for word with that one field picked (a node test
+holds the two files to exactly that difference, and every transcribed form to `templateProblems` before it is seeded).
+The Building 2 & 3 record stays on Rev B — it carries two sign-offs, and a record with a sign-off never moves (R174) —
+so its earthworks lot is retyped by hand as the lot's name before the remaining parties sign; records begun after the
+seed open on Rev C and pick. Suite 42 gained the rule.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;

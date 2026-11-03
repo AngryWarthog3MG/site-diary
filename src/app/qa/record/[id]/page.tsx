@@ -4,7 +4,7 @@ import { requireUser, resolveProject, guardScreen } from '@/lib/auth';
 import { sees } from '@/lib/roles';
 import { BrandMark } from '@/components/brand-mark';
 import { perthToday } from '@/lib/push/decide';
-import { loadQaRecord, loadVoidTrail, loadPhotoAdditions } from '@/lib/qa/load';
+import { loadQaRecord, loadVoidTrail, loadPhotoAdditions, loadFormLots } from '@/lib/qa/load';
 import { addedAfterSignoff } from '@/lib/qa/photos';
 import { RecordEditor } from './record-editor';
 
@@ -49,10 +49,13 @@ export default async function QaRecordPage({ params, searchParams }: { params: P
     const { data } = await supabase.storage.from('entry-photos').createSignedUrls(paths, 3600);
     for (const d of data ?? []) if (d.path && d.signedUrl) urls[d.path] = d.signedUrl;
   }
+  // The lots a `record` header field may pick from: this job's records of the form it names (README R182).
+  const recordCodes = (t.spec.header_fields ?? []).filter((f) => f.type === 'record' && f.template_code).map((f) => f.template_code as string);
   // The people a sign-off may name: the job's crew list, then the staff list.
-  const [{ data: crew }, { data: staff }] = await Promise.all([
+  const [{ data: crew }, { data: staff }, formLots] = await Promise.all([
     supabase.from('crew').select('name').eq('project_id', current.project_id).eq('active', true).order('sort_order').order('name'),
     supabase.from('staff').select('name').eq('org_id', current.project.org.id).eq('active', true).order('name'),
+    loadFormLots(supabase, current.project.org.id, current.project_id, recordCodes),
   ]);
   const seen = new Set<string>(); const people: string[] = [];
   for (const r of [...((crew ?? []) as Array<{ name: string }>), ...((staff ?? []) as Array<{ name: string }>)]) { const n = String(r.name ?? '').trim(); if (n && !seen.has(n.toLowerCase())) { seen.add(n.toLowerCase()); people.push(n); } }
@@ -76,6 +79,7 @@ export default async function QaRecordPage({ params, searchParams }: { params: P
         today={perthToday()}
         signatureUrls={urls}
         people={people}
+        formLots={formLots}
         backTo={`/qa${q}`}
       />
     </main>

@@ -14,7 +14,9 @@ import { appendQaPhotos } from '@/lib/qa/photos';
 import { blanksAsGaps, gapCount, recordState, STATE_LABEL, type ItemResult, type ItemState, type RecordSignoff, type Signoff, type TemplateSection } from '@/lib/qa/model';
 import type { QaRecordRow, QaTemplateRow, QaVoidEvent } from '@/lib/qa/load';
 
-type HeaderField = { key: string; label: string; type: string; options?: string[]; default?: string; unit?: string };
+type HeaderField = { key: string; label: string; type: string; options?: string[]; default?: string; unit?: string; template_code?: string };
+/** A lot the job has a record for, on the form a `record` header field names (README R182). */
+export type FormLot = { id: string; lot: string; state: string };
 type Item = { id: string; text: string; reference?: string; value_type?: string; value_label?: string; hold_point?: boolean; notice?: string };
 type Section = { title: string; items: Item[] };
 type Column = { key: string; label: string; type: string; options?: string[]; unit?: string };
@@ -35,9 +37,9 @@ const slug = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(
  * is an answer, never a block. A sign-off once saved is never changed; when every required party has signed, the
  * record is frozen and this screen reads only.
  */
-export function RecordEditor({ projectId, recordId, template, record, instanceId, canWrite, isOffice, trail, addedAfter, myName, today, signatureUrls, people, backTo }: {
+export function RecordEditor({ projectId, recordId, template, record, instanceId, canWrite, isOffice, trail, addedAfter, myName, today, signatureUrls, people, formLots, backTo }: {
   projectId: string; recordId: string; template: QaTemplateRow; record: QaRecordRow | null; instanceId: string | null;
-  canWrite: boolean; isOffice: boolean; trail: QaVoidEvent[]; addedAfter: Record<string, { at: string; by: string | null }>; myName: string; today: string; signatureUrls: Record<string, string>; people: string[]; backTo: string;
+  canWrite: boolean; isOffice: boolean; trail: QaVoidEvent[]; addedAfter: Record<string, { at: string; by: string | null }>; myName: string; today: string; signatureUrls: Record<string, string>; people: string[]; formLots: Record<string, FormLot[]>; backTo: string;
 }) {
   const router = useRouter();
   const spec = template.spec as unknown as Spec;
@@ -207,6 +209,19 @@ export function RecordEditor({ projectId, recordId, template, record, instanceId
     const v = header[f.key] ?? '';
     const set = (x: string) => { setHeader((h) => ({ ...h, [f.key]: x })); setDirty(true); };
     if (f.type === 'select') return <select className="field field--sm" value={v} disabled={!editable} onChange={(e) => set(e.target.value)}><option value="">—</option>{(f.options ?? []).map((o) => <option key={o} value={o}>{o}</option>)}</select>;
+    if (f.type === 'record') {
+      // Picked from the job's records of the form the field names (README R182): the lot each one names, with where it
+      // stands. A value typed on an earlier revision stays on offer so nothing already on the sheet is lost.
+      const lots = formLots[f.template_code ?? ''] ?? [];
+      const known = lots.some((l) => l.lot === v);
+      return (
+        <select className="field field--sm" value={v} disabled={!editable} onChange={(e) => set(e.target.value)}>
+          <option value="">{lots.length ? '—' : `No ${f.template_code ?? 'record'} on this job yet`}</option>
+          {v && !known ? <option value={v}>{v}</option> : null}
+          {lots.map((l) => <option key={l.id} value={l.lot}>{l.lot} · {l.state}</option>)}
+        </select>
+      );
+    }
     if (f.type === 'date') return <input className="field field--sm" type="date" value={v} disabled={!editable} onChange={(e) => set(e.target.value)} />;
     if (f.type === 'number') return <input className="field field--sm" inputMode="decimal" value={v} disabled={!editable} onChange={(e) => set(e.target.value)} />;
     if (f.type === 'multiline') return <textarea className="field field--sm" rows={2} value={v} disabled={!editable} onChange={(e) => set(e.target.value)} />;

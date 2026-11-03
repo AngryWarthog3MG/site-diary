@@ -1,5 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { recordState, type ItemResult, type QaTemplate, type RecordSignoff, type RecordState } from './model';
+import { recordState, STATE_LABEL, type ItemResult, type QaTemplate, type RecordSignoff, type RecordState } from './model';
 import type { QaPhotoAddition } from './photos';
 
 /** A template as the job reads it: the row and its form. */
@@ -117,6 +117,33 @@ export async function loadQaRecord(supabase: SupabaseClient, projectId: string, 
     instance = (inst as QaInstanceRow | null) ?? null;
   }
   return { record, template: asTemplate(t as Record<string, unknown>), instance };
+}
+
+/**
+ * The lots a `record` header field may pick from (README R182): this job's records of each named form, every issued
+ * revision of it, voided ones left out, newest first — the lot or element each names and where it stands. A code with
+ * no record on the job gives an empty list, and the field says so.
+ */
+export async function loadFormLots(supabase: SupabaseClient, orgId: string, projectId: string, codes: string[]): Promise<Record<string, Array<{ id: string; lot: string; state: string }>>> {
+  const out: Record<string, Array<{ id: string; lot: string; state: string }>> = {};
+  const wanted = [...new Set(codes.filter(Boolean))];
+  if (wanted.length === 0) return out;
+  for (const c of wanted) out[c] = [];
+  const { data: tpls, error } = await supabase.from('qa_templates').select(TEMPLATE_COLS).eq('org_id', orgId).in('code', wanted).not('issued_at', 'is', null);
+  if (error) throw new Error(error.message);
+  const ts = ((tpls ?? []) as Array<Record<string, unknown>>).map(asTemplate);
+  if (ts.length === 0) return out;
+  const byId = new Map(ts.map((t) => [t.id, t]));
+  const { data: recs, error: rErr } = await supabase.from('qa_records').select(RECORD_COLS).eq('project_id', projectId).in('template_id', ts.map((t) => t.id)).is('voided_at', null).order('updated_at', { ascending: false });
+  if (rErr) throw new Error(rErr.message);
+  for (const raw of (recs ?? []) as Array<Record<string, unknown>>) {
+    const r = asRecord(raw);
+    const t = byId.get(r.template_id);
+    const lot = (r.lot_or_element ?? '').trim();
+    if (!t || !lot) continue;
+    out[t.code].push({ id: r.id, lot, state: STATE_LABEL[recordState(t.spec, r)] });
+  }
+  return out;
 }
 
 /** One ITP instance with its form and the records against its ITRs. */

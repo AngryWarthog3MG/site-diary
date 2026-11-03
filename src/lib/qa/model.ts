@@ -15,7 +15,12 @@ export type ValueType = (typeof VALUE_TYPES)[number];
 export const ITEM_STATES = ['ok', 'na', 'gap'] as const;
 export type ItemState = (typeof ITEM_STATES)[number];
 
-export interface HeaderField { key: string; label: string; type: 'text' | 'number' | 'date' | 'datetime' | 'select' | 'multiline'; options?: string[]; default?: string; unit?: string; note?: string }
+/**
+ * A header field. Type `record` (README R182) is PICKED from the job's records of another of the company's forms —
+ * `template_code` names that form — and stored as the lot or element that record names, so the sheet reads as the
+ * paper did and the value can only be a lot the job actually has.
+ */
+export interface HeaderField { key: string; label: string; type: 'text' | 'number' | 'date' | 'datetime' | 'select' | 'multiline' | 'record'; options?: string[]; default?: string; unit?: string; note?: string; template_code?: string }
 export interface TemplateItem { id: string; text: string; reference?: string; responsible?: string; value_type?: ValueType; value_label?: string; hold_point?: boolean; notice?: string }
 export interface TemplateSection { title: string; items: TemplateItem[] }
 export interface RegisterColumn { key: string; label: string; type: 'text' | 'number' | 'date' | 'datetime' | 'select'; unit?: string; options?: string[] }
@@ -87,7 +92,12 @@ export function templateProblems(t: Partial<QaTemplate>): string[] {
     });
   }
   const hk = new Set<string>();
-  (t.header_fields ?? []).forEach((h) => { if (!h.key?.trim() || !h.label?.trim()) out.push('every header field keyed and labelled'); if (hk.has(h.key)) out.push(`header field ${h.key} twice`); hk.add(h.key); });
+  (t.header_fields ?? []).forEach((h) => {
+    if (!h.key?.trim() || !h.label?.trim()) out.push('every header field keyed and labelled');
+    if (hk.has(h.key)) out.push(`header field ${h.key} twice`);
+    hk.add(h.key);
+    if (h.type === 'record' && !h.template_code?.trim()) out.push(`header field ${h.key} names the form it picks from`);
+  });
   return [...new Set(out)];
 }
 

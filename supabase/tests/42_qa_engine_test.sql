@@ -56,6 +56,11 @@ select tests.expect_error($$
   insert into public.qa_templates (org_id, spec) values ('aaaaaaaa-aaaa-0000-0000-000000000001',
     '{"code":"KBS-QA-T","kind":"itr_checklist","title":"Release without hold","revision":"A","hold_point":false,"sections":[{"title":"A","items":[{"id":"1","text":"x"}]}],"signoffs":[{"party":"P","required":true,"kind":"external","is_release":true}]}')
 $$, 'release sign-off only on a hold point form');
+-- A header field picked from another form's records names that form (README R182).
+select tests.expect_error($$
+  insert into public.qa_templates (org_id, spec) values ('aaaaaaaa-aaaa-0000-0000-000000000001',
+    '{"code":"KBS-QA-T","kind":"itr_checklist","title":"Pick with no form","revision":"A","header_fields":[{"key":"earthworks_lot","label":"Earthworks lot","type":"record"}],"sections":[{"title":"A","items":[{"id":"1","text":"x"}]}]}')
+$$, 'header field earthworks_lot names the form it picks from');
 insert into public.qa_templates (id, org_id, spec) values ('cccccccc-aaaa-0000-0000-000000000001', 'aaaaaaaa-aaaa-0000-0000-000000000001',
   '{"code":"KBS-QA-CG-001","kind":"itr_checklist","title":"Concrete on Ground - Pre-Pour Inspection","revision":"A","hold_point":true,
     "header_fields":[{"key":"pour_id","label":"Pour ID","type":"text"},{"key":"planned_at","label":"Planned pour date / time","type":"datetime"}],
