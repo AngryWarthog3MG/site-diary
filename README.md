@@ -3857,6 +3857,28 @@ Variation, Instruction or event, Concrete docket, Progress photograph — counte
 is on, every month opens flat, and the month downloads come back when it is cleared. Still not in it: incident, order,
 inspection and QA record photographs — their own records with their own readers (R173). Say the word.
 
+**R184. The library takes the records' own photographs too.** "Add the QA and incident photos too." R173 left them out
+because each record has its own readers; the library now lists them UNDER THAT READER'S OWN RULE — the loader runs as
+the caller, so a labourer's library would hold only the reports they made, and a page that cannot read a record does
+not list its photographs. Hazard and incident reports: the report's photographs on the Perth day it happened, an
+update's on the day of the update, context `INC-003 · Near miss`, the location as caption, the reporter named.
+Inspection and test records (not voided): the record's own photographs and each item's, context
+`6425-KBS-ITR-002 · Building 2 & 3`, an item's numbered as caption — dated by the day Storage says the file was
+uploaded (`list` on the record's folder), because a record has no day of its own and a pour date is not when a
+photograph was taken; a file Storage does not list falls back to the day the record was begun. Both are their own
+kind on the finder's chips (Hazard or incident, Inspection and test record), never marked draft — the draft mark is
+the diary's — and the download names each by its record. Still their own records: nothing here is copied, and a
+photograph removed from a record is not listed.
+
+**R185. A record's photographs print whole, at the size they were stored.** "The images on the PDF are so pixelated
+and nothing can be seen. We need to be able to see all info on these photos." The inspection and test record's PDF drew
+its photographs three to a row, 46 mm tall, cropped to fit, and shrunk to 1,200 px on the way — a docket or a
+certificate photographed on site was a thumbnail. Now one photograph per row at the page's full width, whole (never
+cropped), numbered, and the route's limit is the 1,600 px a photograph is stored at (`compress.ts`), so the file prints
+as it was kept and nothing is re-encoded. A nine-photograph record is eleven pages; that is what reading them takes.
+The PDF is rendered fresh on every request and never stored, so every record already done prints this way — nothing
+to redo. The daily docket is untouched.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;

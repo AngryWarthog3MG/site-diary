@@ -46,8 +46,9 @@ export default async function PhotoLibraryPage({ searchParams }: { searchParams:
       <h1 className="page-title">Photographs</h1>
       <p className="page-subtitle">
         Every photograph taken on the job, by the day it was taken: the diary’s own, the ones on dayworks, variations,
-        instructions and concrete dockets, and the crew’s progress photographs. Search for the one you need, or download
-        a month as a folder of dated folders, each file named by its day.
+        instructions and concrete dockets, the crew’s progress photographs, and the ones on hazard and incident reports
+        and inspection and test records that you may read. Search for the one you need, or download a month as a folder
+        of dated folders, each file named by its day.
       </p>
 
       <nav className="photolib-actions" aria-label="Photo library actions">

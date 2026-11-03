@@ -37,7 +37,7 @@ export function PhotoFinder({ months, kinds, urls, total, q }: {
               <div className="photolib-item__missing">File not found</div>
             )}
             <figcaption>
-              <span className="photolib-item__context">{p.context}{p.source === 'crew' ? ` · ${p.by ?? 'crew'}, not yet on the day` : p.day === 'signed' ? '' : ' · draft'}</span>
+              <span className="photolib-item__context">{p.context}{p.source === 'crew' ? ` · ${p.by ?? 'crew'}, not yet on the day` : p.source === 'incident' && p.by ? ` · ${p.by}` : p.source === 'diary' && p.day !== 'signed' ? ' · draft' : ''}</span>
               {p.caption && <span className="photolib-item__caption">{p.caption}</span>}
             </figcaption>
           </figure>

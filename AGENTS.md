@@ -162,10 +162,10 @@ improvising; the register once shipped dead because a live smoke test was skippe
   ONLY — a leading hand never writes the draft, whatever `canAuthorEntries` in TS says
 - `src/lib/photos/library.ts` + `library-load.ts` — the job's photographs in one place, by day (README R173): `/entries/photos`
   (screen `entries`; its own `Photographs` item under Diary since README R183, with a finder — `kindOf`, `photoMatches`,
-  `filterMonths`, pure — in `photo-finder.tsx`) lists every photograph the diary and
+  `filterMonths`, pure — in `photo-finder.tsx`; incident and QA record photographs listed too since README R184, under the caller's own read rule, each its own kind) lists every photograph the diary and
   `day_photos` hold, current version of a day only, signed links for the hour, no copy kept. `GET /api/entries/photos/zip
   ?project[&month]` streams them as a zip of dated folders through `src/lib/zip.ts` (STORE, streamed, dependency-free,
-  node-tested) — nothing stored. Incident, order and inspection photographs are NOT in it (their own read rules)
+  node-tested) — nothing stored. Order and inspection photographs are NOT in it (their own read rules)
 - `src/lib/swms/` — SWMS and JSA: `model.ts` (the 18 high-risk categories of WHS r.291, the 5×5 risk matrix,
   `readSteps`, `swmsProblems` — the TS half of `app.swms_problems`, the DB wins), `pdf.tsx`. Tables `swms`
   (born a draft; `active` only when complete, then frozen; a revision has `supersedes_id` and supersedes on
@@ -449,7 +449,7 @@ improvising; the register once shipped dead because a live smoke test was skippe
   a record's id is chosen on the way in and saved by upsert through outbox kind `qa_record`, signatures as blobs; the
   Kalgoorlie concrete set 6425-KBS-ITP-002 / ITR-002 / ITR-002A is transcribed by script from the documents' cells; `pdf.ts` +
   `/api/qa/record/[id]/pdf` print a record in the Kooboolong format, never stored, in `outputFileTracingIncludes`;
-  `qa_records.photo_paths` are the record's own photographs, README R166): `model.ts` (`templateProblems` — the TS half
+  `qa_records.photo_paths` are the record's own photographs, README R166; printed one per row, full width, whole, at the stored 1,600 px — README R185): `model.ts` (`templateProblems` — the TS half
   of `app.qa_template_problems`, `blanksAsGaps`, `gapCount`, `signoffsComplete`, `released`, `recordState`, `nextRevision`,
   `templateCounts`). Tables `qa_templates` (company; `spec` jsonb is the form; issued = frozen, next wording = next revision),
   `qa_itp_instances` (one ITP revision per job; draft → issued → approved → signed, forward only; office only), `qa_records`

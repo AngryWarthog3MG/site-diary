@@ -9,7 +9,8 @@ import { qaRecordHtml } from '@/lib/qa/pdf';
 export const maxDuration = 300;
 export const runtime = 'nodejs';
 
-const PHOTO_MAX = 1200;
+/** A photograph is stored at 1600 px (compress.ts); printed at that size, whole, so a docket photographed on site can be read (README R185). */
+const PHOTO_MAX = 1600;
 
 /**
  * One inspection and test record as a PDF (README R166), under the caller's RLS: the record, its signatures and its

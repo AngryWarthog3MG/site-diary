@@ -1,5 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { PHOTO_CONTEXT } from '@/lib/pdf/photos';
+import { perthDate } from '@/lib/pdf/dates';
+import { incidentRef, KIND_LABEL, type IncidentKind } from '@/lib/incidents/model';
 import { distinctPhotos, type LibraryPhoto } from './library';
 
 /**
@@ -10,7 +12,10 @@ import { distinctPhotos, type LibraryPhoto } from './library';
  *     and concrete dockets; the CURRENT version of a day only, a corrected day showing the correction,
  *     drafts included and marked;
  *   - `day_photos` — what the crew added to a day (README R172). One that the supervisor has carried
- *     onto the day is the same file, so it falls together with the diary's by path.
+ *     onto the day is the same file, so it falls together with the diary's by path;
+ *   - and since README R184 the records that keep their own photographs, each under its own read rule:
+ *     hazard and incident reports (the report's on the day it happened, an update's on the day of the
+ *     update) and inspection and test records (on the day each file was uploaded, as Storage dates it).
  *
  * Nothing here is a copy: the library lists the record's own files and signs links to them for the
  * hour. A photograph removed from a day's draft is not on the day and is not listed.
@@ -90,6 +95,50 @@ export async function loadPhotoLibrary(
       source: 'crew',
       by: names.get(r.added_by) ?? null,
     });
+  }
+  // The day's standing for a photograph that is not on the diary: the day as it stands, nothing more.
+  const standing = (date: string): Pick<LibraryPhoto, 'entryNo' | 'day'> => {
+    const day = dayOf.get(date);
+    return { entryNo: (day?.entry_no as string | null) ?? null, day: day ? (day.status === 'signed' ? 'signed' : 'draft') : 'none' };
+  };
+  const inRange = (date: string) => (!range.from || date >= range.from) && (!range.to || date <= range.to);
+
+  // Hazards and incidents (README R184): the report's photographs on the day it happened, an update's on its own day.
+  const { data: incRows } = await supabase.from('incidents').select('id, seq, kind, occurred_at, location, photo_urls, reported_by, incident_updates(body, photo_urls, created_at)').eq('project_id', projectId);
+  const incidents = (incRows ?? []) as Array<{ id: string; seq: number; kind: string; occurred_at: string; location: string | null; photo_urls: string[] | null; reported_by: string; incident_updates: Array<{ body: string; photo_urls: string[] | null; created_at: string }> | null }>;
+  const reporters = [...new Set(incidents.map((i) => i.reported_by))].filter((id) => !names.has(id));
+  if (reporters.length) {
+    const { data: people } = await supabase.from('profiles').select('id, full_name').in('id', reporters);
+    for (const pr of (people ?? []) as Array<{ id: string; full_name: string | null }>) names.set(pr.id, pr.full_name);
+  }
+  for (const i of incidents) {
+    const context = `${incidentRef(i.seq)} · ${KIND_LABEL[i.kind as IncidentKind] ?? i.kind}`;
+    const date = perthDate(i.occurred_at);
+    if (date && inRange(date)) for (const path of i.photo_urls ?? []) out.push({ date, path, context, caption: i.location, ...standing(date), source: 'incident', by: names.get(i.reported_by) ?? null });
+    for (const u of i.incident_updates ?? []) {
+      const d = perthDate(u.created_at);
+      if (d && inRange(d)) for (const path of u.photo_urls ?? []) out.push({ date: d, path, context: `${context} · update`, caption: u.body, ...standing(d), source: 'incident', by: names.get(i.reported_by) ?? null });
+    }
+  }
+
+  // Inspection and test records (README R184): the record's own photographs and each item's, dated by the upload
+  // Storage recorded — a record has no day of its own; a file that Storage does not list is dated by the record's start.
+  const { data: qaRows } = await supabase.from('qa_records').select('id, lot_or_element, photo_paths, items, client_created_at, template:qa_templates(code, title)').eq('project_id', projectId).is('voided_at', null);
+  type QaRow = { id: string; lot_or_element: string | null; photo_paths: string[] | null; items: Array<{ item_id: string; photo_paths?: string[] }> | null; client_created_at: string; template: { code: string; title: string } | Array<{ code: string; title: string }> | null };
+  for (const r of (qaRows ?? []) as QaRow[]) {
+    const itemPhotos = (Array.isArray(r.items) ? r.items : []).flatMap((it) => (it.photo_paths ?? []).map((path) => ({ path, item: it.item_id })));
+    const own = (r.photo_paths ?? []).map((path) => ({ path, item: null as string | null }));
+    if (own.length + itemPhotos.length === 0) continue;
+    const t = (Array.isArray(r.template) ? r.template[0] : r.template) ?? null;
+    const context = `${t?.code ?? 'ITR'} · ${r.lot_or_element ?? t?.title ?? 'record'}`;
+    const { data: files } = await supabase.storage.from('entry-photos').list(`${projectId}/qa/${r.id}`, { limit: 1000 });
+    const uploaded = new Map<string, string>();
+    for (const f of (files ?? []) as Array<{ name: string; created_at?: string }>) if (f.created_at) uploaded.set(`${projectId}/qa/${r.id}/${f.name}`, f.created_at);
+    for (const { path, item } of [...own, ...itemPhotos]) {
+      const date = perthDate(uploaded.get(path) ?? r.client_created_at);
+      if (!date || !inRange(date)) continue;
+      out.push({ date, path, context, caption: item ? `Item ${item}` : null, ...standing(date), source: 'qa', by: null });
+    }
   }
   return distinctPhotos(out);
 }

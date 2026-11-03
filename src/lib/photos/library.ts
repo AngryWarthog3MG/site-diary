@@ -6,7 +6,12 @@
  * and the names. Relative imports only — Node-tested.
  */
 
-export type PhotoSource = 'diary' | 'crew';
+/**
+ * Where a photograph comes from: the diary's record, the crew's progress photographs (R172), an inspection and test
+ * record, or a hazard or incident report and its updates (README R184). Each is listed under the caller's own read rule.
+ */
+export type PhotoSource = 'diary' | 'crew' | 'qa' | 'incident';
+export const SOURCE_KIND: Record<Exclude<PhotoSource, 'diary'>, string> = { crew: 'Progress photograph', qa: 'Inspection and test record', incident: 'Hazard or incident' };
 /** Where the day's diary stands: signed (the record), a draft, or no diary for that day at all. */
 export type DayStanding = 'signed' | 'draft' | 'none';
 
@@ -22,7 +27,7 @@ export interface LibraryPhoto {
   entryNo: string | null;
   /** The day the photograph is on. A photograph on a signed day is part of the record. */
   day: DayStanding;
-  /** `diary`: on the day's record. `crew`: added by the crew (README R172), not yet carried onto a day. */
+  /** `diary`: on the day's record. `crew`: added by the crew (README R172), not yet carried onto a day. `qa` and `incident`: that record's own (README R184). */
   source: PhotoSource;
   /** Who added it, where the row says (the crew's photographs). */
   by: string | null;
@@ -124,7 +129,7 @@ export function zipEntries(jobCode: string, days: LibraryDay[]): Array<{ name: s
     day.photos.forEach((photo, i) => {
       const nn = String(i + 1).padStart(2, '0');
       const tail = photo.caption ? ` - ${safeName(photo.caption, 60)}` : '';
-      const mark = photo.source === 'crew' ? ' (crew, not yet on the day)' : photo.day === 'signed' ? '' : ' (draft)';
+      const mark = photo.source === 'crew' ? ' (crew, not yet on the day)' : photo.source !== 'diary' || photo.day === 'signed' ? '' : ' (draft)';
       out.push({ name: `${root}/${day.date}/${day.date} ${nn} ${safeName(photo.context, 40)}${tail}${mark}.${extensionOf(photo.path)}`, photo });
     });
   }
@@ -149,7 +154,7 @@ export function zipFileName(jobCode: string, month: string | null): string {
  * "Variation V-003" is a Variation, "Concrete docket — Pad 4" a Concrete docket — and the crew's are their own kind.
  */
 export function kindOf(p: Pick<LibraryPhoto, 'context' | 'source'>): string {
-  if (p.source === 'crew') return 'Progress photograph';
+  if (p.source !== 'diary') return SOURCE_KIND[p.source];
   return p.context.replace(/\s+V-\d+$/, '').replace(/\s+—.*$/, '').trim() || 'Photograph';
 }
 

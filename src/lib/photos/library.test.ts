@@ -95,3 +95,15 @@ test('the finder: a kind per context, every word must match, and empty days fall
   assert.equal(filterMonths(months, '').length, 2, 'no search, nothing dropped');
   assert.equal(filterMonths(months, 'nothing like this').length, 0);
 });
+
+test('a record’s photograph is its own kind, never a draft of the diary, and names its record in the download (README R184)', () => {
+  const inc = photo({ path: 'i.jpg', context: 'INC-003 · Near miss', source: 'incident', by: 'Evan', day: 'draft', entryNo: null, caption: 'North gate' });
+  const qa = photo({ path: 'q.jpg', context: '6425-KBS-ITR-002 · Building 2 & 3', source: 'qa', day: 'none', entryNo: null, caption: 'Item 12' });
+  assert.deepEqual([kindOf(inc), kindOf(qa)], ['Hazard or incident', 'Inspection and test record']);
+  assert.equal(photoMatches(inc, 'inc-003 evan'), true);
+  assert.equal(photoMatches(qa, 'building item 12'), true);
+  const names = zipEntries('C010', groupByDay([inc, qa, photo({ path: 'd.jpg', day: 'draft', entryNo: null })])).map((e) => e.name.split('/').pop());
+  assert.ok(names.some((n) => n?.includes('INC-003 · Near miss - North gate.jpg') && !n.includes('(draft)')), names.join(' | '));
+  assert.ok(names.some((n) => n?.includes('6425-KBS-ITR-002 · Building 2 & 3 - Item 12.jpg')), names.join(' | '));
+  assert.ok(names.some((n) => n?.includes('Site photograph (draft)')), 'the diary’s own draft still says so');
+});
