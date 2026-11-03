@@ -3879,6 +3879,12 @@ as it was kept and nothing is re-encoded. A nine-photograph record is eleven pag
 The PDF is rendered fresh on every request and never stored, so every record already done prints this way — nothing
 to redo. The daily docket is untouched.
 
+The Record Details grid on the same PDF drew a short green rule under each LABEL — "the lines under the titles are so
+far off". The label span carried class `lbl`, and inside a `.sect` that class is the section heading's style (green,
+underlined, `src/lib/pdf/styles.ts`), so every field label inherited a heading's rule. The labels now have their own
+class (`qa-h__l`: small caps, grey, no rule); each label-and-value pair sits on one hairline, three to a row, with the
+rule under the pair rather than under the title. Nothing on the sheet changed but how it is drawn.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;
