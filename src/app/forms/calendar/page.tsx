@@ -11,6 +11,7 @@ import { loadPlantOnJob } from '@/lib/plant/on-job';
 import { peopleOnJob } from '@/lib/crew/inductions';
 import { monthLabel, nextMonth, prevMonth, readMonth, monthStart, monthEnd } from '@/lib/deliveries/model';
 import { FormsCalendar, type DoneOnDay } from './forms-calendar';
+import { loadJobPeople } from '@/lib/members/people';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Forms calendar · Kooboolong IMS' };
@@ -33,7 +34,7 @@ export default async function FormsCalendarPage({ searchParams }: { searchParams
   const month = readMonth(params.month, today);
   const supabase = await createClient();
   const orgId = current.project.org.id;
-  const [schedules, templates, { data: doneRows }, machines, { data: crew }, { data: members }] = await Promise.all([
+  const [schedules, templates, { data: doneRows }, machines, { data: crew }, memberRows] = await Promise.all([
     loadSchedules(supabase, orgId, current.project_id, today),
     loadTemplates(supabase, orgId),
     supabase.from('form_submissions').select('id, template_code, template_title, subject_person, subject_plant_id, completed_at, completed_on_device_at, outcome, schedule_id')
@@ -41,10 +42,8 @@ export default async function FormsCalendarPage({ searchParams }: { searchParams
       .gte('completed_at', `${monthStart(month)}T00:00:00+08:00`).lte('completed_at', `${monthEnd(month)}T23:59:59+08:00`),
     loadPlantOnJob(supabase, current.project_id),
     supabase.from('crew').select('name').eq('project_id', current.project_id).eq('active', true),
-    supabase.from('project_members').select('user_id, role, profile:profiles(full_name)').eq('project_id', current.project_id),
+    loadJobPeople(supabase, current.project_id, { everyone: true }),
   ]);
-  type M = { user_id: string; role: string; profile: { full_name: string | null } | Array<{ full_name: string | null }> | null };
-  const memberRows = ((members ?? []) as unknown as M[]).map((m) => ({ id: m.user_id, name: (Array.isArray(m.profile) ? m.profile[0]?.full_name : m.profile?.full_name) ?? 'Unnamed' })).sort((a, b) => a.name.localeCompare(b.name));
   const people = peopleOnJob(memberRows.map((m) => m.name), ((crew ?? []) as Array<{ name: string }>).map((c) => c.name));
   const done: DoneOnDay[] = ((doneRows ?? []) as Array<{ id: string; template_code: string; template_title: string; subject_person: string | null; completed_at: string; completed_on_device_at: string | null; outcome: string | null; schedule_id: string | null }>)
     .map((d) => ({ id: d.id, code: d.template_code, title: d.template_title, about: d.subject_person, at: d.completed_on_device_at ?? d.completed_at, outcome: d.outcome, scheduleId: d.schedule_id }));

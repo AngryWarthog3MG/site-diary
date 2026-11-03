@@ -6,6 +6,7 @@ import { BrandMark } from '@/components/brand-mark';
 import { perthToday } from '@/lib/push/decide';
 import { isUuid } from '@/lib/api';
 import { loadAssetRegister } from '@/lib/assets/load';
+import { loadJobPeople } from '@/lib/members/people';
 import { CLASS_LABEL, categoryLabel, type AssetRecordKind, type Outcome } from '@/lib/assets/model';
 import { AssetScreen, type AssetRecordRow, type CheckoutRow, type OpenAction } from './asset-screen';
 
@@ -33,18 +34,13 @@ export default async function AssetPage({ params, searchParams }: { params: Prom
   const verdict = data.verdicts[0];
   if (!verdict || verdict.asset.org_id !== org.id) notFound();
 
-  const [{ data: records }, { data: history }, { data: actions }, { data: members }] = await Promise.all([
+  const [{ data: records }, { data: history }, { data: actions }, people] = await Promise.all([
     supabase.from('asset_records').select('id, profile_id, kind, done_on, performed_by_name, competence, organisation, meter_reading, outcome, findings, next_due_on, file_path, created_at').eq('asset_id', id).order('done_on', { ascending: false }).order('created_at', { ascending: false }),
     supabase.from('asset_checkouts').select('id, holder_name, purpose, due_back_on, out_at, condition_out, in_at, condition_in, project:projects(code)').eq('asset_id', id).order('out_at', { ascending: false }).limit(30),
     supabase.from('asset_actions').select('id, profile_id, due_on, action, detail, priority, assigned_to, done_at').eq('asset_id', id).is('done_at', null).order('due_on'),
-    supabase.from('project_members').select('user_id, role, profile:profiles(full_name)').eq('project_id', current.project_id),
+    loadJobPeople(supabase, current.project_id),
   ]);
   // Who an action can go to: the job's members who have a door to the action register (R177: not the labourer).
-  type M = { user_id: string; role: string; profile: { full_name: string | null } | { full_name: string | null }[] | null };
-  const people = ((members ?? []) as unknown as M[])
-    .filter((m) => m.role !== 'labourer')
-    .map((m) => ({ id: m.user_id, name: (Array.isArray(m.profile) ? m.profile[0]?.full_name : m.profile?.full_name) ?? 'Unnamed' }))
-    .sort((a, b) => a.name.localeCompare(b.name));
   const jobs = memberships.filter((m) => m.project.active && m.project.org.id === org.id).map((m) => ({ id: m.project_id, code: m.project.code, name: m.project.name }));
   const a = verdict.asset;
 

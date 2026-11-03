@@ -8,6 +8,7 @@ import { isUuid } from '@/lib/api';
 import { loadRiskRegister } from '@/lib/risks/load';
 import { PROFILE_STATUS_LABEL, SCOPE_LABEL, canAssess } from '@/lib/risks/model';
 import { readSteps } from '@/lib/swms/model';
+import { loadJobPeople } from '@/lib/members/people';
 import { ProfileScreen, type SwmsOption } from './profile-screen';
 
 export const dynamic = 'force-dynamic';
@@ -38,18 +39,13 @@ export default async function RiskProfilePage({ params, searchParams }: { params
   // Another job's profile is read from its own job.
   if (p.scope === 'project' && p.project_id !== current.project_id) redirect(`/risks/${id}?project=${p.project_id}`);
 
-  const [{ data: members }, { data: causes }, { data: swmsRows }, { data: reviews }] = await Promise.all([
-    supabase.from('project_members').select('user_id, role, profile:profiles(full_name)').eq('project_id', current.project_id),
+  const [people, { data: causes }, { data: swmsRows }, { data: reviews }] = await Promise.all([
+    loadJobPeople(supabase, current.project_id),
     supabase.from('org_incident_causes').select('kind, key, label, active').eq('org_id', org.id),
     supabase.from('swms').select('id, title, kind, version, steps').eq('project_id', current.project_id).eq('status', 'active').order('title'),
     supabase.from('risk_profile_reviews').select('id, reviewed_on, reviewed_by_name, note').eq('profile_id', id).order('reviewed_on', { ascending: false }).limit(20),
   ]);
   // Who a risk or a planned control can go to: the job's members with a door to the action register (R177: not the labourer).
-  type M = { user_id: string; role: string; profile: { full_name: string | null } | { full_name: string | null }[] | null };
-  const people = ((members ?? []) as unknown as M[])
-    .filter((m) => m.role !== 'labourer')
-    .map((m) => ({ id: m.user_id, name: (Array.isArray(m.profile) ? m.profile[0]?.full_name : m.profile?.full_name) ?? 'Unnamed' }))
-    .sort((a, b) => a.name.localeCompare(b.name));
   const swms: SwmsOption[] = ((swmsRows ?? []) as Array<{ id: string; title: string; kind: string; version: number; steps: unknown }>)
     .map((s) => ({ id: s.id, title: s.title, kind: s.kind, version: s.version, steps: readSteps(s.steps).map((st) => ({ step: st.step, hazards: st.hazards, risk_before: st.risk_before, controls: st.controls, risk_after: st.risk_after })) }));
   const where = p.scope === 'project' ? `Job ${verdict.projectCode ?? current.project.code}` : p.scope === 'asset' ? `Asset · ${verdict.assetName ?? ''}` : SCOPE_LABEL.company;

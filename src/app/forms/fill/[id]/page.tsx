@@ -7,6 +7,7 @@ import { loadPlantOnJob } from '@/lib/plant/on-job';
 import { peopleOnJob } from '@/lib/crew/inductions';
 import { asTemplate, loadSubmission } from '@/lib/forms/load';
 import { FormFill } from './form-fill';
+import { loadJobPeople } from '@/lib/members/people';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Fill a form · Kooboolong IMS' };
@@ -48,12 +49,12 @@ export default async function FillPage({ params, searchParams }: { params: Promi
     const scRow = sc as { id: string; template_code: string; subject_plant_id: string | null; subject_person: string | null } | null;
     if (scRow && scRow.template_code === tpl.code) sched = scRow;
   }
-  const [machines, { data: crew }, { data: members }] = await Promise.all([
+  const [machines, { data: crew }, memberRows] = await Promise.all([
     loadPlantOnJob(supabase, current.project_id),
     supabase.from('crew').select('name').eq('project_id', current.project_id).eq('active', true),
-    supabase.from('project_members').select('profile:profiles(full_name)').eq('project_id', current.project_id),
+    loadJobPeople(supabase, current.project_id, { everyone: true }),
   ]);
-  const memberNames = ((members ?? []) as Array<{ profile: { full_name: string | null } | Array<{ full_name: string | null }> | null }>).map((m) => (Array.isArray(m.profile) ? m.profile[0]?.full_name : m.profile?.full_name) ?? null);
+  const memberNames = memberRows.map((m) => m.name);
   const people = peopleOnJob(memberNames, ((crew ?? []) as Array<{ name: string }>).map((c) => c.name));
   const submissionId = open?.id ?? crypto.randomUUID();
   const title = open?.template_title ?? tpl?.title ?? '';
