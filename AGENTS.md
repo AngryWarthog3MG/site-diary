@@ -161,7 +161,8 @@ improvising; the register once shipped dead because a live smoke test was skippe
   a removed one stays off); the day's `photos` rows stay the record. `app.can_author_entries` in SQL is supervisor/admin/pm
   ONLY — a leading hand never writes the draft, whatever `canAuthorEntries` in TS says
 - `src/lib/photos/library.ts` + `library-load.ts` — the job's photographs in one place, by day (README R173): `/entries/photos`
-  (screen `entries`, linked from the diary's hero, never a section of its own) lists every photograph the diary and
+  (screen `entries`; its own `Photographs` item under Diary since README R183, with a finder — `kindOf`, `photoMatches`,
+  `filterMonths`, pure — in `photo-finder.tsx`) lists every photograph the diary and
   `day_photos` hold, current version of a day only, signed links for the hour, no copy kept. `GET /api/entries/photos/zip
   ?project[&month]` streams them as a zip of dated folders through `src/lib/zip.ts` (STORE, streamed, dependency-free,
   node-tested) — nothing stored. Incident, order and inspection photographs are NOT in it (their own read rules)

@@ -46,6 +46,7 @@ export const NAV_GROUPS: NavGroup[] = [
     label: 'Diary', scope: 'site',
     items: [
       { href: '/entries', name: 'Daily Diary', what: 'Every day’s diary — signed days and their PDFs', screen: 'entries' },
+      { href: '/entries/photos', name: 'Photographs', short: 'Photos', what: 'Every photograph on the job in one place, by day — search by what it shows or when, download a month', screen: 'entries' },
       { href: '/signin', name: 'Site sign-in', what: 'Who is on site now — in and out at the gate', screen: 'signin' },
       { href: '/prestart', name: 'Prestarts', what: 'Morning briefing and sign-on — with each machine’s check', screen: 'prestart' },
       { href: '/plant', name: 'Plant prestarts', short: 'Plant', what: 'Each machine checked before use, daily — defects and the register', screen: 'plant' },

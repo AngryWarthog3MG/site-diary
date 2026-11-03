@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { distinctPhotos, groupByDay, groupByMonth, monthLabel, monthRange, zipEntries, zipFileName, type LibraryPhoto } from './library.ts';
+import { distinctPhotos, groupByDay, groupByMonth, monthLabel, monthRange, zipEntries, zipFileName, kindOf, kindsOf, photoMatches, filterMonths, type LibraryPhoto } from './library.ts';
 
 const photo = (over: Partial<LibraryPhoto>): LibraryPhoto => ({
   date: '2026-10-22',
@@ -73,4 +73,25 @@ test('a month’s range ends on its real last day — September has no 31st, whi
   assert.deepEqual(monthRange('2026-10'), { from: '2026-10-01', to: '2026-10-31' });
   assert.deepEqual(monthRange('2028-02'), { from: '2028-02-01', to: '2028-02-29' });
   assert.throws(() => monthRange('2026-9'));
+});
+
+test('the finder: a kind per context, every word must match, and empty days fall away (README R183)', () => {
+  const a = photo({ path: 'a', context: 'Variation V-003', caption: 'Extra kerb at the north gate' });
+  const b = photo({ path: 'b', context: 'Concrete docket — Pad 4', date: '2026-10-21' });
+  const c = photo({ path: 'c', context: 'Progress photograph', source: 'crew', by: 'Evan', day: 'none', entryNo: null, date: '2026-09-30' });
+  assert.deepEqual([kindOf(a), kindOf(b), kindOf(c)], ['Variation', 'Concrete docket', 'Progress photograph']);
+  assert.deepEqual(kindsOf([a, b, c, a]), [{ kind: 'Variation', count: 2 }, { kind: 'Concrete docket', count: 1 }, { kind: 'Progress photograph', count: 1 }]);
+  assert.equal(photoMatches(a, 'kerb gate'), true);
+  assert.equal(photoMatches(a, 'kerb south'), false, 'every word');
+  assert.equal(photoMatches(a, 'v-003'), true, 'the variation number');
+  assert.equal(photoMatches(b, '21/10/2026'), true, 'the day as printed');
+  assert.equal(photoMatches(b, '21 oct'), true, 'the day as said');
+  assert.equal(photoMatches(c, 'evan'), true, 'who added it');
+  assert.equal(photoMatches(a, '', 'Variation'), true);
+  assert.equal(photoMatches(a, '', 'Dayworks'), false);
+  const months = groupByMonth(groupByDay([a, b, c]));
+  assert.deepEqual(filterMonths(months, 'evan').map((m) => [m.month, m.count]), [['2026-09', 1]]);
+  assert.deepEqual(filterMonths(months, '', 'Concrete docket').flatMap((m) => m.days.map((d) => d.date)), ['2026-10-21']);
+  assert.equal(filterMonths(months, '').length, 2, 'no search, nothing dropped');
+  assert.equal(filterMonths(months, 'nothing like this').length, 0);
 });

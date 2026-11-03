@@ -143,3 +143,47 @@ export function monthRange(month: string): { from: string; to: string } {
 export function zipFileName(jobCode: string, month: string | null): string {
   return `${safeName(jobCode, 40)} photographs${month ? ` ${month}` : ''}.zip`;
 }
+
+/**
+ * The kind of photograph, for the finder's chips (README R183): the context with its particular stripped —
+ * "Variation V-003" is a Variation, "Concrete docket — Pad 4" a Concrete docket — and the crew's are their own kind.
+ */
+export function kindOf(p: Pick<LibraryPhoto, 'context' | 'source'>): string {
+  if (p.source === 'crew') return 'Progress photograph';
+  return p.context.replace(/\s+V-\d+$/, '').replace(/\s+—.*$/, '').trim() || 'Photograph';
+}
+
+/** The kinds on the job, in the order they first appear, each with its count. */
+export function kindsOf(photos: readonly LibraryPhoto[]): Array<{ kind: string; count: number }> {
+  const out = new Map<string, number>();
+  for (const p of photos) { const k = kindOf(p); out.set(k, (out.get(k) ?? 0) + 1); }
+  return [...out].map(([kind, count]) => ({ kind, count }));
+}
+
+const DAY_WORDS = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
+/** What a photograph can be found by: its caption, its context, who added it, its serial, and its day said three ways. */
+export function searchText(p: LibraryPhoto): string {
+  const [y, m, d] = p.date.split('-');
+  const day = `${p.date} ${d}/${m}/${y} ${Number(d)} ${DAY_WORDS[Number(m) - 1] ?? ''} ${y}`;
+  return [p.caption, p.context, p.by, p.entryNo, kindOf(p), day].filter(Boolean).join(' ').toLowerCase();
+}
+
+/** Every word typed must appear somewhere in the photograph's text; an empty search matches all. */
+export function photoMatches(p: LibraryPhoto, query: string, kind: string | null = null): boolean {
+  if (kind && kindOf(p) !== kind) return false;
+  const words = query.toLowerCase().split(/\s+/).filter(Boolean);
+  if (words.length === 0) return true;
+  const text = searchText(p);
+  return words.every((w) => text.includes(w));
+}
+
+/** The months and days narrowed to the photographs that match; empty days and months fall away. */
+export function filterMonths(months: readonly LibraryMonth[], query: string, kind: string | null = null): LibraryMonth[] {
+  if (!query.trim() && !kind) return [...months];
+  return months
+    .map((m) => {
+      const days = m.days.map((d) => ({ ...d, photos: d.photos.filter((p) => photoMatches(p, query, kind)) })).filter((d) => d.photos.length > 0);
+      return { ...m, days, count: days.reduce((n, d) => n + d.photos.length, 0) };
+    })
+    .filter((m) => m.days.length > 0);
+}

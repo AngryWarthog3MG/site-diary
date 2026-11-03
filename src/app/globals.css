@@ -5165,6 +5165,8 @@ body:has(> .topbar) .homefoot--top { display: none; }
 
 /* The job's photographs, by day (README R173). Lives under the Daily Diary; the thumbnails zoom through PhotoZoom. */
 .photolib-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0.75rem 0 1rem; }
+.photolib-finder { display: grid; gap: 0.5rem; margin: 0 0 0.75rem; }
+.photolib-finder .field { width: 100%; }
 .photolib-month { margin: 1.25rem 0 0; }
 .photolib-month__head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 0.5rem; padding-bottom: 0.4rem; border-bottom: 1px solid var(--ink-12); }
 .photolib-month__head h2 { margin: 0; font-size: 1.25rem; }

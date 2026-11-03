@@ -3845,6 +3845,18 @@ The Building 2 & 3 record stays on Rev B — it carries two sign-offs, and a rec
 so its earthworks lot is retyped by hand as the lot's name before the remaining parties sign; records begun after the
 seed open on Rev C and pick. Suite 42 gained the rule.
 
+**R183. Photographs get their own item, with a finder.** "I wanted a tab where I can assess all the photos taken for the
+job in one location so it's easier to find photos I need." The library of R173 was built for exactly that and then put
+behind a link on the diary's hero, where it was not found. It is now `Photographs` under Diary in the menu, the rail and
+the home bar (screen `entries`, as before — the same readers, the same record). The page gained a finder
+(`src/app/entries/photos/photo-finder.tsx`, over the list the page already holds — nothing fetched, nothing stored): a
+search box where every word typed must appear in the photograph's caption, its context, who added it, the day's serial
+or the day itself said any way (`21/10/2026`, `21 oct`, `2026-10-21`), and one chip per kind — Site photograph, Dayworks,
+Variation, Instruction or event, Concrete docket, Progress photograph — counted. `kindOf`, `photoMatches` and
+`filterMonths` in `src/lib/photos/library.ts` are the rules, node-tested; empty days and months fall away while a search
+is on, every month opens flat, and the month downloads come back when it is cleared. Still not in it: incident, order,
+inspection and QA record photographs — their own records with their own readers (R173). Say the word.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;
