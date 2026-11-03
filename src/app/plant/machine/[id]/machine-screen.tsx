@@ -37,9 +37,11 @@ interface Props {
   records: RecordRow[];
   today: string;
   canEdit: boolean;
+  /** The active profiles on the machine's asset row (README R186), which a record here can discharge. */
+  profiles?: Array<{ id: string; label: string }>;
 }
 
-export function MachineScreen({ machine, records, today, canEdit }: Props) {
+export function MachineScreen({ machine, records, today, canEdit, profiles = [] }: Props) {
   const router = useRouter();
   const [urls, setUrls] = useState<Record<string, string>>({});
   const [error, setError] = useState<string | null>(null);
@@ -65,6 +67,7 @@ export function MachineScreen({ machine, records, today, canEdit }: Props) {
   const [outcome, setOutcome] = useState<Outcome | ''>('');
   const [findings, setFindings] = useState('');
   const [nextDue, setNextDue] = useState('');
+  const [profileId, setProfileId] = useState('');
   const [file, setFile] = useState<File | null>(null);
 
   const inspection = nextInspection(machine, records);
@@ -134,13 +137,13 @@ export function MachineScreen({ machine, records, today, canEdit }: Props) {
         id, plant_id: machine.id, kind, done_on: doneOn,
         performed_by_name: by.trim(), competence: competence.trim() || null, organisation: organisation.trim() || null,
         hour_meter: h, outcome: outcome || null, findings: findings.trim() || null,
-        next_due_on: nextDue || null, file_path: filePath,
+        next_due_on: nextDue || null, file_path: filePath, profile_id: profileId || null,
       });
       if (e) {
         if (filePath) await supabase.storage.from('plant-records').remove([filePath]).catch(() => undefined);
         throw new Error(e.message);
       }
-      setAdding(false); setBy(''); setCompetence(''); setOrganisation(''); setHours(''); setOutcome(''); setFindings(''); setNextDue(''); setFile(null);
+      setAdding(false); setBy(''); setCompetence(''); setOrganisation(''); setHours(''); setOutcome(''); setFindings(''); setNextDue(''); setFile(null); setProfileId('');
       setNotice('Recorded.');
       router.refresh();
     } catch (err) {
@@ -287,6 +290,16 @@ export function MachineScreen({ machine, records, today, canEdit }: Props) {
               <input className="field field--sm" id="r-next" type="date" value={nextDue} onChange={(e) => setNextDue(e.target.value)} />
             </label>
           </div>
+          {profiles.length > 0 && (
+            <label className="fieldcell">
+              <span className="label">Discharges</span>
+              <select className="field field--sm" id="r-profile" value={profileId} onChange={(e) => setProfileId(e.target.value)}>
+                <option value="">Nothing scheduled — a one-off</option>
+                {profiles.map((p) => <option key={p.id} value={p.id}>{p.label}</option>)}
+              </select>
+              <span className="caption">What is set to fall due on this machine under Assets &amp; equipment; the open action for it closes with this record.</span>
+            </label>
+          )}
           <label className="fieldcell">
             <span className="label">Findings</span>
             <textarea className="field field--sm" id="r-findings" rows={2} value={findings} onChange={(e) => setFindings(e.target.value)} />

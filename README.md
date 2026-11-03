@@ -3885,6 +3885,60 @@ underlined, `src/lib/pdf/styles.ts`), so every field label inherited a heading's
 class (`qa-h__l`: small caps, grey, no rule); each label-and-value pair sits on one hairline, three to a row, with the
 rule under the pair rather than under the title. Nothing on the sheet changed but how it is drawn.
 
+**R186. The asset register.** Item 5 of the Stems migration. Stems One keeps one asset register over everything a company
+owns or hires — plant, fire extinguishers, first-aid kits, electrical items, office gear, vehicles — with a barcode, a
+type, custody, maintenance and inspection profiles that raise actions, meter entry, test and tag, and third-party
+assets. The IMS had the plant register (R46, R64) and nothing for the rest: an extinguisher's six-monthly service, a
+lead's test and tag, a sling's periodic inspection and a harness's six-monthly check were in nobody's diary, and
+"who has the laser level" was a phone call.
+
+**A machine is an asset without moving a row.** `assets` carries everything that is not a machine; a machine's asset
+row has `plant_id` and NOTHING ELSE of the machine's — its name, number, make, ownership and supplier are refused by
+the trigger ("kept on the plant register") and the view `asset_register` coalesces them in. Inserting a plant row makes
+the asset row (`app.plant_joins_assets`), and every machine already on the register got one in the migration. Retiring
+a machine is done on the plant register and the view follows. A machine's inspections and maintenance stay on
+`plant_maintenance_records` and the machine's page (reg. 237) — `asset_records` refuses a plant-backed asset — but
+that record can now name a PROFILE it discharges (`profile_id`), and its hour meter is a reading.
+
+**What falls due is a profile, not a column.** `asset_profiles` — inspection, test or maintenance; by the calendar
+(every N days/weeks/months from a first due), by the meter (every N hours from a start reading), or both; the clause
+or the manufacturer's word as its basis; who it goes to and at what priority. Next due is NEVER stored:
+`app.asset_profile_next_due` is the first due until something is done, then an interval from the last DOING on
+either records table, a date the inspector or the tag set winning (the same shape as the forms' R181 and the
+obligations' R61). `nextDue` / `dueAtHours` in `src/lib/assets/model.ts` are its TS twins; the register, the asset
+page, What's due and the nightly sweep all read the one verdict. Presets per class carry their clause — AS/NZS 3760
+Table 4's three-monthly test and tag on a construction site, AS 1851's six-monthly extinguisher service, AS/NZS
+1891.4's six-monthly harness inspection, reg. 213's annual — as an offer the office edits, never a rule.
+
+**The action is the sweep's, the discharge is the record's.** Nightly `assets=1` calls `raise_asset_actions`
+(service role only; an authenticated insert into `asset_actions` is refused): one action per profile and due day,
+for everything falling due within a week or past it, and for a meter profile the day the latest reading reached the
+due reading — however often it runs. The action register (R177) carries them as origin `asset`, company-wide (no
+job), named by asset and profile; the assignee or a plant manager moves who holds it and its priority, never its
+wording or date. Recording the inspection, test or service that names the profile closes every open action due on or
+before the day the doing moves the next due to — done three days early still counts — with a note saying which
+record did it. The labourer has no door to actions, so a profile goes to someone who does: the page lists the job's
+members but the labourer.
+
+**The meter has three sources and one truth.** `asset_meter_readings` by hand (outbox kind `asset_meter`), a
+completed plant prestart's hour meter, a service record's reading on either table. `app.asset_latest_meter` picks the
+latest day, then the higher number; a reading lower than the latest is refused unless the row says the meter was
+replaced. **Custody** is `asset_checkouts`: one open per asset (a partial unique index — a second taker is told
+someone else got there first, on the phone too), who took it fixed on the way out, checked in once, then frozen;
+a retired asset is not checked out. Outbox kinds `asset_checkout` / `asset_checkin`.
+
+**On screen and paper.** `/assets` (screen `assets`, Site works; supervisor, leading hand, PM, admin — not the
+labourer) is the register with a finder and a chip per class; `/assets/[id]` the asset's page: facts behind Edit,
+custody, what falls due, the meter, the records. `/api/assets/register/pdf` prints it through the R117 register
+layout (everything, this job's — the machines on its plant list plus whatever is checked out onto it — or the
+ticked lines, an extract saying so); `/api/assets/labels?ids=` prints 70 × 42 mm QR labels whose code opens the
+asset's page, so a scan on an extinguisher lands on what is due and where to record it. Keeping = `app.can_manage_plant`
+(the plant register's rule); reads = the company's record readers, restrictive. Files in `plant-records`
+`{org}/{asset}/{record}.ext`. What's due source `assets`. Suite 72.
+
+Not done: the register on the home card and the Safety dashboard (an overdue asset is on What's due and the action
+register already); consumables and stock (item 10); a photograph of the asset.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;

@@ -54,11 +54,11 @@ bones; the Stems feature adds something. **Missing** — nothing in the IMS does
 ### Registers
 | Stems feature | IMS | Notes |
 |---|---|---|
-| Asset register for everything, not just plant: plant, fire extinguishers, first-aid kits, electrical items, office equipment, vehicles; barcode, type/category/classification; simple / advanced / archived views | Partly | `plant_register` is plant only |
-| Check in / check out of assets | Missing | — |
-| Maintenance & inspection profiles (scheduled intervals per asset) that raise actions when due; assign to multiple items; bulk completion date | Partly | Plant inspections (reg. 213 cascade) and maintenance records exist for plant; no generic scheduled profile that raises an action |
+| Asset register for everything, not just plant: plant, fire extinguishers, first-aid kits, electrical items, office equipment, vehicles; barcode, type/category/classification; simple / advanced / archived views | Have | R186: `assets` over every class, the plant register one kind of it; barcode, category; retired kept behind a tick |
+| Check in / check out of assets | Have | R186: `asset_checkouts`, one open per asset, offline through the outbox |
+| Maintenance & inspection profiles (scheduled intervals per asset) that raise actions when due; assign to multiple items; bulk completion date | Partly | R186: `asset_profiles` by calendar and/or meter raise actions nightly and are discharged by the record. One asset per profile; no bulk completion |
 | Distance / hours meter entry | Missing | — |
-| Third-party (hired-in) asset register; on-hire / off-hire checklists | Partly | `employer` on plant row; no hire forms |
+| Third-party (hired-in) asset register; on-hire / off-hire checklists | Partly | R186: ownership own / hired / third party's with supplier and hire reference on every asset; on/off-hire checklists are form templates (R181) |
 | Electrical items register (test & tag due) | Missing | — |
 | Barcode printing | Missing | — |
 | Consumables register (PPE, uniforms, laptops: barcode, type, category, supplier, manufacturer, allocation to people, stock, allocation report) | Missing | Template items have a consumables kind for mobilisation only |
@@ -173,7 +173,7 @@ Grouped so each step is one README section, one migration set, one suite, and sh
 2. **Incident investigation** — investigation stage, root causes and contributing factors (company lists), 5 Why, confidential flag, sign-off, investigation due dates. **Built — README R178, 02/11/2026.**
 3. **Hazard controls** — control status lifecycle, hierarchy of controls, hazard types, critical-risk flag. **Built — README R179, 02/11/2026.**
 4. **Forms engine** (Comply One's heart) — **Built — 4a README R180, 4b README R181, 02/11/2026 (twelve templates seeded as drafts by `scripts/forms-seed-templates.mjs`; the office issues each after reading it).** — — a designer for checklists (sections, question types, score, fail-raises-action, photo required), public vs scheduled profiles, calendar, completed-forms register, non-compliance register. Then the missing forms as templates: fatigue, journey management plan, Take Time, field leadership observation, workplace hazard inspection, VOC, on/off hire, light and heavy vehicle pre-starts, weekly crack inspection, training evaluation.
-5. **Asset register** — every asset, not only plant: types/categories, barcode, check in/out, maintenance & inspection profiles that raise actions, meter entry, electrical test & tag, third-party assets. Plant register becomes one kind of asset without moving a row.
+5. **Asset register** — every asset, not only plant: types/categories, barcode, check in/out, maintenance & inspection profiles that raise actions, meter entry, electrical test & tag, third-party assets. Plant register becomes one kind of asset without moving a row. **Built — README R186, 03/11/2026.**
 6. **Risk register** — risk profiles (project / asset), inherent/residual/potential, existing vs planned controls, critical controls, owner/assessor/review date, dashboard gauges; SWMS risk feeds it.
 7. **Training courses and classes** — course catalogue (UoC, duration, expiry, owner), class sessions with attendees and booking, completed-training and training-hours reports, VOC form → ticket.
 8. **People profile** — levels/types/status categories, employment date, line manager, personal and emergency details, licences and visa, work history, performance reviews, discipline (admin-only), assets/consumables issued, log.

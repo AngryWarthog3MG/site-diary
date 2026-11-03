@@ -28,6 +28,7 @@ const SCREEN_OF_PATH: Array<[prefix: string, screen: Screen]> = [
   ['/toolbox', 'toolbox'], ['/api/toolbox', 'toolbox'],
   ['/plant', 'plant'], ['/api/plant', 'plant'],
   ['/plant/check', 'plant_check'],
+  ['/assets', 'assets'], ['/api/assets', 'assets'],
   ['/notices', 'notices'],
   ['/templates', 'templates'],
   ['/mobilisation', 'start_gate'], ['/start-gate', 'start_gate'],

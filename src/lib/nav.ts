@@ -62,6 +62,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { href: '/toolbox', name: 'Toolbox talks', what: 'Weekly talk and sign-on', screen: 'toolbox' },
       { href: '/construction', name: 'Construction records', short: 'Construction', what: 'WHS management plan, services and trenches for each dig, white cards', screen: 'construction' },
       { href: '/orders', name: 'Orders & plant issues', short: 'Orders', what: 'Diesel, consumables, anything to order — and a light out on a machine', screen: 'orders' },
+      { href: '/assets', name: 'Assets & equipment', short: 'Assets', what: 'Extinguishers, first-aid kits, leads, slings, harnesses, hired gear and the machines — where each is, who has it, and what is due on it', screen: 'assets' },
       { href: '/deliveries', name: 'Calendar', what: 'Deliveries booked to arrive, day by day — on this job, or every job on one calendar', screen: 'deliveries' },
     ],
   },

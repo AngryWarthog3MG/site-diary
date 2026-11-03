@@ -20,6 +20,7 @@ export function readKind(value: unknown): RegisterKind {
  * frozen — so they are kept where they are made and only pointed to from here.
  */
 export const OTHER_REGISTERS: ReadonlyArray<{ href: string; label: string; what: string }> = [
+  { href: '/assets', label: 'Assets and equipment', what: 'Everything owned or hired — the machines above and all the rest — with what is due on each, its meter and who has it; edited on its own screen because its records, readings and custody live there' },
   { href: '/training', label: 'Training and tickets', what: 'Who holds what, and when it expires' },
   { href: '/subcontractors', label: 'Subcontractors', what: 'Insurances, SWMS and licences' },
   { href: '/swms', label: 'SWMS and JSA', what: 'Method statements and who has signed on' },

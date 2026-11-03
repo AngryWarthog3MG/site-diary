@@ -20,6 +20,7 @@ const SOURCE_LABEL: Record<ObligationItem['source'], string> = {
   incident: 'WorkSafe',
   emergency: 'Emergency plan',
   plant: 'Plant',
+  assets: 'Assets',
   construction: 'Construction',
   quality: 'Quality',
   audits: 'Audits and reviews',

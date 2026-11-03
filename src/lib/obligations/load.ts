@@ -14,6 +14,7 @@ import { currentDocs, noticeState, swmsReviewStatus, headContractorName, HC_DOC_
 import { ncrRef, lotRef, ncrReportState, holdsAwaitingRelease, calibrationStatus, CALIBRATION_LABEL, type PointType, type Result } from '@/lib/quality/model';
 import { nextInspection, registrationStatus, REGISTRATION_LABEL, type InspectionBasis, type RecordKind, type Outcome } from '@/lib/plant/inspections';
 import { loadSchedules, fillHref } from '@/lib/forms/load';
+import { loadAssetRegister } from '@/lib/assets/load';
 import {
   dueStatus, nextDue, onTime, sortItems, summarise, KIND_LABEL,
   type ObligationItem, type ObligationKind,
@@ -247,6 +248,24 @@ export async function loadObligations(
       basis: `WHS (General) Regs 2022 (WA) reg. 43(1)(b) · ISO 45001 cl. 8.2 · every ${emergency.current.test_every_months} months, per the plan`,
       dueOn: emergency.nextDrillDue, status: dueStatus(emergency.nextDrillDue, today), href: `/emergency${q}`,
     });
+  }
+
+  // Assets (README R186): every inspection, test or service profile on the company's register that is overdue or due
+  // within the month — a machine's annual inspection by its profile as much as an extinguisher's six-monthly. Read
+  // under the caller's RLS; the verdict is the model's, the same one the register and the asset page show.
+  const assets = await loadAssetRegister(supabase, orgId, today).catch(() => null);
+  for (const v of assets?.verdicts ?? []) {
+    if (!v.asset.active) continue;
+    for (const s of v.profiles) {
+      if (s.status !== 'overdue' && s.status !== 'due_soon') continue;
+      const dueOn = s.due ?? today;
+      items.push({
+        key: `asset:${s.profile.id}`, source: 'assets',
+        title: `${s.profile.label} — ${v.asset.name}${s.due == null && s.dueAt != null ? ` (at ${s.dueAt.toLocaleString('en-AU', { maximumFractionDigits: 1 })} h${s.reading ? `, read ${s.reading.reading.toLocaleString('en-AU', { maximumFractionDigits: 1 })} h` : ''})` : ''}`,
+        basis: s.profile.basis ?? `Asset register · ${s.profile.kind}`,
+        dueOn, status: s.status === 'overdue' ? 'overdue' : dueStatus(dueOn, today), href: `/assets/${v.asset.id}${q}`,
+      });
+    }
   }
 
   // Plant on this job: its reg. 213 inspection and, where it must be registered, its registration (s. 42).

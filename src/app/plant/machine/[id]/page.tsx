@@ -35,7 +35,7 @@ export default async function MachinePage({
   guardScreen(current, 'plant');
 
   const supabase = await createClient();
-  const [{ data: machine }, { data: records }] = await Promise.all([
+  const [{ data: machine }, { data: records }, { data: assetRow }] = await Promise.all([
     supabase
       .from('plant_register')
       .select('id, org_id, name, kind, make_model, plant_no, ownership, supplier, active, inspection_basis, inspection_interval_months, registration_required, registration_kind, registration_no, registration_expires_on')
@@ -46,7 +46,10 @@ export default async function MachinePage({
       .select('id, kind, done_on, performed_by_name, competence, organisation, hour_meter, outcome, findings, next_due_on, file_path, created_at')
       .eq('plant_id', id)
       .order('done_on', { ascending: false }),
+    // The machine's asset row (README R186): its active profiles are what a record here can discharge.
+    supabase.from('assets').select('id, asset_profiles(id, label, kind, active)').eq('plant_id', id).maybeSingle(),
   ]);
+  const profiles = (((assetRow?.asset_profiles ?? []) as Array<{ id: string; label: string; kind: string; active: boolean }>)).filter((p) => p.active).map((p) => ({ id: p.id, label: p.label }));
   // RLS scopes the register to the organisation; the address must also be this job's organisation's.
   if (!machine || machine.org_id !== current.project.org.id) notFound();
 
@@ -73,8 +76,10 @@ export default async function MachinePage({
           .map((r) => ({ ...r, hour_meter: r.hour_meter == null ? null : Number(r.hour_meter) }))}
         today={perthToday()}
         canEdit={canRunTalks(current.role)}
+        profiles={profiles}
       />
       <hr className="rule" />
+      {assetRow?.id && <p><Link className="linklike" href={`/assets/${assetRow.id as string}?project=${current.project_id}`}>What falls due on it, its meter and who has it — Assets &amp; equipment</Link></p>}
       <Link className="button button--quiet" href={`/plant?project=${current.project_id}`}>Back to plant</Link>
     </main>
   );

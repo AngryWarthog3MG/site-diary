@@ -45,7 +45,10 @@ export type OutboxKind =
   | 'hc_document'
   | 'dayworks_approval'
   | 'delivery_book'
-  | 'delivery_update';
+  | 'delivery_update'
+  | 'asset_checkout'
+  | 'asset_checkin'
+  | 'asset_meter';
 
 export type OutboxState = 'queued' | 'syncing' | 'blocked' | 'failed';
 
@@ -99,6 +102,9 @@ export const KIND_LABEL: Record<OutboxKind, string> = {
   dayworks_approval: 'a dayworks approval signature',
   delivery_book: 'a delivery booking',
   delivery_update: 'a delivery change',
+  asset_checkout: 'an asset checked out',
+  asset_checkin: 'an asset checked in',
+  asset_meter: 'a meter reading',
 };
 
 const CHANGED = 'outbox-changed';

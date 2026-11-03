@@ -72,6 +72,9 @@ const nextConfig: NextConfig = {
     '/api/training/pdf': CHROMIUM,
     // The printed registers (README R117). The plant register is covered by '/api/plant/*/pdf' above.
     '/api/plant/register/pdf': CHROMIUM,
+    // The asset register and its QR labels (README R186).
+    '/api/assets/register/pdf': CHROMIUM,
+    '/api/assets/labels': CHROMIUM,
     '/api/chemicals/pdf': CHROMIUM,
     '/api/quality/equipment/pdf': CHROMIUM,
     '/api/safety/pdf': CHROMIUM,

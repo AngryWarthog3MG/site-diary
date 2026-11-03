@@ -484,6 +484,22 @@ improvising; the register once shipped dead because a live smoke test was skippe
   `incidents.hazard_type` is part of the frozen first account; `incidents.critical_risk` is the managers' while open. A HAZARD
   closes only once a control is in place. Panel `src/app/incidents/[id]/controls-panel.tsx`; outbox kinds `hazard_control` /
   `hazard_control_update`. Suite 69
+- `src/lib/assets/` — the asset register (README R186): `model.ts` (pure, node-tested; `nextDue` / `dueAtHours` the TS twins
+  of `app.asset_profile_next_due` / `app.asset_profile_due_at_hours` — change both together; `latestMeter`, `profileState`,
+  `assetVerdict`, `summarise`, `sortVerdicts`, `assetMatches`, `PROFILE_PRESETS` each with its clause), `load.ts`
+  (`loadAssetRegister` — the `asset_register` view, profiles, doings on BOTH records tables, every meter source, open
+  custody), `sweep.ts` (nightly `assets=1` → `raise_asset_actions`, service role only). Tables `assets` (a machine's row
+  has `plant_id` and none of the machine's facts — the trigger refuses them; `app.plant_joins_assets` makes it; retired with
+  a reason, never deleted), `asset_profiles` (calendar and/or meter clock; retired never deleted), `asset_records` (NOT for
+  a plant-backed asset — a machine's are `plant_maintenance_records`, which grew `profile_id`; frozen; file in `plant-records`
+  `{org}/{asset}/{id}.ext`), `asset_meter_readings` (lower than the latest needs `meter_replaced`; frozen),
+  `asset_checkouts` (one open per asset — `asset_checkouts_one_open`; fixed on the way out, frozen once in),
+  `asset_actions` (written ONLY by `raise_asset_actions`; closed by the record naming the profile via
+  `app.asset_record_discharges`, or by hand through the action register — origin `asset`, company-wide). NEVER store a
+  next due. Keeping = `app.can_manage_plant`; the labourer reads none and is never an assignee (no door to actions).
+  Screens `/assets`, `/assets/[id]` (screen `assets`; outbox kinds `asset_checkout`, `asset_checkin`, `asset_meter`);
+  `/api/assets/register/pdf` (R117 layout, `?scope=job` = the job's plant list + what is checked out onto it) and
+  `/api/assets/labels?ids=` (QR labels), both in `outputFileTracingIncludes`. What's due source `assets`. Suite 72
 - `src/lib/forms/` — the forms engine (README R180): `model.ts` (pure, node-tested; `templateProblems`, `answerFails`, `score`,
   `completionProblems`, `outcome`, `specFromLines` — each the TS half of an `app.form_*` function; the DB wins), `load.ts`,
   `pdf.tsx`. Tables `form_templates` (company; FRM-001 by the DB; a revision is a NEW row with `supersedes_id`, issued =

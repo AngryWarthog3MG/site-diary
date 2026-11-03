@@ -342,6 +342,33 @@ async function replay(item: OutboxItem): Promise<void> {
       }
       return;
     }
+    case 'asset_checkout': {
+      // Custody taken with no signal (README R186): the id is the phone's, so a replay meets its own row and stops.
+      // A second open custody on the same asset is refused by the one-open index — someone else took it first,
+      // and that is an answer, not a retry.
+      const { error } = await supabase.from('asset_checkouts').insert(p.row as Record<string, unknown>);
+      if (error && /asset_checkouts_one_open/i.test(error.message)) throw Object.assign(new Error('Someone else checked this asset out first. Find it on the register.'), { code: '42501' });
+      if (error && !isAlreadyDone(error)) throw error;
+      return;
+    }
+    case 'asset_checkin': {
+      // Returned with no signal. Already returned by someone else: frozen, done is done.
+      const { data, error } = await supabase.from('asset_checkouts').update(p.patch as Record<string, unknown>).eq('id', item.subjectId).is('in_at', null).select('id');
+      if (error && !isFrozen(error)) throw error;
+      if (!error && (!data || data.length === 0)) {
+        const { data: row } = await supabase.from('asset_checkouts').select('in_at').eq('id', item.subjectId).maybeSingle();
+        if (!row) throw Object.assign(new Error('That custody record no longer exists.'), { code: '42501' });
+        if (row.in_at == null) throw Object.assign(new Error('The asset could not be checked in from this account.'), { code: '42501' });
+      }
+      return;
+    }
+    case 'asset_meter': {
+      // A reading taken with no signal: the phone's id, so a replay stops at its own row. A reading the meter
+      // has since passed is refused by the database as a lower one — that is a real answer, not a retry.
+      const { error } = await supabase.from('asset_meter_readings').insert(p.row as Record<string, unknown>);
+      if (error && !isAlreadyDone(error)) throw error;
+      return;
+    }
     case 'dayworks_approval': {
       // The client's signature on the screen (README R125): the drawn signature first, then the row that names it.
       // The row's id is the phone's, so a replay after a dropped reply meets its own row and stops.
