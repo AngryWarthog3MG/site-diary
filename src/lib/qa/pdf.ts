@@ -25,6 +25,8 @@ export interface QaPdfMeta {
   images: Record<string, string>;
   /** Photographs added after every required party had signed (README R176): path → when, by whom. */
   addedAfter?: Record<string, { at: string; by: string | null }>;
+  /** Photographs taken off after sign-off (README R189) — only ones that had been added after it; counted, since they are not on the sheet. */
+  removedAfter?: number;
 }
 
 /**
@@ -106,7 +108,7 @@ export function qaRecordHtml(template: QaTemplateRow, record: QaRecordRow, meta:
     loose.length ? `<section class="sect"><p class="lbl">${spec.certification ? 'Certification' : 'Sign-off'}</p>${spec.certification ? `<p class="qa-cert">${esc(spec.certification)}</p>` : ''}<div class="qa-sigs">${loose.map((s) => signBlock(s.party, s)).join('')}</div>${spec.footer ? `<p class="qa-foot">${esc(spec.footer)}</p>` : ''}</section>` : '',
     // One photograph per row at the page's full width, whole (never cropped), at the size it was stored (README R185):
     // a docket or a test certificate photographed on site has to be readable off the sheet.
-    photoKeys.length ? `<section class="sect"><p class="lbl">Photographs · ${photoKeys.length}${afterCount ? ` · ${afterCount} added after sign-off` : ''}</p><div class="photos__grid">${photoKeys.map(({ k, after }, i) => `<figure><span class="qa-pics__no mono">Photograph ${i + 1} of ${photoKeys.length}</span><img data-photo="${k}" alt="" />${after ? `<figcaption class="qa-pics">Added after sign-off ${esc(fmtPerthDate(after.at))}${after.by ? ` · ${esc(after.by)}` : ''}</figcaption>` : ''}</figure>`).join('')}</div></section>` : '',
+    photoKeys.length ? `<section class="sect"><p class="lbl">Photographs · ${photoKeys.length}${afterCount ? ` · ${afterCount} added after sign-off` : ''}${meta.removedAfter ? ` · ${meta.removedAfter} taken off after sign-off` : ''}</p><div class="photos__grid">${photoKeys.map(({ k, after }, i) => `<figure><span class="qa-pics__no mono">Photograph ${i + 1} of ${photoKeys.length}</span><img data-photo="${k}" alt="" />${after ? `<figcaption class="qa-pics">Added after sign-off ${esc(fmtPerthDate(after.at))}${after.by ? ` · ${esc(after.by)}` : ''}</figcaption>` : ''}</figure>`).join('')}</div></section>` : '',
     `<p class="src">Record ${esc(record.id)} · ${esc(STATE_LABEL[state])}${record.gap_count ? ` · ${record.gap_count} gap${record.gap_count === 1 ? '' : 's'}` : ''}${record.completed_at ? ` · signed by every required party ${esc(fmtPerthDate(record.completed_at))}` : ''}${record.voided_at ? ` · VOIDED ${esc(fmtPerthDate(record.voided_at))}: ${esc(record.void_reason ?? '')}` : ''} · last saved ${esc(fmtPerthDate(record.updated_at))} · printed ${esc(fmtDate(meta.today))}. Signatures as drawn on the device; a sign-off once made is never changed.</p>`,
     '</div></body></html>',
   ].join('');

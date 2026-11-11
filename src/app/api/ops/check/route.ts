@@ -458,6 +458,9 @@ async function reconcileStorage(): Promise<Record<string, unknown>> {
     ['variations', ['photo_urls']], ['dayworks', ['photo_urls']], ['site_events', ['photo_urls']], ['daywork_dockets', ['photo_urls']],
     ['prestart_attendees', ['signature_path']], ['toolbox_attendees', ['signature_path']], ['swms_signons', ['signature_path']], ['incidents', ['photo_urls']], ['incident_updates', ['photo_urls']], ['orders', ['photo_urls']], ['inspections', ['signature_path', 'items']], ['permits', ['issuer_signature_path', 'holder_signature_path', 'closeout_signature_path']], ['site_signins', ['signature_path']], ['document_acknowledgements', ['signature_path']],
     ['plant_prestarts', ['signature_path']], ['plant_defects', ['photo_path']],
+    // QA records (README R166): photographs and signatures; a photograph taken off a record stays in storage and its
+    // removal row is what names it (README R189).
+    ['qa_records', ['photo_paths', 'signoffs']], ['qa_record_photo_removals', ['paths']],
   ];
   for (const [table, cols] of sources) {
     const { data } = await admin.from(table).select(cols.join(','));

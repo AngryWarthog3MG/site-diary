@@ -10,7 +10,7 @@ import { runOrQueue } from '@/lib/outbox/sync';
 import * as outbox from '@/lib/outbox/store';
 import { compressPhoto } from '@/lib/photos/compress';
 import { fmtPerthDate } from '@/lib/pdf/dates';
-import { appendQaPhotos } from '@/lib/qa/photos';
+import { changeQaPhotos, type QaPhotoRemoval } from '@/lib/qa/photos';
 import { blanksAsGaps, gapCount, recordState, STATE_LABEL, type ItemResult, type ItemState, type RecordSignoff, type Signoff, type TemplateSection } from '@/lib/qa/model';
 import type { QaRecordRow, QaTemplateRow, QaVoidEvent } from '@/lib/qa/load';
 
@@ -37,18 +37,20 @@ const slug = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(
  * is an answer, never a block. A sign-off once saved is never changed; when every required party has signed, the
  * record is frozen and this screen reads only.
  */
-export function RecordEditor({ projectId, recordId, template, record, instanceId, canWrite, isOffice, trail, addedAfter, myName, today, signatureUrls, people, formLots, backTo }: {
+export function RecordEditor({ projectId, recordId, template, record, instanceId, canWrite, isOffice, trail, addedAfter, removedAfter, myName, today, signatureUrls, people, formLots, backTo }: {
   projectId: string; recordId: string; template: QaTemplateRow; record: QaRecordRow | null; instanceId: string | null;
-  canWrite: boolean; isOffice: boolean; trail: QaVoidEvent[]; addedAfter: Record<string, { at: string; by: string | null }>; myName: string; today: string; signatureUrls: Record<string, string>; people: string[]; formLots: Record<string, FormLot[]>; backTo: string;
+  canWrite: boolean; isOffice: boolean; trail: QaVoidEvent[]; addedAfter: Record<string, { at: string; by: string | null }>; removedAfter: QaPhotoRemoval[]; myName: string; today: string; signatureUrls: Record<string, string>; people: string[]; formLots: Record<string, FormLot[]>; backTo: string;
 }) {
   const router = useRouter();
   const spec = template.spec as unknown as Spec;
   const isRegister = template.kind === 'itr_register';
   const frozen = Boolean(record?.completed_at || record?.voided_at);
   const editable = canWrite && !frozen;
-  // A signed record still takes photographs — added after the ones it was signed with, never removed (README R176).
+  // A signed record still takes photographs — added after the ones it was signed with (README R176) — and the ones
+  // added after sign-off may come off again (README R189); the signed-with ones never.
   const signedPhotosOpen = canWrite && Boolean(record?.completed_at) && !record?.voided_at;
   const photosOpen = editable || signedPhotosOpen;
+  const canRemovePhoto = (p: string) => editable || (signedPhotosOpen && Boolean(addedAfter[p]));
   const labels = spec.answer_labels ?? { ok: 'OK', gap: 'Gap', na: 'N/A' };
   const lotField = spec.lot_field ?? null;
 
@@ -72,6 +74,8 @@ export function RecordEditor({ projectId, recordId, template, record, instanceId
   const [comments, setComments] = useState(record?.comments ?? '');
   const [pending, setPending] = useState<Pending[]>([]);
   const [photos, setPhotos] = useState<NewPhoto[]>([]);
+  // Photographs already on the record, marked to come off with the next save (README R189).
+  const [removing, setRemoving] = useState<Set<string>>(() => new Set());
   const [dirty, setDirty] = useState(!record);
   const [saving, setSaving] = useState(false);
   const [kept, setKept] = useState(false);
@@ -95,6 +99,11 @@ export function RecordEditor({ projectId, recordId, template, record, instanceId
 
   const mark = (id: string, s: ItemState) => { if (!editable) return; setItems((m) => ({ ...m, [id]: { ...m[id], state: m[id]?.state === s ? undefined : s } })); setDirty(true); };
   const setValue = (id: string, v: string) => { setItems((m) => ({ ...m, [id]: { ...m[id], value: v } })); setDirty(true); };
+  const toggleRemove = (p: string) => {
+    if (!canRemovePhoto(p)) return;
+    setRemoving((s) => { const n = new Set(s); if (n.has(p)) n.delete(p); else n.add(p); return n; });
+    setDirty(true);
+  };
 
   async function save(submit: boolean) {
     if (!editable) return;
@@ -105,7 +114,7 @@ export function RecordEditor({ projectId, recordId, template, record, instanceId
       const userId = session.session?.user.id ?? null;
       const now = new Date().toISOString();
       const files = photos.map((ph) => ({ key: ph.key, path: `${projectId}/qa/${recordId}/${ph.key}.${ph.extension}`, type: ph.type, ph }));
-      const photoPaths = [...(record?.photo_paths ?? []), ...files.map((f) => f.path)];
+      const photoPaths = [...(record?.photo_paths ?? []).filter((p) => !removing.has(p)), ...files.map((f) => f.path)];
       const base: ItemResult[] = submit ? blanksAsGaps({ sections: (spec.sections ?? []) as unknown as TemplateSection[] }, resultsNow) : resultsNow;
       const itemsOut: ItemResult[] = base.map((r) => ({ item_id: r.item_id, state: r.state, ...(r.value ? { value: r.value } : {}) }));
       const headerOut: Record<string, string> = {};
@@ -137,7 +146,7 @@ export function RecordEditor({ projectId, recordId, template, record, instanceId
         await outbox.enqueue({ kind: 'qa_record', projectId, subjectId: recordId, payload: { row, sigs: sigs.map((s) => ({ key: s.key, path: s.path })), files: files.map((f) => ({ key: f.key, path: f.path, type: f.type })) }, blobs });
       };
       const outcome = await runOrQueue(live, queue);
-      if (outcome === 'sent') { setPending([]); setPhotos([]); setDirty(false); router.refresh(); }
+      if (outcome === 'sent') { setPending([]); setPhotos([]); setRemoving(new Set()); setDirty(false); router.refresh(); }
       else { setKept(true); setDirty(false); }
     } catch (err) { setError(err instanceof Error ? err.message : 'The record did not save.'); }
     finally { setSaving(false); }
@@ -154,9 +163,11 @@ export function RecordEditor({ projectId, recordId, template, record, instanceId
     }
   }
 
-  // The photographs alone, onto a signed record: the files, then the append — now, or from the outbox when there is signal.
+  // The photographs alone, on a signed record: the new files, then the change — added on the end, the marked ones
+  // (only ones added after sign-off) taken off — now, or from the outbox when there is signal.
   async function savePhotosOnly() {
-    if (!signedPhotosOpen || !photos.length) return;
+    const remove = [...removing].filter((p) => addedAfter[p]);
+    if (!signedPhotosOpen || (!photos.length && !remove.length)) return;
     setSaving(true); setError(null); setKept(false);
     try {
       const supabase = createClient();
@@ -166,15 +177,15 @@ export function RecordEditor({ projectId, recordId, template, record, instanceId
           const { error: upErr } = await supabase.storage.from('entry-photos').upload(f.path, f.ph.blob, { contentType: f.type, upsert: false });
           if (upErr && !/already exists|duplicate/i.test(upErr.message)) throw new Error(upErr.message);
         }
-        await appendQaPhotos(supabase, recordId, files.map((f) => f.path));
+        await changeQaPhotos(supabase, recordId, { add: files.map((f) => f.path), remove });
       };
       const queue = async () => {
         const blobs: Record<string, Blob> = {};
         for (const f of files) blobs[f.key] = f.ph.blob;
-        await outbox.enqueue({ kind: 'qa_record_photos', projectId, subjectId: recordId, payload: { files: files.map((f) => ({ key: f.key, path: f.path, type: f.type })) }, blobs });
+        await outbox.enqueue({ kind: 'qa_record_photos', projectId, subjectId: recordId, payload: { files: files.map((f) => ({ key: f.key, path: f.path, type: f.type })), remove }, blobs });
       };
       const outcome = await runOrQueue(live, queue);
-      if (outcome === 'sent') { setPhotos([]); setDirty(false); router.refresh(); }
+      if (outcome === 'sent') { setPhotos([]); setRemoving(new Set()); setDirty(false); router.refresh(); }
       else { setKept(true); setDirty(false); }
     } catch (err) { setError(err instanceof Error ? err.message : 'The photographs did not save.'); }
     finally { setSaving(false); }
@@ -364,9 +375,16 @@ export function RecordEditor({ projectId, recordId, template, record, instanceId
       })}
 
       <section className="qa-section">
-        <p className="label">Photographs · {(record?.photo_paths.length ?? 0) + photos.length}</p>
+        <p className="label">Photographs · {(record?.photo_paths.length ?? 0) - removing.size + photos.length}</p>
         <div className="qa-item__photos">
-          {(record?.photo_paths ?? []).map((p) => signatureUrls[p] ? /* eslint-disable-next-line @next/next/no-img-element */ <img key={p} className="qa-photo" src={signatureUrls[p]} alt="" title={addedAfter[p] ? `Added after sign-off ${fmtPerthDate(addedAfter[p].at)}${addedAfter[p].by ? ` by ${addedAfter[p].by}` : ''}` : undefined} /> : <span key={p} className="qa-photo qa-photo--pending" />)}
+          {(record?.photo_paths ?? []).map((p) => (
+            <span key={p} className={`qa-photo__wrap${removing.has(p) ? ' qa-photo__wrap--removing' : ''}`}>
+              {signatureUrls[p] ? /* eslint-disable-next-line @next/next/no-img-element */ <img className="qa-photo" src={signatureUrls[p]} alt="" title={addedAfter[p] ? `Added after sign-off ${fmtPerthDate(addedAfter[p].at)}${addedAfter[p].by ? ` by ${addedAfter[p].by}` : ''}` : record?.completed_at ? 'Signed with — stays on the record' : undefined} /> : <span className="qa-photo qa-photo--pending" />}
+              {canRemovePhoto(p) && (
+                <button type="button" className="qa-photo__x" aria-label={removing.has(p) ? 'Keep this photograph' : 'Take this photograph off'} title={removing.has(p) ? 'Keep it' : 'Take it off'} onClick={() => toggleRemove(p)}>{removing.has(p) ? '↺' : '×'}</button>
+              )}
+            </span>
+          ))}
           {photos.map((ph) => /* eslint-disable-next-line @next/next/no-img-element */ <img key={ph.key} className="qa-photo qa-photo--new" src={ph.previewUrl} alt="" title="Not saved yet" />)}
           {photosOpen && (
             <label className="qa-photo__add">
@@ -379,12 +397,19 @@ export function RecordEditor({ projectId, recordId, template, record, instanceId
         {Object.keys(addedAfter).length > 0 && (
           <p className="caption">{(record?.photo_paths ?? []).filter((p) => addedAfter[p]).length} added after sign-off: {[...new Set(Object.values(addedAfter).map((a) => `${fmtPerthDate(a.at)}${a.by ? ` by ${a.by}` : ''}`))].join(' · ')}. The rest were there when it was signed.</p>
         )}
-        {photos.length > 0 && editable && <p className="caption">{photos.length} new photo{photos.length === 1 ? '' : 's'} — saved with the record when you press Save.</p>}
-        {photos.length > 0 && signedPhotosOpen && (
+        {removedAfter.length > 0 && (
+          <p className="caption">{removedAfter.reduce((n, r) => n + r.paths.length, 0)} taken off after sign-off: {[...new Set(removedAfter.map((r) => `${fmtPerthDate(r.at)}${r.by ? ` by ${r.by}` : ''}`))].join(' · ')}. Only photographs added after sign-off can come off; the signed-with ones stay.</p>
+        )}
+        {editable && (photos.length > 0 || removing.size > 0) && (
+          <p className="caption">{[photos.length ? `${photos.length} new photo${photos.length === 1 ? '' : 's'}` : '', removing.size ? `${removing.size} marked to come off` : ''].filter(Boolean).join(', ')} — saved with the record when you press Save.</p>
+        )}
+        {signedPhotosOpen && (photos.length > 0 || removing.size > 0) && (
           <div className="dw-rates__form">
-            <button type="button" className="button" disabled={saving} onClick={() => void savePhotosOnly()}>{saving ? 'Saving…' : `Add ${photos.length} photo${photos.length === 1 ? '' : 's'} to the signed record`}</button>
-            <button type="button" className="quotebtn" onClick={() => { setPhotos([]); setDirty(false); }}>Discard</button>
-            <span className="caption">The record stays as signed; these are marked as added after sign-off, with the date and your name.</span>
+            <button type="button" className="button" disabled={saving} onClick={() => void savePhotosOnly()}>
+              {saving ? 'Saving…' : [photos.length ? `Add ${photos.length}` : '', removing.size ? `take ${removing.size} off` : ''].filter(Boolean).join(' and ').replace(/^take/, 'Take') + ' — the signed record'}
+            </button>
+            <button type="button" className="quotebtn" onClick={() => { setPhotos([]); setRemoving(new Set()); setDirty(false); }}>Discard</button>
+            <span className="caption">The record stays as signed; what is added or taken off is kept on its trail with the date and your name.</span>
           </div>
         )}
         {kept && signedPhotosOpen && <p className="caption">Kept on this phone, sends with signal.</p>}

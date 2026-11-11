@@ -4,8 +4,8 @@ import { requireUser, resolveProject, guardScreen } from '@/lib/auth';
 import { sees } from '@/lib/roles';
 import { BrandMark } from '@/components/brand-mark';
 import { perthToday } from '@/lib/push/decide';
-import { loadQaRecord, loadVoidTrail, loadPhotoAdditions, loadFormLots } from '@/lib/qa/load';
-import { addedAfterSignoff } from '@/lib/qa/photos';
+import { loadQaRecord, loadVoidTrail, loadPhotoAdditions, loadPhotoRemovals, loadFormLots } from '@/lib/qa/load';
+import { addedAfterSignoff, removalsAfterSignoff } from '@/lib/qa/photos';
 import { RecordEditor } from './record-editor';
 
 export const dynamic = 'force-dynamic';
@@ -41,6 +41,8 @@ export default async function QaRecordPage({ params, searchParams }: { params: P
   const trail = record ? await loadVoidTrail(supabase, id) : [];
   // Which photographs came after the signatures (README R176).
   const addedAfter = record ? addedAfterSignoff(await loadPhotoAdditions(supabase, id)) : {};
+  // And which came off again after the signatures (README R189).
+  const removedAfter = record ? removalsAfterSignoff(await loadPhotoRemovals(supabase, id), record.completed_at) : [];
   const instanceId = record?.itp_instance_id ?? (itp && UUID_RE.test(itp) ? itp : null);
   // The signatures already given, as links that last the hour.
   const paths = [...(record?.signoffs ?? []).map((s) => s.signature_path), ...(record?.photo_paths ?? [])].filter(Boolean);
@@ -75,6 +77,7 @@ export default async function QaRecordPage({ params, searchParams }: { params: P
         isOffice={current.role === 'pm' || current.role === 'admin'}
         trail={trail}
         addedAfter={addedAfter}
+        removedAfter={removedAfter}
         myName={profile?.full_name ?? email ?? ''}
         today={perthToday()}
         signatureUrls={urls}

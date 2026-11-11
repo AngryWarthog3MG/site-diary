@@ -2,8 +2,8 @@ import { createHash } from 'node:crypto';
 import { fail, requireApiUser, isUuid, forbidUnlessSees } from '@/lib/api';
 import { renderPdfDocument, BrowserUnavailableError } from '@/lib/pdf/render';
 import { perthToday } from '@/lib/push/decide';
-import { loadQaRecord, loadPhotoAdditions } from '@/lib/qa/load';
-import { addedAfterSignoff } from '@/lib/qa/photos';
+import { loadQaRecord, loadPhotoAdditions, loadPhotoRemovals } from '@/lib/qa/load';
+import { addedAfterSignoff, removalsAfterSignoff } from '@/lib/qa/photos';
 import { qaRecordHtml } from '@/lib/qa/pdf';
 
 export const maxDuration = 300;
@@ -43,7 +43,8 @@ export async function GET(_request: Request, context: { params: Promise<{ id: st
   }
   const today = perthToday();
   const addedAfter = addedAfterSignoff(await loadPhotoAdditions(supabase, id));
-  const built = qaRecordHtml(loaded.template, loaded.record, { orgName: org.name, orgCode: org.code, projectName: project.name as string, projectCode: project.code as string, today, images, addedAfter });
+  const removedAfter = removalsAfterSignoff(await loadPhotoRemovals(supabase, id), loaded.record.completed_at).reduce((n, r) => n + r.paths.length, 0);
+  const built = qaRecordHtml(loaded.template, loaded.record, { orgName: org.name, orgCode: org.code, projectName: project.name as string, projectCode: project.code as string, today, images, addedAfter, removedAfter });
   const lot = (loaded.record.lot_or_element ?? 'record').replace(/[^A-Za-z0-9._-]+/g, '_');
   try {
     const pdf = await renderPdfDocument(built.html, {

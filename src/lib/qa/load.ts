@@ -1,6 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { recordState, STATE_LABEL, type ItemResult, type QaTemplate, type RecordSignoff, type RecordState } from './model';
-import type { QaPhotoAddition } from './photos';
+import type { QaPhotoAddition, QaPhotoRemoval } from './photos';
 
 /** A template as the job reads it: the row and its form. */
 export interface QaTemplateRow { id: string; code: string; revision: string; kind: QaTemplate['kind']; title: string; governing_itp: string | null; issued_at: string | null; spec: QaTemplate }
@@ -170,6 +170,19 @@ export async function loadVoidTrail(supabase: SupabaseClient, recordId: string):
 /** Photographs added after sign-off (README R176), oldest first, with the person's name where kept. */
 export async function loadPhotoAdditions(supabase: SupabaseClient, recordId: string): Promise<QaPhotoAddition[]> {
   const { data } = await supabase.from('qa_record_photo_additions').select('paths, by_user_id, at').eq('record_id', recordId).order('at');
+  const rows = (data ?? []) as Array<{ paths: string[]; by_user_id: string | null; at: string }>;
+  const ids = [...new Set(rows.map((r) => r.by_user_id).filter((x): x is string => !!x))];
+  const names = new Map<string, string | null>();
+  if (ids.length) {
+    const { data: people } = await supabase.from('profiles').select('id, full_name').in('id', ids);
+    for (const p of (people ?? []) as Array<{ id: string; full_name: string | null }>) names.set(p.id, p.full_name);
+  }
+  return rows.map((r) => ({ paths: r.paths ?? [], by: r.by_user_id ? (names.get(r.by_user_id) ?? null) : null, at: r.at }));
+}
+
+/** Photographs taken off the record (README R189), oldest first, with the person's name where kept. */
+export async function loadPhotoRemovals(supabase: SupabaseClient, recordId: string): Promise<QaPhotoRemoval[]> {
+  const { data } = await supabase.from('qa_record_photo_removals').select('paths, by_user_id, at').eq('record_id', recordId).order('at');
   const rows = (data ?? []) as Array<{ paths: string[]; by_user_id: string | null; at: string }>;
   const ids = [...new Set(rows.map((r) => r.by_user_id).filter((x): x is string => !!x))];
   const names = new Map<string, string | null>();

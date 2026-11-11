@@ -3997,6 +3997,61 @@ Migration `20261103160000_risk_register.sql`, suite 73. Not built: a hazard repo
 close it and raise it on the other); a profile per SWMS automatically (the feed is a tap, so the assessor reads what came
 in). The nightly reminder for planned controls is the action register's (R177) — nothing new to run.
 
+**R188. Training courses and classes.** Item 7 of the Stems migration. Stems One keeps a *course register* — code,
+name, type, unit of competency, duration, expiry, owner — and a *class register*: sessions of a course with a trainer,
+a venue, seats, and the people booked on them, which is where "completed training" and "training hours" come from. The
+app had the matrix (R47) over fixed ticket types and the company's own competencies, with a ticket recorded by hand
+and nothing that said a course had been run. Migration 20261103170000, suite 74.
+
+- **A course** (`training_courses`, company-wide; code unique per company regardless of case) has a kind — induction,
+  high-risk licence, licence, VET, internal, awareness, VOC, other — an optional unit of competency, duration in hours,
+  expiry in months (1–120, or none: the course does not lapse), a provider (internal, or external with the provider's
+  name required), and optionally THE TICKET IT EARNS: `competency_key`, one of the fixed ticket types or the company's
+  own `org_competencies`. Retired with `active = false`, never deleted.
+- **A class** (`training_classes`) is one session of a course: starts and ends (the end after the start), a venue, a
+  trainer, a seat count, and either a job or the company. `scheduled → held` only once it has started; `cancelled` needs
+  a reason (`training_classes_cancel_whole`); held and cancelled are frozen.
+- **A booking** (`training_class_attendees`) is one per person per class by the name on the sheets, normalised; a booking
+  past the seats is refused ("full"). `booked → attended | absent | withdrawn`, then frozen. Attended carries HOURS —
+  the ones given, else the class's own span (`app.training_class_span_hours`), else the course's duration, and if none
+  of those, null: "not recorded", never a guess — and a result, competent or not yet.
+- **A ticket from a class** is a tap, never automatic: `POST /api/training/classes/[id]/tickets` inserts the
+  `crew_tickets` row with `class_attendee_id`, and `app.crew_tickets_class_link` checks it — attended, competent, the
+  same person, the course's competency, the same company — once per attendance (`crew_tickets_class_once`), issued on
+  the class's Perth day, expiring by the course's months. A course that earns no ticket records none.
+- **The matrix** marks a booking (◷ `Cell.booked_on`) beside a gap without filling it: booked is not competent.
+- **Paper** in the R117 layout: the class's attendance sheet (`/api/training/classes/[id]/pdf`, a signature column
+  beside each name) and the training report over a period (`/api/training/report/pdf`, twelve months by default:
+  hours by person, completed training, competent / not yet). Never stored.
+- Keeping all of it = `app.can_keep_training` (supervisor, PM, admin); reads every member of the company behind
+  `reads_org_record`, so the labourer sees none. Screens `/training/courses`, `/training/classes`,
+  `/training/classes/[id]`, `/training/report` (screen `training`, People).
+
+Not built: a VOC form raising the ticket is R181's (`competency_key` on the form template); a class calendar beyond the
+list; a trainer's own sign-on. Model `src/lib/training/courses.ts`, pure and node-tested.
+
+**R189. Photographs taken off a record.** "Allow me to remove photos from the ITR too." The open record was free to
+change but the screen gave no way to take a photograph off it; the signed record's rule (R176) said the list only grows.
+Migration 20261111100000, suite 75, and suite 66 re-proved against it.
+
+- **On an open record** a photograph comes off with the next Save like any other change (an × on each; marked ones
+  dim, with undo, until Save).
+- **On a signed record only a photograph added after sign-off comes off.** The signatures attest to the checks and the
+  photographs that were there when they were made; a photograph added later was never attested, so taking it off again
+  takes nothing from the signed record — provided the trail says it happened. The trigger reads the signed-with list
+  off `qa_record_photo_additions` (`app.qa_record_signed_with`): those stay first, in order, untouched (suite 66's
+  "never removed" still holds); of the ones added after, any may come off, the rest keep their order, and new ones go
+  on the end; nothing else changes with them. The screen shows × only on the added-after ones, and "Add N and take M
+  off — the signed record" goes through the same outbox kind `qa_record_photos` (payload `remove`); the replay reads
+  the list as it stands and applies both.
+- **Every removal is kept** on `qa_record_photo_removals` — which paths, who, when — append-only, written by the
+  record's trigger. On a signed record it is the trail: the screen says "N taken off after sign-off: <date> by <name>"
+  and the PDF's Photographs heading counts them. On an open record it is what still names the file.
+- **The file stays in storage.** The `entry-photos` delete policy is the diary's (a draft's author on the day's own
+  folder); a QA path is deletable by nobody, and Storage has no undo. So nothing is deleted: the orphan check now reads
+  `qa_records.photo_paths`, its sign-offs and `qa_record_photo_removals.paths`, so a photograph taken off is a
+  referenced file, not a loose one. A voided record takes no change.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;

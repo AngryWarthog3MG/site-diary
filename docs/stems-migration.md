@@ -79,7 +79,7 @@ bones; the Stems feature adds something. **Missing** — nothing in the IMS does
 | Actions: status, types, origins; origins by org item | Partly | Open/overdue counts |
 | HSE scorecard (configurable) and Safety count | Missing | — |
 | Injury overview / by period / breakdown (body part etc.) | Partly | — |
-| Completed training, training hours | Partly | Training gaps email; no completed-training report |
+| Completed training, training hours | Have (R188) | Training report over a period: hours by person, completed training, competent / not yet; PDF |
 | Consumables allocation and stock | Missing | — |
 | Excel export on every register; Word export of an event | Partly | CSV on a few routes (plant, timesheet, claims), PDFs everywhere. No Excel, no Word |
 
@@ -99,9 +99,9 @@ bones; the Stems feature adds something. **Missing** — nothing in the IMS does
 ### Training
 | Stems feature | IMS | Notes |
 |---|---|---|
-| Course register: code, short name, type (inductions, high-risk, licence, VET, internal, awareness…), unit of competency, duration, expiry months, owner (internal / external provider) | Partly | Competencies are fixed ticket types plus the org's own, with expiry on the ticket. No course catalogue with duration/UoC/owner |
-| Class register and class calendar: scheduled sessions, attendees, trainer, booked status | Missing | — |
-| Training matrix by org structure, role-profile requirements, org-profile requirements, custom requirements; required-only / valid-only / booked filters; icon or date display; Excel export | Have (mostly) | `/training` matrix by job or company, requirements by role, tap to record. No booked state, no org-profile requirements |
+| Course register: code, short name, type (inductions, high-risk, licence, VET, internal, awareness…), unit of competency, duration, expiry months, owner (internal / external provider) | Have (R188) | `training_courses`: code, name, kind, UoC, duration, expiry months, internal or external provider, the ticket it earns |
+| Class register and class calendar: scheduled sessions, attendees, trainer, booked status | Have (R188) | `training_classes` + `training_class_attendees`: sessions with trainer, venue, seats; booked → attended with hours and result; attendance sheet PDF. A list by date, not a calendar grid |
+| Training matrix by org structure, role-profile requirements, org-profile requirements, custom requirements; required-only / valid-only / booked filters; icon or date display; Excel export | Have (mostly) | `/training` matrix by job or company, requirements by role, tap to record; a booking marked ◷ beside a gap (R188). No org-profile requirements |
 | Role matrix | Have | Requirements screen |
 | Licences held with number, separate from courses | Partly | Tickets carry a number |
 | Expiring-training notification profile | Have | Nightly tickets email |
@@ -175,7 +175,7 @@ Grouped so each step is one README section, one migration set, one suite, and sh
 4. **Forms engine** (Comply One's heart) — **Built — 4a README R180, 4b README R181, 02/11/2026 (twelve templates seeded as drafts by `scripts/forms-seed-templates.mjs`; the office issues each after reading it).** — — a designer for checklists (sections, question types, score, fail-raises-action, photo required), public vs scheduled profiles, calendar, completed-forms register, non-compliance register. Then the missing forms as templates: fatigue, journey management plan, Take Time, field leadership observation, workplace hazard inspection, VOC, on/off hire, light and heavy vehicle pre-starts, weekly crack inspection, training evaluation.
 5. **Asset register** — every asset, not only plant: types/categories, barcode, check in/out, maintenance & inspection profiles that raise actions, meter entry, electrical test & tag, third-party assets. Plant register becomes one kind of asset without moving a row. **Built — README R186, 03/11/2026.**
 6. **Risk register** — risk profiles (project / asset), inherent/residual/potential, existing vs planned controls, critical controls, owner/assessor/review date, dashboard gauges; SWMS risk feeds it. **Built — README R187, 03/11/2026.**
-7. **Training courses and classes** — course catalogue (UoC, duration, expiry, owner), class sessions with attendees and booking, completed-training and training-hours reports, VOC form → ticket.
+7. **Training courses and classes** — course catalogue (UoC, duration, expiry, owner), class sessions with attendees and booking, completed-training and training-hours reports, VOC form → ticket. **Built — README R188, 11/11/2026** (the VOC form → ticket is R181's `competency_key`).
 8. **People profile** — levels/types/status categories, employment date, line manager, personal and emergency details, licences and visa, work history, performance reviews, discipline (admin-only), assets/consumables issued, log.
 9. **Injury management and D&A** — claims (status, medical status, costs, lost days, RTW), injury detail lists, D&A results register with random selection (confidentiality tier).
 10. **Consumables register** with allocation and stock.

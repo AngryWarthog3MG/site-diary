@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase/client';
 import * as outbox from './store';
 import type { OutboxItem } from './store';
 import { isNetworkError, isPermissionError, isAlreadyDone, isFrozen, backoffMs, isOnline } from './offline';
-import { appendQaPhotos } from '../qa/photos';
+import { changeQaPhotos } from '../qa/photos';
 
 /**
  * Replay what was done offline, in the order it happened, with the same
@@ -96,14 +96,15 @@ async function replay(item: OutboxItem): Promise<void> {
       return;
     }
     case 'qa_record_photos': {
-      // Photographs added to a SIGNED record (README R176): the files first, then appended to whatever the record holds
-      // by now — the database keeps the signed-with ones first and refuses anything else changing.
+      // Photographs on a SIGNED record (README R176, R189): the files first, then added to whatever the record holds by
+      // now, and the ones marked for removal taken off — the database keeps the signed-with ones first and refuses
+      // anything else changing.
       const files = (p.files as Array<{ key: string; path: string; type: string }> | undefined) ?? [];
       for (const f of files) {
         if (!blobs[f.key]) throw Object.assign(new Error('A photograph was lost from this phone. Take it again.'), { code: '42501' });
         await uploadIfMissing(f.path, blobs[f.key], f.type);
       }
-      await appendQaPhotos(createClient(), item.subjectId, files.map((f) => f.path));
+      await changeQaPhotos(createClient(), item.subjectId, { add: files.map((f) => f.path), remove: (p.remove as string[] | undefined) ?? [] });
       return;
     }
     case 'prestart_attendee': {
