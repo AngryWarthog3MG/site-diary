@@ -266,7 +266,7 @@ export function SignoffBlock({
 }
 
 /** The bucket is private, so the link is minted when it is asked for. */
-function SignedFileLink({ path, label }: { path: string; label: string }) {
+export function SignedFileLink({ path, label }: { path: string; label: string }) {
   const [busy, setBusy] = useState(false);
   const [url, setUrl] = useState<string | null>(null);
   if (url) return <a href={url} target="_blank" rel="noopener">{label}</a>;

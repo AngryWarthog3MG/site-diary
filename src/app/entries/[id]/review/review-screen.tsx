@@ -24,6 +24,7 @@ import {
 } from '@/lib/review/schema';
 import { matchRegister, plantNeedingPrestart, prestartHref } from '@/lib/review/warning-targets';
 import { VariationRegisterPanel, type RegisterRow } from './variation-register-panel';
+import { DayworksApproval } from './dayworks-approval';
 import { moveDayworkToVariations } from '@/lib/review/move';
 import { SECTION_KEYS, type SectionKey } from '@/lib/extraction/schema';
 import {
@@ -163,6 +164,8 @@ export function ReviewScreen(props: {
   plantRegister?: Array<{ id: string; name: string }>;
   /** Whether this person keeps the registers — prices and names on the Variations tab (README R100). */
   canManageRegisters?: boolean;
+  /** The head contractor's name, for the signature on the Dayworks tab (README R192). */
+  clientName?: string;
   /** Money access on this job (README R105), with the code entered (R106). */
   seesMoney?: boolean;
   /** Why the money is shut, when it is: the Variations tab says so and links to the code (R106). */
@@ -867,6 +870,12 @@ export function ReviewScreen(props: {
             projectId={props.projectId}
             entryId={props.entryId}
             entryDate={props.entryDate}
+            approval={{
+              clientName: props.clientName?.trim() || 'the head contractor',
+              canRecord: Boolean(props.canManageRegisters),
+              // The draft goes first, so what is signed for is what is kept; the signature does not wait on a failure.
+              beforeSign: async () => { flush(); await inflightRef.current?.catch(() => undefined); },
+            }}
             onChange={update}
             onPatch={patchItem}
             onAdd={addItem}
@@ -1527,6 +1536,7 @@ function DocketSection({
   projectId,
   entryId,
   entryDate,
+  approval,
   onChange,
   onPatch,
   onAdd,
@@ -1540,6 +1550,8 @@ function DocketSection({
   projectId: string;
   entryId: string;
   entryDate: string;
+  /** The head contractor's signature on the Dayworks tab (README R192). */
+  approval: { clientName: string; canRecord: boolean; beforeSign: () => Promise<void> };
   onChange: (group: ItemGroup, index: number, key: string, value: unknown) => void;
   onPatch: (group: ItemGroup, index: number, patch: Item) => void;
   onAdd: (section: SectionDef) => void;
@@ -1604,6 +1616,10 @@ function DocketSection({
           onMoveToVariations={onMoveToVariations}
         />
       ))}
+
+      {section.group === 'dayworks' && (
+        <DayworksApproval projectId={projectId} entryDate={entryDate} items={items} clientName={approval.clientName} canRecord={approval.canRecord} beforeSign={approval.beforeSign} />
+      )}
     </section>
   );
 }

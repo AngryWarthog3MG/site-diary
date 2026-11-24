@@ -35,7 +35,7 @@ export default async function ReviewPage({ params }: { params: Promise<{ id: str
     .from('entries')
     .select(
       `id, project_id, entry_date, status, author_id, transcript_raw, entry_no, notes, supersedes_entry_id, ready_at, ready_by, ready_note,
-       project:projects!inner(id, name, code, day_closer_id, org:organisations!inner(code)),
+       project:projects!inner(id, name, code, day_closer_id, principal_contractor, org:organisations!inner(code)),
        labour(*), plant(*), work_items(*), variations(*), delays(*), pours(*),
        quantities(*), dayworks(*), site_events(*), photos(*), entry_signatures(*), entry_sections(*), weather(*)`,
     )
@@ -224,7 +224,7 @@ export default async function ReviewPage({ params }: { params: Promise<{ id: str
   }
 
   const project = firstOrNull(stored.project) as
-    | { id: string; name: string; code: string; day_closer_id?: string | null; org: { code: string } | { code: string }[] }
+    | { id: string; name: string; code: string; day_closer_id?: string | null; principal_contractor?: string | null; org: { code: string } | { code: string }[] }
     | null;
   // Who closes the day on this job (README R126), and whether it has been handed over already.
   const closerId = project?.day_closer_id ?? null;
@@ -261,6 +261,7 @@ export default async function ReviewPage({ params }: { params: Promise<{ id: str
       startedBy={startedBy}
       plantPrestarted={plantPrestarted}
       plantRegister={plantRegister}
+      clientName={project?.principal_contractor?.trim() || undefined}
       canManageRegisters={(() => { const r = memberships.find((m) => m.project_id === entry.project_id)?.role; return r ? canManageRegisters(r) : false; })()}
       seesMoney={moneyState(memberships.find((m) => m.project_id === entry.project_id), aal) === 'open'}
       moneyLock={moneyState(memberships.find((m) => m.project_id === entry.project_id), aal)}

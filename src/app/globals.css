@@ -5271,3 +5271,6 @@ body:has(> .topbar) .homefoot--top { display: none; }
 .wtr__plus { display: block; color: var(--teal); }
 .wtr__key { color: var(--teal); font-weight: 600; }
 .wtr__note { display: block; font-size: 0.7rem; color: var(--ink-40); text-decoration: underline dotted; }
+
+/* The head contractor's signature on the diary's Dayworks tab (README R192). */
+.dws-block--day { margin-top: 1.25rem; }

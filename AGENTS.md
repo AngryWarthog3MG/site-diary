@@ -599,6 +599,11 @@ improvising; the register once shipped dead because a live smoke test was skippe
   `approvalOf(lines, signoffs)` is the one answer to "is this daywork approved": a line matches by day, works and hours
   (`lineKey`), so a corrected line waits again; never infer approval from a period or a total. On-screen signing goes
   through outbox kind `dayworks_approval`; the sheet prints signatures already given via `SheetApproval`. Suite 53
+  ON THE DAY'S DIARY (README R192): the review screen's Dayworks tab ends with `DayworksApproval`
+  (`src/app/entries/[id]/review/dayworks-approval.tsx`) — the head contractor signs for the day's items once the tab is filled in
+  (`dayBlockers`). The SAME `dayworks_signoffs` row and outbox kind; `src/lib/dayworks/day-approval.ts` (`dayLines`, `dayworkHours`;
+  pure, node-tested) reads a draft item exactly as the schedule reads the saved row — works, and the hours `apply_entry_review`
+  keeps — so the line matches itself later. Change that reading in one place and a signed line shows as awaiting
 - Dayworks carry `labour_rows` (README R129): the people on the item and each one's hours, `[{person_name, hours|null}]`.
   `apply_entry_review` sums them into `hours` only when every person has theirs; the hash carries the key only where rows
   exist; `app.entry_warnings` / `reviewQualityWarnings` raise `daywork_labour_missing_hours`. Print them through

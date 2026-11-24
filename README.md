@@ -4135,6 +4135,35 @@ deliveries calendar. A heading that would hold one door is folded into its neigh
 permission (R105). The tick boxes for a person's screens (R57) are drawn from this list, so they regroup with it; no
 tick changes. The rail's element ids are slugged now — a heading may carry spaces and an ampersand.
 
+**R192. The head contractor signs the dayworks on the day's diary.** "Add a section for LL to sign the dayworks on
+the dayworks tab once it's filled in." R125 gave Lendlease's person a signature on the Dayworks schedule — a screen the
+office opens, over days already signed. The moment that matters is earlier: the supervisor has just written the
+daywork up, the head contractor's supervisor is standing beside the work, and the phone is in the supervisor's hand.
+
+- **The diary's Dayworks tab ends with "Approval by <head contractor>"** (`dayworks-approval.tsx`). Once the tab is
+  FILLED IN — every item says what was done and for how many hours, and nobody on it is without theirs
+  (`dayBlockers`) — it offers "<Head contractor> signs here": the items listed, the sheet's own declaration (R83),
+  the signer's printed name and position, an optional note, the signature pad. Until then it says which item is
+  missing what.
+- **It is the same record, not a second kind.** The signature is a `dayworks_signoffs` row (R125) holding the lines it
+  was given for, filed and frozen the same way, sent through the same outbox kind `dayworks_approval` — no migration,
+  no new table. The Dayworks schedule, the sign-off sheet and the costed claim see it without knowing where it was
+  given; its period is the day and its label says "signed on the day's diary".
+- **The lines are read as the schedule will read them** (`dayLines`, `dayworkHours`): the works as described, and the
+  hours the database keeps — the people's hours added up when every person has theirs, else the figure typed (R129).
+  Read any other way, a line signed here would not match itself on the schedule and would sit "awaiting approval" with
+  a signature behind it; the test holds the two readings to one key.
+- **A signature covers the items as they read when it was given.** The day is still a draft, so an item can change
+  after they sign: reworded or re-houred, it no longer matches (`lineKey`) and waits for a signature again, on the tab
+  and on the schedule — which is the truth a subcontractor needs told. An item added later waits on its own; they
+  sign again for what is waiting, never twice for the same line. The draft is sent before the signature is taken, so
+  what is signed for is what is kept.
+- **Recorded by** whoever keeps the registers on the job (`app.can_manage_registers`: supervisor, PM, admin) — the
+  same roles that write the day. With no signal the signature is kept on the phone and shows as given at once.
+
+Not built: the signature on the signed day's read-only screen (that is the schedule's job, R125); a signature per item
+rather than for everything waiting; the head contractor signing from their own device.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;
