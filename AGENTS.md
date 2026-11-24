@@ -103,7 +103,7 @@ improvising; the register once shipped dead because a live smoke test was skippe
   `crew/inductions.ts` (`peopleOnJob` = members + roster by name, `inductionRows`, `notInducted`) backs the
   inductions block on `/settings/members`, where an induction is recorded by hand — any day up to today, with
   notes; `app.crew_inductions_before_write` tidies the name and refuses a future date. Suite 35, README R88.
-  `/inductions` (screen `inductions`, Company › Staff, pm/admin) draws that block once per job (README R138) — the same rows, the same form.
+  `/inductions` (screen `inductions`, Company › Staff & subcontractors, pm/admin) draws that block once per job (README R138) — the same rows, the same form.
   Add member (`POST /api/projects/[id]/members`) makes the account when none exists and sends the welcome note
   (`src/lib/members/welcome.ts`, README R102 — email + title is the whole of adding someone; the bulk and cards routes
   stay for a terminal but no screen offers them)
@@ -114,7 +114,7 @@ improvising; the register once shipped dead because a live smoke test was skippe
   `crew_tickets` and `crew_inductions` stay where they are, keyed by name, and `model.ts` (`buildStaff`, `summarise`,
   `filterStaff`, `assignStep`; pure, node-tested) joins them. Triggers keep it the one list: a crew insert or a ticket insert
   adds the person (`app.crew_joins_staff`, `app.ticket_holder_joins_staff`); a role change flows to crew rows that carried the
-  old role, and `active=false` hides every crew row (`app.staff_flows_to_crews`). Screen `staff` (admin, Company › Staff),
+  old role, and `active=false` hides every crew row (`app.staff_flows_to_crews`). Screen `staff` (admin, Company › Staff & subcontractors),
   `/staff` is PEOPLE (README R148): one row per person with their login too; `src/app/api/people/route.ts` adds a person with
   account, memberships and crew rows in one call, a job tick writes crew row AND membership, leaving closes the login (R115).
   Assigning to a job IS writing that job's `crew` row — never a second assignment table. Suite 52
@@ -132,7 +132,7 @@ improvising; the register once shipped dead because a live smoke test was skippe
   frozen), `plant_defects`. `app.entry_warnings`
   raises `plant_without_prestart`; the TS half is `reviewQualityWarnings(payload, { plantPrestarted })`. The day's prestart
   screen carries a Plant tab — the job's machines and that day's checks, "Do the check" opening `/plant/new?…&back=` and
-  returning (README R151); the nav item sits under Diary. A LABOURER checks the plant they operate in their own name
+  returning (README R151); the nav item sits under Plant & equipment. A LABOURER checks the plant they operate in their own name
   (README R162): `/plant/check` (screen `plant_check`, a labourer door) is the same form with the operator fixed and the
   job's machines alone; `app.can_check_own_plant` is the policies' second half on `plant_prestarts` and `plant_defects`,
   and the labourer reads their own checks, defects and tickets (own-row clauses on the restrictive policies). Suite 61.
@@ -161,7 +161,7 @@ improvising; the register once shipped dead because a live smoke test was skippe
   a removed one stays off); the day's `photos` rows stay the record. `app.can_author_entries` in SQL is supervisor/admin/pm
   ONLY — a leading hand never writes the draft, whatever `canAuthorEntries` in TS says
 - `src/lib/photos/library.ts` + `library-load.ts` — the job's photographs in one place, by day (README R173): `/entries/photos`
-  (screen `entries`; its own `Photographs` item under Diary since README R183, with a finder — `kindOf`, `photoMatches`,
+  (screen `entries`; its own `Photographs` item under Each day since README R183, with a finder — `kindOf`, `photoMatches`,
   `filterMonths`, pure — in `photo-finder.tsx`; incident and QA record photographs listed too since README R184, under the caller's own read rule, each its own kind) lists every photograph the diary and
   `day_photos` hold, current version of a day only, signed links for the hour, no copy kept. `GET /api/entries/photos/zip
   ?project[&month]` streams them as a zip of dated folders through `src/lib/zip.ts` (STORE, streamed, dependency-free,
@@ -221,7 +221,7 @@ improvising; the register once shipped dead because a live smoke test was skippe
   where booked plus unfinished material orders on their needed-by day, an order with a booking shown once; `monthGrid`,
   `toneFor`, `summarise`, `describe`), `load.ts`. Table `deliveries` (booked → received | cancelled, then frozen; every
   earlier day kept in `moved_from`; never deleted; `order_id` must be the job's). Writes = `app.can_run_talks`; labourer
-  reads none. Screen `deliveries` (Works; `?scope=company` for pm/admin), outbox kinds `delivery_book` / `delivery_update`.
+  reads none. Screen `deliveries` (Site works; `?scope=company` for pm/admin), outbox kinds `delivery_book` / `delivery_update`.
   The home's today panel and the day's review read it as a PROMPT — a booking is never a diary row. Suite 55
 - `src/lib/watering/` — the watering register (README R190), on a landscape job: `model.ts` (pure, node-tested; `METHODS`
   irrigation | manual | soaker, `lineProblems` / `closeProblems` the TS halves of the table constraints and
@@ -293,7 +293,7 @@ improvising; the register once shipped dead because a live smoke test was skippe
   diary row, and never add a third source without a README section. Form `src/app/timesheets/add-time.tsx`. Suite 51. Names go through `makeResolver`:
   each job's crew nicknames on its own rows, the company's `person_aliases` everywhere (README R107); a person on two jobs at
   overlapping clocks is flagged, never adjusted. Screen `timesheets` (pm/admin,
-  company scope, under People): `/timesheets?week=<Monday>`, PDF `/api/timesheets/pdf` (in `outputFileTracingIncludes`)
+  company scope, under Staff & subcontractors): `/timesheets?week=<Monday>`, PDF `/api/timesheets/pdf` (in `outputFileTracingIncludes`)
 - `src/lib/chemicals/` — the hazardous chemicals register: `model.ts` (GHS hazard classes, `currentSds`,
   `sdsStatus` — a sheet is current for five years from the date printed on it, `registerFor`), `load.ts`.
   Tables `chemical_products` (org-wide, one product once), `chemical_sds` (retired never rewritten or deleted,
@@ -390,12 +390,16 @@ improvising; the register once shipped dead because a live smoke test was skippe
   caller's RLS across sign-ins, prestarts, plant, permits, incidents, inspections, tickets, subcontractors, SWMS,
   documents, labour hours). Screen `/safety`; GET `/api/safety/pdf?project`. No tables of its own — every number
   is read from the modules, never typed
-- `src/lib/nav.ts` — the ONE list of the app's sections (`NAV_GROUPS` under seven headings, `showNav`, `navFor`).
+- `src/lib/nav.ts` — the ONE list of the app's sections (`NAV_GROUPS` — eleven headings for the job, five for the company — `showNav`, `navFor`).
+  FILED BY WHAT A THING IS (README R191): Each day · Site works · Plant & equipment · Safety · Health & environment · Quality ·
+  Compliance · Claims · People · Documents · Job setup, then Reports · Registers · Staff & subcontractors · Money · Standards.
+  A new section goes under the heading that names what it is — never the nearest heading with room — and a heading that
+  would hold one door is folded into its neighbour.
   The home page draws it as the heading bar (`src/components/section-bar.tsx`), the phone's Menu drawer as a
   list, the desktop rail as links. A section is added, renamed or moved there and nowhere else; each drawing
   filters it by role through `canSee`. Group labels are written for someone new (README R132: Site works, Documents,
   Job setup; parts captioned `SITE_LABEL` "This job" / `COMPANY_LABEL` "The company"). Two parts (README R111): a GROUP's `scope` is 'site' (this job's record) or
-  'company' (the office's, the same on every job — Reports, Staff, Money, Standards — drawn for the OFFICE, admin and PM, README R136); `navFor` keeps site then company,
+  'company' (the office's, the same on every job — Reports, Registers, Staff & subcontractors, Money, Standards — drawn for the OFFICE, admin and PM, README R136); `navFor` keeps site then company,
   `partsFor` splits them for the home bar's two tabs; the rail and drawer caption the two runs. A new section goes in
   the part its RECORD belongs to. A screen that is both (Plant, Chemicals) stays with the site and names the company
   on its company half. Never reuse a heading label across the two parts — the rail keys its open state by label. The
@@ -467,7 +471,7 @@ improvising; the register once shipped dead because a live smoke test was skippe
   lookahead; one row per upload; the trigger allows voiding only, once, with a reason; a file sits in its own job's
   folder), bucket `programmes` `{project}/{id}.ext` (file first then row; a refused row clears its file; the orphan
   check walks it). Keeping = `app.can_keep_programme` (supervisor/pm/admin); reads = every member behind `reads_record`,
-  leading hand included. `/programme` is screen `programme`, under Site. Suite 41
+  leading hand included. `/programme` is screen `programme`, under Site works. Suite 41
 - `src/lib/qa/` — the QA engine (README R96; screens since R164 — `/qa` the job's QA home, `/qa/itp/[id]` the plan and the
   office's issue → approve → sign moves, `/qa/record/[id]` the record editor, `load.ts` the loaders; screen `qa` under Quality;
   a record's id is chosen on the way in and saved by upsert through outbox kind `qa_record`, signatures as blobs; the
@@ -489,7 +493,7 @@ improvising; the register once shipped dead because a live smoke test was skippe
   `review_actions`, `compliance_evaluation_results`) STAY the record and grew `priority` + `assigned_to`; table `actions` is the
   ones raised by hand (`project_id` null = company-wide, shown on every job); the view unions the six. `update_action` /
   `complete_action` dispatch by origin as the caller — the assignee closes any origin, done is frozen, a manual action is removed
-  only by its raiser while open; `app.action_assignee_ok` refuses anyone not on the job. Screen `actions` (`/actions`, Safety,
+  only by its raiser while open; `app.action_assignee_ok` refuses anyone not on the job. Screen `actions` (`/actions`, Compliance,
   leading hand yes, labourer no), API `/api/actions`. The Safety dashboard and home card count actions through the view — never
   add a seventh source without adding it to the view. Suite 67
 - `src/lib/incidents/investigation.ts` — the investigation behind a report (README R178; pure, node-tested): built-in root causes and
@@ -534,7 +538,7 @@ improvising; the register once shipped dead because a live smoke test was skippe
   (RSK-001 per company; the DB stamps each level from its pair on the matrix, a level alone stands; closed with a reason, frozen),
   `risk_controls` (kind existing | planned is fixed; existing = in place at once; a PLANNED control is `action_register`
   origin `risk` — `complete_action` is what puts it in place; withdrawn with a reason, frozen). Reads behind
-  `reads_org_record`; labourer none. Screens `risks` (`/risks`, `/risks/[id]`, Safety; leading hand reads), PDF
+  `reads_org_record`; labourer none. Screens `risks` (`/risks`, `/risks/[id]`, Compliance; leading hand reads), PDF
   `/api/risks/pdf` (in `outputFileTracingIncludes`), What's due source `risks`, four Safety tiles. NO outbox — desk work, live
   writes. Suite 73
 - `src/lib/forms/` — the forms engine (README R180): `model.ts` (pure, node-tested; `templateProblems`, `answerFails`, `score`,
@@ -620,7 +624,7 @@ improvising; the register once shipped dead because a live smoke test was skippe
   `source_variation_id` + person; frozen unless the variation is raised/priced — `app.variation_cost_lines_guard`). The
   build-up IS the estimate (`variation_register.estimate_source = 'build_up'`, synced by trigger; `set_variation_details`
   cannot type over it); a submission stamps `claimed_total`/`claimed_lines` on its status event. Screens `/rates` (screen
-  `rates`, under Claims) and `/variations/[id]` (the build-up, screen `variations`); links carry `?project=`. `src/lib/money.ts`
+  `rates`, Company › Money) and `/variations/[id]` (the build-up, screen `variations`); links carry `?project=`. `src/lib/money.ts`
   `fmtMoney` for new money on screen. Suite 45
 - `src/lib/messages/` — messages from the office to a person (README R112): table `messages` (the office — admin or PM, R136 — sends to a
   member of its jobs; body and parties frozen; NEVER deleted, service role included; read/acknowledged stamped only by the

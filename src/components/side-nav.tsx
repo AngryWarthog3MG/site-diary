@@ -20,6 +20,9 @@ import type { MemberRole } from '@/types/database';
  * five doors here and five there.
  */
 
+/** A heading as an element id: its name may carry spaces and an ampersand (README R191). */
+const slug = (label: string) => label.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+
 interface Me {
   name: string | null;
   project: (SwitchableJob & { org: { name: string; code: string } }) | null;
@@ -122,14 +125,14 @@ export function SideNav() {
                 type="button"
                 className={`rail__head${holdsHere ? ' rail__head--here' : ''}`}
                 aria-expanded={opened}
-                aria-controls={`rail-${group.label}`}
+                aria-controls={`rail-${slug(group.label)}`}
                 onClick={() => toggle(group.label)}
               >
                 <span>{heading}</span>
                 <span className="rail__caret" aria-hidden>▾</span>
               </button>
               {opened && (
-                <ul id={`rail-${group.label}`} className="rail__sub">
+                <ul id={`rail-${slug(group.label)}`} className="rail__sub">
                   {items.map((item) => (
                     <li key={item.href}>
                       <Link className={`rail__item${here(item.href) ? ' rail__item--here' : ''}`} href={onJob(item.href, jobId)}>

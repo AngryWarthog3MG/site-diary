@@ -3525,6 +3525,8 @@ main.sheet--wide .vr-list { grid-template-columns: repeat(auto-fill, minmax(22re
     display: flex; align-items: center; justify-content: space-between; width: 100%;
     padding: 0.5rem 0.6rem; border: 0; border-radius: 0.45rem; background: none; cursor: pointer;
     font: inherit; font-size: 0.8rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--ink-60);
+    /* A heading of several words may take two lines (README R191): it wraps from the left, clear of the caret. */
+    gap: 0.4rem; text-align: left;
   }
   .rail__head:hover { background: rgba(22, 33, 31, 0.04); }
   .rail__head--here { color: var(--teal, #0e4f52); }

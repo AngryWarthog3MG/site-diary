@@ -4096,6 +4096,45 @@ pure and node-tested. Not built: reordering areas (they keep the order they were
 a change trail finer than the last hand on a line; a reminder when a day goes unrecorded; the week in the weekly
 report. A person whose screens were ticked by hand (R57) needs "Watering register" ticked like any new screen.
 
+**R191. Filed where you would look for it.** "Let's tidy up the layout and the filing system, make it more sensible,
+and file the right areas under the correct heading. Like assets shouldn't be under Site works, that doesn't make
+sense." The menu had grown a feature at a time, each new door put under the nearest heading with room: the asset
+register under Site works, the plant prestart under Diary, the gate and the briefing under Diary, the toolbox talk and
+the Chapter 6 records under Site works, fourteen doors under Safety, the audits under Quality, the calibration
+register under Standards, the subcontractors under Staff, your own messages under Diary and your own name under Job
+setup. `nav.ts` is still the one list; this refiles it and changes nothing else — every door keeps its name, its
+address, its screen and who may open it.
+
+The rule: a door goes under the heading that names WHAT IT IS, where someone who has never seen the app would look,
+and the headings run in the order a job is worked.
+
+| Heading | What is under it | What moved in |
+|---|---|---|
+| **Each day** (was Diary) | Site sign-in, Prestarts, Sign on to the prestart, Daily Diary, Photographs, Weekly report | In the order the day runs. Plant prestarts and Messages for you moved out |
+| **Site works** | Programme, Progress, Orders & plant issues, Calendar, Watering register | Progress, from Claims — the plan and how far along it is sit together |
+| **Plant & equipment** (new) | Plant prestarts, Assets & equipment | From Diary and Site works |
+| **Safety** | Safety dashboard, Hazards & incidents, Inspections, Forms, Permits to work, SWMS & JSA, Sign on to a SWMS, Toolbox talks, Emergency plan, Construction records | Toolbox talks and Construction records, from Site works |
+| **Health & environment** (new) | Chemicals & SDS, Asbestos, Environment | From Safety |
+| **Quality** | Quality, ITPs & ITRs | Audits moved out |
+| **Compliance** (new) | Action register, What's due, Risk register, Audits and reviews | From Safety and Quality — the management system's own housekeeping, whatever the subject |
+| **Claims** | Claims, Dayworks schedule, Variation tracker, Notices | — |
+| **People** | Who is on this job, Training matrix, Training classes, Messages for you, Your name | What is yours, from Diary and Job setup |
+| **Documents** | Policies & procedures, Job documents, Ask a question | — |
+| **Job setup** | Mobilisation, Settings, Words and names | — |
+| *Company* **Reports** | Weekly report — all jobs, All jobs | — |
+| *Company* **Registers** | All registers, Calibration register | Calibration, from Standards — it is a register |
+| *Company* **Staff & subcontractors** (was Staff) | People, Inductions, Timesheets, Health monitoring, Subcontractors, Send a message | Send a message — its heading held that one door |
+| *Company* **Money** | Rates | — |
+| *Company* **Standards** | Templates, Form designer | — |
+
+Decisions: Safety is what is reported, inspected, permitted and briefed on site; what can harm health or the ground
+(chemicals, asbestos, the environmental record) has its own heading, and so does what the system asks of itself
+(actions, what falls due, risks, audits) — fourteen doors under one word was a list nobody read. Orders & plant issues
+stays with Site works: it is one page for diesel, consumables and a light out on a machine, and it pairs with the
+deliveries calendar. A heading that would hold one door is folded into its neighbour, except Money, which is its own
+permission (R105). The tick boxes for a person's screens (R57) are drawn from this list, so they regroup with it; no
+tick changes. The rail's element ids are slugged now — a heading may carry spaces and an ampersand.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;

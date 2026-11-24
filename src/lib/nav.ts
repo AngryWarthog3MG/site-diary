@@ -47,74 +47,102 @@ export const HOME_ITEM: NavItem = { href: '/', name: 'Home', what: 'Today’s di
 
 export const NAV_GROUPS: NavGroup[] = [
   // ---- Site: this job's own record ------------------------------------------------------------
+  // Filed by what a thing IS, under a heading that says so (README R191): a door goes where someone who has never
+  // seen the app would look for it, and the headings run in the order a job is worked — the day, the work, the
+  // plant, then safety, health and environment, quality, the system's housekeeping, the money, the people.
   {
-    label: 'Diary', scope: 'site',
+    // What happens every day on site, in the order it happens: the gate, the briefing, the diary and its photographs, and the week they roll up into.
+    label: 'Each day', scope: 'site',
     items: [
-      { href: '/entries', name: 'Daily Diary', what: 'Every day’s diary — signed days and their PDFs', screen: 'entries' },
-      { href: '/entries/photos', name: 'Photographs', short: 'Photos', what: 'Every photograph on the job in one place, by day — search by what it shows or when, download a month', screen: 'entries' },
       { href: '/signin', name: 'Site sign-in', what: 'Who is on site now — in and out at the gate', screen: 'signin' },
       { href: '/prestart', name: 'Prestarts', what: 'Morning briefing and sign-on — with each machine’s check', screen: 'prestart' },
-      { href: '/plant', name: 'Plant prestarts', short: 'Plant', what: 'Each machine checked before use, daily — defects and the register', screen: 'plant' },
       { href: '/prestart/sign', name: 'Sign on to the prestart', short: 'Sign on', what: 'Today’s briefing on your job — read it and sign on from your own phone', screen: 'prestart_sign' },
+      { href: '/entries', name: 'Daily Diary', what: 'Every day’s diary — signed days and their PDFs', screen: 'entries' },
+      { href: '/entries/photos', name: 'Photographs', short: 'Photos', what: 'Every photograph on the job in one place, by day — search by what it shows or when, download a month', screen: 'entries' },
       { href: '/reports/weekly', name: 'Weekly report', what: 'The week, rolled up', screen: 'weekly' },
-      { href: '/inbox', name: 'Messages for you', short: 'Messages', what: 'What the office has sent you', screen: 'inbox' },
     ],
   },
   {
+    // The work itself: the plan, how far along it is, what is ordered and arriving, and the watering where a job has it.
     label: 'Site works', scope: 'site',
     items: [
       { href: '/programme', name: 'Programme', what: 'The construction programme as issued, and the two-week look-aheads', screen: 'programme' },
-      { href: '/toolbox', name: 'Toolbox talks', what: 'Weekly talk and sign-on', screen: 'toolbox' },
-      { href: '/construction', name: 'Construction records', short: 'Construction', what: 'WHS management plan, services and trenches for each dig, white cards', screen: 'construction' },
+      { href: '/progress', name: 'Progress', what: 'How far along each area is', screen: 'progress' },
       { href: '/orders', name: 'Orders & plant issues', short: 'Orders', what: 'Diesel, consumables, anything to order — and a light out on a machine', screen: 'orders' },
-      { href: '/assets', name: 'Assets & equipment', short: 'Assets', what: 'Extinguishers, first-aid kits, leads, slings, harnesses, hired gear and the machines — where each is, who has it, and what is due on it', screen: 'assets' },
       { href: '/deliveries', name: 'Calendar', what: 'Deliveries booked to arrive, day by day — on this job, or every job on one calendar', screen: 'deliveries' },
       { href: '/watering', name: 'Watering register', short: 'Watering', what: 'Each area, each day: how it was watered and for how many hours, supplementary watering, and the day’s maximum temperature', screen: 'watering', feature: 'watering' },
     ],
   },
   {
-    label: 'Claims', scope: 'site',
+    // The machines and the gear: each machine's daily check, and everything the company owns or hires on this job.
+    label: 'Plant & equipment', scope: 'site',
     items: [
-      { href: '/claims', name: 'Claims', what: 'Delays, variations, dayworks', screen: 'claims' },
-      { href: '/dayworks', name: 'Dayworks schedule', short: 'Dayworks', what: 'Works completed under daywork and the total hours, by period — printable', screen: 'claims' },
-      { href: '/variations', name: 'Variation tracker', what: 'Each one walked from raised to paid — where it is, what it waits on', screen: 'variations' },
-      { href: '/notices', name: 'Notices', what: 'Instructions and events from the diary, and the notices we send about them', screen: 'notices' },
-      { href: '/progress', name: 'Progress', what: 'How far along each area is', screen: 'progress' },
+      { href: '/plant', name: 'Plant prestarts', short: 'Plant', what: 'Each machine checked before use, daily — defects and the register', screen: 'plant' },
+      { href: '/assets', name: 'Assets & equipment', short: 'Assets', what: 'Extinguishers, first-aid kits, leads, slings, harnesses, hired gear and the machines — where each is, who has it, and what is due on it', screen: 'assets' },
     ],
   },
   {
-    label: 'Quality', scope: 'site',
-    items: [
-      { href: '/quality', name: 'Quality', what: 'Inspection and test plans, lots and hold points, non-conformances', screen: 'quality' },
-      { href: '/qa', name: 'ITPs & ITRs', what: 'The job’s inspection and test plans, and the records filled in for every lot and pour', screen: 'qa' },
-      { href: '/audits', name: 'Audits and reviews', short: 'Audits', what: 'Internal audits, management reviews, and their actions until closed', screen: 'audits' },
-    ],
-  },
-  {
+    // Working safely on site: what was reported, inspected, permitted and briefed.
     label: 'Safety', scope: 'site',
     items: [
       { href: '/safety', name: 'Safety dashboard', short: 'Safety', what: 'Open actions, expiring tickets, injuries and rates — read from the record', screen: 'safety' },
-      { href: '/actions', name: 'Action register', short: 'Actions', what: 'Everything to be done, from every record and by hand — who holds it and when it is due', screen: 'actions' },
-      { href: '/emergency', name: 'Emergency plan', short: 'Emergency', what: 'Muster point, nearest hospital, who to call — and the drills that test it', screen: 'emergency' },
-      { href: '/due', name: "What's due", what: 'Audits, reviews, drills, safety data sheets and tickets, in the order they need doing', screen: 'obligations' },
-      { href: '/risks', name: 'Risk register', short: 'Risks', what: 'Risk profiles for the company, the job and its assets — each hazard rated before and after controls, the controls in place and planned', screen: 'risks' },
       { href: '/incidents', name: 'Hazards & incidents', what: 'Report it in a minute; actions until it is closed', screen: 'incidents' },
       { href: '/inspections', name: 'Inspections', what: 'Site walks, environmental and quality checks', screen: 'inspections' },
       { href: '/forms', name: 'Forms', what: 'The company’s checklists filled on the phone — fatigue, observations, hire, crack checks — and what they found', screen: 'forms' },
       { href: '/permits', name: 'Permits to work', what: 'Hot work, excavation, confined space, heights, electrical', screen: 'permits' },
       { href: '/swms', name: 'SWMS & JSA', what: 'Method statements — written here or filed as documents — and who has signed on', screen: 'swms' },
       { href: '/swms/sign', name: 'Sign on to a SWMS', short: 'Sign on', what: 'Read the method statement for your work and sign on from your own phone', screen: 'swms_sign' },
-      { href: '/asbestos', name: 'Asbestos', what: 'The site register, its management plan, the crew briefed, and any removal', screen: 'asbestos' },
-      { href: '/environment', name: 'Environment', what: 'Aspects and impacts, legal register, compliance checks, monitoring, after-rain checks', screen: 'environment' },
-      { href: '/chemicals', name: 'Chemicals & SDS', short: 'Chemicals', what: 'What is on site, and a current safety data sheet for each', screen: 'chemicals' },
+      { href: '/toolbox', name: 'Toolbox talks', what: 'Weekly talk and sign-on', screen: 'toolbox' },
+      { href: '/emergency', name: 'Emergency plan', short: 'Emergency', what: 'Muster point, nearest hospital, who to call — and the drills that test it', screen: 'emergency' },
+      { href: '/construction', name: 'Construction records', short: 'Construction', what: 'WHS management plan, services and trenches for each dig, white cards', screen: 'construction' },
     ],
   },
   {
+    // What can harm people's health or the ground: chemicals, asbestos, and the environmental record.
+    label: 'Health & environment', scope: 'site',
+    items: [
+      { href: '/chemicals', name: 'Chemicals & SDS', short: 'Chemicals', what: 'What is on site, and a current safety data sheet for each', screen: 'chemicals' },
+      { href: '/asbestos', name: 'Asbestos', what: 'The site register, its management plan, the crew briefed, and any removal', screen: 'asbestos' },
+      { href: '/environment', name: 'Environment', what: 'Aspects and impacts, legal register, compliance checks, monitoring, after-rain checks', screen: 'environment' },
+    ],
+  },
+  {
+    // Building it right: the inspection and test plans and the records filled in against them.
+    label: 'Quality', scope: 'site',
+    items: [
+      { href: '/quality', name: 'Quality', what: 'Inspection and test plans, lots and hold points, non-conformances', screen: 'quality' },
+      { href: '/qa', name: 'ITPs & ITRs', what: 'The job’s inspection and test plans, and the records filled in for every lot and pour', screen: 'qa' },
+    ],
+  },
+  {
+    // The management system's own housekeeping: what is to be done, what falls due, the risks, the audits.
+    label: 'Compliance', scope: 'site',
+    items: [
+      { href: '/actions', name: 'Action register', short: 'Actions', what: 'Everything to be done, from every record and by hand — who holds it and when it is due', screen: 'actions' },
+      { href: '/due', name: "What's due", what: 'Audits, reviews, drills, safety data sheets and tickets, in the order they need doing', screen: 'obligations' },
+      { href: '/risks', name: 'Risk register', short: 'Risks', what: 'Risk profiles for the company, the job and its assets — each hazard rated before and after controls, the controls in place and planned', screen: 'risks' },
+      { href: '/audits', name: 'Audits and reviews', short: 'Audits', what: 'Internal audits, management reviews, and their actions until closed', screen: 'audits' },
+    ],
+  },
+  {
+    // What the job is owed beyond the contract, and the notices that protect it.
+    label: 'Claims', scope: 'site',
+    items: [
+      { href: '/claims', name: 'Claims', what: 'Delays, variations, dayworks', screen: 'claims' },
+      { href: '/dayworks', name: 'Dayworks schedule', short: 'Dayworks', what: 'Works completed under daywork and the total hours, by period — printable', screen: 'claims' },
+      { href: '/variations', name: 'Variation tracker', what: 'Each one walked from raised to paid — where it is, what it waits on', screen: 'variations' },
+      { href: '/notices', name: 'Notices', what: 'Instructions and events from the diary, and the notices we send about them', screen: 'notices' },
+    ],
+  },
+  {
+    // Who is on the job, what they are trained for — and what is yours: your messages and your name.
     label: 'People', scope: 'site',
     items: [
+      { href: '/settings/members', name: 'Who is on this job', what: 'Crew, roles, access and inductions — the office manages people on the People page', when: 'canRecord' },
       { href: '/training', name: 'Training matrix', what: 'Who holds what, what each role needs, what is expiring — this job, or the whole company', screen: 'training' },
       { href: '/training/classes', name: 'Training classes', short: 'Classes', what: 'The courses the company runs and sends people to, the classes coming up, who is booked, who came — and the ticket a class earns', screen: 'training' },
-      { href: '/settings/members', name: 'Who is on this job', what: 'Crew, roles, access and inductions — the office manages people on the People page', when: 'canRecord' },
+      { href: '/inbox', name: 'Messages for you', short: 'Messages', what: 'What the office has sent you', screen: 'inbox' },
+      { href: '/name', name: 'Your name', what: 'How your name prints on the sheets' },
     ],
   },
   {
@@ -130,7 +158,6 @@ export const NAV_GROUPS: NavGroup[] = [
     items: [
       { href: '/mobilisation', name: 'Mobilisation', what: 'What this job needs before and as it starts — stamped from the company’s templates', screen: 'start_gate' },
       { href: '/settings', name: 'Settings', what: 'Hours, emails, crew and plant lists', screen: 'settings' },
-      { href: '/name', name: 'Your name', what: 'How your name prints on the sheets' },
       { href: '/settings/vocabulary', name: 'Words and names', what: 'Names and site terms', when: 'canRecord' },
     ],
   },
@@ -143,24 +170,22 @@ export const NAV_GROUPS: NavGroup[] = [
     ],
   },
   {
+    // The company's registers: the editable ones on one page, and the measuring equipment's calibration.
     label: 'Registers', scope: 'company',
     items: [
       { href: '/registers', name: 'All registers', short: 'Registers', what: 'Plant and equipment, chemicals and safety data sheets, calibration — one page, edited in place', screen: 'registers' },
+      { href: '/quality/equipment', name: 'Calibration register', short: 'Calibration', what: 'The company’s measuring equipment and when each is due', screen: 'quality' },
     ],
   },
   {
-    label: 'Staff', scope: 'company',
+    // Everyone who works for the company or under it: their records, their hours, and a message to any of them.
+    label: 'Staff & subcontractors', scope: 'company',
     items: [
       { href: '/staff', name: 'People', what: 'Everyone who works for the company — logins, titles, jobs, tickets, inductions, who to call', screen: 'staff' },
       { href: '/inductions', name: 'Inductions', what: 'Who is inducted on each job and who is not — record one here', screen: 'inductions' },
       { href: '/timesheets', name: 'Timesheets', what: 'Everyone’s hours for the week, across every job, on one sheet', screen: 'timesheets' },
       { href: '/health', name: 'Health monitoring', short: 'Health', what: 'Confidential — blood lead, asbestos and Schedule 14 monitoring, for named record keepers only', screen: 'health' },
       { href: '/subcontractors', name: 'Subcontractors', what: 'Insurances, SWMS and licences, chased before they lapse', screen: 'subcontractors' },
-    ],
-  },
-  {
-    label: 'Messages', scope: 'company',
-    items: [
       { href: '/messages', name: 'Send a message', short: 'Messages', what: 'Tell someone something — it goes to their phone and stays on the record', screen: 'messages' },
     ],
   },
@@ -171,10 +196,10 @@ export const NAV_GROUPS: NavGroup[] = [
     ],
   },
   {
+    // What every job starts from: the templates and the company's own forms.
     label: 'Standards', scope: 'company',
     items: [
       { href: '/templates', name: 'Templates', what: 'What every job starts with — mobilisation items, hold points, submittals, consumables, risks, folders — by module', screen: 'templates' },
-      { href: '/quality/equipment', name: 'Calibration register', short: 'Calibration', what: 'The company’s measuring equipment and when each is due', screen: 'quality' },
       { href: '/forms/design', name: 'Form designer', short: 'Forms', what: 'Write and issue the company’s checklists: sections, questions, scores, what raises an action', screen: 'forms_design' },
     ],
   },
