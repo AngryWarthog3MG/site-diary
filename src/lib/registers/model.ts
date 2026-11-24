@@ -36,6 +36,8 @@ export interface RegisterDoc {
   /** One line each, under the title: the counts a reader wants first. */
   summary: string[];
   sections: RegisterSection[];
+  /** What red and amber mean on THIS register, where it is not "overdue" and "falling due" (README R190). */
+  key?: string;
 }
 
 /** DD/MM/YYYY from an ISO day, by hand — a register is read in Perth and printed anywhere. */

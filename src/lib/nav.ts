@@ -20,6 +20,9 @@ import type { MemberRole } from '@/types/database';
  * machines here, and the fleet behind them) stays with the job and labels its
  * company half on the page.
  */
+/** What a job has that most do not (README R190): a door drawn only on the jobs that have it. */
+export type JobFeature = 'watering';
+
 export interface NavItem {
   href: string;
   name: string;
@@ -28,6 +31,8 @@ export interface NavItem {
   what: string;
   screen?: Screen;
   when?: 'canRecord' | 'multiJob';
+  /** Drawn only on a job that has this (README R190) — the role's screen still decides who. */
+  feature?: JobFeature;
 }
 
 /** Two parts (README R111): the job you are standing on, and the company that runs every job. */
@@ -64,6 +69,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { href: '/orders', name: 'Orders & plant issues', short: 'Orders', what: 'Diesel, consumables, anything to order — and a light out on a machine', screen: 'orders' },
       { href: '/assets', name: 'Assets & equipment', short: 'Assets', what: 'Extinguishers, first-aid kits, leads, slings, harnesses, hired gear and the machines — where each is, who has it, and what is due on it', screen: 'assets' },
       { href: '/deliveries', name: 'Calendar', what: 'Deliveries booked to arrive, day by day — on this job, or every job on one calendar', screen: 'deliveries' },
+      { href: '/watering', name: 'Watering register', short: 'Watering', what: 'Each area, each day: how it was watered and for how many hours, supplementary watering, and the day’s maximum temperature', screen: 'watering', feature: 'watering' },
     ],
   },
   {
@@ -181,7 +187,7 @@ export const NAV_GROUPS: NavGroup[] = [
  */
 export const EVERY_ROLE: Screen[] = ['today', 'entries', 'weekly', 'prestart', 'prestart_sign', 'plant', 'toolbox', 'signin', 'swms', 'swms_sign', 'incidents', 'inspections', 'forms', 'permits', 'procedures', 'safety', 'orders', 'chemicals', 'obligations', 'emergency', 'construction', 'quality', 'qa', 'audits', 'asbestos', 'environment'];
 
-export interface NavViewer { role: MemberRole | null; screens?: readonly string[] | null; finance?: boolean | null; canRecord: boolean; multiJob: boolean }
+export interface NavViewer { role: MemberRole | null; screens?: readonly string[] | null; finance?: boolean | null; canRecord: boolean; multiJob: boolean; features?: readonly string[] | null }
 
 /**
  * The groups this viewer gets, each holding only the doors they get; empty
@@ -204,6 +210,8 @@ export function partsFor(groups: NavGroup[]): { site: NavGroup[]; company: NavGr
 /** Whether this viewer gets this door. A null role means "not known yet". */
 export function showNav(item: NavItem, viewer: NavViewer): boolean {
   const member: Access | null = viewer.role ? { role: viewer.role, screens: viewer.screens ?? null, finance: viewer.finance ?? null } : null;
+  // A door only some jobs have (README R190): not drawn until the job is known to have it.
+  if (item.feature && !(viewer.features ?? []).includes(item.feature)) return false;
   // The crew pages live under Settings: an authoring role gets them, unless Settings is unticked for this person.
   if (item.when === 'canRecord') return viewer.canRecord && (member ? sees(member, 'settings') : true);
   // All jobs is the owner's screen: several jobs, and a role that reads the record on them.

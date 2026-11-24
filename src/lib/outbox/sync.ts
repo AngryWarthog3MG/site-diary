@@ -6,6 +6,7 @@ import * as outbox from './store';
 import type { OutboxItem } from './store';
 import { isNetworkError, isPermissionError, isAlreadyDone, isFrozen, backoffMs, isOnline } from './offline';
 import { changeQaPhotos } from '../qa/photos';
+import { saveWateringDay, type WateringDayPayload } from '../watering/save';
 
 /**
  * Replay what was done offline, in the order it happened, with the same
@@ -324,6 +325,12 @@ async function replay(item: OutboxItem): Promise<void> {
     case 'env_monitoring': {
       const { error } = await supabase.from('env_monitoring_records').insert(p.row as Record<string, unknown>);
       if (error && !isAlreadyDone(error)) throw error;
+      return;
+    }
+    case 'watering_day': {
+      // A day of the watering register saved with no signal (README R190): the day and its lines are upserts on their
+      // own keys, so a replay meets its own rows. A week closed meanwhile refuses it, and the refusal is shown.
+      await saveWateringDay(supabase, p as unknown as WateringDayPayload);
       return;
     }
     case 'delivery_book': {

@@ -14,6 +14,8 @@ import { InboxNudge } from '@/components/inbox-nudge';
 import { WaitingPanel } from '@/components/waiting-panel';
 import { canRunTalks, canReport, sees, ROLE_LABEL, type Screen } from '@/lib/roles';
 import { navFor, viewerFor } from '@/lib/nav';
+import { jobFeatures } from '@/lib/features';
+import { createClient } from '@/lib/supabase/server';
 import { SignOutButton } from '@/components/sign-out-button';
 import { TodayPanel } from './today-panel';
 import { DashboardCards, DashboardSkeleton } from './dashboard-cards';
@@ -68,7 +70,7 @@ export default async function TodayPage({
 
   const activeJobs = memberships.filter((m) => m.project.active).length;
   const q = `?project=${current.project_id}`;
-  const groups = navFor(viewerFor(current, activeJobs));
+  const groups = navFor({ ...viewerFor(current, activeJobs), features: await jobFeatures(await createClient(), current.project_id) });
   const talks = canRunTalks(current.role);
   const reports = canReport(current.role);
   const authors = canAuthorEntries(current.role);

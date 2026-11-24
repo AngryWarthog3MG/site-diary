@@ -4052,6 +4052,50 @@ Migration 20261111100000, suite 75, and suite 66 re-proved against it.
   `qa_records.photo_paths`, its sign-offs and `qa_record_photo_removals.paths`, so a photograph taken off is a
   referenced file, not a loose one. A voided record takes no change.
 
+**R190. The watering register.** "I need to add a watering register to the Curtin page … the areas … Monday to
+Sunday, the dropdowns need to be Irrigation, Manual water, Soaker hoses, then the amount of hours it's been running
+for, add a max daily temperature also … add notes also … they want us to do supplementary watering as well, so there
+could be irrigation and supplementary watering on the same day." Curtin is a landscape job: plants that die are argued
+over months later, and what was watered, when and in what heat is the record that answers it. Mitchell saw it as a
+mock-up three times before it was built. Migration 20261124100000, suite 76.
+
+- **Areas are the job's own list** (`watering_areas`): the office adds and retires them (`app.is_office`), tidied, one
+  of a name, never deleted. A retired area leaves the weeks to come and stays on the weeks it has a line in
+  (`shownAreas`). Curtin's six — Old Brand Drive North, Old Brand Drive South, East Gate, Brand Drive, Bus Port,
+  Holding Stock Area — are seeded by the migration, scoped to that job's id.
+- **A line is one area on one day** (`watering_entries`, unique on area and day): a method — irrigation, manual water
+  or soaker hoses — and its hours, a SUPPLEMENTARY method and its hours beside it, and a note. Supplementary is a
+  second line of the same shape rather than a fourth dropdown word, because it is watering done on top of the day's
+  watering and the head contractor reads the two apart; the same three methods serve both.
+- **Hours never stand without a method; a method may wait for its hours.** "Never invent a number": a method saved
+  with no hours is kept, shown amber as "hours?", left out of every total and counted as a gap — the register keeps
+  asking. Hours are over 0 and at most 24; nothing is recorded for a day that has not come.
+- **A day somebody recorded is a row** (`watering_days`): saving a day writes it, with the maximum temperature and who
+  recorded it. That row is what tells nil from gap — an empty area on a recorded day prints "Not watered"; a day with
+  no row prints "Not recorded". The temperature is TYPED: the Bureau's daily maximum for the job
+  (`project_weather_days`) is shown beside the box with "Use it", a prompt and never the record — the app writes no
+  temperature of its own.
+- **Saved a day at a time, whole** — `saveWateringDay`, upserts on the natural keys, so the phone's replay (outbox kind
+  `watering_day`) meets its own rows; the trigger stamps `updated_by` only where a line really changed, so re-saving a
+  day does not put your name on lines you did not touch. Recorded by whoever runs the site (`app.can_run_talks`: leading
+  hand, supervisor, PM, admin); the labourer reads none.
+- **A week closes** (`watering_weeks`, a supervisor's, PM's or admin's tap) once its Sunday has gone by and no line is
+  waiting on its hours; then nothing in it changes and the close is never undone. Until then a day is corrected
+  freely — this is a working register, not a signed docket; the stamp says who last changed a line. Days nobody
+  recorded do not block the close: they print as not recorded, which is the truth.
+- **Printed a week at a time** in the R117 layout (`/api/watering/pdf?project=&week=`): the days with their
+  temperatures and who recorded them, the areas by day with a week total, the notes. `RegisterDoc.key` lets a register
+  say what amber means on it — here "still to be answered", not "falling due". Never stored.
+- **Only on a job that has one.** A job has a watering register once it has an area. `NavItem.feature` and
+  `jobFeatures` (`src/lib/features.ts`) draw the door only there — the lookup is its own query and never fails the
+  menu, so the app does not depend on the table existing. The office starts one on another job by opening `/watering`
+  and adding areas.
+
+Screen `watering` (`/watering`, Site works; leading hand, supervisor, PM, admin). Model `src/lib/watering/model.ts`,
+pure and node-tested. Not built: reordering areas (they keep the order they were added in); reopening a closed week;
+a change trail finer than the last hand on a line; a reminder when a day goes unrecorded; the week in the weekly
+report. A person whose screens were ticked by hand (R57) needs "Watering register" ticked like any new screen.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;

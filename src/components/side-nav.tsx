@@ -26,6 +26,7 @@ interface Me {
   role: MemberRole | null;
   screens?: string[] | null;
   finance?: boolean | null;
+  features?: string[] | null;
   canRecord?: boolean;
   projects?: SwitchableJob[];
 }
@@ -39,7 +40,7 @@ export function SideNav() {
   // own; a tap on any heading opens or closes it, and that is remembered for
   // the session so a desk that likes everything open keeps it that way.
   const [open, setOpen] = useState<Record<string, boolean>>({});
-  const viewer = { role: me?.role ?? null, screens: me?.screens ?? null, finance: me?.finance ?? null, canRecord: Boolean(me?.canRecord), multiJob: (me?.projects?.length ?? 0) > 1 };
+  const viewer = { role: me?.role ?? null, screens: me?.screens ?? null, finance: me?.finance ?? null, features: me?.features ?? null, canRecord: Boolean(me?.canRecord), multiJob: (me?.projects?.length ?? 0) > 1 };
   // The rail draws every heading as a dropdown; Settings sits in its foot, and the crew pages live under it.
   // The job's headings first, then the company's (README R87) — the same split as the drawer and the home bar.
   const groups = navFor(viewer)

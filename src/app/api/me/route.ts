@@ -2,6 +2,7 @@ import { cookies } from 'next/headers';
 import { fail, ok, requireApiUser } from '@/lib/api';
 import { resolveProject, canAuthorEntries, canRunTalks, type Membership } from '@/lib/auth';
 import { JOB_COOKIE, preferJob, readJobCookie } from '@/lib/jobs';
+import { jobFeatures } from '@/lib/features';
 
 export const dynamic = 'force-dynamic';
 
@@ -34,6 +35,9 @@ export async function GET(request: Request) {
     .eq('id', user.id)
     .maybeSingle();
 
+  // What this job has that most do not — the watering register (README R190). Never fails the menu.
+  const features = current ? await jobFeatures(supabase, current.project_id) : [];
+
   return ok(
     {
       name: (profile?.full_name as string | null) ?? user.email ?? null,
@@ -43,6 +47,7 @@ export async function GET(request: Request) {
       role: current?.role ?? null,
       screens: current?.screens ?? null,
       finance: current?.finance ?? null,
+      features,
       canRecord: current ? canAuthorEntries(current.role) : false,
       canRunTalks: current ? canRunTalks(current.role) : false,
       projects: rows

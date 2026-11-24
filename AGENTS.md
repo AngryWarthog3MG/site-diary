@@ -223,6 +223,19 @@ improvising; the register once shipped dead because a live smoke test was skippe
   earlier day kept in `moved_from`; never deleted; `order_id` must be the job's). Writes = `app.can_run_talks`; labourer
   reads none. Screen `deliveries` (Works; `?scope=company` for pm/admin), outbox kinds `delivery_book` / `delivery_update`.
   The home's today panel and the day's review read it as a PROMPT — a booking is never a diary row. Suite 55
+- `src/lib/watering/` — the watering register (README R190), on a landscape job: `model.ts` (pure, node-tested; `METHODS`
+  irrigation | manual | soaker, `lineProblems` / `closeProblems` the TS halves of the table constraints and
+  `app.watering_weeks_before_insert` — the DB wins; `lineGaps`, `cellState`, `areaHours`, `summariseWeek`, `shownAreas`),
+  `load.ts` (`loadWateringWeek`), `save.ts` (`saveWateringDay` — the ONE writer of a day, upserts on the natural keys).
+  Tables `watering_areas` (the job's list; office writes via `app.is_office`; retired never deleted), `watering_days` (a row
+  = the day was RECORDED, with the typed maximum temperature — the Bureau's reading is a prompt, never written by the app),
+  `watering_entries` (one per area per day: method + hours, supplementary method + hours, notes; hours never without a
+  method, a method may wait for its hours — amber "hours?", never in a total), `watering_weeks` (a row closes the week:
+  only once over and with no hours outstanding; then frozen, never reopened). Recorded by `app.can_run_talks`, closed by
+  `app.can_manage_incidents`, labourer reads none. Nil is not a gap: an empty area on a recorded day is "Not watered", an
+  unrecorded day is "Not recorded". Screen `watering` (`/watering`), outbox kind `watering_day`, PDF `/api/watering/pdf`
+  (`src/lib/registers/watering.ts`, in `outputFileTracingIncludes`). Drawn ONLY on a job with an area: `NavItem.feature`
+  + `jobFeatures` (`src/lib/features.ts`, never allowed to fail the menu). Suite 76
 - `src/lib/gate/` — the visitor gate: `model.ts` (`newGateToken`, `gateUrl`, `DEFAULT_RULES`, `validateGateSignIn`).
   Table `gate_tokens` (one active per job; rotate = revoke + new). Public routes `/gate/[token]` and
   `/api/gate/[token]/{signin,signout}` (listed in `PUBLIC_PATHS`; service role; rate limit 60/10 min per job) write

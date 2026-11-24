@@ -16,6 +16,7 @@ interface Me {
   role: string | null;
   screens?: string[] | null;
   finance?: boolean | null;
+  features?: string[] | null;
   canRecord: boolean;
   projects: SwitchableJob[];
 }
@@ -70,7 +71,7 @@ export function AppMenu({ slotId }: { slotId: string }) {
   const jobId = me?.project?.id ?? projectParam ?? null;
   // The same list the home page and the rail draw. Until the role is known
   // only the doors every role has are drawn, so nobody sees one close on them.
-  const viewer = { role: (me?.role as MemberRole | null) ?? null, screens: me?.screens ?? null, finance: me?.finance ?? null, canRecord: Boolean(me?.canRecord), multiJob: (me?.projects.length ?? 0) > 1 };
+  const viewer = { role: (me?.role as MemberRole | null) ?? null, screens: me?.screens ?? null, finance: me?.finance ?? null, features: me?.features ?? null, canRecord: Boolean(me?.canRecord), multiJob: (me?.projects.length ?? 0) > 1 };
   const groups = navFor(viewer);
   const item = (it: NavItem, variant?: 'wide') => (
     <Link

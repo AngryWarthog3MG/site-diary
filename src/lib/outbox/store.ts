@@ -45,6 +45,7 @@ export type OutboxKind =
   | 'hc_document'
   | 'dayworks_approval'
   | 'delivery_book'
+  | 'watering_day'
   | 'delivery_update'
   | 'asset_checkout'
   | 'asset_checkin'
@@ -101,6 +102,7 @@ export const KIND_LABEL: Record<OutboxKind, string> = {
   hc_document: 'a head contractor plan received',
   dayworks_approval: 'a dayworks approval signature',
   delivery_book: 'a delivery booking',
+  watering_day: 'a day of the watering register',
   delivery_update: 'a delivery change',
   asset_checkout: 'an asset checked out',
   asset_checkin: 'an asset checked in',

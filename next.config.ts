@@ -73,6 +73,7 @@ const nextConfig: NextConfig = {
     // Training classes and the training report (README R188).
     '/api/training/classes/*/pdf': CHROMIUM,
     '/api/training/report/pdf': CHROMIUM,
+    '/api/watering/pdf': CHROMIUM,
     // The printed registers (README R117). The plant register is covered by '/api/plant/*/pdf' above.
     '/api/plant/register/pdf': CHROMIUM,
     // The asset register and its QR labels (README R186).
