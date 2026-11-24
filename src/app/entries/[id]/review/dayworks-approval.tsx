@@ -135,7 +135,8 @@ export function DayworksApproval({ projectId, entryDate, items, clientName, canR
       {approval.state === 'awaiting' && blockers.length === 0 && (
         <p className="notice gap"><strong>Not approved yet.</strong> Waiting for {clientName} to sign: {waiting}.</p>
       )}
-      {approval.awaiting > 0 && blockers.length > 0 && (
+      {/* Whatever else is true: an item with no description is not a line yet, so it is in no count above — it is named here. */}
+      {blockers.length > 0 && (
         <p className="notice gap">{cap(clientName)} can sign once the dayworks are filled in: {blockers.join(' ')}</p>
       )}
       {done && <p className="notice" role="status">{done}</p>}
