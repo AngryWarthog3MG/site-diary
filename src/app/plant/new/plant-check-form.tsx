@@ -15,6 +15,9 @@ import * as outbox from '@/lib/outbox/store';
 import { runOrQueue } from '@/lib/outbox/sync';
 import { ticketVerdict, normaliseName, TICKET_LABEL, type TicketVerdict, type TicketFacts } from '@/lib/crew/tickets';
 
+/** A check carries at most this many photographs of its own — the database's limit (README R193). */
+const MAX_PHOTOS = 10;
+
 /**
  * The walk-around, on the phone. Pick the machine (search the register, or
  * add one), answer every check, note and photograph any defect, read the
@@ -41,6 +44,22 @@ export function PlantCheckForm({ projectId, projectName, orgId, register, onJob,
   const [answers, setAnswers] = useState<Record<string, CheckResult | undefined>>({});
   const [defectNotes, setDefectNotes] = useState<Record<string, string>>({});
   const [defectPhotos, setDefectPhotos] = useState<Record<string, File | undefined>>({});
+  // Photographs of the machine taken during the check (README R193) — the hour meter, the state it arrived in. Shrunk
+  // as they are added, so what waits on the phone is what will be kept.
+  const [photos, setPhotos] = useState<Array<{ key: string; blob: Blob; contentType: string; extension: string; url: string }>>([]);
+  const [photoBusy, setPhotoBusy] = useState(false);
+  async function addPhotos(list: FileList | null) {
+    if (!list) return;
+    setPhotoBusy(true); setError(null);
+    try {
+      for (const file of Array.from(list)) {
+        try {
+          const c = await compressPhoto(file);
+          setPhotos((ps) => (ps.length >= MAX_PHOTOS ? ps : [...ps, { key: `photo-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`, blob: c.blob, contentType: c.contentType, extension: c.extension, url: URL.createObjectURL(c.blob) }]));
+        } catch { setError('A photo could not be read. Try taking it again.'); }
+      }
+    } finally { setPhotoBusy(false); }
+  }
   const [fit, setFit] = useState<boolean | null>(null);
   const [notes, setNotes] = useState('');
   const [saving, setSaving] = useState(false);
@@ -139,6 +158,9 @@ export function PlantCheckForm({ projectId, projectName, orgId, register, onJob,
         });
       }
 
+      const photoPlans = photos.map((ph) => ({ key: ph.key, path: `${base}/${ph.key}.${ph.extension}`, contentType: ph.contentType, blob: ph.blob }));
+      const photoPaths = photoPlans.map((ph) => ph.path);
+
       const live = async () => {
         if (putOnJob) {
           const { error: jobErr } = await supabase.from('project_plant').upsert({ project_id: projectId, plant_id: plant.id, active: true }, { onConflict: 'project_id,plant_id' });
@@ -154,18 +176,24 @@ export function PlantCheckForm({ projectId, projectName, orgId, register, onJob,
           const { error: defErr } = await supabase.from('plant_defects').insert(d.row);
           if (defErr) throw new Error(defErr.message);
         }
+        for (const ph of photoPlans) {
+          const { error: upErr } = await supabase.storage.from('entry-photos').upload(ph.path, ph.blob, { contentType: ph.contentType, upsert: false });
+          if (upErr && !/already exists|duplicate/i.test(upErr.message)) throw new Error(upErr.message);
+        }
         const { error: sigErr } = await supabase.storage.from('entry-photos').upload(sigPath, signature, { contentType: 'image/png', upsert: false });
         if (sigErr) throw new Error(sigErr.message);
-        // The signature arriving completes it; the database stamps the time.
-        const { error: doneErr } = await supabase.from('plant_prestarts').update({ signature_path: sigPath, completed_on_device_at: at }).eq('id', id);
+        // The signature arriving completes it; the database stamps the time. The photographs are named in the same
+        // write, so a signed check and its photographs are one frozen thing.
+        const { error: doneErr } = await supabase.from('plant_prestarts').update({ signature_path: sigPath, completed_on_device_at: at, ...(photoPaths.length ? { photo_paths: photoPaths } : {}) }).eq('id', id);
         if (doneErr) throw new Error(doneErr.message);
       };
       const queue = async () => {
         const blobs: Record<string, Blob> = { signature };
         for (const d of defectPlans) if (d.blob && d.photoKey) blobs[d.photoKey] = d.blob;
+        for (const ph of photoPlans) blobs[ph.key] = ph.blob;
         await outbox.enqueue({
           kind: 'plant_prestart', projectId, subjectId: id,
-          payload: { plantId: plant.id, plantName: plant.name, putOnJob, row, sigPath, at, defects: defectPlans.map((d) => ({ row: d.row, photoKey: d.photoKey, photoPath: d.photoPath, contentType: d.contentType })) },
+          payload: { plantId: plant.id, plantName: plant.name, putOnJob, row, sigPath, at, defects: defectPlans.map((d) => ({ row: d.row, photoKey: d.photoKey, photoPath: d.photoPath, contentType: d.contentType })), photos: photoPlans.map((ph) => ({ key: ph.key, path: ph.path, contentType: ph.contentType })) },
           blobs,
         });
       };
@@ -282,6 +310,26 @@ export function PlantCheckForm({ projectId, projectName, orgId, register, onJob,
               <p className="way-hint">Not to be used tags the machine on Plant and Home until a later prestart clears it. The defects stay open until someone closes them.</p>
             </div>
           )}
+
+          <div className="fieldcell">
+            <span className="label">Photos of the machine · optional · {photos.length} of {MAX_PHOTOS}</span>
+            <div className="qa-item__photos">
+              {photos.map((ph) => (
+                <span key={ph.key} className="qa-photo__wrap">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img className="qa-photo" src={ph.url} alt="" />
+                  <button type="button" className="qa-photo__x" aria-label="Take this photo off" title="Take it off" onClick={() => setPhotos((ps) => ps.filter((x) => x.key !== ph.key))}>×</button>
+                </span>
+              ))}
+              {photos.length < MAX_PHOTOS && (
+                <label className="qa-photo__add">
+                  <span>{photoBusy ? 'Adding…' : '+ Photos'}</span>
+                  <input type="file" accept="image/*" multiple hidden disabled={photoBusy} onChange={(e) => { const l = e.target.files; void addPhotos(l); e.target.value = ''; }} />
+                </label>
+              )}
+            </div>
+            <p className="way-hint">The hour meter, how the machine looks today, anything worth a picture. They are saved when you sign and kept with the check. A defect’s own photo goes on the defect above.</p>
+          </div>
 
           <label className="fieldcell">
             <span className="label">Anything else</span>

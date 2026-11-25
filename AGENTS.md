@@ -129,7 +129,9 @@ improvising; the register once shipped dead because a live smoke test was skippe
 - `src/lib/plant/` — plant prestarts: `checklist.ts` (per-kind checks, frozen labels), `pdf.tsx`, `on-job.ts`
   (the machines on a job: `project_plant` → `plant_register`, the ONE plant vocabulary — there is no per-job
   plant list any more). Tables `plant_register` (org-wide fleet), `project_plant`, `plant_prestarts` (signed =
-  frozen), `plant_defects`. `app.entry_warnings`
+  frozen), `plant_defects`. A check carries its OWN photographs (README R193, suite 77): `plant_prestarts.photo_paths`, up to ten,
+  under `{project}/plant/{prestart}/`, named in the write that signs it and frozen with it (`app.plant_prestart_photos_check`
+  holds the folder; a defect's photo stays on the defect); outbox payload `photos`; printed with `data-src`. `app.entry_warnings`
   raises `plant_without_prestart`; the TS half is `reviewQualityWarnings(payload, { plantPrestarted })`. The day's prestart
   screen carries a Plant tab — the job's machines and that day's checks, "Do the check" opening `/plant/new?…&back=` and
   returning (README R151); the nav item sits under Plant & equipment. A LABOURER checks the plant they operate in their own name

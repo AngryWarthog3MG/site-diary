@@ -5,8 +5,8 @@ import type { StoredCheck } from './checklist';
 
 /**
  * One machine, one morning, one page. The checks print exactly as they were
- * answered — OK, Defect or N/A — with the defect notes and photos under them
- * and the operator's signature at the foot. Fit for use, or not, in the head
+ * answered — OK, Defect or N/A — with the defect notes and photos under them,
+ * the check's own photographs (README R193) and the operator's signature at the foot. Fit for use, or not, in the head
  * where an inspector looks first.
  */
 export interface PlantPrestartPdfData {
@@ -21,6 +21,8 @@ export interface PlantPrestartPdfData {
   hourMeter: number | null;
   checks: StoredCheck[];
   defects: Array<{ label: string; note: string | null; src: string | null }>;
+  /** The check's own photographs, as data URIs — decoded one at a time by the renderer (README R84). */
+  photos?: string[];
   fitForUse: boolean;
   notes: string | null;
   completedAtAwst: string;
@@ -83,6 +85,17 @@ export function PlantPrestartDoc({ data }: { data: PlantPrestartPdfData }): Reac
         </section>
       )}
 
+      {(data.photos ?? []).length > 0 && (
+        <section className="sect">
+          <p className="lbl">Photographs · {(data.photos ?? []).length}</p>
+          <div className="plantphotos">
+            {(data.photos ?? []).map((src, i) => (
+              <figure key={i}><img data-shrink="1100" data-src={src} alt="" /><figcaption>Photograph {i + 1} of {(data.photos ?? []).length}</figcaption></figure>
+            ))}
+          </div>
+        </section>
+      )}
+
       {data.notes && (
         <section className="sect">
           <p className="lbl">Notes</p>
@@ -119,4 +132,8 @@ export const PLANT_CSS = `
 .defect-print { margin: 0 0 3mm; break-inside: avoid; }
 .defectphoto { display: block; max-width: 70mm; max-height: 50mm; margin-top: 1.5mm; border: 0.5pt solid #C9D1CE; }
 .sigline { height: 14mm; border-bottom: 0.6pt solid #131A1E; }
+.plantphotos { display: grid; grid-template-columns: 1fr 1fr; gap: 3mm; }
+.plantphotos figure { margin: 0; break-inside: avoid; }
+.plantphotos img { display: block; width: 100%; max-height: 70mm; object-fit: contain; border: 0.5pt solid #C9D1CE; background: #F4F6F5; }
+.plantphotos figcaption { font-size: 7pt; color: #5B6664; margin-top: 0.8mm; }
 `;

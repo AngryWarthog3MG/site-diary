@@ -4164,6 +4164,33 @@ daywork up, the head contractor's supervisor is standing beside the work, and th
 Not built: the signature on the signed day's read-only screen (that is the schedule's job, R125); a signature per item
 rather than for everything waiting; the head contractor signing from their own device.
 
+**R193. Photographs on a plant prestart.** "Can you please add photos to the machine pre-starts? Give an option for
+people to add photos whilst they're doing the pre-starts for any of the machines or plant." Until now a check could
+carry one photograph per DEFECT and nothing else. A machine that passes has things worth a picture too — the hour
+meter, the state a hired machine arrived in, a guard that is on — and that picture is what answers "it was like that
+when we got it" months later. Migration 20261125100000, suite 77.
+
+- **The check form has "Photos of the machine"** under the checks: "+ Photos" (several at once, camera or library), a
+  thumbnail for each with an × to take it off before signing, ten at most. Optional — a check without one signs as it
+  always did. A defect's own photograph stays on the defect.
+- **Shrunk as they are added** (`compressPhoto`, the size every stored photograph is kept at), so what waits on the
+  phone is what will be kept.
+- **Saved by the signature.** `plant_prestarts.photo_paths` is named in the same write that signs the check, after
+  the files are up, so a signed check and its photographs are one frozen thing: the existing rule that a signed
+  prestart is never modified covers them, with no second rule. The files sit in the check's own folder
+  (`{project}/plant/{prestart}/photo-….jpg`) beside the signature and the defect photos, under the storage rules that
+  folder already had — writable while the check is open, by whoever may write the check, so a labourer checking their
+  own plant (R162) adds them too. A separate small trigger (`app.plant_prestart_photos_check`) holds each path to
+  that folder and to one of each; the big prestart trigger was not touched.
+- **Offline** the photographs ride in the same outbox item as the check (kind `plant_prestart`, payload `photos`); on
+  replay a photograph whose file is no longer on the phone is left off rather than named without a file.
+- **Shown** on the prestart's page and **printed** on its PDF, two to a row, each whole, through the renderer's
+  one-at-a-time decoding (`data-src`, R84) so ten phone photographs do not take Chromium down. A PDF already stored
+  for an earlier prestart is never rebuilt — those checks had no photographs to show.
+
+Not built: adding a photograph to a check after it is signed (it is frozen — that is a new check or a defect); the
+photographs in the job's photo library (R173); a caption per photograph.
+
 ## Not built, and deliberately so
 
 - **Organisation and project creation.** `projects` can be inserted by an org admin;

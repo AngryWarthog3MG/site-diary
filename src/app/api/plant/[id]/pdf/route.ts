@@ -21,7 +21,7 @@ export async function POST(_request: Request, context: { params: Promise<{ id: s
   const { data: row } = await supabase
     .from('plant_prestarts')
     .select(
-      `id, project_id, prestart_date, operator_name, hour_meter, checks, fit_for_use, notes, signature_path, completed_at, completed_on_device_at,
+      `id, project_id, prestart_date, operator_name, hour_meter, checks, fit_for_use, notes, signature_path, photo_paths, completed_at, completed_on_device_at,
        plant:plant_register!inner(name, kind, make_model, plant_no, ownership, supplier),
        project:projects!inner(name, code, org:organisations!inner(name, code))`,
     )
@@ -61,6 +61,13 @@ export async function POST(_request: Request, context: { params: Promise<{ id: s
     defects.push({ label: d.item_label as string, note: (d.note as string | null) ?? null, src: await toDataUrl(d.photo_path as string | null, 'image/jpeg') });
   }
 
+  // The check's own photographs (README R193). One that cannot be read is left off the page rather than printed blank.
+  const photos: string[] = [];
+  for (const path of ((row.photo_paths as string[] | null) ?? [])) {
+    const src = await toDataUrl(path, /\.png$/i.test(path) ? 'image/png' : 'image/jpeg');
+    if (src) photos.push(src);
+  }
+
   const completedAtAwst = finishedAtAwst(row.completed_at as string, row.completed_on_device_at as string | null);
   const meta = [
     isPlantKind(plant.kind) ? PLANT_KIND_LABEL[plant.kind] : null,
@@ -79,6 +86,7 @@ export async function POST(_request: Request, context: { params: Promise<{ id: s
     hourMeter: row.hour_meter == null ? null : Number(row.hour_meter),
     checks: readChecks(row.checks),
     defects,
+    photos,
     fitForUse: Boolean(row.fit_for_use),
     notes: (row.notes as string | null) ?? null,
     completedAtAwst,

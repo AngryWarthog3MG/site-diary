@@ -455,9 +455,17 @@ async function replay(item: OutboxItem): Promise<void> {
         const { error } = await supabase.from('plant_defects').insert(d.row);
         if (error && !isAlreadyDone(error) && !isFrozen(error)) throw error;
       }
+      // The check's own photographs (README R193): each file, then named in the write that signs. One whose file is
+      // no longer on the phone is left off — the record never names a photograph that is not there.
+      const photoPaths: string[] = [];
+      for (const ph of (p.photos as Array<{ key: string; path: string; contentType?: string }> | undefined) ?? []) {
+        if (!blobs[ph.key]) continue;
+        await uploadIfMissing(ph.path, blobs[ph.key], ph.contentType ?? 'image/jpeg');
+        photoPaths.push(ph.path);
+      }
       await uploadIfMissing(p.sigPath as string, blobs.signature, 'image/png');
       const { error: doneErr } = await supabase.from('plant_prestarts')
-        .update({ signature_path: p.sigPath, completed_on_device_at: p.at }).eq('id', item.subjectId);
+        .update({ signature_path: p.sigPath, completed_on_device_at: p.at, ...(photoPaths.length ? { photo_paths: photoPaths } : {}) }).eq('id', item.subjectId);
       if (doneErr && !isFrozen(doneErr)) throw doneErr;
       return;
     }

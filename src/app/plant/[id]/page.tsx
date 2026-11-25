@@ -16,7 +16,7 @@ export default async function PlantPrestartPage({ params }: { params: Promise<{ 
   const supabase = await createClient();
   const { data: row } = await supabase
     .from('plant_prestarts')
-    .select(`id, project_id, prestart_date, operator_name, hour_meter, checks, fit_for_use, notes, signature_path, completed_at,
+    .select(`id, project_id, prestart_date, operator_name, hour_meter, checks, fit_for_use, notes, signature_path, photo_paths, completed_at,
              plant:plant_register!inner(name, kind, plant_no, make_model), project:projects!inner(name)`)
     .eq('id', id).maybeSingle();
   if (!row) notFound();
@@ -26,7 +26,8 @@ export default async function PlantPrestartPage({ params }: { params: Promise<{ 
   const project = first(row.project) as { name: string };
   const checks = readChecks(row.checks);
   const { data: defects } = await supabase.from('plant_defects').select('id, item_label, note, photo_path, closed_at, closed_note').eq('prestart_id', id).order('raised_at');
-  const paths = [row.signature_path as string | null, ...(defects ?? []).map((d) => d.photo_path as string | null)].filter((p): p is string => Boolean(p));
+  const photoPaths = ((row.photo_paths as string[] | null) ?? []);
+  const paths = [row.signature_path as string | null, ...(defects ?? []).map((d) => d.photo_path as string | null), ...photoPaths].filter((p): p is string => Boolean(p));
   const urls: Record<string, string> = {};
   if (paths.length) {
     const { data: signed } = await supabase.storage.from('entry-photos').createSignedUrls(paths, 3600);
@@ -75,6 +76,18 @@ export default async function PlantPrestartPage({ params }: { params: Promise<{ 
               </li>
             ))}
           </ul>
+        </>
+      )}
+      {photoPaths.length > 0 && (
+        <>
+          <hr className="rule" />
+          <p className="label">Photographs · {photoPaths.length}</p>
+          <div className="qa-item__photos">
+            {photoPaths.map((p) => urls[p]
+              // eslint-disable-next-line @next/next/no-img-element
+              ? <a key={p} href={urls[p]} target="_blank" rel="noreferrer"><img className="qa-photo" src={urls[p]} alt="" /></a>
+              : <span key={p} className="qa-photo qa-photo--pending" />)}
+          </div>
         </>
       )}
       {row.notes && (<><hr className="rule" /><p className="label">Notes</p><p>{row.notes as string}</p></>)}
